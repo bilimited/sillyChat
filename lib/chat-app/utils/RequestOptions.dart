@@ -1,0 +1,83 @@
+class LLMRequestOptions {
+  final List<Map<String, String>> messages; // 消息记录
+  final int maxTokens; // token上限
+  final double temperature; // 温度参数
+  final double topP; // 核采样参数
+  final double presencePenalty; // 话题新鲜度惩罚
+  final double frequencyPenalty; // 词频惩罚
+  final int maxHistoryLength; // 历史消息长度上限
+  final int apiId;
+
+  final bool isDeleteThinking; // 是否删除思考消息
+  final bool isThinkMode; // 是否思考模式
+
+  const LLMRequestOptions({
+    required this.messages,
+    this.maxTokens = 4000,
+    this.temperature = 0.7,
+    this.topP = 1.0,
+    this.presencePenalty = 0.0,
+    this.frequencyPenalty = 0.0,
+    this.maxHistoryLength = 10,
+    this.apiId = 0,
+
+    this.isThinkMode = false,
+    this.isDeleteThinking = true,
+  });
+
+  factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
+    return LLMRequestOptions(
+      messages: (json['messages'] as List?)?.map((e) => Map<String, String>.from(e)).toList() ?? [],
+      maxTokens: json['max_tokens'] ?? 4000,
+      temperature: json['temperature']?.toDouble() ?? 0.7,
+      topP: json['top_p']?.toDouble() ?? 1.0,
+      presencePenalty: json['presence_penalty']?.toDouble() ?? 0.0,
+      frequencyPenalty: json['frequency_penalty']?.toDouble() ?? 0.0,
+      maxHistoryLength: json['max_history_length'] ?? 10,
+      apiId: json['api_id'] ?? 0,
+      isDeleteThinking: json['is_delete_thinking'] ?? true,
+      isThinkMode: json['is_think_mode'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'messages': messages,
+      'max_tokens': maxTokens,
+      'temperature': temperature,
+      'top_p': topP,
+      'presence_penalty': presencePenalty,
+      'frequency_penalty': frequencyPenalty,
+      'max_history_length': maxHistoryLength,
+      'api_id': apiId,
+      'is_delete_thinking': isDeleteThinking,
+      'is_think_mode': isThinkMode,
+    };
+  }
+
+  LLMRequestOptions copyWith({
+    List<Map<String, String>>? messages,
+    int? maxTokens,
+    double? temperature,
+    double? topP,
+    double? presencePenalty,
+    double? frequencyPenalty,
+    int? maxHistoryLength,
+    int? apiId,
+    bool? isDeleteThinking,
+    bool? isThinkMode,
+  }) {
+    return LLMRequestOptions(
+      messages: messages ?? this.messages,
+      maxTokens: maxTokens ?? this.maxTokens,
+      temperature: temperature ?? this.temperature,
+      topP: topP ?? this.topP,
+      presencePenalty: presencePenalty ?? this.presencePenalty,
+      frequencyPenalty: frequencyPenalty ?? this.frequencyPenalty,
+      maxHistoryLength: maxHistoryLength ?? this.maxHistoryLength,
+      apiId: apiId ?? this.apiId,
+      isDeleteThinking: isDeleteThinking ?? this.isDeleteThinking,
+      isThinkMode: isThinkMode ?? this.isThinkMode,
+    );
+  }
+}
