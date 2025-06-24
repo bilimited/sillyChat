@@ -14,9 +14,11 @@ class ChatListItem extends StatelessWidget {
 
   CharacterController _characterController = Get.find();
   ChatController _chatController = Get.find();
+  final void Function(ChatModel chat)? onSelectChat;
 
   ChatModel get chat => _chatController.getChatById(chatId);
-  ChatListItem({Key? key, required this.chatId}) : super(key: key);
+  ChatListItem({Key? key, required this.chatId, this.onSelectChat})
+      : super(key: key);
 
   String _getModeText(ChatMode? mode) {
     switch (mode) {
@@ -68,9 +70,15 @@ class ChatListItem extends StatelessWidget {
     }
 
     return InkWell(
-      onTap: () => Get.to(() => ChatDetailPage(
-            chatId: chat.id,
-          )),
+      onTap: () {
+        if (onSelectChat != null) {
+          onSelectChat!(chat);
+        } else {
+          Get.to(() => ChatDetailPage(
+                chatId: chat.id,
+              ));
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

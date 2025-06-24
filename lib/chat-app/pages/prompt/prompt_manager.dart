@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
@@ -44,7 +45,7 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
           if (widget.isSelector) {
             Get.back(result: prompt.id);
           } else {
-            Get.to(() => EditPromptPage(prompt: prompt));
+            customNavigate(EditPromptPage(prompt: prompt));
           }
         },
         child: ListTile(

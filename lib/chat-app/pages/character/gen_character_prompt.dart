@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
+import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../models/prompt_model.dart';
@@ -57,9 +58,8 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
 
     promptContent =
         promptContent.replaceAll("<request>", _requestController.text);
-    requestOptions.messages.addAll([
-      {'role': 'user', 'content': promptContent},
-    ]);
+    requestOptions.messages
+        .addAll([LLMMessage(content: promptContent, role: 'user')]);
 
     bool isFirstTokenGenerated = false;
     try {

@@ -1,5 +1,7 @@
+import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+
 class LLMRequestOptions {
-  final List<Map<String, String>> messages; // 消息记录
+  final List<LLMMessage> messages; // 消息记录
   final int maxTokens; // token上限
   final double temperature; // 温度参数
   final double topP; // 核采样参数
@@ -20,14 +22,13 @@ class LLMRequestOptions {
     this.frequencyPenalty = 0.0,
     this.maxHistoryLength = 10,
     this.apiId = 0,
-
     this.isThinkMode = false,
     this.isDeleteThinking = true,
   });
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
     return LLMRequestOptions(
-      messages: (json['messages'] as List?)?.map((e) => Map<String, String>.from(e)).toList() ?? [],
+      messages: [],
       maxTokens: json['max_tokens'] ?? 4000,
       temperature: json['temperature']?.toDouble() ?? 0.7,
       topP: json['top_p']?.toDouble() ?? 1.0,
@@ -40,9 +41,23 @@ class LLMRequestOptions {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson(){
     return {
-      'messages': messages,
+      'max_tokens': maxTokens,
+      'temperature': temperature,
+      'top_p': topP,
+      'presence_penalty': presencePenalty,
+      'frequency_penalty': frequencyPenalty,
+      'max_history_length': maxHistoryLength,
+      'api_id': apiId,
+      'is_delete_thinking': isDeleteThinking,
+      'is_think_mode': isThinkMode,
+    };
+  }
+
+  Map<String, dynamic> toOpenAIJson() {
+    return {
+      'messages': messages.map((msg) => msg.toOpenAIJson()).toList(),
       'max_tokens': maxTokens,
       'temperature': temperature,
       'top_p': topP,
@@ -56,7 +71,7 @@ class LLMRequestOptions {
   }
 
   LLMRequestOptions copyWith({
-    List<Map<String, String>>? messages,
+    List<LLMMessage>? messages,
     int? maxTokens,
     double? temperature,
     double? topP,

@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
@@ -319,71 +320,89 @@ class ChatController extends GetxController {
         .toList();
   }
 
-  List<Map<String, String>> getLLMMessageList(ChatModel chat) {
-    var sysPrompts = chat.prompts.map((prompt) => {
-          "role": prompt.role,
-          "content": prompt.getContent(chat),
-        });
-    int maxMsgs = chat.requestOptions.maxHistoryLength;
-    bool isDeleteThinking = chat.requestOptions.isDeleteThinking;
-    final msglst = [
-      ...sysPrompts,
-      ...chat.messages
-          .skip(chat.messages.length > maxMsgs
-              ? chat.messages.length - maxMsgs
-              : 0)
-          .map((msg) {
-        
-        return {
-          "role": msg.isAssistant ? "assistant" : "user",
-          "content": isDeleteThinking
-              ? msg.content
-                  .replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '')
-              : msg.content
-        };
-      })
-    ];
-    print(msglst);
-    if (msglst.length > 0) {
-      msglst.last['content'] =
-          chat.messageTemplate.replaceAll('{{msg}}', msglst.last['content']!);
+  String propressMessage(String content, LLMRequestOptions options,
+      {bool isGroupMode = false}) {
+    // 处理消息内容，删除thinking标记
+    if (options.isDeleteThinking) {
+      content =
+          content.replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '');
     }
-
-    return msglst;
+    return content;
   }
 
-  List<Map<String, String>> getGroupMessageList(
-      ChatModel chat, CharacterModel sender) {
-    var sysPrompts = chat.prompts.map((prompt) => {
-          "role": prompt.role,
-          "content": prompt.getContent(chat, sender: sender),
-        });
+  // sender!=null ,则为群聊模式
+  List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+    var sysPrompts = chat.prompts.map((prompt) =>
+        LLMMessage(
+          content: prompt.getContent(chat, sender: sender),
+          role: prompt.role,
+        )
+    ).toList();
+
     int maxMsgs = chat.requestOptions.maxHistoryLength;
-    bool isDeleteThinking = chat.requestOptions.isDeleteThinking;
+    final int total = chat.messages.length;
+    final int start = total > maxMsgs ? total - maxMsgs : 0;
+    final pinnedIndexes = <int>{};
+    for (int i = 0; i < chat.messages.length; i++) {
+      if (chat.messages[i].isPinned == true) {
+        pinnedIndexes.add(i);
+      }
+    }
+    // 需要保留的消息索引：末尾maxMsgs条+所有pinned
+    final keepIndexes = <int>{
+      ...List.generate(total - start, (i) => start + i),
+      ...pinnedIndexes
+    };
+
     final msglst = [
       ...sysPrompts,
-      ...chat.messages
-          .skip(chat.messages.length > maxMsgs
-              ? chat.messages.length - maxMsgs
-              : 0)
-          .map((msg) {
-        final content = isDeleteThinking
-            ? msg.content
-                .replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '')
-            : msg.content;
-        return {
-          "role": msg.sender == sender.id ? "assistant" : "user",
-          "content": msg.sender == sender.id
-              ? content
-              : "${characterController.getCharacterById(msg.sender).name}:\n${content}"
-        };
+      ...List.generate(chat.messages.length, (i) => i)
+          .where((i) => keepIndexes.contains(i))
+          .map((i) {
+        final msg = chat.messages[i];
+        final content = propressMessage(msg.content, chat.requestOptions);
+        if (sender == null) {
+          return LLMMessage(
+            content: content,
+            role: msg.isAssistant ? "assistant" : "user",
+            fileDirs: msg.resPath
+          );
+        } else {
+          return LLMMessage(
+            content: msg.sender == sender.id
+                ? content
+                : "${characterController.getCharacterById(msg.sender).name}:\n${content}",
+            role: msg.sender == sender.id ? "assistant" : "user",
+            fileDirs: msg.resPath
+          );
+        }
       })
     ];
-    if (msglst.length > 0) {
-      msglst.last['content'] =
-          chat.messageTemplate.replaceAll('{{msg}}', msglst.last['content']!);
-      // 强制修正发言者；防止人名重复出现
-      msglst.last['content'] = "${msglst.last['content']}\n${sender.name}:";
+
+    // 修正最后一条消息内容
+    if (msglst.isNotEmpty) {
+      final last = msglst.last;
+      final fixedContent = chat.messageTemplate.replaceAll('{{msg}}', last.content);
+      if (sender != null) {
+        // 强制修正发言者；防止人名重复出现
+        msglst[msglst.length - 1] = LLMMessage(
+          content: "$fixedContent\n${sender.name}:",
+          role: last.role,
+          fileDirs: last.fileDirs,
+        );
+      } else {
+        msglst[msglst.length - 1] = LLMMessage(
+          content: fixedContent,
+          role: last.role,
+          fileDirs: last.fileDirs,
+        );
+      }
+    }
+    if (sender == null && msglst.isNotEmpty && msglst.last.role != 'user') {
+      msglst.add(LLMMessage(
+        content: '请接着刚才的话题继续。',
+        role: 'user',
+      ));
     }
     return msglst;
   }
@@ -395,19 +414,11 @@ class ChatController extends GetxController {
     LLMMessageBuffer.value = "";
     isLLMGenerating.value = true;
     late LLMRequestOptions options;
-    late List<Map<String, String>> messages;
-    if (sender == null) {
-      currentAssistant.value = chat.assistantId ?? 0;
-      sender = (Get.find<CharacterController>())
-          .getCharacterById(currentAssistant.value);
-      messages = getLLMMessageList(chat);
-      // options = chat.requestOptions.copyWith(messages: );
-    } else {
-      currentAssistant.value = sender.id;
-      messages = getGroupMessageList(chat, sender);
-      // options = chat.requestOptions
-      //     .copyWith(messages: getGroupMessageList(chat, sender));
-    }
+    late List<LLMMessage> messages;
+
+    currentAssistant.value =
+        sender == null ? (chat.assistantId ?? 0) : sender.id;
+    messages = getLLMMessageList(chat, sender: sender);
     options = chat.requestOptions.copyWith(messages: messages);
 
     await for (String token in chatAIHandler.requestTokenStream(options)) {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/character/personal_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
@@ -107,13 +108,14 @@ class _ContactsPageState extends State<ContactsPage> {
             )
           : null,
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            // 之前是导航到PersonalPage
-            builder: (context) => EditCharacterPage(characterId: contact.id),
-          ),
-        );
+        customNavigate(EditCharacterPage(characterId: contact.id,));
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     // 之前是导航到PersonalPage
+        //     builder: (context) => EditCharacterPage(characterId: contact.id),
+        //   ),
+        // );
       },
     );
   }

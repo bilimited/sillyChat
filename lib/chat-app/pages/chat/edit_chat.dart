@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -253,7 +254,7 @@ class _EditChatPageState extends State<EditChatPage>
         Expanded(
           child: InkWell(
             onTap: () async {
-              CharacterModel? char = await Get.to(() => CharacterSelector());
+              CharacterModel? char = await customNavigate(CharacterSelector());
               if (char == null) {
                 return;
               }
@@ -371,29 +372,29 @@ class _EditChatPageState extends State<EditChatPage>
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
-        Card(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('请求设置', style: Theme.of(context).textTheme.titleMedium),
-                SizedBox(height: 16),
-                SwitchListTile(
-                  title: Text('覆盖角色请求参数'),
-                  subtitle: Text('开启后将使用角色参数，而不是对话请求参数'),
-                  value: widget.chat.overriteOption,
-                  onChanged: (bool value) {
-                    setState(() {
-                      widget.chat.overriteOption = value;
-                    });
-                  },
-                ),
+        // Card(
+        //   child: Padding(
+        //     padding: EdgeInsets.all(16),
+        //     child: Column(
+        //       crossAxisAlignment: CrossAxisAlignment.start,
+        //       children: [
+        //         Text('请求设置', style: Theme.of(context).textTheme.titleMedium),
+        //         SizedBox(height: 16),
+        //         SwitchListTile(
+        //           title: Text('覆盖角色请求参数'),
+        //           subtitle: Text('开启后将使用角色参数，而不是对话请求参数'),
+        //           value: widget.chat.overriteOption,
+        //           onChanged: (bool value) {
+        //             setState(() {
+        //               widget.chat.overriteOption = value;
+        //             });
+        //           },
+        //         ),
 
-              ],
-            ),
-          ),
-        ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         if (!widget.chat.overriteOption)
           Card(
             child: Padding(
@@ -423,7 +424,9 @@ class _EditChatPageState extends State<EditChatPage>
           leading: Icon(Icons.preview),
           onTap: () {
             final messages = _chatController.getLLMMessageList(widget.chat);
-            Get.to(() => PromptPreviewPage(messages: messages));
+            customNavigate(
+              PromptPreviewPage(messages: messages.map((ele)=>ele.toOpenAIJson()).toList())
+            );
           },
         ),
         Divider(),
@@ -455,7 +458,7 @@ class _EditChatPageState extends State<EditChatPage>
       await _chatController.saveChats(widget.chat.fileId);
 
       Get.back();
-      Get.snackbar('成功', '群聊信息已更新');
+      // Get.snackbar('成功', '群聊信息已更新');
     }
   }
 

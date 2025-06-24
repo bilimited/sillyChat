@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/prompt/edit_prompt.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
@@ -42,7 +43,8 @@ class _PromptEditorState extends State<PromptEditor> {
 
   Future<void> _replacePrompt(int index) async {
     final int? selected =
-        await Get.to(() => PromptManagerPage(isSelector: true));
+        await customNavigate(PromptManagerPage(isSelector: true));
+    // await Get.to(() => PromptManagerPage(isSelector: true));
     if (selected == null) return;
 
     final selectedPrompt = _promptController.getPromptById(selected);
@@ -85,7 +87,7 @@ class _PromptEditorState extends State<PromptEditor> {
           maxLines: 3,
         ),
         onTap: () async {
-          PromptModel? newPrompt = await Get.to(EditPromptPage(
+          PromptModel? newPrompt = await customNavigate(EditPromptPage(
             prompt: prompt,
             editTempPrompt: true,
           ));

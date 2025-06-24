@@ -107,7 +107,7 @@ class Aihandler {
         ),
         data: {
           'model': model,
-          ...options.toJson(),
+          ...options.toOpenAIJson(),
           'stream': true,
         },
       );
@@ -165,14 +165,9 @@ class Aihandler {
 
   Stream<String> requestGoogle(LLMRequestOptions options, ApiModel api) async* {
     Gemini.reInitialize(apiKey: api.apiKey);
-
     List<Content> chats = [];
     for (final msg in options.messages) {
-      chats.add(Content(
-        parts: [Part.text(msg['content'] ?? '')],
-        role:
-            msg['role'] == 'assistant' ? 'model' : 'user', // gemini只有user和model
-      ));
+      chats.add(msg.toGeminiContent());
     }
     await for (final token in Gemini.instance
         .streamChat(chats,

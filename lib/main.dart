@@ -9,14 +9,33 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await SettingController.loadVaultName();
-  runApp(Phoenix(child: SillyChatApp()));
+  SillyChatApp.packageInfo = await PackageInfo.fromPlatform();
+  runApp(SillyChatApp());
+  SettingController.loadInitialData();
 }
+
+// Future<void> _getAppVersion() async {
+  
+
+//   String appName = packageInfo.appName;
+//   String packageName = packageInfo.packageName;
+//   String version = packageInfo.version; // 版本号，如 1.0.0
+//   String buildNumber = packageInfo.buildNumber; // 构建号，如 1
+
+//   print('App Name: $appName');
+//   print('Package Name: $packageName');
+//   print('Version: $version');
+//   print('Build Number: $buildNumber');
+// }
 
 class SillyChatApp extends StatelessWidget {
   final defalutThemeDay = ThemeData(
@@ -30,6 +49,8 @@ class SillyChatApp extends StatelessWidget {
     useMaterial3: true,
     fontFamily: Platform.isWindows ? "思源黑体" : null,
   );
+
+  static late PackageInfo packageInfo;
 
   SillyChatApp({super.key});
   final SettingController setting = Get.put(SettingController());
@@ -52,6 +73,10 @@ class SillyChatApp extends StatelessWidget {
     Get.find<VaultSettingController>().loadSettings();
     Get.find<ChatOptionController>().chatOptions.value = [];
     Get.find<ChatOptionController>().loadChatOptions();
+  }
+
+  static String getVersion() {
+    return "v${packageInfo.version}";
   }
 
   @override

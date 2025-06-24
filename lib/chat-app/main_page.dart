@@ -1,12 +1,19 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/webdav_util.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'pages/chat/chat_page.dart';
@@ -24,8 +31,18 @@ class _MainPageState extends State<MainPage> {
   final VaultSettingController _vaultSettingController = Get.find();
   final SettingController _settingController = Get.find();
   final CharacterController _characterController = Get.find();
+  final ChatController _chatController = Get.find();
 
   final webDav = WebDavUtil();
+
+  int desktop_destination_left = 0;
+  int desktop_destination_right = 0;
+  int desktop_chatId = 0;
+  MessageModel? desktop_initialPosition;
+
+  late List<Widget> _desktop_pages;
+
+  CharacterModel get me => _characterController.me;
 
   void _showCharacterSelectDialog() {
     showDialog(
@@ -62,12 +79,11 @@ class _MainPageState extends State<MainPage> {
 
   void refleshAll() {
     SillyChatApp.restart();
-    // _characterController.loadCharacters();
-    // _promptController.loadPrompts();
-    // _chatController.chats.value = [];
-    // _chatController.loadChats();
-    // _vaultSettingController.loadSettings();
-    // _chatOptionController.loadChatOptions();
+
+    setState(() {
+      desktop_destination_left = 0;
+      desktop_destination_right = 0;
+    });
   }
 
   void _uploadAll() async {
@@ -170,9 +186,12 @@ class _MainPageState extends State<MainPage> {
   }
 
   void setupWebDav() {
-    final urlController = TextEditingController(text: SettingController.webdav_url);
-    final usernameController = TextEditingController(text: SettingController.webdav_username);
-    final passwordController = TextEditingController(text: SettingController.webdav_password);
+    final urlController =
+        TextEditingController(text: SettingController.webdav_url);
+    final usernameController =
+        TextEditingController(text: SettingController.webdav_username);
+    final passwordController =
+        TextEditingController(text: SettingController.webdav_password);
 
     Get.dialog(
       AlertDialog(
@@ -229,6 +248,24 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    _desktop_pages = [
+      ChatPage(onSelectChat: (chat) {
+        setState(() {
+          desktop_initialPosition = null;
+          desktop_chatId = chat.id;
+        });
+      }),
+      ContactsPage(),
+      ChatOptionsManagerPage(),
+      Obx(() => SearchPage(
+          chats: _chatController.chats.value,
+          onMessageTap: (msg, chat) {
+            setState(() {
+              desktop_initialPosition = msg;
+              desktop_chatId = chat.id;
+            });
+          }))
+    ];
     webDav.init();
   }
 
@@ -238,7 +275,8 @@ class _MainPageState extends State<MainPage> {
       builder: (context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
-          children: [            ListTile(
+          children: [
+            ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('设置webdav'),
               onTap: setupWebDav,
@@ -253,19 +291,11 @@ class _MainPageState extends State<MainPage> {
               title: const Text('上传到云端'),
               onTap: _uploadAll,
             ),
-            // ListTile(
-            //   leading: const Icon(Icons.back_hand),
-            //   title: const Text('版本迁移'),
-            //   onTap: () {
-            //     MigrationStart();
-            //   },
-            // ),
           ],
         );
       },
     );
   }
-
 
   final List<Widget> _pages = [
     ChatPage(),
@@ -273,8 +303,182 @@ class _MainPageState extends State<MainPage> {
     ChatOptionsManagerPage(), // 更新这一行
   ];
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDesktop(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    const LEFT_WIDTH = 350.0;
+    return Scaffold(
+      backgroundColor: colors.surface,
+      body: Row(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child:
+                    // NavigationRail as the left-side AppBar
+                    NavigationRail(
+                        selectedIndex: desktop_destination_left,
+                        backgroundColor: colors.surfaceContainerHighest,
+                        labelType: NavigationRailLabelType.all,
+                        leading: Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: CircleAvatar(
+                            backgroundImage: Image.file(File(me.avatar)).image,
+                            radius: 24,
+                          ),
+                        ),
+                        destinations: [
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text('聊天'),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.person),
+                            label: const Text('角色'),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.settings_applications),
+                            label: const Text('对话配置'),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.search),
+                            label: const Text('搜索'),
+                          ),
+                        ],
+                        onDestinationSelected: (index) {
+                          setState(() {
+                            desktop_destination_left = index;
+                          });
+                        },
+                        trailing: null),
+              ),
+              Container(
+                width: 80, // 暂时和rail严丝合缝
+                color: colors.surfaceContainerHighest,
+                child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Column(
+                      children: [
+                        PopupMenuButton<int>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) {
+                            // 根据 value 执行不同操作
+                            if (value == 0) {
+                              _settingController.toggleDarkMode();
+                            } else if (value == 1) {
+                              _showBackupDialog();
+                            } else if (value == 2) {
+                              customNavigate(VaultManagerPage());
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 0,
+                              child: Row(
+                                children: [
+                                  _settingController.isDarkMode.value
+                                      ? Icon(Icons.nightlight)
+                                      : Icon(Icons.sunny),
+                                  SizedBox(width: 8),
+                                  Text('切换主题'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 1,
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.cloud, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('云端同步'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 2,
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.switch_camera, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('切换仓库'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text('SillyChat',
+                            style:
+                                TextStyle(color: colors.outline, fontSize: 12)),
+                        Text(
+                          SillyChatApp.getVersion(),
+                          style: TextStyle(color: colors.outline, fontSize: 12),
+                        ),
+                      ],
+                    )),
+              ),
+            ],
+          ),
+
+          // Main chat area
+          Expanded(
+            child: Container(
+              child: Stack(
+                children: [
+                  // 左侧固定宽度容器
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                        width: LEFT_WIDTH,
+                        color: colors.surfaceContainer, // 可自定义颜色
+                        child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(-0.0, -0.2),
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                )),
+                                child: FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeIn,
+                                  ),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: IndexedStack(
+                              key: ValueKey(desktop_destination_left),
+                              index: desktop_destination_left,
+                              children: _desktop_pages,
+                            ))),
+                  ),
+                  // 主内容区（右侧），留出左侧容器宽度
+                  Padding(
+                      padding: const EdgeInsets.only(left: LEFT_WIDTH),
+                      child: Obx(() => ChatDetailPage(
+                            key: ValueKey(
+                                '${desktop_chatId}_${desktop_initialPosition?.id ?? 0}'),
+                            chatId: _chatController.chats.isEmpty
+                                ? -1
+                                : desktop_chatId,
+                            initialPosition: desktop_initialPosition,
+                          ))),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     //final color = Theme.of(context).colorScheme;
     return Scaffold(
@@ -311,6 +515,21 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               actions: [
+                IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () {
+                    Get.to(() => SearchPage(
+                          chats: Get.find<ChatController>().chats,
+                          onMessageTap: (message, chat) {
+                            Get.back();
+                            Get.to(() => ChatDetailPage(
+                                  chatId: chat.id,
+                                  initialPosition: message,
+                                ));
+                          },
+                        ));
+                  },
+                ),
                 IconButton(
                   icon: Icon(Icons.switch_camera),
                   onPressed: () {
@@ -363,5 +582,14 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if ((Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      return _buildDesktop(context);
+    } else {
+      return _buildMobile(context);
+    }
   }
 }

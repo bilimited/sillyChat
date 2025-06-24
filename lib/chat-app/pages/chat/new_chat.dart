@@ -254,12 +254,16 @@ class _NewChatPageState extends State<NewChatPage> {
           : [_selectedUserId!, _selectedAssistantId!],
       userId: _selectedUserId,
       assistantId: _selectedAssistantId,
-      prompts: _selectedOption?.prompts.map((p) => p.copy()).toList() ??
-          [], // 使用选中的ChatOption中的prompts
-      requestOptions: _selectedOption?.requestOptions.copyWith() ??
-          LLMRequestOptions(messages: []), // 优先使用ChatOption中的设置
+      // prompts: _selectedOption?.prompts.map((p) => p.copy()).toList() ??
+      //     [], // 使用选中的ChatOption中的prompts
+      // requestOptions: _selectedOption?.requestOptions.copyWith() ??
+      //     LLMRequestOptions(messages: []), // 优先使用ChatOption中的设置
       currectOption: _selectedOption?.id ?? -1,
     )..mode = _selectedMode; // 设置选择的模式
+    if(_selectedOption!=null){
+      newChat.initOptions(_selectedOption!);
+    }
+    
 
     await _chatController.addChat(newChat);
     Get.back();

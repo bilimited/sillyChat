@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import 'api_edit.dart';
 
@@ -33,14 +34,14 @@ class ApiManagerPage extends StatelessWidget {
                   if (api.remarks != null) Text('备注: ${api.remarks}'),
                 ],
               ),
-              onTap: () => Get.to(() => ApiEditPage(api: api)),
+              onTap: () => customNavigate (ApiEditPage(api: api)),
               trailing: const Icon(Icons.drag_handle),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.to(() => ApiEditPage()),
+        onPressed: () => customNavigate (ApiEditPage()),
         child: const Icon(Icons.add),
       ),
     );

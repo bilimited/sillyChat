@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 
 // 全局配置
 class SettingController extends GetxController {
@@ -96,6 +99,39 @@ class SettingController extends GetxController {
   void toggleDarkMode() {
     isDarkMode.value = !isDarkMode.value;
     saveGlobalSettings();
+  }
+
+  // 第一次启动：加载初始数据
+  static Future<void> loadInitialData() async {
+    getApplicationDocumentsDirectory().then((directory) async {
+      final rootDir = Directory('${directory.path}/SillyChat');
+      if (!(await rootDir.exists()) || (await rootDir.list().isEmpty)) {
+        print("init data...");
+        // 创建 {directory.path}/SillyChat 文件夹（如果不存在的话）
+        if (!(await rootDir.exists())) {
+          await rootDir.create(recursive: true);
+        }
+        // 复制 assets/initData 下的所有文件到数据根目录
+        final assetManifest = await DefaultAssetBundle.of(Get.context!).loadString('AssetManifest.json');
+        final Map<String, dynamic> manifestMap = json.decode(assetManifest);
+        final initDataFiles = manifestMap.keys
+            .where((String key) => key.startsWith('assets/initData/'))
+            .toList();
+
+        for (final assetPath in initDataFiles) {
+          final data = await rootBundle.load(assetPath);
+          final List<int> bytes = data.buffer.asUint8List();
+          final fileName = assetPath.split('/').last;
+          final file = File('${rootDir.path}/$fileName');
+          await file.writeAsBytes(bytes, flush: true);
+        }
+        print('初始数据已复制到数据根目录');
+        SillyChatApp.restart();
+        await Get.find<CharacterController>().unpackAvatarFiles();
+      } else {
+        print('数据根目录已存在且不为空');
+      }
+    });
   }
 
   // 添加设置当前保管库名称的方法

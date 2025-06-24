@@ -51,6 +51,7 @@ class WebDavUtil {
         'characters.json',
         'prompts.json',
         'settings.json',
+        'chat_options.json',
         'character_avatars.zip'
       ];
 

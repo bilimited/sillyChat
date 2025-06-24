@@ -19,6 +19,7 @@ class EditChatOptionPage extends StatefulWidget {
 class _EditChatOptionPageState extends State<EditChatOptionPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _msgTemplateController = TextEditingController();
   final ChatOptionController _controller = Get.find();
 
   late LLMRequestOptions _requestOptions;
@@ -31,6 +32,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
     isEditing = widget.option != null;
 
     _nameController.text = widget.option?.name ?? '';
+    _msgTemplateController.text = widget.option?.messageTemplate ?? '{{msg}}';
     _requestOptions = widget.option?.requestOptions ??
         const LLMRequestOptions(messages: [], maxTokens: 2000);
     _prompts = widget.option?.prompts ?? [];
@@ -39,6 +41,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _msgTemplateController.dispose();
     super.dispose();
   }
 
@@ -53,6 +56,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text,
       requestOptions: _requestOptions,
       prompts: _prompts,
+      messageTemplate: _msgTemplateController.text,
     );
 
     if (isEditing) {
@@ -72,6 +76,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text+"的副本",
       requestOptions: _requestOptions.copyWith(),
       prompts: _prompts.map((ele) => ele.copy()).toList(),
+      messageTemplate: _msgTemplateController.text,
     );
     _controller.addChatOption(chatOption);
     Get.back();
@@ -109,6 +114,15 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _msgTemplateController,
+                  decoration: const InputDecoration(
+                    labelText: '消息模板',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
                 ),
                 const SizedBox(height: 24),
                 const Text('提示词列表',

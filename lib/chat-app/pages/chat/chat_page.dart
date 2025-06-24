@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_controller.dart';
 import '../../widgets/chat/chat_list_item.dart';
 import 'new_chat.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key}) : super(key: key);
+
+  final void Function(ChatModel chat)? onSelectChat;
+
+  const ChatPage({Key? key, this.onSelectChat}) : super(key: key);
+  
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -88,6 +93,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 itemBuilder: (context, index) => ChatListItem(
                   chatId: filteredChats.reversed.toList()[index].id,
+                  onSelectChat: widget.onSelectChat,
                 ),
               );
             }),
