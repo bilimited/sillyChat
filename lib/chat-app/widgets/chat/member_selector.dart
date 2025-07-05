@@ -51,7 +51,7 @@ class MemberSelector extends StatelessWidget {
                   leading: CircleAvatar(
                     backgroundImage: Image.file(File(character.avatar)).image,
                   ),
-                  title: Text(character.name),
+                  title: Text(character.roleName),
                   trailing: isMember
                       ? Icon(Icons.check_circle, color: Colors.green)
                       : null,

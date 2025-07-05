@@ -6,7 +6,6 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -24,7 +23,7 @@ class _NewChatPageState extends State<NewChatPage> {
   int? _selectedUserId = 0;
   int? _selectedAssistantId;
   final List<int> _selectedIds = [];
-  ChatMode? _selectedMode = ChatMode.auto; // 添加模式选择变量
+  ChatMode? _selectedMode = ChatMode.group; // 添加模式选择变量
   ChatOptionModel? _selectedOption;
 
   final CharacterController _characterController = Get.find();
@@ -42,7 +41,7 @@ class _NewChatPageState extends State<NewChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('创建新对话'),
+        title: Text('创建新群聊'),
       ),
       body: Form(
         key: _formKey,
@@ -54,39 +53,39 @@ class _NewChatPageState extends State<NewChatPage> {
               child: TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: '对话标题（可选）',
+                  labelText: '群聊标题（可选）',
                   border: OutlineInputBorder(),
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: DropdownButtonFormField<ChatMode>(
-                value: _selectedMode,
-                decoration: InputDecoration(
-                  labelText: '对话模式',
-                  border: OutlineInputBorder(),
-                ),
-                items: ChatMode.values.map((mode) {
-                  String displayName = {
-                        ChatMode.auto: '自动',
-                        ChatMode.group: '群聊',
-                        ChatMode.manual: '手动',
-                      }[mode] ??
-                      mode.toString();
+            // Padding(
+            //   padding: EdgeInsets.all(16),
+            //   child: DropdownButtonFormField<ChatMode>(
+            //     value: _selectedMode,
+            //     decoration: InputDecoration(
+            //       labelText: '对话模式',
+            //       border: OutlineInputBorder(),
+            //     ),
+            //     items: ChatMode.values.map((mode) {
+            //       String displayName = {
+            //             ChatMode.auto: '自动',
+            //             ChatMode.group: '群聊',
+            //             ChatMode.manual: '手动',
+            //           }[mode] ??
+            //           mode.toString();
 
-                  return DropdownMenuItem(
-                    value: mode,
-                    child: Text(displayName),
-                  );
-                }).toList(),
-                onChanged: (ChatMode? newValue) {
-                  setState(() {
-                    _selectedMode = newValue;
-                  });
-                },
-              ),
-            ),
+            //       return DropdownMenuItem(
+            //         value: mode,
+            //         child: Text(displayName),
+            //       );
+            //     }).toList(),
+            //     onChanged: (ChatMode? newValue) {
+            //       setState(() {
+            //         _selectedMode = newValue;
+            //       });
+            //     },
+            //   ),
+            // ),
             Padding(
               padding: EdgeInsets.all(16),
               child: Obx(() => DropdownButtonFormField<ChatOptionModel>(
@@ -188,7 +187,7 @@ class _NewChatPageState extends State<NewChatPage> {
                           backgroundImage: FileImage(File(character.avatar)),
                         ),
                         SizedBox(width: 8),
-                        Text(character.name),
+                        Text(character.roleName),
                         Spacer(),
                         IconButton(
                           icon: Icon(Icons.close, size: 16),
@@ -249,9 +248,6 @@ class _NewChatPageState extends State<NewChatPage> {
       lastMessage: '对话已创建',
       time: DateTime.now().toString(),
       messages: [],
-      characterIds: _selectedMode == ChatMode.group
-          ? _selectedIds
-          : [_selectedUserId!, _selectedAssistantId!],
       userId: _selectedUserId,
       assistantId: _selectedAssistantId,
       // prompts: _selectedOption?.prompts.map((p) => p.copy()).toList() ??
@@ -259,7 +255,9 @@ class _NewChatPageState extends State<NewChatPage> {
       // requestOptions: _selectedOption?.requestOptions.copyWith() ??
       //     LLMRequestOptions(messages: []), // 优先使用ChatOption中的设置
       currectOption: _selectedOption?.id ?? -1,
-    )..mode = _selectedMode; // 设置选择的模式
+    )..mode = _selectedMode
+    ..characterIds = _selectedIds
+    ; // 设置选择的模式
     if(_selectedOption!=null){
       newChat.initOptions(_selectedOption!);
     }

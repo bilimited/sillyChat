@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_controller.dart';
 import '../../widgets/chat/chat_list_item.dart';
-import 'new_chat.dart';
 
 class ChatPage extends StatefulWidget {
-
   final void Function(ChatModel chat)? onSelectChat;
 
   const ChatPage({Key? key, this.onSelectChat}) : super(key: key);
-  
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -21,11 +21,20 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _searchController = TextEditingController();
   final RxString _searchText = ''.obs;
 
+  bool isQuerying = false;
+
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
       _searchText.value = _searchController.text;
+      setState(() {
+        if (_searchText.value.isEmpty) {
+          isQuerying = false;
+        } else {
+          isQuerying = true;
+        }
+      });
     });
   }
 
@@ -38,22 +47,18 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
+          SizedBox(
+            height: 5,
+          ),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -71,7 +76,8 @@ class _ChatPageState extends State<ChatPage> {
                       decoration: InputDecoration(
                         hintText: '搜索聊天',
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -79,10 +85,101 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
+          Obx(() => AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: _searchText.isEmpty
+                    ? Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 8.0),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                if (widget.onSelectChat != null) {
+                                  widget.onSelectChat!(
+                                      chatController.defaultChat.value);
+                                } else {
+                                  customNavigate(ChatDetailPage(chatId: -1),
+                                      context: context);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.add,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '创建新聊天',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Divider(
+                            height: 1,
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 8.0),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                customNavigate(NewChatPage());
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.group,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '创建新群聊',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Divider(
+                            height: 1,
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              )),
           Expanded(
             child: Obx(() {
               final filteredChats = chatController.chats
-                  .where((chat) => chat.name.toLowerCase()
+                  .where((chat) => chat.name
+                      .toLowerCase()
                       .contains(_searchText.value.toLowerCase()))
                   .toList();
               return ListView.separated(
@@ -100,10 +197,10 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.chat),
-        onPressed: () => Get.to(() => NewChatPage()),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   child: const Icon(Icons.chat),
+      //   onPressed: () => customNavigate(NewChatPage(), context: context),
+      // ),
     );
   }
 }

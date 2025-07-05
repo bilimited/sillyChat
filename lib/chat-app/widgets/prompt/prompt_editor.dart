@@ -43,7 +43,7 @@ class _PromptEditorState extends State<PromptEditor> {
 
   Future<void> _replacePrompt(int index) async {
     final int? selected =
-        await customNavigate(PromptManagerPage(isSelector: true));
+        await customNavigate(PromptManagerPage(isSelector: true),context: context);
     // await Get.to(() => PromptManagerPage(isSelector: true));
     if (selected == null) return;
 
@@ -90,7 +90,7 @@ class _PromptEditorState extends State<PromptEditor> {
           PromptModel? newPrompt = await customNavigate(EditPromptPage(
             prompt: prompt,
             editTempPrompt: true,
-          ));
+          ),context: context);
           if (newPrompt == null) {
             return;
           }
@@ -170,7 +170,7 @@ class _PromptEditorState extends State<PromptEditor> {
               ElevatedButton.icon(
                 onPressed: () async {
                   final int? selected =
-                      await Get.to(() => PromptManagerPage(isSelector: true));
+                      await customNavigate(PromptManagerPage(isSelector: true),context: context);
                   if (selected == null) return;
                   final selectedPrompt =
                       _promptController.getPromptById(selected);

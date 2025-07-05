@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
 
 class LLMMessage {
   final String content;
@@ -19,10 +18,9 @@ class LLMMessage {
   /// 从 MessageModel 创建
   factory LLMMessage.fromMessageModel(MessageModel msg) {
     return LLMMessage(
-      content: msg.content,
-      role: msg.role.toString().split('.').last,
-      fileDirs: msg.resPath
-    );
+        content: msg.content,
+        role: msg.role.toString().split('.').last,
+        fileDirs: msg.resPath);
   }
 
   /// 从 PromptModel 创建
@@ -43,32 +41,68 @@ class LLMMessage {
     };
   }
 
+  List<Map<String, dynamic>> toGeminiParts() {
+    final List<Map<String, dynamic>> parts = [];
+
+    // Add the text part if content is not empty.
+    if (content.isNotEmpty) {
+      parts.add({"text": content});
+    }
+
+    // Add file parts if any files are present.
+    if (fileDirs.isNotEmpty) {
+      for (var dir in fileDirs) {
+        try {
+          final file = File(dir);
+          final bytes = file.readAsBytesSync();
+          // A simple way to guess the mime type. For a robust solution,
+          // you might use a library like 'mime'.
+          final mimeType = dir.endsWith('.png')
+              ? 'image/png'
+              : 'image/jpeg'; // Default to jpeg
+
+          parts.add({
+            "inline_data": {"mime_type": mimeType, "data": base64Encode(bytes)}
+          });
+        } catch (e) {
+          // Handle file reading errors, e.g., log them.
+          print('Error reading file $dir: $e');
+        }
+      }
+    }
+    return parts;
+  }
+
   /// 转为 Gemini 消息格式
-  Map<String, dynamic> toGeminiJson() {
+  /// Converts to Gemini REST API message format.
+  /// This new method replaces toGeminiJson and toGeminiContent.
+  Map<String, dynamic> toGeminiRestJson() {
+    final effectiveRole = (role == 'assistant') ? 'model' : 'user';
     return {
-      "parts": [
-        {"text": content},
-        if (fileDirs.isNotEmpty)
-          ...fileDirs.map((dir) => {"file_data": {"file_uri": dir}})
-      ],
-      "role": role,
+      "role": effectiveRole,
+      "parts": toGeminiParts(),
     };
   }
 
-  Content toGeminiContent() {
-    return Content(
-      parts: [
-        Part.text(content),
-        if (fileDirs.isNotEmpty)
-          ...fileDirs.map((dir){
-            final bytes = File(dir).readAsBytesSync();
-            return Part.inline(InlineData(
-            mimeType: 'image/jpeg',
-            data: base64Encode(bytes)
-          ));
-          })
-      ],
-      role: role == 'assistant' ? 'model' : 'user'
+  static Map<String, dynamic> toGeminiSystemPrompt(
+      List<LLMMessage> messages) {
+    if (messages.isEmpty) {
+      return {};
+    }
+    // 取第一个消息的角色
+    final role = messages.first.role;
+    // 合并内容
+    final mergedContent = messages.map((m) => m.content).join('\n');
+    // 合并文件
+    final mergedFileDirs = messages.expand((m) => m.fileDirs).toList();
+
+    final mergedMessage = LLMMessage(
+      content: mergedContent,
+      role: role,
+      fileDirs: mergedFileDirs,
     );
+    return {
+      "parts": mergedMessage.toGeminiParts()
+    };
   }
 }

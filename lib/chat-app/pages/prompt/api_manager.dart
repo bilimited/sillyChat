@@ -26,7 +26,7 @@ class ApiManagerPage extends StatelessWidget {
             final api = controller.apis[index];
             return ListTile(
               key: ValueKey(api),
-              title: Text(api.modelName),
+              title: Text('${api.displayName}(${api.modelName})'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -34,14 +34,14 @@ class ApiManagerPage extends StatelessWidget {
                   if (api.remarks != null) Text('备注: ${api.remarks}'),
                 ],
               ),
-              onTap: () => customNavigate (ApiEditPage(api: api)),
+              onTap: () => customNavigate (ApiEditPage(api: api),context: context),
               trailing: const Icon(Icons.drag_handle),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => customNavigate (ApiEditPage()),
+        onPressed: () => customNavigate (ApiEditPage(), context: context),
         child: const Icon(Icons.add),
       ),
     );

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class ThinkWidget extends StatefulWidget {
   final bool isThinking;
   final String thinkContent;
+  final bool isExpanded;
 
   const ThinkWidget({
     Key? key,
     required this.isThinking,
     required this.thinkContent,
+    this.isExpanded = true
   }) : super(key: key);
 
   @override
@@ -17,7 +19,7 @@ class ThinkWidget extends StatefulWidget {
 class _ThinkWidgetState extends State<ThinkWidget> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _contentAnimation;
-  bool _isExpanded = true;
+  late bool _isExpanded = widget.isExpanded;
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _ThinkWidgetState extends State<ThinkWidget> with SingleTickerProviderStat
       parent: _controller,
       curve: Curves.easeInOut,
     );
-    _controller.value = 1.0; // 初始状态为展开
+    _controller.value = widget.isExpanded ? 1.0 : 0.0; // 初始状态为展开
   }
 
   @override

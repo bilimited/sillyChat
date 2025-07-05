@@ -164,24 +164,24 @@ class _EditPromptPageState extends State<EditPromptPage> {
                     }
                   }),
                 ),
-                if (_category == PromptCategory.custom) ...[
-                  SizedBox(height: 16),
-                  TextFormField(
-                    initialValue: _customCategory,
-                    decoration: InputDecoration(
-                      labelText: '自定义类别',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (_category == PromptCategory.custom && 
-                          (value?.isEmpty ?? true)) {
-                        return '请输入自定义类别';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _customCategory = value,
-                  ),
-                ],
+                // if (_category == PromptCategory.custom) ...[
+                //   SizedBox(height: 16),
+                //   TextFormField(
+                //     initialValue: _customCategory,
+                //     decoration: InputDecoration(
+                //       labelText: '自定义类别',
+                //       border: OutlineInputBorder(),
+                //     ),
+                //     validator: (value) {
+                //       if (_category == PromptCategory.custom && 
+                //           (value?.isEmpty ?? true)) {
+                //         return '请输入自定义类别';
+                //       }
+                //       return null;
+                //     },
+                //     onSaved: (value) => _customCategory = value,
+                //   ),
+                // ],
               ],
               SizedBox(height: 16),
               TextFormField(

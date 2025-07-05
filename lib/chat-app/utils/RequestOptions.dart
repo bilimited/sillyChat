@@ -9,6 +9,7 @@ class LLMRequestOptions {
   final double frequencyPenalty; // 词频惩罚
   final int maxHistoryLength; // 历史消息长度上限
   final int apiId;
+  final int seed;
 
   final bool isDeleteThinking; // 是否删除思考消息
   final bool isThinkMode; // 是否思考模式
@@ -24,6 +25,7 @@ class LLMRequestOptions {
     this.apiId = 0,
     this.isThinkMode = false,
     this.isDeleteThinking = true,
+    this.seed = -1,
   });
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class LLMRequestOptions {
       apiId: json['api_id'] ?? 0,
       isDeleteThinking: json['is_delete_thinking'] ?? true,
       isThinkMode: json['is_think_mode'] ?? false,
+      seed: json['seed'] ?? -1,
     );
   }
 
@@ -52,6 +55,7 @@ class LLMRequestOptions {
       'api_id': apiId,
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
+      'seed': seed,
     };
   }
 
@@ -67,6 +71,7 @@ class LLMRequestOptions {
       'api_id': apiId,
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
+      'seed': seed,
     };
   }
 
@@ -81,6 +86,7 @@ class LLMRequestOptions {
     int? apiId,
     bool? isDeleteThinking,
     bool? isThinkMode,
+    int? seed,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -93,6 +99,7 @@ class LLMRequestOptions {
       apiId: apiId ?? this.apiId,
       isDeleteThinking: isDeleteThinking ?? this.isDeleteThinking,
       isThinkMode: isThinkMode ?? this.isThinkMode,
+      seed: seed ?? this.seed,
     );
   }
 }

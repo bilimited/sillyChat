@@ -12,8 +12,6 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -22,20 +20,6 @@ void main() async {
   runApp(SillyChatApp());
   SettingController.loadInitialData();
 }
-
-// Future<void> _getAppVersion() async {
-  
-
-//   String appName = packageInfo.appName;
-//   String packageName = packageInfo.packageName;
-//   String version = packageInfo.version; // 版本号，如 1.0.0
-//   String buildNumber = packageInfo.buildNumber; // 构建号，如 1
-
-//   print('App Name: $appName');
-//   print('Package Name: $packageName');
-//   print('Version: $version');
-//   print('Build Number: $buildNumber');
-// }
 
 class SillyChatApp extends StatelessWidget {
   final defalutThemeDay = ThemeData(
@@ -77,6 +61,10 @@ class SillyChatApp extends StatelessWidget {
 
   static String getVersion() {
     return "v${packageInfo.version}";
+  }
+
+  static bool isDesktop() {
+    return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
   }
 
   @override

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/widgets/prompt/promptref_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_option_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/chat_option_controller.dart';
 import '../../utils/RequestOptions.dart';
-import '../../widgets/prompt/prompt_editor.dart';
 import '../../widgets/prompt/request_options_editor.dart';
 
 class EditChatOptionPage extends StatefulWidget {
@@ -24,6 +24,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
 
   late LLMRequestOptions _requestOptions;
   late List<PromptModel> _prompts;
+  late List<int> _promptId;
   bool isEditing = false;
 
   @override
@@ -36,6 +37,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
     _requestOptions = widget.option?.requestOptions ??
         const LLMRequestOptions(messages: [], maxTokens: 2000);
     _prompts = widget.option?.prompts ?? [];
+    _promptId = widget.option?.promptId ?? [];
   }
 
   @override
@@ -55,8 +57,9 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
               .millisecondsSinceEpoch, // Use a unique ID for new options
       name: _nameController.text,
       requestOptions: _requestOptions,
-      prompts: _prompts,
+      // prompts: _prompts,
       messageTemplate: _msgTemplateController.text,
+      promptId: _promptId,
     );
 
     if (isEditing) {
@@ -75,7 +78,8 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
           .millisecondsSinceEpoch, // Use a unique ID for new options
       name: _nameController.text+"的副本",
       requestOptions: _requestOptions.copyWith(),
-      prompts: _prompts.map((ele) => ele.copy()).toList(),
+      // prompts: _prompts.map((ele) => ele.copy()).toList(),
+      promptId: _prompts.map((ele) => ele.id).toList(),
       messageTemplate: _msgTemplateController.text,
     );
     _controller.addChatOption(chatOption);
@@ -128,12 +132,15 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                 const Text('提示词列表',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                PromptEditor(
-                  prompts: _prompts,
-                  onPromptsChanged: (prompts) {
-                    _prompts = prompts;
-                  },
-                ),
+                // PromptEditor(
+                //   prompts: _prompts,
+                //   onPromptsChanged: (prompts) {
+                //     _prompts = prompts;
+                //   },
+                // ),
+                PromptRefEditor(initialItems: _promptId,onItemsChanged: (promptIds){
+                  _promptId = promptIds;
+                },),
                 const SizedBox(height: 24),
                 const Text('请求参数',
                     style:

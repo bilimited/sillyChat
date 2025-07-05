@@ -13,6 +13,7 @@ enum PromptCategory {
 
 class PromptModel {
   int id;
+  int? refId;
   String content;
   String role;
   DateTime createDate;
@@ -34,6 +35,7 @@ class PromptModel {
     DateTime? createDate,
     DateTime? updateDate,
     bool this.isDefault = false,
+    this.refId,
   })  : this.createDate = createDate ?? DateTime.now(),
         this.updateDate = updateDate ?? DateTime.now();
 
@@ -47,6 +49,7 @@ class PromptModel {
         customCategory = json['customCategory'],
         createDate = DateTime.parse(json['createDate']),
         updateDate = DateTime.parse(json['updateDate']),
+        refId = json['refId'],
         customPriority = json['customPriority'] == 'null'
             ? null
             : int.tryParse(json['customPriority']);
@@ -61,6 +64,7 @@ class PromptModel {
         'createDate': createDate.toIso8601String(),
         'updateDate': updateDate.toIso8601String(),
         'customPriority': customPriority.toString(),
+        'refId': refId, 
       };
 
   PromptModel copy() {
@@ -74,6 +78,7 @@ class PromptModel {
       createDate: createDate,
       updateDate: updateDate,
       isDefault: isDefault,
+      refId: refId,
     );
   }
 
@@ -122,7 +127,7 @@ class PromptModel {
       var mentionedChars = chat.messages.reversed
         .take(count)
         .expand((msg) => characterController.characters
-          .where((char) => msg.content.contains(char.name))
+          .where((char) => msg.content.contains(char.roleName))
           .map((char) => char.id))
         .toSet();
         
@@ -137,7 +142,7 @@ class PromptModel {
         ? "无更多角色。" 
         : recentChars.map((id) {
           final char = characterController.getCharacterById(id);
-          return "${char.name}-${char.gender.toString()}-${char.age}岁: ${char.brief}";
+          return "${char.roleName}-${char.gender.toString()}-${char.age}岁: ${char.brief}";
         } ).join("\n");
       
       prompt = prompt.replaceAll(match.group(0)!, recentCharsText);
@@ -162,11 +167,11 @@ class PromptModel {
         var anotherOne = character_controller.getCharacterById(entry.key);
         var typeText =
             (entry.value.type != null && entry.value.type!.isNotEmpty)
-                ? "${anotherOne.name}是${character.name}的${entry.value.type}。"
+                ? "${anotherOne.roleName}是${character.roleName}的${entry.value.type}。"
                 : "";
         var brief = entry.value.brief;
 
-        relationsText += """### ${anotherOne.name}-${anotherOne.gender}-${anotherOne.age}岁
+        relationsText += """### ${anotherOne.roleName}-${anotherOne.gender}-${anotherOne.age}岁
 ${anotherOne.brief}
 ${typeText} ${brief}
 """;

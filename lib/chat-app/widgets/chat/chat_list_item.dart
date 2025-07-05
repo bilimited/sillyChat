@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -74,9 +75,11 @@ class ChatListItem extends StatelessWidget {
         if (onSelectChat != null) {
           onSelectChat!(chat);
         } else {
-          Get.to(() => ChatDetailPage(
+          customNavigate(
+              ChatDetailPage(
                 chatId: chat.id,
-              ));
+              ),
+              context: context);
         }
       },
       child: Container(

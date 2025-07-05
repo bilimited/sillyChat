@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
-import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
@@ -37,44 +37,49 @@ class _MainPageState extends State<MainPage> {
 
   int desktop_destination_left = 0;
   int desktop_destination_right = 0;
-  int desktop_chatId = 0;
+  // int desktop_chatId = 0;
   MessageModel? desktop_initialPosition;
 
   late List<Widget> _desktop_pages;
 
   CharacterModel get me => _characterController.me;
 
-  void _showCharacterSelectDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('选择角色'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Obx(
-              () => ListView.builder(
-                shrinkWrap: true,
-                itemCount: _characterController.characters.length,
-                itemBuilder: (context, index) {
-                  final character = _characterController.characters[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: Image.file(File(character.avatar)).image,
-                    ),
-                    title: Text(character.name),
-                    onTap: () {
-                      _characterController.myId = character.id;
-                      Navigator.of(context).pop();
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  void _showCharacterSelectDialog() async {
+    CharacterModel? character = await customNavigate<CharacterModel>(CharacterSelector());
+    if(character != null){
+      _vaultSettingController.myId.value = character.id;
+      await _vaultSettingController.saveSettings();
+    }
+    // showDialog(
+    //   context: context,
+    //   builder: (context) {
+    //     return AlertDialog(
+    //       title: const Text('选择角色'),
+    //       content: SizedBox(
+    //         width: double.maxFinite,
+    //         child: Obx(
+    //           () => ListView.builder(
+    //             shrinkWrap: true,
+    //             itemCount: _characterController.characters.length,
+    //             itemBuilder: (context, index) {
+    //               final character = _characterController.characters[index];
+    //               return ListTile(
+    //                 leading: CircleAvatar(
+    //                   backgroundImage: Image.file(File(character.avatar)).image,
+    //                 ),
+    //                 title: Text(character.remark),
+    //                 onTap: () {
+    //                   _characterController.myId = character.id;
+    //                   Navigator.of(context).pop();
+    //                 },
+    //               );
+    //             },
+    //           ),
+    //         ),
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   void refleshAll() {
@@ -84,6 +89,10 @@ class _MainPageState extends State<MainPage> {
       desktop_destination_left = 0;
       desktop_destination_right = 0;
     });
+  }
+
+  void desktop_switchChat(int chatId) {
+    _chatController.desktop_currentChat.value = chatId;
   }
 
   void _uploadAll() async {
@@ -252,7 +261,7 @@ class _MainPageState extends State<MainPage> {
       ChatPage(onSelectChat: (chat) {
         setState(() {
           desktop_initialPosition = null;
-          desktop_chatId = chat.id;
+          desktop_switchChat(chat.id);
         });
       }),
       ContactsPage(),
@@ -262,7 +271,7 @@ class _MainPageState extends State<MainPage> {
           onMessageTap: (msg, chat) {
             setState(() {
               desktop_initialPosition = msg;
-              desktop_chatId = chat.id;
+              desktop_switchChat(chat.id);
             });
           }))
     ];
@@ -317,15 +326,18 @@ class _MainPageState extends State<MainPage> {
                     // NavigationRail as the left-side AppBar
                     NavigationRail(
                         selectedIndex: desktop_destination_left,
-                        backgroundColor: colors.surfaceContainerHighest,
+                        backgroundColor: colors.surface,
                         labelType: NavigationRailLabelType.all,
                         leading: Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: CircleAvatar(
-                            backgroundImage: Image.file(File(me.avatar)).image,
-                            radius: 24,
-                          ),
-                        ),
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: GestureDetector(
+                              onTap: _showCharacterSelectDialog,
+                              child: Obx(() => CircleAvatar(
+                                    backgroundImage:
+                                        Image.file(File(me.avatar)).image,
+                                    radius: 24,
+                                  )),
+                            )),
                         destinations: [
                           NavigationRailDestination(
                             icon: const Icon(Icons.chat_bubble_outline),
@@ -351,9 +363,10 @@ class _MainPageState extends State<MainPage> {
                         },
                         trailing: null),
               ),
+              // 假Footer
               Container(
                 width: 80, // 暂时和rail严丝合缝
-                color: colors.surfaceContainerHighest,
+                color: colors.surface,
                 child: Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Column(
@@ -418,9 +431,17 @@ class _MainPageState extends State<MainPage> {
             ],
           ),
 
-          // Main chat area
+          // 左侧内容区
           Expanded(
             child: Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: colors.outline.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Stack(
                 children: [
                   // 左侧固定宽度容器
@@ -460,15 +481,24 @@ class _MainPageState extends State<MainPage> {
                   ),
                   // 主内容区（右侧），留出左侧容器宽度
                   Padding(
-                      padding: const EdgeInsets.only(left: LEFT_WIDTH),
-                      child: Obx(() => ChatDetailPage(
-                            key: ValueKey(
-                                '${desktop_chatId}_${desktop_initialPosition?.id ?? 0}'),
-                            chatId: _chatController.chats.isEmpty
-                                ? -1
-                                : desktop_chatId,
-                            initialPosition: desktop_initialPosition,
-                          ))),
+                    padding: const EdgeInsets.only(left: LEFT_WIDTH),
+                    child: Container(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0),
+                          child: Obx(() => ChatDetailPage(
+                                key: ValueKey(
+                                    '${_chatController.desktop_currentChat}_${desktop_initialPosition?.id ?? 0}'),
+                                chatId: _chatController.chats.isEmpty
+                                    ? -1
+                                    : _chatController.desktop_currentChat.value,
+                                initialPosition: desktop_initialPosition,
+                              )),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -586,7 +616,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    if ((Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (SillyChatApp.isDesktop()) {
       return _buildDesktop(context);
     } else {
       return _buildMobile(context);

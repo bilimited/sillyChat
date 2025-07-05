@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:get/get.dart';
 import '../models/chat_option_model.dart';
 import 'setting_controller.dart';
@@ -7,6 +8,16 @@ import 'setting_controller.dart';
 class ChatOptionController extends GetxController {
   final RxList<ChatOptionModel> chatOptions = <ChatOptionModel>[].obs;
   final String fileName = 'chat_options.json';
+
+  ChatOptionModel get defaultOption => chatOptions.isEmpty
+      ? ChatOptionModel(
+          id: -1,
+          name: '空预设',
+          requestOptions: LLMRequestOptions(messages: []),
+          // prompts: [],
+          promptId: [],
+          )
+      : chatOptions[0];
 
   @override
   void onInit() {
@@ -23,9 +34,8 @@ class ChatOptionController extends GetxController {
       if (await file.exists()) {
         final String contents = await file.readAsString();
         final List<dynamic> jsonList = json.decode(contents);
-        chatOptions.value = jsonList
-            .map((json) => ChatOptionModel.fromJson(json))
-            .toList();
+        chatOptions.value =
+            jsonList.map((json) => ChatOptionModel.fromJson(json)).toList();
       }
     } catch (e) {
       print('加载聊天选项数据失败: $e');

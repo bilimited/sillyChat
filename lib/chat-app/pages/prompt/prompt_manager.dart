@@ -41,11 +41,11 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
     return Card(
       margin: EdgeInsets.all(4.0),
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           if (widget.isSelector) {
             Get.back(result: prompt.id);
           } else {
-            customNavigate(EditPromptPage(prompt: prompt));
+            customNavigate(EditPromptPage(prompt: prompt),context: context);
           }
         },
         child: ListTile(

@@ -5,6 +5,13 @@ class Relation {
   String? brief;
 
   Relation({required this.targetId});
+
+  Relation copy() {
+    return Relation(
+      targetId: targetId,
+    )..type = type
+     ..brief = brief;
+  }
 }
 
 enum MessageStyle {
@@ -19,8 +26,8 @@ class CharacterModel {
   // JSONIgnore。仅供丢失角色（旁白和分割线）使用。现已无用
   MessageStyle messageStyle = MessageStyle.common;
 
-  String name;
-  String roleName; // 唯一名称
+  String remark;       // 备注
+  String roleName;        // 唯一名称
   String avatar;
   String gender = '女';
   int age = 18;
@@ -32,22 +39,24 @@ class CharacterModel {
   String category;
   Map<int, Relation> relations = {};
 
+  List<CharacterModel>? backups;
 
   CharacterModel({
     required this.id,
-    required this.name,
+    required this.remark,
     required this.roleName,
     required this.avatar,
     this.description,
     required this.category,
     this.messageStyle = MessageStyle.common,
     this.brief,
+    this.backups,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'name': remark,
       'nickname': roleName,
       'avatar': avatar,
       'gender': gender.toString().split('.').last,
@@ -63,13 +72,14 @@ class CharacterModel {
             'brief': value.brief,
           })),
       'messageStyle': messageStyle.toString().split('.').last, // 序列化messageStyle
+      'backups': backups!=null ? backups!.map((e) => e.toJson()).toList() : null, // 添加isBackup字段
     };
   }
 
   factory CharacterModel.fromJson(Map<String, dynamic> json) {
     var char = CharacterModel(
       id: json['id'],
-      name: json['name'],
+      remark: json['name'],
       roleName: json['nickname'] ?? json['name'],
       avatar: json['avatar'],
       description: json['description'],
@@ -96,19 +106,24 @@ class CharacterModel {
       orElse: () => MessageStyle.common,
     );
 
+    char.backups = (json['backups'] as List<dynamic>?)
+        ?.map((e) => CharacterModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+
     return char;
   }
 
   CharacterModel copy() {
     var newChar = CharacterModel(
       id: DateTime.now().millisecondsSinceEpoch, // 使用时间戳作为新ID
-      name: name,
+      remark: remark,
       roleName: roleName,
       avatar: avatar,
       description: description,
       category: category,
       brief: brief,
       messageStyle: messageStyle,
+      backups: backups?.map((e) => e.copy()).toList(),
     );
 
     newChar.archive = archive; // 添加archive字段的复制

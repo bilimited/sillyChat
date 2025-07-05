@@ -3,33 +3,60 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
 class ChatController extends GetxController {
   final RxList<ChatModel> chats = <ChatModel>[].obs;
-  final RxString LLMMessageBuffer = "".obs;
-  final RxString LLMThinkBuffer = "".obs;
+
   final String fileName = 'chats.json';
 
+  // 与AI有关的状态变量
+  final RxString LLMMessageBuffer = "".obs;
   final RxBool isLLMGenerating = false.obs;
   final RxInt currentAssistant = 0.obs;
 
+  // 仅桌面端：当前打开的聊天Id。
+  final RxInt desktop_currentChat = (-1).obs;
+
   final chatAIHandler = Aihandler();
 
-  final ChatModel defaultChat = ChatModel(
-    id: -1,
-    name: "ERROR!",
-    avatar: "",
-    lastMessage: "ERROR!!!",
-    time: "Error!!",
-    messages: [],
-  );
+  final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
+
+  List<MessageModel> get messageToPaste {
+    final now = DateTime.now();
+    final messagesToPaste = messageClipboard.reversed
+        .toList()
+        .asMap()
+        .entries
+        .map((entry) => entry.value.copyWith(
+              time: now.add(Duration(microseconds: entry.key + 1)),
+              id: now.microsecondsSinceEpoch + entry.key + 1,
+            ))
+        .toList();
+    return messagesToPaste;
+    
+  }
+
+  // 默认聊天为：应用启动（PC端）、找不到聊天、创建群聊时使用的聊天对象
+  Rx<ChatModel> defaultChat = ChatModel(
+          id: -1,
+          name: "新聊天",
+          avatar: "",
+          lastMessage: "聊天已创建",
+          time: DateTime.now().toString(),
+          messages: [],
+          mode: ChatMode.auto
+          // userId: Get.find<CharacterController>().myId
+          )
+      .obs;
 
   final CharacterController characterController = Get.find();
 
@@ -38,6 +65,42 @@ class ChatController extends GetxController {
 
   String getFileName(int fileId) {
     return 'chats_$fileId.json';
+  }
+
+  // 会在每次进入新聊天界面时调用。
+  void resetDefaultChat() {
+    defaultChat = ChatModel(
+            id: -1,
+            name: "新聊天",
+            avatar: "",
+            lastMessage: "聊天已创建",
+            time: DateTime.now().toString(),
+            messages: [],
+            userId: characterController.myId,
+            // characterIds: [],
+            mode: ChatMode.auto)
+        .obs;
+  }
+
+  void updateDefaultChat({int? assistantId}) {
+    if (assistantId != null) {
+      defaultChat.value.assistantId = assistantId;
+    }
+    defaultChat.refresh();
+  }
+
+  // 保存临时聊天，返回聊天id
+  ChatModel saveDefaultChat() {
+    final newChat = defaultChat.value;
+    newChat.id = DateTime.now().microsecond;
+    newChat.time = DateTime.now().toString();
+    newChat.characterIds = [
+      if (newChat.userId != null) newChat.userId!,
+      if (newChat.assistantId != null) newChat.assistantId!,
+    ]; // TODO:处理群聊初始化的情况
+    addChat(newChat);
+    resetDefaultChat();
+    return newChat;
   }
 
   @override
@@ -163,6 +226,8 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       print('保存聊天数据失败: $e');
+      handleSevereError('Save Failed!',e);
+      rethrow;
     }
   }
 
@@ -206,30 +271,21 @@ class ChatController extends GetxController {
 
   // 根据名称获取聊天
   ChatModel getChatByName(String name) {
-    return chats.firstWhereOrNull((chat) => chat.name == name) ?? defaultChat;
+    return chats.firstWhereOrNull((chat) => chat.name == name) ??
+        defaultChat.value;
   }
 
   ChatModel getChatById(int id) {
-    return chats.firstWhereOrNull((chat) => chat.id == id) ?? defaultChat;
+    return chats.firstWhereOrNull((chat) => chat.id == id) ?? defaultChat.value;
   }
 
   // 复制聊天（除messages和id外）
   ChatModel cloneChat(ChatModel original) {
-    return ChatModel(
+    return original.deepCopyWith(
       id: DateTime.now().millisecondsSinceEpoch,
-      name: original.name,
-      avatar: original.avatar,
       lastMessage: "群聊已拷贝",
       time: DateTime.now().toString(),
       messages: [],
-      characterIds: List.from(original.characterIds),
-      prompts: List.from(original.prompts.map((prompt) => prompt.copy())),
-      requestOptions: original.requestOptions.copyWith(),
-      assistantId: original.assistantId,
-      userId: original.userId,
-      backgroundImage: original.backgroundImage,
-      description: original.description,
-      mode: original.mode,
     );
   }
 
@@ -332,12 +388,12 @@ class ChatController extends GetxController {
 
   // sender!=null ,则为群聊模式
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
-    var sysPrompts = chat.prompts.map((prompt) =>
-        LLMMessage(
-          content: prompt.getContent(chat, sender: sender),
-          role: prompt.role,
-        )
-    ).toList();
+    var sysPrompts = chat.prompts
+        .map((prompt) => LLMMessage(
+              content: prompt.getContent(chat, sender: sender),
+              role: prompt.role,
+            ))
+        .toList();
 
     int maxMsgs = chat.requestOptions.maxHistoryLength;
     final int total = chat.messages.length;
@@ -363,18 +419,16 @@ class ChatController extends GetxController {
         final content = propressMessage(msg.content, chat.requestOptions);
         if (sender == null) {
           return LLMMessage(
-            content: content,
-            role: msg.isAssistant ? "assistant" : "user",
-            fileDirs: msg.resPath
-          );
+              content: content,
+              role: msg.isAssistant ? "assistant" : "user",
+              fileDirs: msg.resPath);
         } else {
           return LLMMessage(
-            content: msg.sender == sender.id
-                ? content
-                : "${characterController.getCharacterById(msg.sender).name}:\n${content}",
-            role: msg.sender == sender.id ? "assistant" : "user",
-            fileDirs: msg.resPath
-          );
+              content: msg.sender == sender.id
+                  ? content
+                  : "${characterController.getCharacterById(msg.sender).roleName}:\n${content}",
+              role: msg.sender == sender.id ? "assistant" : "user",
+              fileDirs: msg.resPath);
         }
       })
     ];
@@ -382,11 +436,12 @@ class ChatController extends GetxController {
     // 修正最后一条消息内容
     if (msglst.isNotEmpty) {
       final last = msglst.last;
-      final fixedContent = chat.messageTemplate.replaceAll('{{msg}}', last.content);
+      final fixedContent =
+          chat.messageTemplate.replaceAll('{{msg}}', last.content);
       if (sender != null) {
         // 强制修正发言者；防止人名重复出现
         msglst[msglst.length - 1] = LLMMessage(
-          content: "$fixedContent\n${sender.name}:",
+          content: "$fixedContent\n${sender.roleName}:",
           role: last.role,
           fileDirs: last.fileDirs,
         );

@@ -89,7 +89,7 @@ class CharacterWheel extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      characters[index].name,
+                      characters[index].roleName,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                           ),

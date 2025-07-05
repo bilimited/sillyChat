@@ -94,7 +94,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
         await for (var entity in currentVaultDir.list()) {
           if (entity is File) {
             final fileName = entity.path.split('\\').last.split('/').last;
-            if (!fileName.startsWith('chat')) {
+            if (fileName.startsWith('chat_options') || !fileName.startsWith('chat')) {
               final newPath = '${newVaultDir.path}/$fileName';
               // 这里发生了错误
               await entity.copy(newPath);

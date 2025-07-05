@@ -27,6 +27,13 @@ class BookMarkModel {
       'title': title,
     };
   }
+
+  BookMarkModel copy() {
+    return BookMarkModel(
+      messageId: messageId,
+      title: title,
+    );
+  }
 }
 
 class ChatModel {
@@ -40,7 +47,7 @@ class ChatModel {
   String time;
   int? userId; // 新增：用户ID
   int? assistantId; // 新增：助手ID
-  List<MessageModel> messages = [];
+  List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
   String? description; // 对话摘要或介绍
   LLMRequestOptions requestOptions;
@@ -78,14 +85,12 @@ class ChatModel {
     required this.messages,
     this.backgroundImage,
     this.description,
-    this.characterIds = const [],
     this.requestOptions = const LLMRequestOptions(messages: const []),
     List<PromptModel>? prompts, // 新增参数
     this.userId, // 新增
     this.assistantId, // 新增
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
-    this.tags = const [], // 新增：构造函数参数
     this.overriteOption = false, // 是否用角色参数覆盖请求参数
     this.currectOption = -1, // -1:没有使用任何配置
   }) {
@@ -108,7 +113,6 @@ class ChatModel {
       lastMessage: json['lastMessage'],
       time: json['time'],
       description: json['description'],
-      characterIds: json['characterIds']?.cast<int>() ?? [],
       messages: (json['messages'] as List?)
               ?.map((e) => MessageModel.fromJson(e))
               .toList() ??
@@ -122,7 +126,6 @@ class ChatModel {
       userId: json['userId'], // 新增
       assistantId: json['assistantId'], // 新增
       messageTemplate: json['messageTemplate'] ?? "{{msg}}", // 新增：反序列化
-      tags: (json['tags'] as List?)?.cast<String>() ?? [], // 新增：反序列化
       overriteOption: json['overriteOption'] ?? false, // 是否用角色参数覆盖请求参数
       currectOption: json['currectOption'] ?? -1, // -1:没有使用任何配置
     )
@@ -134,7 +137,9 @@ class ChatModel {
       ..bookmarks = (json['bookmarks'] as List?)
               ?.map((e) => BookMarkModel.fromJson(e))
               .toList() ??
-          [];
+          []
+      ..tags = (json['tags'] as List?)?.cast<String>() ?? []
+      ..characterIds = json['characterIds']?.cast<int>() ?? [];
   }
 
   Map<String, dynamic> toJson() => {
@@ -191,7 +196,7 @@ class ChatModel {
       lastMessage: lastMessage ?? this.lastMessage,
       time: time ?? this.time,
       description: description ?? this.description,
-      characterIds: characterIds ?? this.characterIds,
+      // characterIds: characterIds ?? this.characterIds,
       messages: messages ?? this.messages,
       requestOptions: requestOptions ?? this.requestOptions,
       prompts: prompts ?? this.prompts,
@@ -199,9 +204,56 @@ class ChatModel {
       assistantId: assistantId ?? this.assistantId,
       mode: mode ?? this.mode,
       messageTemplate: messageTemplate ?? this.messageTemplate,
-      tags: tags ?? this.tags,
       overriteOption: overriteOption ?? this.overriteOption,
       currectOption: currectOption ?? this.currectOption,
-    )..bookmarks = bookmarks ?? this.bookmarks;
+    )
+      ..bookmarks = bookmarks ?? this.bookmarks
+      ..tags = tags ?? []
+      ..characterIds = characterIds ?? this.characterIds;
+    ;
+  }
+
+  ChatModel deepCopyWith({
+    int? id,
+    String? name,
+    String? avatar,
+    String? backgroundImage,
+    String? lastMessage,
+    String? time,
+    String? description,
+    List<int>? characterIds,
+    List<MessageModel>? messages,
+    LLMRequestOptions? requestOptions,
+    List<PromptModel>? prompts,
+    int? userId,
+    int? assistantId,
+    ChatMode? mode,
+    String? messageTemplate,
+    List<String>? tags,
+    bool? overriteOption,
+    int? currectOption,
+    List<BookMarkModel>? bookmarks,
+  }) {
+    return ChatModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      avatar: avatar ?? this.avatar,
+      backgroundImage: backgroundImage ?? this.backgroundImage,
+      lastMessage: lastMessage ?? this.lastMessage,
+      time: time ?? this.time,
+      description: description ?? this.description,
+      messages: messages ?? this.messages.map((e) => e.copyWith()).toList(),
+      requestOptions: requestOptions ?? this.requestOptions.copyWith(),
+      prompts: prompts ?? this.prompts.map((p) => p.copy()).toList(),
+      userId: userId ?? this.userId,
+      assistantId: assistantId ?? this.assistantId,
+      mode: mode ?? this.mode,
+      messageTemplate: messageTemplate ?? this.messageTemplate,
+      overriteOption: overriteOption ?? this.overriteOption, // 是否用角色参数覆盖请求参数
+      currectOption: currectOption ?? this.currectOption, // -1:没有使用任何配置
+    )
+      ..tags = tags ?? [...this.tags]
+      ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
+      ..characterIds = characterIds ?? [...this.characterIds];
   }
 }

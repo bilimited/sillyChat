@@ -27,14 +27,12 @@ extension MessageTypeExtension on MessageType {
 enum MessageRole { user, assistant, system }
 
 extension MessageRoleExtension on MessageRole {
-
-  static MessageRole fromString(String name){
+  static MessageRole fromString(String name) {
     return MessageRole.values.firstWhere(
       (e) => e.toString() == 'MessageRole.$name',
       orElse: () => MessageRole.user,
     );
   }
-
 }
 
 class MessageModel {
@@ -45,9 +43,9 @@ class MessageModel {
 
   // 备选文本列表。该列表中一定会有一个Null，代表已选择文本在备选文本中的位置。
   final List<String?> alternativeContent;
-  final int sender;
+  int sender;
   final DateTime time;
-  final MessageType type;
+  MessageType type;
   bool get isAssistant => role == MessageRole.assistant;
 
   final int? token;
@@ -56,7 +54,7 @@ class MessageModel {
   final List<String> resPath;
   // 是否常驻（不会被移出消息列表）
   bool isPinned = false;
-  bool bookmark = false;
+  String? bookmark;
 
   MessageModel({
     required this.id,
@@ -69,7 +67,7 @@ class MessageModel {
     this.token = 0,
     this.resPath = const [],
     this.isPinned = false,
-    this.bookmark = false,
+    this.bookmark,
     required this.alternativeContent,
   });
 
@@ -90,12 +88,12 @@ class MessageModel {
         // isAssistant = json['isRead'],
         token = (json['token'] ?? 0) as int,
         resPath = json['resPath'] is String
-            ? [if((json['resPath'] as String).isNotEmpty) json['resPath']]
+            ? [if ((json['resPath'] as String).isNotEmpty) json['resPath']]
             : (json['resPath'] is List
                 ? List<String>.from(json['resPath'])
                 : []),
         isPinned = json['isPinned'] ?? false,
-        bookmark = json['bookmark'] ?? false,
+        bookmark = json['bookmark'] is bool ? null : json['bookmark'] ?? null,
         alternativeContent = (json['alternativeContent'] as List<dynamic>?)
                 ?.map((e) => e as String?)
                 .toList() ??
@@ -130,7 +128,7 @@ class MessageModel {
       token: map['token'],
       resPath: map['resPath'],
       isPinned: map['isPinned'] ?? false,
-      bookmark: map['bookmark'] ?? false,
+      bookmark: map['bookmark'] ?? null,
       alternativeContent: (map['alternativeContent'] as List<dynamic>?)
               ?.map((e) => e as String?)
               .toList() ??
@@ -149,7 +147,7 @@ class MessageModel {
     int? token,
     List<String>? resPath,
     bool? isPinned,
-    bool? bookmark,
+    String? bookmark,
     List<String?>? alternativeContent,
   }) {
     return MessageModel(

@@ -44,7 +44,10 @@ class _SearchPageState extends State<SearchPage> {
     for (final chat in widget.chats) {
       for (final msg in chat.messages) {
         if (query.isEmpty) {
-          if (msg.bookmark == true) {
+          if (msg.bookmark != null) {
+            results.add(_SearchResult(chat, msg));
+          }
+          else if (widget.chats.length == 1 && msg.isPinned) {
             results.add(_SearchResult(chat, msg));
           }
         } else {
@@ -158,8 +161,13 @@ class _SearchPageState extends State<SearchPage> {
                                     ],
                                   ),
                                 )
-                              : Text(msg.content,
-                                  maxLines: 2, overflow: TextOverflow.ellipsis),
+                              // 书签
+                              : Text(
+                                  msg.bookmark ?? msg.content,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 14),
+                                ),
                           subtitle: multiChat
                               ? Text(
                                   chat.name,
@@ -167,9 +175,16 @@ class _SearchPageState extends State<SearchPage> {
                                       fontWeight: FontWeight.bold),
                                 )
                               : null,
-                          trailing: msg.bookmark
-                              ? const Icon(Icons.bookmark, color: Colors.orange)
-                              : null,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (msg.bookmark != null)
+                                const Icon(Icons.bookmark, color: Colors.blue),
+                              if (msg.isPinned)
+                                const Icon(Icons.push_pin,
+                                    color: Colors.orange),
+                            ],
+                          ),
                           onTap: () => widget.onMessageTap(msg, chat),
                         );
                       },

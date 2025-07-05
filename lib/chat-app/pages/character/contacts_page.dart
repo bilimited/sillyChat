@@ -21,6 +21,8 @@ class _ContactsPageState extends State<ContactsPage> {
   final characterController = Get.find<CharacterController>();
 
   Map<String, List<CharacterModel>> get groupedContacts {
+    // 隐藏用户角色
+    //return characterController.characters.where((char)=>char.id != 0).fold(<String, List<CharacterModel>>{},
     return characterController.characters.fold(<String, List<CharacterModel>>{},
         (map, contact) {
       if (!map.containsKey(contact.category)) {
@@ -89,15 +91,16 @@ class _ContactsPageState extends State<ContactsPage> {
         ],
       ),
       trailing: IconButton(onPressed: (){
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            // 之前是导航到PersonalPage
-            builder: (context) => PersonalPage(character: contact,),
-          ),
-        );
+        customNavigate(PersonalPage(character: contact,),context: context);
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     // 之前是导航到PersonalPage
+        //     builder: (context) => 
+        //   ),
+        // );
       }, icon: Icon(Icons.chevron_right)),
-      title: Text(contact.name),
+      title: Text(contact.roleName),
       subtitle: contact.brief != null
           ? Text(
               contact.brief!,
@@ -145,7 +148,7 @@ class _ContactsPageState extends State<ContactsPage> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
-          Get.to(EditCharacterPage());
+          customNavigate(EditCharacterPage(),context: context);
         },
       ),
     );

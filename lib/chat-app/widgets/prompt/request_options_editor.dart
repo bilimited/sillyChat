@@ -21,6 +21,7 @@ class RequestOptionsEditor extends StatefulWidget {
 class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
   late final TextEditingController _maxTokensController;
   late final TextEditingController _maxHistoryLengthController;
+  late final TextEditingController _seedController;
   final VaultSettingController vaultSettingController = Get.find();
 
   @override
@@ -30,12 +31,15 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         TextEditingController(text: widget.options.maxTokens.toString());
     _maxHistoryLengthController =
         TextEditingController(text: widget.options.maxHistoryLength.toString());
+    _seedController = TextEditingController(
+        text: widget.options.seed.toString());
   }
 
   @override
   void dispose() {
     _maxTokensController.dispose();
     _maxHistoryLengthController.dispose();
+    _seedController.dispose();
     super.dispose();
   }
 
@@ -94,6 +98,14 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
             }
           },
         ),
+        // _buildNumberInput(
+        //   label: 'Seed（仅部分模型有效，-1代表随机生成）',
+        //   controller: _seedController,
+        //   onChanged: (value) {
+        //     final intValue = int.tryParse(value);
+        //     widget.onChanged(widget.options.copyWith(seed: intValue));
+        //   },
+        // ),
         _buildCheckbox(
           label: '是否删除思考消息',
           value: widget.options.isDeleteThinking,

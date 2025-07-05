@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
@@ -101,11 +102,11 @@ class _EditChatPageState extends State<EditChatPage>
                   color: colors.surfaceContainerHighest,
                   child: Text(
                     widget.chat.id == -1
-                        ? '警告：该群聊ID无效（-1）'
-                        : '群聊ID：${widget.chat.id}; File ID:${widget.chat.fileId}',
+                        ? '聊天未创建'
+                        : '聊天ID：${widget.chat.id}; File ID:${widget.chat.fileId}',
                     style: TextStyle(
                       color:
-                          widget.chat.id == -1 ? colors.error : colors.outline,
+                          widget.chat.id == -1 ? colors.outline : colors.outline,
                       fontSize: 12,
                     ),
                   ),
@@ -274,7 +275,7 @@ class _EditChatPageState extends State<EditChatPage>
                           backgroundImage: FileImage(File(character.avatar)),
                         ),
                         SizedBox(width: 8),
-                        Text(character.name),
+                        Text(character.roleName),
                         Spacer(),
                         IconButton(
                           icon: Icon(Icons.close, size: 16),
@@ -453,10 +454,12 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   void _saveChanges() async {
+    if(widget.chat.id == -1){
+      Get.back();
+    }
     if (_formKey.currentState?.validate() ?? true) {
       _chatController.refleshAll();
       await _chatController.saveChats(widget.chat.fileId);
-
       Get.back();
       // Get.snackbar('成功', '群聊信息已更新');
     }
@@ -502,6 +505,9 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   void _deleteChat() {
+    if(widget.chat.id == -1){
+      return;
+    }
     Get.dialog(
       AlertDialog(
         title: Text('确认删除'),

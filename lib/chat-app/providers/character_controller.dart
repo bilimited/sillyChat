@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/utils/image_packer.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
@@ -8,14 +10,15 @@ import '../models/character_model.dart';
 
 class CharacterController extends GetxController {
   final RxList<CharacterModel> characters = <CharacterModel>[].obs;
-  final RxInt _myId = RxInt(-1);
   final String fileName = 'characters.json';
 
-  // 系统内建角色
-  static final defaultCharacter = CharacterModel(id: -2, name: "旁白",roleName: '旁白', avatar: "", category: "",messageStyle: MessageStyle.narration);
+  final VaultSettingController _vaultSettingController = Get.find();
 
-  int? get myId => _myId.value;
-  set myId(val){_myId.value = val;}
+  // 系统内建角色
+  static final defaultCharacter = CharacterModel(id: -2, remark: "内置角色",roleName: '旁白', avatar: "", category: "",messageStyle: MessageStyle.narration);
+  
+  int? get myId => _vaultSettingController.myId.value;
+  set myId(val){_vaultSettingController.myId.value = val;}
 
   @override
   void onInit() {
@@ -37,9 +40,18 @@ class CharacterController extends GetxController {
         characters.value = jsonList
             .map((json) => CharacterModel.fromJson(json))
             .toList();
-        if(!characters.isEmpty){
-          _myId.value = characters[0].id;
+
+        if (!characters.any((char) => char.id == 0)) {
+          characters.insert(0, CharacterModel(
+            id: 0,
+            roleName: '我',
+            avatar: '',
+            category: '',
+            remark: '默认角色',
+            messageStyle: MessageStyle.common,
+          ));
         }
+
         
       }
 
@@ -128,6 +140,8 @@ class CharacterController extends GetxController {
       await file.writeAsString(jsonString);
     } catch (e) {
       print('保存角色数据失败: $e');
+      handleSevereError('Save Failed!',e);
+      rethrow;
     }
   }
 

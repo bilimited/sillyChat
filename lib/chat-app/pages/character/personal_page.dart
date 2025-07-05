@@ -137,7 +137,7 @@ class _PersonalPageState extends State<PersonalPage>
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                character.name,
+                                character.roleName,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,

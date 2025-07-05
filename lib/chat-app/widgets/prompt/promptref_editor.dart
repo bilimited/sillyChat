@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/pages/prompt/edit_prompt.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 
 import '../../providers/prompt_controller.dart';
@@ -59,9 +61,8 @@ class _PromptRefEditorState extends State<PromptRefEditor> {
     }
   }
 
-
   Future<void> _addNewPrompt() async {
-    final selectedId = await Get.to(() => PromptManagerPage(isSelector: true));
+    final selectedId = await customNavigate(PromptManagerPage(isSelector: true,),context: context) ;
     if (selectedId != null) {
       setState(() {
         _items.add(selectedId);
@@ -103,7 +104,11 @@ class _PromptRefEditorState extends State<PromptRefEditor> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.chevron_right),
+              IconButton(onPressed: (){
+                customNavigate(EditPromptPage(prompt: prompt),context: context);
+              }
+              , icon: Icon(Icons.edit)),
+              
               IconButton(
                 icon: Icon(Icons.delete_outline),
                 onPressed: () => _deleteItem(item),

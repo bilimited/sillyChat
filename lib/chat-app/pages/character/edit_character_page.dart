@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/main_page.dart';
 import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,6 +37,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late String _selectedGender;
   CharacterModel? _character;
   bool get isEditMode => widget.characterId != null;
+  bool get isEditPlayer => widget.characterId == 0;
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       _character = _characterController.getCharacterById(widget.characterId!);
     }
 
-    _nameController = TextEditingController(text: _character?.name ?? '');
+    _nameController = TextEditingController(text: _character?.remark ?? '');
     _nickNameController =
         TextEditingController(text: _character?.roleName ?? '');
     _descriptionController =
@@ -60,7 +61,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     _selectedGender = _character?.gender ?? '女';
     _avatarPath = _character?.avatar;
     _backgroundPath = _character?.backgroundImage;
-
   }
 
   Future<void> _pickImage(bool isAvatar) async {
@@ -77,12 +77,13 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     }
   }
 
+  // 复制角色并返回
   CharacterModel? _saveCharacter() {
-    if (!_formKey.currentState!.validate()) return null; // 字段校验不通过无提示
+    if (!_formKey.currentState!.validate()) return null; // TODO:字段校验不通过无提示
 
     return CharacterModel(
       id: _character?.id ?? DateTime.now().millisecondsSinceEpoch,
-      name: _nameController.text,
+      remark: _nameController.text,
       roleName: _nickNameController.text,
       avatar: _avatarPath ?? '',
       description: _descriptionController.text,
@@ -95,7 +96,35 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..brief = _briefController.text
       ..relations = _character?.relations ?? {}
       ..archive = _archiveController.text
-      ..messageStyle = _character?.messageStyle ?? MessageStyle.common;
+      ..messageStyle = _character?.messageStyle ?? MessageStyle.common
+      ..backups = _character?.backups ?? [];
+  }
+
+  void _applyBackup(CharacterModel backup) {
+
+    setState(() {
+      _nickNameController.text = backup.roleName;
+      _nameController.text = backup.remark;
+      _descriptionController.text = backup.description ?? '';
+      _categoryController.text = backup.category;
+      _ageController.text = backup.age.toString();
+      _briefController.text = backup.brief ?? '';
+      _archiveController.text = backup.archive;
+      _selectedGender = backup.gender;
+
+      // 头像和背景不拷贝
+      //_avatarPath = backup.avatar;
+      //_backgroundPath = backup.backgroundImage;
+
+      // 关系：深拷贝
+      Map<int, Relation> newRelations = {};
+      for (var relation in backup.relations.values) {
+        newRelations[relation.targetId] = relation.copy();
+      }
+      _character!.relations = Map.from(newRelations);
+
+      _character!.messageStyle = backup.messageStyle;
+    });
   }
 
   Future<void> _saveAndBack() async {
@@ -132,7 +161,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
     if (confirmed == true) {
       await _characterController.deleteCharacter(widget.characterId!);
-      Get.to(() => MainPage());
+      Get.back();
     }
   }
 
@@ -142,7 +171,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     var char = _character!.copy();
     _characterController.addCharacter(char);
     Get.back();
-    Get.snackbar("拷贝成功", "角色已拷贝");
   }
 
   Widget _buildBasicInfoTab() {
@@ -188,27 +216,27 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             child: Column(
               children: [
                 TextFormField(
-                  controller: _nameController,
+                  controller: _nickNameController,
                   decoration: const InputDecoration(
                     labelText: '角色名称',
                     border: UnderlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value?.isEmpty ?? true) return '请输入角色名称';
+                    if (value?.isEmpty ?? true) return '角色名称';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  controller: _nickNameController,
+                  controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: '别名(聊天使用名称)',
+                    labelText: '备注',
                     border: UnderlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return '请输入角色别名';
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value?.isEmpty ?? true) return '备注';
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -280,8 +308,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                           Get.snackbar("错误", "字段填写存在问题!");
                           return;
                         }
-                        final result = await Get.to<String?>(
-                            () => GenCharacterPromptPage(character: char));
+                        final result = await customNavigate<String>(
+                            GenCharacterPromptPage(character: char),
+                            context: context);
+
                         if (result != null) {
                           setState(() {
                             _archiveController.text = result;
@@ -426,6 +456,293 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 16),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '备份管理',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ReorderableListView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      final backups = _character?.backups ?? [];
+                      if (oldIndex < newIndex) newIndex -= 1;
+                      final item = backups.removeAt(oldIndex);
+                      backups.insert(newIndex, item);
+                      _character?.backups = List<CharacterModel>.from(backups);
+                    });
+                  },
+                  children: [
+                    for (int i = 0; i < (_character?.backups?.length ?? 0); i++)
+                      ListTile(
+                        key: ValueKey('backup_$i'),
+                        title: Text(
+                          '${_character!.backups![i].roleName}-${_character!.backups![i].remark}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.upload),
+                              tooltip: '应用',
+                              onPressed: () async {
+                                final confirmed = await Get.dialog<bool>(
+                                  AlertDialog(
+                                    title: const Text('确认应用备份'),
+                                    content: const Text('确定要应用此备份吗？当前内容将被覆盖。'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Get.back(result: false),
+                                        child: const Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Get.back(result: true),
+                                        child: const Text('确定'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  final backup = _character!.backups![i];
+                                  _applyBackup(backup);
+                                  _tabController.index = 0;
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.download),
+                              tooltip: '覆盖',
+                              onPressed: () async {
+                                final confirmed = await Get.dialog<bool>(
+                                  AlertDialog(
+                                    title: const Text('确认覆盖备份'),
+                                    content: const Text('确定要用当前内容覆盖此备份吗？'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Get.back(result: false),
+                                        child: const Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Get.back(result: true),
+                                        child: const Text('确定'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  setState(() {
+                                    final backup = _saveCharacter();
+                                    
+                                    if (backup != null) {
+                                      backup.backups = null;
+                                      _character!.backups![i] = backup;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              tooltip: '删除',
+                              onPressed: () async {
+                                final confirmed = await Get.dialog<bool>(
+                                  AlertDialog(
+                                    title: const Text('确认删除备份'),
+                                    content: const Text('确定要删除此备份吗？'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Get.back(result: false),
+                                        child: const Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Get.back(result: true),
+                                        child: const Text('确定'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  setState(() {
+                                    _character!.backups!.removeAt(i);
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('添加备份'),
+                    onPressed: () {
+                      setState(() {
+                        final backup = _saveCharacter();
+
+                        if (backup != null) {
+                          // 备份不能被备份
+                          backup.backups = null;
+                          _character?.backups ??= [];
+                          _character!.backups!.add(backup.copy());
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 用户（Id==0）的设置界面
+  Widget _buildPlayerSetting() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Center(
+          child: GestureDetector(
+            onTap: () => _pickImage(true),
+            child: Container(
+              height: 120,
+              width: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+                color: Colors.grey.shade100,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(60),
+                child: _avatarPath != null
+                    ? Image.file(
+                        File(_avatarPath!),
+                        fit: BoxFit.cover,
+                      )
+                    : Icon(
+                        Icons.add_photo_alternate,
+                        size: 40,
+                        color: Colors.grey.shade600,
+                      ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _nickNameController,
+                  decoration: const InputDecoration(
+                    labelText: '角色名称',
+                    border: UnderlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) return '角色名称';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // TextFormField(
+                //   controller: _nameController,
+                //   decoration: const InputDecoration(
+                //     labelText: '备注',
+                //     border: UnderlineInputBorder(),
+                //   ),
+                // ),
+                // const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _ageController,
+                        decoration: const InputDecoration(
+                          labelText: '年龄',
+                          border: UnderlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _selectedGender,
+                        decoration: const InputDecoration(
+                          labelText: '性别',
+                          border: UnderlineInputBorder(),
+                        ),
+                        onChanged: (value) =>
+                            setState(() => _selectedGender = value),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _briefController,
+                  decoration: const InputDecoration(
+                    labelText: '简略介绍',
+                    border: UnderlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<MessageStyle>(
+                  value: _character?.messageStyle,
+                  decoration: const InputDecoration(
+                    labelText: '对话样式',
+                    border: UnderlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                        value: MessageStyle.common, child: Text('普通')),
+                    DropdownMenuItem(
+                        value: MessageStyle.narration, child: Text('旁白')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      if (_character != null) {
+                        _character!.messageStyle = value ?? MessageStyle.common;
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -434,15 +751,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditMode ? '编辑角色' : '新建角色'),
-        bottom: TabBar(
+        title: Text(isEditPlayer ? '编辑用户角色' : isEditMode ? '编辑角色' : '新建角色'),
+        bottom: isEditPlayer ? null : TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: '基本信息'),
             Tab(text: '其他设置'),
           ],
         ),
-        actions: [
+        actions: isEditPlayer ? [] : [
           IconButton(onPressed: _copyCharacter, icon: const Icon(Icons.copy)),
           if (isEditMode)
             IconButton(
@@ -453,7 +770,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ),
       body: Form(
         key: _formKey,
-        child: TabBarView(
+        child: isEditPlayer ? _buildPlayerSetting() : TabBarView(
           controller: _tabController,
           children: [
             _buildBasicInfoTab(),

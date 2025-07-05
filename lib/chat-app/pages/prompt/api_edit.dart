@@ -15,7 +15,7 @@ class ApiEditPage extends StatefulWidget {
 class _ApiEditPageState extends State<ApiEditPage> {
   final _formKey = GlobalKey<FormState>();
   final VaultSettingController controller = Get.find();
-  
+
   late TextEditingController _apiKeyController;
   late TextEditingController _modelNameController;
   late TextEditingController _urlController;
@@ -28,11 +28,14 @@ class _ApiEditPageState extends State<ApiEditPage> {
   void initState() {
     super.initState();
     _apiKeyController = TextEditingController(text: widget.api?.apiKey ?? '');
-    _modelNameController = TextEditingController(text: widget.api?.modelName ?? '');
+    _modelNameController =
+        TextEditingController(text: widget.api?.modelName ?? '');
     _urlController = TextEditingController(text: widget.api?.url ?? '');
     _remarksController = TextEditingController(text: widget.api?.remarks ?? '');
-    _displayNameController = TextEditingController(text: widget.api?.displayName ?? '');
-    _modelNameThinkController = TextEditingController(text: widget.api?.modelName_think ?? '');
+    _displayNameController =
+        TextEditingController(text: widget.api?.displayName ?? '');
+    _modelNameThinkController =
+        TextEditingController(text: widget.api?.modelName_think ?? '');
     _selectedProvider = widget.api?.provider ?? ServiceProvider.openai;
   }
 
@@ -169,22 +172,20 @@ class _ApiEditPageState extends State<ApiEditPage> {
               ),
             ],
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _urlController,
-              decoration: const InputDecoration(
-                labelText: 'URL',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (_selectedProvider == ServiceProvider.google) {
+            if (_selectedProvider != ServiceProvider.google)
+              TextFormField(
+                controller: _urlController,
+                decoration: const InputDecoration(
+                  labelText: 'URL',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入 URL';
+                  }
                   return null;
-                }
-                if (value == null || value.isEmpty) {
-                  return '请输入 URL';
-                }
-                return null;
-              },
-            ),
+                },
+              ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _remarksController,

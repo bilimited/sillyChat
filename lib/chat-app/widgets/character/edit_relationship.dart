@@ -99,11 +99,11 @@ class _EditRelationshipState extends State<EditRelationship> {
                                 ? FileImage(File(targetChar.avatar))
                                 : null,
                             child: targetChar.avatar.isEmpty
-                                ? Text(targetChar.name[0])
+                                ? Text(targetChar.roleName[0])
                                 : null,
                           ),
                           const SizedBox(width: 8),
-                          Text(targetChar.name),
+                          Text(targetChar.roleName),
                           const Text(' 是我的 '),
                           Expanded(
                             child: TextFormField(

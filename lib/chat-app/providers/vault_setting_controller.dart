@@ -10,6 +10,7 @@ class VaultSettingController extends GetxController {
   final String vaultSettingFileName = 'settings.json';
   final RxList<ApiModel> apis = <ApiModel>[].obs;
   final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
+  final RxInt myId = 0.obs;
   
   String get lastSyncTimeString{
     if (lastSyncTime.value == null) return "未同步";
@@ -47,6 +48,7 @@ class VaultSettingController extends GetxController {
         
         apis.value = settings.apis;
         lastSyncTime.value = settings.lastSyncTime;
+        myId.value = settings.myId;
       }
     } catch (e) {
       print('加载设置失败: $e');
@@ -63,6 +65,7 @@ class VaultSettingController extends GetxController {
         vaultName: SettingController.currectValutName,
         lastSyncTime: lastSyncTime.value,
         apis: apis,
+        myId: myId.value,
       );
 
       final String jsonString = json.encode(settings.toJson());
