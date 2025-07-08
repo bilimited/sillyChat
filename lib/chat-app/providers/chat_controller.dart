@@ -399,16 +399,20 @@ class ChatController extends GetxController {
     final int total = chat.messages.length;
     final int start = total > maxMsgs ? total - maxMsgs : 0;
     final pinnedIndexes = <int>{};
+    final hiddenIndexs = <int>{};
     for (int i = 0; i < chat.messages.length; i++) {
       if (chat.messages[i].isPinned == true) {
         pinnedIndexes.add(i);
+      }else if(chat.messages[i].isHidden == true){
+        hiddenIndexs.add(i);
       }
     }
-    // 需要保留的消息索引：末尾maxMsgs条+所有pinned
+    
+    // 需要保留的消息索引：末尾maxMsgs条+所有pinned-所有hidden
     final keepIndexes = <int>{
       ...List.generate(total - start, (i) => start + i),
       ...pinnedIndexes
-    };
+    }..removeAll(hiddenIndexs);
 
     final msglst = [
       ...sysPrompts,

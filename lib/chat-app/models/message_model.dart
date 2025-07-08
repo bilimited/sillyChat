@@ -35,6 +35,9 @@ extension MessageRoleExtension on MessageRole {
   }
 }
 
+enum MessageVisbility { common, pinned, hidden }
+
+
 class MessageModel {
   final int id;
   String content;
@@ -53,7 +56,11 @@ class MessageModel {
   // 若type为image或其他文件格式，则为文件路径
   final List<String> resPath;
   // 是否常驻（不会被移出消息列表）
-  bool isPinned = false;
+
+  MessageVisbility visbility;
+
+  bool get isPinned => visbility == MessageVisbility.pinned;
+  bool get isHidden => visbility == MessageVisbility.hidden;
   String? bookmark;
 
   MessageModel({
@@ -63,10 +70,9 @@ class MessageModel {
     required this.time,
     this.type = MessageType.text,
     this.role = MessageRole.user,
-    // this.isAssistant = false,
     this.token = 0,
     this.resPath = const [],
-    this.isPinned = false,
+    this.visbility = MessageVisbility.common,
     this.bookmark,
     required this.alternativeContent,
   });
@@ -85,14 +91,16 @@ class MessageModel {
               ),
         time = DateTime.parse(json['time']),
         type = MessageTypeExtension.fromJson(json['type']),
-        // isAssistant = json['isRead'],
         token = (json['token'] ?? 0) as int,
         resPath = json['resPath'] is String
             ? [if ((json['resPath'] as String).isNotEmpty) json['resPath']]
             : (json['resPath'] is List
                 ? List<String>.from(json['resPath'])
                 : []),
-        isPinned = json['isPinned'] ?? false,
+        visbility = MessageVisbility.values.firstWhere(
+          (e) => e.toString() == 'MessageVisbility.${json['visbility']}',
+          orElse: () => MessageVisbility.common,
+        ),
         bookmark = json['bookmark'] is bool ? null : json['bookmark'] ?? null,
         alternativeContent = (json['alternativeContent'] as List<dynamic>?)
                 ?.map((e) => e as String?)
@@ -108,7 +116,8 @@ class MessageModel {
         'role': role.toString().split('.').last,
         // 'isRead': isAssistant,
         'token': token,
-        'isPinned': isPinned,
+        // 'isPinned': isPinned,
+        'visbility': visbility.toString().split('.').last,
         'bookmark': bookmark,
         'resPath': resPath,
         'alternativeContent': alternativeContent,
@@ -127,7 +136,10 @@ class MessageModel {
       ),
       token: map['token'],
       resPath: map['resPath'],
-      isPinned: map['isPinned'] ?? false,
+      visbility: MessageVisbility.values.firstWhere(
+        (e) => e.toString() == 'MessageVisbility.${map['visbility']}',
+        orElse: () => MessageVisbility.common,
+      ),
       bookmark: map['bookmark'] ?? null,
       alternativeContent: (map['alternativeContent'] as List<dynamic>?)
               ?.map((e) => e as String?)
@@ -148,6 +160,7 @@ class MessageModel {
     List<String>? resPath,
     bool? isPinned,
     String? bookmark,
+    MessageVisbility? visbility,
     List<String?>? alternativeContent,
   }) {
     return MessageModel(
@@ -160,7 +173,7 @@ class MessageModel {
       // isAssistant: isAssistant ?? this.isAssistant,
       token: token ?? this.token,
       resPath: resPath ?? this.resPath,
-      isPinned: isPinned ?? this.isPinned,
+      visbility: visbility ?? this.visbility,
       bookmark: bookmark ?? this.bookmark,
       alternativeContent: alternativeContent ?? this.alternativeContent,
     );

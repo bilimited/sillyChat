@@ -161,36 +161,41 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Icons.paste),
-                title: const Text('粘贴到上方'),
-                onTap: () async {
-                  Get.back();
-                  final messagesToPaste = _chatController.messageToPaste;
-                  final msgList = chat.messages;
-                  final idx = msgList.indexWhere((m) => m.time == message.time);
-                  if (idx != -1) {
-                    msgList.insertAll(idx, messagesToPaste);
-                    await _updateChat();
-                    setState(() {});
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.paste),
-                title: const Text('粘贴到下方'),
-                onTap: () async {
-                  Get.back();
-                  final messagesToPaste = _chatController.messageToPaste;
-                  final msgList = chat.messages;
-                  final idx = msgList.indexWhere((m) => m.time == message.time);
-                  if (idx != -1) {
-                    msgList.insertAll(idx + 1, messagesToPaste);
-                    await _updateChat();
-                    setState(() {});
-                  }
-                },
-              ),
+              if (_chatController.messageClipboard.isNotEmpty) ...[
+                Text('剪贴板中共${_chatController.messageClipboard.length}条消息'),
+                ListTile(
+                  leading: const Icon(Icons.paste),
+                  title: const Text('粘贴到上方'),
+                  onTap: () async {
+                    Get.back();
+                    final messagesToPaste = _chatController.messageToPaste;
+                    final msgList = chat.messages;
+                    final idx =
+                        msgList.indexWhere((m) => m.time == message.time);
+                    if (idx != -1) {
+                      msgList.insertAll(idx, messagesToPaste);
+                      await _updateChat();
+                      setState(() {});
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.paste),
+                  title: const Text('粘贴到下方'),
+                  onTap: () async {
+                    Get.back();
+                    final messagesToPaste = _chatController.messageToPaste;
+                    final msgList = chat.messages;
+                    final idx =
+                        msgList.indexWhere((m) => m.time == message.time);
+                    if (idx != -1) {
+                      msgList.insertAll(idx + 1, messagesToPaste);
+                      await _updateChat();
+                      setState(() {});
+                    }
+                  },
+                ),
+              ],
               ListTile(
                 leading: message.bookmark != null
                     ? const Icon(Icons.bookmark)
@@ -332,12 +337,28 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         ),
         const SizedBox(width: 8),
         _buildActionButton(
-          icon: Icons.push_pin_outlined,
+          icon: message.isPinned
+              ? Icons.push_pin_outlined
+              : message.isHidden
+                  ? Icons.hide_source_rounded
+                  : Icons.remove_red_eye,
           label: 'Pin',
-          iconColor: message.isPinned ? Colors.orange : null,
+          iconColor: message.isPinned
+              ? Colors.orange
+              : message.isHidden
+                  ? Colors.blueGrey
+                  : null,
           onTap: () async {
             setState(() {
-              message.isPinned = !message.isPinned;
+              // TODO: 切换消息的Pin状态
+              // message.isPinned = !message.isPinned;
+              if (message.isPinned) {
+                message.visbility = MessageVisbility.hidden;
+              } else if (message.isHidden) {
+                message.visbility = MessageVisbility.common;
+              } else {
+                message.visbility = MessageVisbility.pinned;
+              }
             });
             _updateChat();
           },
@@ -556,22 +577,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
+  // 若character为空则不显示发言者名称
   Widget _buildMessageUserName(
-      MessageModel message, CharacterModel character, bool isMe) {
+      MessageModel message, CharacterModel? character, bool isMe) {
+    bool isNarration = character == null;
     return Row(
       mainAxisSize: MainAxisSize.min,
       // 用户名
       children: [
-        if (!isMe) Text(character.roleName),
-        if (!isMe) const SizedBox(width: 8),
+        if (!isMe && !isNarration) Text(character.roleName),
+        if (!isMe && !isNarration) const SizedBox(width: 8),
         // BookMark icon (blue)
         if (message.bookmark != null)
           const Icon(Icons.bookmark, color: Colors.blue, size: 16),
         // Pin icon (orange)
         if (message.isPinned)
           const Icon(Icons.push_pin, color: Colors.orange, size: 16),
-        if (isMe) const SizedBox(width: 8),
-        if (isMe) Text(character.roleName),
+        if (message.isHidden)
+          const Icon(Icons.hide_source, color: Colors.blueGrey, size: 16),
+        if (isMe && !isNarration) const SizedBox(width: 8),
+        if (isMe && !isNarration) Text(character.roleName),
       ],
     );
   }
@@ -826,6 +851,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               height: 16,
             ),
             if (message.resPath.isNotEmpty) _buildMessageImage(message),
+            _buildMessageUserName(message, null, false),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: MarkdownBody(
@@ -1017,6 +1043,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
+  
   // 多选时的底部按钮组
   Widget _buildBottomButtonGroup() {
     final colors = Theme.of(context).colorScheme;
@@ -1120,7 +1147,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       },
                       icon: Icon(
                         Icons.copy_all,
-                        color: colors.primaryFixed,
+                        color: colors.onPrimaryContainer,
                       ),
                     ),
                     // CUT MSG
@@ -1138,14 +1165,30 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       },
                       icon: Icon(
                         Icons.cut,
-                        color: colors.primaryFixed,
+                        color: colors.onPrimaryContainer,
                       ),
                     ),
                     IconButton(
                       onPressed: () {
                         setState(() {
                           for (final msg in _selectedMessages) {
-                            msg.isPinned = true;
+                            msg.visbility = MessageVisbility.hidden;
+                          }
+                          _updateChat();
+                          _isMultiSelecting = false;
+                          _selectedMessages.clear();
+                        });
+                      },
+                      icon: Icon(
+                        Icons.hide_source,
+                        color: colors.onPrimaryContainer,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          for (final msg in _selectedMessages) {
+                            msg.visbility = MessageVisbility.pinned;
                           }
                           _updateChat();
                           _isMultiSelecting = false;
@@ -1154,36 +1197,22 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       },
                       icon: Icon(
                         Icons.push_pin,
-                        color: colors.primaryFixed,
+                        color: colors.onPrimaryContainer,
                       ),
                     ),
                     IconButton(
                       onPressed: () {
                         setState(() {
                           for (final msg in _selectedMessages) {
-                            msg.isPinned = false;
+                            msg.visbility = MessageVisbility.common;
                           }
                           _updateChat();
                           _isMultiSelecting = false;
                           _selectedMessages.clear();
                         });
                       },
-                      icon: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(Icons.push_pin, color: colors.outline),
-                          Positioned(
-                            right: 2,
-                            bottom: 2,
-                            child: Icon(
-                              Icons.block, // 叉号/禁止符号
-                              color: Colors.redAccent,
-                              size: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      tooltip: '取消订固',
+                      icon: Icon(Icons.remove_red_eye),
+                      tooltip: '将可见性设为常规',
                     ),
                     IconButton(
                         onPressed: () {
