@@ -14,8 +14,8 @@ class ChatOptionController extends GetxController {
           id: -1,
           name: '空预设',
           requestOptions: LLMRequestOptions(messages: []),
-          // prompts: [],
-          promptId: [],
+          prompts: [],
+          //promptId: [],
           )
       : chatOptions[0];
 

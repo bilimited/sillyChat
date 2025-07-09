@@ -22,15 +22,11 @@ enum MessageStyle {
 
 class CharacterModel {
   final int id;
-
-  // JSONIgnore。仅供丢失角色（旁白和分割线）使用。现已无用
   MessageStyle messageStyle = MessageStyle.common;
 
   String remark;       // 备注
   String roleName;        // 唯一名称
   String avatar;
-  String gender = '女';
-  int age = 18;
   String? description;
   String? backgroundImage;
   String? brief; // 简略个人信息
@@ -59,8 +55,8 @@ class CharacterModel {
       'name': remark,
       'nickname': roleName,
       'avatar': avatar,
-      'gender': gender.toString().split('.').last,
-      'age': age,
+      // 'gender': gender.toString().split('.').last,
+      // 'age': age,
       'description': description,
       'backgroundImage': backgroundImage,
       'category': category,
@@ -88,8 +84,14 @@ class CharacterModel {
     );
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
-    char.gender = json['gender'] ?? '女';
-    char.age = json['age'] ?? 18;
+    // char.gender = json['gender'] ?? '女';
+    // char.age = json['age'] ?? 18;
+    // 版本迁移
+    if (json['gender'] != null && json['age'] != null) {
+      String genderAge = '性别：${json['gender']}，年龄：${json['age']}\n';
+      char.archive = genderAge + (char.archive ?? '');
+      char.brief = genderAge + (char.brief ?? '');
+    }
     char.backgroundImage = json['backgroundImage'];
 
     if (json['relations'] != null) {
@@ -128,8 +130,8 @@ class CharacterModel {
 
     newChar.archive = archive; // 添加archive字段的复制
 
-    newChar.gender = gender;
-    newChar.age = age;
+    // newChar.gender = gender;
+    // newChar.age = age;
     newChar.backgroundImage = backgroundImage;
     newChar.roleName = roleName;
     newChar.messageStyle = messageStyle;

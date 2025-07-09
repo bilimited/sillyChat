@@ -8,7 +8,7 @@ class EditPromptPage extends StatefulWidget {
   final bool editTempPrompt;
 
   const EditPromptPage({
-    Key? key, 
+    Key? key,
     this.prompt,
     this.editTempPrompt = false,
   }) : super(key: key);
@@ -20,12 +20,11 @@ class EditPromptPage extends StatefulWidget {
 class _EditPromptPageState extends State<EditPromptPage> {
   final _formKey = GlobalKey<FormState>();
   final _promptController = Get.find<PromptController>();
-  
+
   late String _name = '';
   late String _content = '';
   late String _role = 'user';
-  late PromptCategory _category = PromptCategory.general;
-  String? _customCategory;
+  late int? _priority = null;
 
   @override
   void initState() {
@@ -34,14 +33,13 @@ class _EditPromptPageState extends State<EditPromptPage> {
       _name = widget.prompt!.name;
       _content = widget.prompt!.content;
       _role = widget.prompt!.role;
-      _category = widget.prompt!.category;
-      _customCategory = widget.prompt!.customCategory;
+      _priority = widget.prompt!.priority;
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     _formKey.currentState!.save();
 
     final prompt = PromptModel(
@@ -49,11 +47,9 @@ class _EditPromptPageState extends State<EditPromptPage> {
       name: _name,
       content: _content,
       role: _role,
-      category: _category,
-      customCategory: _customCategory,
       createDate: widget.prompt?.createDate,
       updateDate: DateTime.now(),
-    );
+    )..priority = _priority;
 
     if (widget.editTempPrompt) {
       Get.back(result: prompt);
@@ -71,7 +67,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
 
   Future<void> _duplicate() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     _formKey.currentState!.save();
 
     final prompt = PromptModel(
@@ -79,17 +75,14 @@ class _EditPromptPageState extends State<EditPromptPage> {
       name: _name,
       content: _content,
       role: _role,
-      category: _category,
-      customCategory: _customCategory,
-    );
+    )..priority = _priority;
 
     await _promptController.addPrompt(prompt);
-    if(widget.editTempPrompt){
+    if (widget.editTempPrompt) {
       Get.snackbar("保存成功", "当前Prompt已保存到提示词管理");
-    }else{
+    } else {
       Get.snackbar("复制成功", "当前Prompt已复制");
     }
-    
   }
 
   @override
@@ -104,12 +97,12 @@ class _EditPromptPageState extends State<EditPromptPage> {
               onPressed: _duplicate,
               tooltip: '复制提示词',
             ),
-
         ],
       ),
-      floatingActionButton: FloatingActionButton(onPressed: _save,child: 
-        Icon(Icons.save)
-      ,),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _save,
+        child: Icon(Icons.save),
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Form(
@@ -143,46 +136,57 @@ class _EditPromptPageState extends State<EditPromptPage> {
                     .toList(),
                 onChanged: (value) => setState(() => _role = value!),
               ),
-              if (!widget.editTempPrompt) ...[
-                SizedBox(height: 16),
-                DropdownButtonFormField<PromptCategory>(
-                  value: _category,
-                  decoration: InputDecoration(
-                    labelText: '类别',
-                    border: OutlineInputBorder(),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Switch(
+                    value: _priority != null,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value) {
+                          _priority = 99999;
+                        } else {
+                          _priority = null;
+                        }
+                      });
+                    },
                   ),
-                  items: PromptCategory.values
-                      .map((category) => DropdownMenuItem(
-                            value: category,
-                            child: Text(category.toString().split('.').last),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() {
-                    _category = value!;
-                    if (_category != PromptCategory.custom) {
-                      _customCategory = null;
-                    }
-                  }),
+                  Text('设置优先级'),
+                ],
+              ),
+              SizedBox(height: 16),
+              if (_priority != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: TextFormField(
+                    initialValue: _priority?.toString(),
+                    decoration: InputDecoration(
+                      labelText: '优先级(0代表最后一条消息之后，1代表最后一条消息之前，99999代表消息列表开头)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (_priority != null) {
+                        if (value == null || value.isEmpty) {
+                          return '请输入优先级';
+                        }
+                        final n = int.tryParse(value);
+                        if (n == null) return '请输入有效的数字';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      if (_priority != null) {
+                        _priority = int.tryParse(value ?? '99999');
+                      }
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        _priority = int.tryParse(value);
+                      });
+                    },
+                  ),
                 ),
-                // if (_category == PromptCategory.custom) ...[
-                //   SizedBox(height: 16),
-                //   TextFormField(
-                //     initialValue: _customCategory,
-                //     decoration: InputDecoration(
-                //       labelText: '自定义类别',
-                //       border: OutlineInputBorder(),
-                //     ),
-                //     validator: (value) {
-                //       if (_category == PromptCategory.custom && 
-                //           (value?.isEmpty ?? true)) {
-                //         return '请输入自定义类别';
-                //       }
-                //       return null;
-                //     },
-                //     onSaved: (value) => _customCategory = value,
-                //   ),
-                // ],
-              ],
               SizedBox(height: 16),
               TextFormField(
                 initialValue: _content,
@@ -191,9 +195,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 18,
-                style: TextStyle(
-                  fontSize: 14  
-                ),
+                style: TextStyle(fontSize: 14),
                 validator: (value) {
                   if (value?.isEmpty ?? true) return '请输入内容';
                   return null;

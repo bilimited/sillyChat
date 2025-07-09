@@ -29,12 +29,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _descriptionController;
   late TextEditingController _archiveController;
   late TextEditingController _categoryController;
-  late TextEditingController _ageController;
   late TextEditingController _briefController;
 
   String? _avatarPath;
   String? _backgroundPath;
-  late String _selectedGender;
   CharacterModel? _character;
   bool get isEditMode => widget.characterId != null;
   bool get isEditPlayer => widget.characterId == 0;
@@ -55,10 +53,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     _archiveController = TextEditingController(text: _character?.archive ?? '');
     _categoryController =
         TextEditingController(text: _character?.category ?? '');
-    _ageController =
-        TextEditingController(text: (_character?.age ?? 18).toString());
+    // _ageController =
+    //     TextEditingController(text: (_character?.age ?? 18).toString());
     _briefController = TextEditingController(text: _character?.brief ?? '');
-    _selectedGender = _character?.gender ?? '女';
+    // _selectedGender = _character?.gender ?? '女';
     _avatarPath = _character?.avatar;
     _backgroundPath = _character?.backgroundImage;
   }
@@ -90,8 +88,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       category:
           _categoryController.text.isEmpty ? "默认" : _categoryController.text,
     )
-      ..gender = _selectedGender
-      ..age = int.parse(_ageController.text)
       ..backgroundImage = _backgroundPath
       ..brief = _briefController.text
       ..relations = _character?.relations ?? {}
@@ -107,10 +103,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       _nameController.text = backup.remark;
       _descriptionController.text = backup.description ?? '';
       _categoryController.text = backup.category;
-      _ageController.text = backup.age.toString();
       _briefController.text = backup.brief ?? '';
       _archiveController.text = backup.archive;
-      _selectedGender = backup.gender;
 
       // 头像和背景不拷贝
       //_avatarPath = backup.avatar;
@@ -241,28 +235,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _ageController,
-                        decoration: const InputDecoration(
-                          labelText: '年龄',
-                          border: UnderlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _selectedGender,
-                        decoration: const InputDecoration(
-                          labelText: '性别',
-                          border: UnderlineInputBorder(),
-                        ),
-                        onChanged: (value) =>
-                            setState(() => _selectedGender = value),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -675,41 +647,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   },
                 ),
                 const SizedBox(height: 16),
-                // TextFormField(
-                //   controller: _nameController,
-                //   decoration: const InputDecoration(
-                //     labelText: '备注',
-                //     border: UnderlineInputBorder(),
-                //   ),
-                // ),
-                // const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _ageController,
-                        decoration: const InputDecoration(
-                          labelText: '年龄',
-                          border: UnderlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _selectedGender,
-                        decoration: const InputDecoration(
-                          labelText: '性别',
-                          border: UnderlineInputBorder(),
-                        ),
-                        onChanged: (value) =>
-                            setState(() => _selectedGender = value),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 TextFormField(
                   controller: _briefController,
                   decoration: const InputDecoration(
@@ -795,7 +732,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     _nameController.dispose();
     _descriptionController.dispose();
     _categoryController.dispose();
-    _ageController.dispose();
     _briefController.dispose();
     super.dispose();
   }

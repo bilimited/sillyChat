@@ -8,10 +8,10 @@ class ChatOptionModel {
   String name;
   String messageTemplate = "{{msg}}";
   LLMRequestOptions requestOptions;
-  // List<PromptModel> prompts = []; // 新增：存储实际的PromptModel对象
-  List<int> promptId = [];
+  List<PromptModel> prompts = []; // 新增：存储实际的PromptModel对象
+  // List<int> promptId = [];
 
-  List<PromptModel> get prompts {
+  static List<PromptModel> getPromptsbyId(List<int> promptId) {
     final PromptController controller = Get.find();
     return promptId
         .map((p) {
@@ -21,13 +21,13 @@ class ChatOptionModel {
         .toList();
   }
 
-  ChatOptionModel(
-      {required this.id,
-      required this.name,
-      this.messageTemplate = "{{msg}}",
-      required this.requestOptions,
-      // required this.prompts,
-      required this.promptId});
+  ChatOptionModel({
+    required this.id,
+    required this.name,
+    this.messageTemplate = "{{msg}}",
+    required this.requestOptions,
+    required this.prompts,
+  });
 
   factory ChatOptionModel.fromJson(Map<String, dynamic> json) {
     return ChatOptionModel(
@@ -37,9 +37,12 @@ class ChatOptionModel {
       requestOptions: json['requestOptions'] != null
           ? LLMRequestOptions.fromJson(json['requestOptions'])
           : const LLMRequestOptions(messages: []),
-      promptId:
-          (json['promptId'] as List<dynamic>?)?.map((e) => e as int).toList() ??
-              [],
+      prompts: json['prompts'] != null
+          ? (json['prompts'] as List<dynamic>)
+              .map((p) => PromptModel.fromJson(p as Map<String, dynamic>))
+              .toList()
+          : getPromptsbyId((json['promptId'] as List<dynamic>?)?.map((e) => e as int).toList() ??
+               []), // 版本迁移用
     );
   }
 
@@ -49,8 +52,7 @@ class ChatOptionModel {
         'messageTemplate': messageTemplate,
         'requestOptions': requestOptions.toJson()
           ..addAll({'max_history_length': requestOptions.maxHistoryLength}),
-        // 'prompts': prompts.map((p) => p.toJson()).toList(),
-        'promptId': promptId,
+        'prompts': prompts.map((p) => p.toJson()).toList(),
       };
 
   ChatOptionModel copyWith({
@@ -65,8 +67,8 @@ class ChatOptionModel {
       name: name ?? this.name,
       messageTemplate: messageTemplate ?? this.messageTemplate,
       requestOptions: requestOptions ?? this.requestOptions,
-      // prompts: prompts ?? this.prompts,
-      promptId: prompts?.map((p) => p.id).toList() ?? this.promptId,
+      prompts: prompts ?? this.prompts,
+      //promptId: prompts?.map((p) => p.id).toList() ?? this.promptId,
     );
   }
 }

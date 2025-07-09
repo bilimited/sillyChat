@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../models/api_model.dart';
-import '../models/vault_settings.dart';
+import '../models/settings/vault_settings.dart';
 
 // 库配置
 class VaultSettingController extends GetxController {

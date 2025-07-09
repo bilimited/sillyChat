@@ -52,9 +52,8 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
 
     setState(() => isGenerating = true);
 
-    var promptContent = selectedPrompt?.BuildCharacterSystemPrompt(
-            selectedPrompt!.content, widget.character) ??
-        '**用户没有选择Prompt!请提示“请选择Propmt”。**';
+    var promptContent = PromptModel.BuildCharacterSystemPrompt(
+        selectedPrompt!.content, widget.character);
 
     promptContent =
         promptContent.replaceAll("<request>", _requestController.text);
@@ -105,7 +104,6 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
                         border: OutlineInputBorder(),
                       ),
                       items: _promptController.prompts
-                          .where((p) => p.category == PromptCategory.character)
                           .map((p) => DropdownMenuItem(
                                 value: p,
                                 child: Text(p.name),

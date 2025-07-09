@@ -7,18 +7,19 @@ import 'package:get/get.dart';
 /// [context] 安卓端有些页面无法跳转，需要用另一种方法跳转
 /// 返回Future<T?>，可await获取返回值
 Future<T?> customNavigate<T>(Widget page, {BuildContext? context}) async {
+  
   if (SillyChatApp.isDesktop()) {
     // 桌面端：用Dialog包裹页面
     return await Get.dialog<T>(
       Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         elevation: 16, // 提高阴影
         shadowColor: Colors.black.withOpacity(0.3), // 自定义阴影颜色
         insetPadding: EdgeInsets.symmetric(horizontal: 100, vertical: 50),
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // 防止内容与圆角重叠
+          padding: const EdgeInsets.all(12.0), // 防止内容与圆角重叠
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 600,

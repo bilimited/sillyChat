@@ -1,3 +1,4 @@
+import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ void MigrationStart(){
   for (var character in characterController.characters) {
     // 创建一个临时的ChatModel，用于构建提示词
     var prompt = archivePrompt.content;
-    prompt = archivePrompt.BuildCharacterSystemPrompt(prompt, character);
+    prompt = PromptModel.BuildCharacterSystemPrompt(prompt, character);
     //prompt = archivePrompt.BuildRelationsPrompt(prompt, character, characterController, null);
     
     // 更新角色的archive属性

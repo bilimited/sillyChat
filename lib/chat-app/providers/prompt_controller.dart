@@ -29,7 +29,6 @@ class PromptController extends GetxController {
       if (await file.exists()) {
         final String contents = await file.readAsString();
         final List<dynamic> jsonList = json.decode(contents);
-        print(contents);
         prompts.value =
             jsonList.map((json) => PromptModel.fromJson(json)).toList();
       }
@@ -74,20 +73,6 @@ class PromptController extends GetxController {
     await savePrompts();
   }
 
-  // 获取特定类别的提示词
-  List<PromptModel> getPromptsByCategory(PromptCategory category) {
-    return _sortPrompts(prompts.where((p) => p.category == category).toList());
-  }
-
-  // 获取自定义类别的提示词
-  List<PromptModel> getPromptsByCustomCategory(String customCategory) {
-    return prompts
-        .where((p) =>
-            p.category == PromptCategory.custom &&
-            p.customCategory == customCategory)
-        .toList();
-  }
-
   // 根据名称和角色获取提示词
   PromptModel? getPromptByNameAndRole(String name, String role) {
     return prompts.firstWhereOrNull((p) => p.name == name && p.role == role);
@@ -102,20 +87,9 @@ class PromptController extends GetxController {
     final prompt = prompts.removeAt(oldIndex);
     prompts.insert(newIndex, prompt);
     update();
-    // 可选：保存新的排序到持久化存储
     savePrompts();
   }
 
-  List<PromptModel> _sortPrompts(List<PromptModel> prompts) {
-    switch (_sortMethod.value) {
-      case PromptSort.timeAsc:
-        return prompts..sort((a, b) => a.updateDate.compareTo(b.updateDate));
-      case PromptSort.timeDesc:
-        return prompts..sort((a, b) => b.updateDate.compareTo(a.updateDate));
-      case PromptSort.name:
-        return prompts..sort((a, b) => a.name.compareTo(b.name));
-    }
-  }
 }
 
 enum PromptSort {

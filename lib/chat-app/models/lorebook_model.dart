@@ -9,7 +9,9 @@ class LorebookModel {
   final String content;
 
   /// 关键词列表，用于传统匹配（如果启用）
-  final List<String> keywords;
+  final String keywords;
+
+  final MatchingLogic logic;
 
   /// 激活条件：可以设置为 Always（总是激活），Keywords（关键词激活），或 Manual（手动激活，用于RAG等）
   final ActivationType activationType;
@@ -29,28 +31,20 @@ class LorebookModel {
   /// 最后更新时间
   final DateTime updatedAt;
 
-  // 可选：用于RAG的额外字段，例如：
-  // 如果内容过长，是否需要进行分块处理（chunking）
-  final bool enableChunkingForRAG;
-  // chunk的大小（tokens）
-  final int? chunkSize;
-  // chunk重叠大小
-  final int? chunkOverlap;
 
   LorebookModel({
     required this.id,
     required this.name,
     required this.content,
-    this.keywords = const [],
+    this.keywords = '',
     this.activationType = ActivationType.keywords,
     this.activationDepth = 3, // 默认回溯3条消息
     this.priority = 0, // 默认优先级
     this.tags = const [],
+    this.logic = MatchingLogic.or,
     DateTime? createdAt,
     DateTime? updatedAt,
-    this.enableChunkingForRAG = false,
-    this.chunkSize,
-    this.chunkOverlap,
+
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -66,9 +60,6 @@ class LorebookModel {
         'tags': tags,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
-        'enableChunkingForRAG': enableChunkingForRAG,
-        'chunkSize': chunkSize,
-        'chunkOverlap': chunkOverlap,
       };
 
   factory LorebookModel.fromJson(Map<String, dynamic> json) {
@@ -76,7 +67,7 @@ class LorebookModel {
       id: json['id'],
       name: json['name'],
       content: json['content'],
-      keywords: List<String>.from(json['keywords'] ?? []),
+      keywords: json['keywords'],
       activationType: ActivationType.values.firstWhere(
           (e) => e.toString().split('.').last == json['activationType'],
           orElse: () => ActivationType.keywords),
@@ -85,9 +76,6 @@ class LorebookModel {
       tags: List<String>.from(json['tags'] ?? []),
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
-      enableChunkingForRAG: json['enableChunkingForRAG'] ?? false,
-      chunkSize: json['chunkSize'],
-      chunkOverlap: json['chunkOverlap'],
     );
   }
 }
@@ -97,4 +85,10 @@ enum ActivationType {
   keywords, // 通过关键词匹配激活
   rag, // 通过语义相似性（RAG）激活
   manual, // 手动激活/停用（可能用于特殊场景或调试）
+}
+
+enum MatchingLogic{
+  and,
+  or,
+  regex
 }

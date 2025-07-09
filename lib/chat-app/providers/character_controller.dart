@@ -36,7 +36,6 @@ class CharacterController extends GetxController {
         final String contents = await file.readAsString();
         
         final List<dynamic> jsonList = json.decode(contents);
-        print(contents);
         characters.value = jsonList
             .map((json) => CharacterModel.fromJson(json))
             .toList();

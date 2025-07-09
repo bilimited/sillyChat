@@ -26,10 +26,14 @@ class _EditRelationshipState extends State<EditRelationship> {
   final _characterController = Get.find<CharacterController>();
   late Map<int, Relation> _relations;
 
+  // 新增：用于排序的关系列表
+  late List<MapEntry<int, Relation>> _relationList;
+
   @override
   void initState() {
     super.initState();
     _relations = Map.from(widget.relations);
+    _relationList = _relations.entries.toList();
   }
 
   void _addRelation() async {
@@ -54,6 +58,7 @@ class _EditRelationshipState extends State<EditRelationship> {
     if (result != null) {
       setState(() {
         _relations[result.id] = Relation(targetId: result.id);
+        _relationList = _relations.entries.toList();
         widget.onChanged(_relations);
       });
     }
@@ -62,14 +67,20 @@ class _EditRelationshipState extends State<EditRelationship> {
   void _removeRelation(int id) {
     setState(() {
       _relations.remove(id);
+      _relationList = _relations.entries.toList();
       widget.onChanged(_relations);
     });
   }
 
-  @override
-  void dispose() {
-    print("--- dispose");
-    super.dispose();
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) newIndex -= 1;
+      final item = _relationList.removeAt(oldIndex);
+      _relationList.insert(newIndex, item);
+      // 重新生成 _relations 保持顺序
+      _relations = {for (var e in _relationList) e.key: e.value};
+      widget.onChanged(_relations);
+    });
   }
 
   @override
@@ -77,79 +88,91 @@ class _EditRelationshipState extends State<EditRelationship> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ..._relations.entries.map((entry) {
-          final targetChar = _characterController.getCharacterById(entry.key);
-          final relation = entry.value;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              key: Key(targetChar.id.toString()),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+        // 用 ReorderableListView 替换原来的 Column
+        SizedBox(
+          height: 56.0 * _relationList.length + 80, // 估算高度，防止溢出
+          child: ReorderableListView(
+            shrinkWrap: true,
+            physics: const ScrollPhysics(),
+            onReorder: _onReorder,
+            children: [
+              for (final entry in _relationList)
+                Padding(
+                  key: ValueKey(entry.key),
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundImage: targetChar.avatar.isNotEmpty
-                                ? FileImage(File(targetChar.avatar))
-                                : null,
-                            child: targetChar.avatar.isEmpty
-                                ? Text(targetChar.roleName[0])
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(targetChar.roleName),
-                          const Text(' 是我的 '),
-                          Expanded(
-                            child: TextFormField(
-                              initialValue: relation.type ?? '',
-                              decoration: const InputDecoration(
-                                hintText: '关系',
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundImage: _characterController.getCharacterById(entry.key).avatar.isNotEmpty
+                                      ? FileImage(File(_characterController.getCharacterById(entry.key).avatar))
+                                      : null,
+                                  child: _characterController.getCharacterById(entry.key).avatar.isEmpty
+                                      ? Text(_characterController.getCharacterById(entry.key).roleName[0])
+                                      : null,
                                 ),
+                                const SizedBox(width: 8),
+                                Text(_characterController.getCharacterById(entry.key).roleName),
+                                const Text(' 是我的 '),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: entry.value.type ?? '',
+                                    decoration: const InputDecoration(
+                                      hintText: '关系',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      entry.value.type = value;
+                                      widget.onChanged(_relations);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              initialValue: entry.value.brief ?? '',
+                              decoration: const InputDecoration(
+                                hintText: '关系描述（可选）',
+                                border: OutlineInputBorder(),
                               ),
+                              style: TextStyle(fontSize: 13),
+                              maxLines: null,
+                              minLines: 2,
                               onChanged: (value) {
-                                relation.type = value;
+                                entry.value.brief = value;
                                 widget.onChanged(_relations);
                               },
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        initialValue: relation.brief ?? '',
-                        decoration: const InputDecoration(
-                          hintText: '关系描述（可选）',
-                          border: OutlineInputBorder(),
+                          ],
                         ),
-                        style: TextStyle(fontSize: 13),
-                        maxLines: null,
-                        minLines: 2,
-                        onChanged: (value) {
-                          relation.brief = value;
-                          widget.onChanged(_relations);
-                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => _removeRelation(entry.key),
+                      ),
+                      // 拖拽手柄
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, top: 8),
+                        child: Icon(Icons.drag_handle),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => _removeRelation(entry.key),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+            ],
+          ),
+        ),
         TextButton.icon(
           onPressed: _addRelation,
           icon: const Icon(Icons.add),

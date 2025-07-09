@@ -172,7 +172,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                           onPressed: () {
                             Get.dialog(
                               AlertDialog(
-                                title: const Text('切换对话配置'),
+                                title: const Text('切换对话预设'),
                                 content: SizedBox(
                                   width: double.maxFinite,
                                   child: ListView.builder(

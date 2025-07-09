@@ -42,7 +42,6 @@ class ChatController extends GetxController {
             ))
         .toList();
     return messagesToPaste;
-    
   }
 
   // 默认聊天为：应用启动（PC端）、找不到聊天、创建群聊时使用的聊天对象
@@ -226,7 +225,7 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       print('保存聊天数据失败: $e');
-      handleSevereError('Save Failed!',e);
+      handleSevereError('Save Failed!', e);
       rethrow;
     }
   }
@@ -389,9 +388,12 @@ class ChatController extends GetxController {
   // sender!=null ,则为群聊模式
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
     var sysPrompts = chat.prompts
+        .where((prompt) => prompt.isEnable)
         .map((prompt) => LLMMessage(
               content: prompt.getContent(chat, sender: sender),
               role: prompt.role,
+              priority: prompt.priority ?? 99999,
+              isPrompt: true,
             ))
         .toList();
 
@@ -403,66 +405,81 @@ class ChatController extends GetxController {
     for (int i = 0; i < chat.messages.length; i++) {
       if (chat.messages[i].isPinned == true) {
         pinnedIndexes.add(i);
-      }else if(chat.messages[i].isHidden == true){
+      } else if (chat.messages[i].isHidden == true) {
         hiddenIndexs.add(i);
       }
     }
-    
+
     // 需要保留的消息索引：末尾maxMsgs条+所有pinned-所有hidden
     final keepIndexes = <int>{
       ...List.generate(total - start, (i) => start + i),
       ...pinnedIndexes
     }..removeAll(hiddenIndexs);
 
+    // 计算priority，使最后一条消息priority为0，倒数第二条为1，依此类推
+    final msgIndexes = List.generate(chat.messages.length, (i) => i)
+        .where((i) => keepIndexes.contains(i))
+        .toList();
     final msglst = [
       ...sysPrompts,
-      ...List.generate(chat.messages.length, (i) => i)
-          .where((i) => keepIndexes.contains(i))
-          .map((i) {
+      ...msgIndexes.map((i) {
         final msg = chat.messages[i];
         final content = propressMessage(msg.content, chat.requestOptions);
+        int priority = msgIndexes.length - 1 - msgIndexes.indexOf(i); // 最后一条为0
         if (sender == null) {
           return LLMMessage(
-              content: content,
-              role: msg.isAssistant ? "assistant" : "user",
-              fileDirs: msg.resPath);
+            content: content,
+            role: msg.isAssistant ? "assistant" : "user",
+            fileDirs: msg.resPath,
+            priority: priority,
+          );
         } else {
           return LLMMessage(
               content: msg.sender == sender.id
                   ? content
                   : "${characterController.getCharacterById(msg.sender).roleName}:\n${content}",
               role: msg.sender == sender.id ? "assistant" : "user",
-              fileDirs: msg.resPath);
+              fileDirs: msg.resPath,
+              priority: priority);
         }
       })
     ];
 
-    // 修正最后一条消息内容
-    if (msglst.isNotEmpty) {
-      final last = msglst.last;
-      final fixedContent =
-          chat.messageTemplate.replaceAll('{{msg}}', last.content);
-      if (sender != null) {
-        // 强制修正发言者；防止人名重复出现
-        msglst[msglst.length - 1] = LLMMessage(
-          content: "$fixedContent\n${sender.roleName}:",
-          role: last.role,
-          fileDirs: last.fileDirs,
-        );
-      } else {
-        msglst[msglst.length - 1] = LLMMessage(
-          content: fixedContent,
-          role: last.role,
-          fileDirs: last.fileDirs,
-        );
+    // 按priority升序排序，priority相同则sysPrompts更靠后（稳定排序）
+    msglst.sort((b, a) {
+      if (a.priority != b.priority) {
+        return a.priority.compareTo(b.priority);
       }
-    }
-    if (sender == null && msglst.isNotEmpty && msglst.last.role != 'user') {
-      msglst.add(LLMMessage(
-        content: '请接着刚才的话题继续。',
-        role: 'user',
-      ));
-    }
+      if (a.isPrompt == b.isPrompt) return 0;
+      return a.isPrompt ? -1 : 1; // sysPrompts更靠后
+    });
+
+    // 修正最后一条消息内容
+    // if (msglst.isNotEmpty) {
+    //   final last = msglst.last;
+    //   final fixedContent =
+    //       chat.messageTemplate.replaceAll('{{msg}}', last.content);
+    //   if (sender != null) {
+    //     // 强制修正发言者；防止人名重复出现
+    //     msglst[msglst.length - 1] = LLMMessage(
+    //       content: "$fixedContent\n${sender.roleName}:",
+    //       role: last.role,
+    //       fileDirs: last.fileDirs,
+    //     );
+    //   } else {
+    //     msglst[msglst.length - 1] = LLMMessage(
+    //       content: fixedContent,
+    //       role: last.role,
+    //       fileDirs: last.fileDirs,
+    //     );
+    //   }
+    // }
+    // if (sender == null && msglst.isNotEmpty && msglst.last.role != 'user') {
+    //   msglst.add(LLMMessage(
+    //     content: '请接着刚才的话题继续。',
+    //     role: 'user',
+    //   ));
+    // }
     return msglst;
   }
 

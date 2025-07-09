@@ -58,40 +58,13 @@ class _NewChatPageState extends State<NewChatPage> {
                 ),
               ),
             ),
-            // Padding(
-            //   padding: EdgeInsets.all(16),
-            //   child: DropdownButtonFormField<ChatMode>(
-            //     value: _selectedMode,
-            //     decoration: InputDecoration(
-            //       labelText: '对话模式',
-            //       border: OutlineInputBorder(),
-            //     ),
-            //     items: ChatMode.values.map((mode) {
-            //       String displayName = {
-            //             ChatMode.auto: '自动',
-            //             ChatMode.group: '群聊',
-            //             ChatMode.manual: '手动',
-            //           }[mode] ??
-            //           mode.toString();
 
-            //       return DropdownMenuItem(
-            //         value: mode,
-            //         child: Text(displayName),
-            //       );
-            //     }).toList(),
-            //     onChanged: (ChatMode? newValue) {
-            //       setState(() {
-            //         _selectedMode = newValue;
-            //       });
-            //     },
-            //   ),
-            // ),
             Padding(
               padding: EdgeInsets.all(16),
               child: Obx(() => DropdownButtonFormField<ChatOptionModel>(
                     value: _selectedOption,
                     decoration: InputDecoration(
-                      labelText: '对话配置',
+                      labelText: '对话预设',
                       border: OutlineInputBorder(),
                     ),
                     items: _chatOptionController.chatOptions.map((option) {

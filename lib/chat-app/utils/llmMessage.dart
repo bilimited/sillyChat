@@ -8,11 +8,15 @@ class LLMMessage {
   final String content;
   final String role; // 如 "user"、"assistant"、"system"
   final List<String> fileDirs; // 上传文件目录列表
+  final int priority; // 消息优先级，默认99999
+  final bool isPrompt; // prompt消息比常规消息优先级更高
 
   LLMMessage({
     required this.content,
     required this.role,
     this.fileDirs = const [],
+    this.priority = 99999,
+    this.isPrompt = false,
   });
 
   /// 从 MessageModel 创建

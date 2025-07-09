@@ -21,7 +21,6 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
   final PromptController _promptController = Get.find();
   final TextEditingController _searchController = TextEditingController();
   final RxString _searchText = ''.obs;
-  final Rx<PromptCategory?> _selectedCategory = Rx<PromptCategory?>(null);
 
   @override
   void initState() {
@@ -71,18 +70,7 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 详情预览
-              // Text(
-              //   prompt.content.length > 50 
-              //     ? '${prompt.content.substring(0, 50)}...'
-              //     : prompt.content,
-              //   style: TextStyle(
-              //     fontSize: 13,
-              //     color: Colors.grey[600],
-              //   ),
-              //   maxLines: 2,
-              // ),
-              // SizedBox(height: 4),
+
               Text(
                 '更新时间: ${prompt.updateDate.toString().split('.')[0]}',
                 style: TextStyle(fontSize: 11),
@@ -149,47 +137,12 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
                   ),
                 ),
                 SizedBox(width: 8),
-                Expanded(
-                  flex: 1,
-                  child: DropdownButtonFormField<PromptCategory?>(
-                    value: _selectedCategory.value,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    hint: Text('选择类别'),
-                    items: [
-                      DropdownMenuItem<PromptCategory?>(
-                        value: null,
-                        child: Text('全部'),
-                      ),
-                      ...PromptCategory.values.map((category) {
-                        return DropdownMenuItem<PromptCategory>(
-                          value: category,
-                          child: Text(category.toString().split('.').last),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (value) {
-                      _selectedCategory.value = value;
-                    },
-                  ),
-                ),
               ],
             ),
           ),
           Expanded(
             child: Obx(() {
-              var prompts = _selectedCategory.value == null
-                  ? _promptController.prompts
-                  : _promptController.getPromptsByCategory(_selectedCategory.value!);
-              
-              prompts = prompts
-                .where((p) => 
-                  p.name.toLowerCase().contains(_searchText.value.toLowerCase()) ||
-                  p.content.toLowerCase().contains(_searchText.value.toLowerCase())
-                ).toList();
-
+              var prompts = _promptController.prompts;
               if (widget.isSelector) {
                 return ListView.builder(
                   itemCount: prompts.length,

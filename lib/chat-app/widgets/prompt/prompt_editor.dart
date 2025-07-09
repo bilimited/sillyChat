@@ -26,6 +26,9 @@ class _PromptEditorState extends State<PromptEditor> {
   @override
   void initState() {
     super.initState();
+    if (widget.prompts.where((p) => p.id < 0).isNotEmpty) {
+      widget.prompts.removeWhere((p) => p.id < 0);
+    }
   }
 
   void _updatePrompts() {
@@ -42,9 +45,9 @@ class _PromptEditorState extends State<PromptEditor> {
   }
 
   Future<void> _replacePrompt(int index) async {
-    final int? selected =
-        await customNavigate(PromptManagerPage(isSelector: true),context: context);
-    // await Get.to(() => PromptManagerPage(isSelector: true));
+    final int? selected = await customNavigate(
+        PromptManagerPage(isSelector: true),
+        context: context);
     if (selected == null) return;
 
     final selectedPrompt = _promptController.getPromptById(selected);
@@ -55,7 +58,6 @@ class _PromptEditorState extends State<PromptEditor> {
           content: selectedPrompt.content,
           role: selectedPrompt.role,
           name: selectedPrompt.name,
-          category: selectedPrompt.category,
         );
         _updatePrompts();
       });
@@ -63,6 +65,8 @@ class _PromptEditorState extends State<PromptEditor> {
   }
 
   Widget _buildPromptCard(PromptModel prompt, int index) {
+    final colors = Theme.of(context).colorScheme;
+
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
       child: ListTile(
@@ -73,24 +77,42 @@ class _PromptEditorState extends State<PromptEditor> {
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
-            prompt.role,
+            (const {
+                  'system': '系统',
+                  'user': '用户',
+                  'assistant': '助手',
+                })[prompt.role] ??
+                '未知',
             style: TextStyle(fontSize: 11),
           ),
         ),
-        title: Text(
-          prompt.name.isEmpty
-              ? prompt.content.isEmpty
-                  ? "空白消息"
-                  : prompt.content
-              : prompt.name,
-          style: TextStyle(fontSize: 13),
-          maxLines: 3,
+        title: Row(
+          children: [
+            Text(
+              prompt.name.isEmpty
+                  ? prompt.content.isEmpty
+                      ? "空白提示词"
+                      : prompt.content
+                  : prompt.name,
+              style: TextStyle(
+                  fontSize: 13, color: prompt.isEnable ? null : colors.outline),
+              maxLines: 3,
+            ),
+            SizedBox(width: 5,),
+            if (prompt.priority != null)
+              Text(
+                '@${prompt.priority}',
+                style: TextStyle(color: colors.outline,fontSize: 13),
+              )
+          ],
         ),
         onTap: () async {
-          PromptModel? newPrompt = await customNavigate(EditPromptPage(
-            prompt: prompt,
-            editTempPrompt: true,
-          ),context: context);
+          PromptModel? newPrompt = await customNavigate(
+              EditPromptPage(
+                prompt: prompt,
+                editTempPrompt: true,
+              ),
+              context: context);
           if (newPrompt == null) {
             return;
           }
@@ -98,19 +120,34 @@ class _PromptEditorState extends State<PromptEditor> {
             prompt.name = newPrompt.name;
             prompt.role = newPrompt.role;
             prompt.content = newPrompt.content;
+            prompt.priority = newPrompt.priority;
           });
         },
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.swap_horiz),
-              onPressed: () => _replacePrompt(index),
-            ),
-            IconButton(
               icon: Icon(Icons.delete_outline),
               onPressed: () => _deletePrompt(prompt),
             ),
+            Transform.scale(
+              scale: 0.6,
+              child: Switch(
+                value: prompt.isEnable,
+                onChanged: (bool value) {
+                  setState(() {
+                    prompt.isEnable = value;
+                    _updatePrompts();
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            // IconButton(
+            //   icon: Icon(Icons.swap_horiz),
+            //   onPressed: () => _replacePrompt(index),
+            // ),
           ],
         ),
       ),
@@ -157,7 +194,6 @@ class _PromptEditorState extends State<PromptEditor> {
                     content: '',
                     role: 'system',
                     name: '',
-                    category: PromptCategory.custom,
                   );
                   setState(() {
                     widget.prompts.add(newPrompt);
@@ -169,8 +205,9 @@ class _PromptEditorState extends State<PromptEditor> {
               ),
               ElevatedButton.icon(
                 onPressed: () async {
-                  final int? selected =
-                      await customNavigate(PromptManagerPage(isSelector: true),context: context);
+                  final int? selected = await customNavigate(
+                      PromptManagerPage(isSelector: true),
+                      context: context);
                   if (selected == null) return;
                   final selectedPrompt =
                       _promptController.getPromptById(selected);
@@ -180,7 +217,6 @@ class _PromptEditorState extends State<PromptEditor> {
                       content: selectedPrompt.content,
                       role: selectedPrompt.role,
                       name: selectedPrompt.name,
-                      category: selectedPrompt.category,
                     );
                     setState(() {
                       widget.prompts.add(promptCopy);

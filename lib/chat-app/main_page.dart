@@ -50,36 +50,6 @@ class _MainPageState extends State<MainPage> {
       _vaultSettingController.myId.value = character.id;
       await _vaultSettingController.saveSettings();
     }
-    // showDialog(
-    //   context: context,
-    //   builder: (context) {
-    //     return AlertDialog(
-    //       title: const Text('选择角色'),
-    //       content: SizedBox(
-    //         width: double.maxFinite,
-    //         child: Obx(
-    //           () => ListView.builder(
-    //             shrinkWrap: true,
-    //             itemCount: _characterController.characters.length,
-    //             itemBuilder: (context, index) {
-    //               final character = _characterController.characters[index];
-    //               return ListTile(
-    //                 leading: CircleAvatar(
-    //                   backgroundImage: Image.file(File(character.avatar)).image,
-    //                 ),
-    //                 title: Text(character.remark),
-    //                 onTap: () {
-    //                   _characterController.myId = character.id;
-    //                   Navigator.of(context).pop();
-    //                 },
-    //               );
-    //             },
-    //           ),
-    //         ),
-    //       ),
-    //     );
-    //   },
-    // );
   }
 
   void refleshAll() {
@@ -349,7 +319,7 @@ class _MainPageState extends State<MainPage> {
                           ),
                           NavigationRailDestination(
                             icon: const Icon(Icons.settings_applications),
-                            label: const Text('对话配置'),
+                            label: const Text('对话预设'),
                           ),
                           NavigationRailDestination(
                             icon: const Icon(Icons.search),
@@ -607,7 +577,7 @@ class _MainPageState extends State<MainPage> {
           NavigationDestination(
             icon: Icon(Icons.settings_applications_outlined),
             selectedIcon: Icon(Icons.settings_applications),
-            label: '聊天配置',
+            label: '聊天预设',
           ),
         ],
       ),
