@@ -27,6 +27,8 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  static const String AppVersion = 'v1.9.0-alpha';
+
   int _currentIndex = 0;
   final VaultSettingController _vaultSettingController = Get.find();
   final SettingController _settingController = Get.find();
@@ -45,8 +47,9 @@ class _MainPageState extends State<MainPage> {
   CharacterModel get me => _characterController.me;
 
   void _showCharacterSelectDialog() async {
-    CharacterModel? character = await customNavigate<CharacterModel>(CharacterSelector());
-    if(character != null){
+    CharacterModel? character =
+        await customNavigate<CharacterModel>(CharacterSelector());
+    if (character != null) {
       _vaultSettingController.myId.value = character.id;
       await _vaultSettingController.saveSettings();
     }
@@ -270,6 +273,7 @@ class _MainPageState extends State<MainPage> {
               title: const Text('上传到云端'),
               onTap: _uploadAll,
             ),
+            AboutListTile(),
           ],
         );
       },
@@ -351,6 +355,8 @@ class _MainPageState extends State<MainPage> {
                               _showBackupDialog();
                             } else if (value == 2) {
                               customNavigate(VaultManagerPage());
+                            } else if(value == 3){
+                              showLicensePage(context: context);
                             }
                           },
                           itemBuilder: (context) => [
@@ -383,6 +389,16 @@ class _MainPageState extends State<MainPage> {
                                   Icon(Icons.switch_camera, size: 20),
                                   SizedBox(width: 8),
                                   Text('切换仓库'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 3,
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.info, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('查看第三方证书'),
                                 ],
                               ),
                             ),

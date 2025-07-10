@@ -29,7 +29,7 @@ class SillyChatApp extends StatelessWidget {
   );
   final defaultThemeNight = ThemeData(
     colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue, brightness: Brightness.dark),
+        seedColor: const Color.fromARGB(255, 135, 191, 237), brightness: Brightness.dark),
     useMaterial3: true,
     fontFamily: Platform.isWindows ? "思源黑体" : null,
   );

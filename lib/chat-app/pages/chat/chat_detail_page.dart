@@ -619,6 +619,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     String afterThink = '';
     bool isThinking = false;
 
+    // 内置正则：渲染<think>
     if (message.content.contains('<think>')) {
       int startIndex = message.content.indexOf('<think>') + 7;
       int endIndex = message.content.indexOf('</think>');

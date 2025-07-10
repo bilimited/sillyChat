@@ -58,7 +58,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       requestOptions: _requestOptions,
       prompts: _prompts,
       messageTemplate: _msgTemplateController.text,
-      //promptId: _promptId,
     );
 
     if (isEditing) {

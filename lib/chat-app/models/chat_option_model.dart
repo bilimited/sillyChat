@@ -41,9 +41,19 @@ class ChatOptionModel {
           ? (json['prompts'] as List<dynamic>)
               .map((p) => PromptModel.fromJson(p as Map<String, dynamic>))
               .toList()
-          : getPromptsbyId((json['promptId'] as List<dynamic>?)?.map((e) => e as int).toList() ??
-               []), // 版本迁移用
+          : getPromptsbyId((json['promptId'] as List<dynamic>?)
+                  ?.map((e) => e as int)
+                  .toList() ??
+              []), // 版本迁移用
     );
+  }
+
+  factory ChatOptionModel.empty() {
+    return ChatOptionModel(
+        id: 0,
+        name: '空预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: []);
   }
 
   Map<String, dynamic> toJson() => {
@@ -55,7 +65,8 @@ class ChatOptionModel {
         'prompts': prompts.map((p) => p.toJson()).toList(),
       };
 
-  ChatOptionModel copyWith({
+  ChatOptionModel copyWith(
+    bool isDeep, {
     int? id,
     String? name,
     String? messageTemplate,
@@ -66,8 +77,10 @@ class ChatOptionModel {
       id: id ?? this.id,
       name: name ?? this.name,
       messageTemplate: messageTemplate ?? this.messageTemplate,
-      requestOptions: requestOptions ?? this.requestOptions,
-      prompts: prompts ?? this.prompts,
+      requestOptions: requestOptions ??
+          (isDeep ? this.requestOptions.copyWith() : this.requestOptions),
+      prompts: prompts ??
+          (isDeep ? this.prompts.map((p) => p.copy()).toList() : this.prompts),
       //promptId: prompts?.map((p) => p.id).toList() ?? this.promptId,
     );
   }

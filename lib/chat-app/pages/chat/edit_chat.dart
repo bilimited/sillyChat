@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
@@ -25,22 +25,25 @@ class EditChatPage extends StatefulWidget {
 class _EditChatPageState extends State<EditChatPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  late ChatModel chat;
   final _formKey = GlobalKey<FormState>();
   final ChatController _chatController = Get.find();
   final CharacterController _characterController = Get.find();
-  
+  final ChatOptionController _chatOptionController = Get.find();
+
+  // 傻逼Flutter。强制刷新
+  Key _advanceTabKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
+    chat = widget.chat;
     _tabController = TabController(length: 3, vsync: this);
-
   }
 
   void _onOptionsDirty() {
-    setState(() {
-      widget.chat.currectOption = -1;
-    });
+    setState(() {});
   }
 
   @override
@@ -65,7 +68,6 @@ class _EditChatPageState extends State<EditChatPage>
             ],
           ),
           actions: [
-            
             IconButton(
               icon: Icon(Icons.content_copy),
               onPressed: () async {
@@ -105,8 +107,9 @@ class _EditChatPageState extends State<EditChatPage>
                         ? '聊天未创建'
                         : '聊天ID：${widget.chat.id}; File ID:${widget.chat.fileId}',
                     style: TextStyle(
-                      color:
-                          widget.chat.id == -1 ? colors.outline : colors.outline,
+                      color: widget.chat.id == -1
+                          ? colors.outline
+                          : colors.outline,
                       fontSize: 12,
                     ),
                   ),
@@ -152,19 +155,6 @@ class _EditChatPageState extends State<EditChatPage>
                             value?.isEmpty ?? true ? '请输入聊天标题' : null,
                       ),
                       SizedBox(height: 16),
-                      TextFormField(
-                        initialValue: widget.chat.messageTemplate,
-                        onChanged: (value) {
-                          widget.chat.messageTemplate = value;
-                        },
-                        decoration: InputDecoration(
-                          labelText: '消息模板',
-                          border: OutlineInputBorder(),
-                          hintText: '在此输入消息模板...',
-                        ),
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                      ),
                     ],
                   )),
             ),
@@ -201,27 +191,6 @@ class _EditChatPageState extends State<EditChatPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('提示词设置',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    SizedBox(height: 16),
-                    PromptEditor(
-                      prompts: widget.chat.prompts,
-                      onPromptsChanged: (newPrompts) {
-                        setState(() => widget.chat.prompts = newPrompts);
-                        _onOptionsDirty();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
                     Text('标签', style: Theme.of(context).textTheme.titleMedium),
                     SizedBox(height: 16),
                     SizedBox(
@@ -231,6 +200,33 @@ class _EditChatPageState extends State<EditChatPage>
                   ],
                 ),
               ),
+            ),
+            Divider(),
+            ListTile(
+              title: Text('查看Prompt'),
+              leading: Icon(Icons.preview),
+              onTap: () {
+                final messages = _chatController.getLLMMessageList(widget.chat);
+                customNavigate(PromptPreviewPage(
+                    messages:
+                        messages.map((ele) => ele.toOpenAIJson()).toList()));
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text('清空聊天记录'),
+              leading: Icon(Icons.delete_sweep),
+              textColor: Colors.orange,
+              iconColor: Colors.orange,
+              onTap: _clearMessages,
+            ),
+            Divider(),
+            ListTile(
+              title: Text('删除群聊'),
+              leading: Icon(Icons.delete_forever),
+              textColor: Colors.red,
+              iconColor: Colors.red,
+              onTap: _deleteChat,
             ),
             SizedBox(
               height: 64,
@@ -371,80 +367,181 @@ class _EditChatPageState extends State<EditChatPage>
   // 高级设置标签页
   Widget _buildAdvancedTab() {
     return ListView(
+      key: _advanceTabKey,
       padding: EdgeInsets.all(16),
       children: [
-        // Card(
-        //   child: Padding(
-        //     padding: EdgeInsets.all(16),
-        //     child: Column(
-        //       crossAxisAlignment: CrossAxisAlignment.start,
-        //       children: [
-        //         Text('请求设置', style: Theme.of(context).textTheme.titleMedium),
-        //         SizedBox(height: 16),
-        //         SwitchListTile(
-        //           title: Text('覆盖角色请求参数'),
-        //           subtitle: Text('开启后将使用角色参数，而不是对话请求参数'),
-        //           value: widget.chat.overriteOption,
-        //           onChanged: (bool value) {
-        //             setState(() {
-        //               widget.chat.overriteOption = value;
-        //             });
-        //           },
-        //         ),
-
-        //       ],
-        //     ),
-        //   ),
-        // ),
-        if (!widget.chat.overriteOption)
-          Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('对话参数设置',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  SizedBox(height: 16),
-                  RequestOptionsEditor(
-                    options: widget.chat.requestOptions,
-                    onChanged: (newOptions) {
-                      setState(() {
-                        widget.chat.requestOptions = newOptions;
-                      });
-                      _onOptionsDirty();
-                    },
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextFormField(
+                  initialValue: chat.chatOption.name,
+                  onChanged: (value) {
+                    chat.chatOption.name = value;
+                  },
+                  decoration: InputDecoration(
+                    labelText: '配置名称',
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ),
+                ),
+                SizedBox(
+                  height: 16,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.download),
+                      label: Text('替换预设'),
+                      onPressed: () async {
+                        Get.dialog(
+                          AlertDialog(
+                            title: const Text('切换对话预设'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount:
+                                    _chatOptionController.chatOptions.length,
+                                itemBuilder: (context, index) {
+                                  final option =
+                                      _chatOptionController.chatOptions[index];
+                                  return ListTile(
+                                    title: Text(option.name),
+                                    onTap: () {
+                                      setState(() {
+                                        chat.initOptions(option);
+                                        Get.back();
+                                      });
+                                      _advanceTabKey = UniqueKey();
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (chat.chatOption.id != 0) ...[
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.refresh),
+                        label: Text('重置预设'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade200,
+                          foregroundColor: Colors.black87,
+                        ),
+                        onPressed: () async {
+                          await Get.dialog(
+                            AlertDialog(
+                              title: Text('重置预设'),
+                              content: Text('确定要重置该预设为默认值吗？此操作不可恢复。'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Get.back(result: false),
+                                  child: Text('取消'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final option = _chatOptionController
+                                        .getChatOptionById(chat.chatOption.id);
+                                    if (option != null) {
+                                      setState(() {
+                                        chat.initOptions(option);
+                                        Get.back();
+                                      });
+                                    }
+                                  },
+                                  child: Text('确定'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.upload),
+                        label: Text('更新预设'),
+                        onPressed: () async {
+                          await Get.dialog(
+                            AlertDialog(
+                              title: Text('更新预设'),
+                              content: Text('确定要用当前聊天配置更新聊天预设吗？此操作不可恢复。'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Get.back(result: false),
+                                  child: Text('取消'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final option = _chatOptionController
+                                        .getChatOptionById(chat.chatOption.id);
+                                    if (option != null) {
+                                      setState(() {
+                                        _chatOptionController.updateChatOption(
+                                            chat.chatOption.copyWith(true),
+                                            null);
+                                        Get.back();
+                                      });
+                                      _advanceTabKey = UniqueKey();
+                                    }
+                                  },
+                                  child: Text('确定'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ]
+                  ],
+                ),
+              ],
             ),
           ),
-        Divider(),
-        ListTile(
-          title: Text('查看Prompt'),
-          leading: Icon(Icons.preview),
-          onTap: () {
-            final messages = _chatController.getLLMMessageList(widget.chat);
-            customNavigate(
-              PromptPreviewPage(messages: messages.map((ele)=>ele.toOpenAIJson()).toList())
-            );
-          },
         ),
-        Divider(),
-        ListTile(
-          title: Text('清空聊天记录'),
-          leading: Icon(Icons.delete_sweep),
-          textColor: Colors.orange,
-          iconColor: Colors.orange,
-          onTap: _clearMessages,
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('提示词设置', style: Theme.of(context).textTheme.titleMedium),
+                SizedBox(height: 16),
+                PromptEditor(
+                  prompts: chat.prompts,
+                  onPromptsChanged: (newPrompts) {
+                    setState(() => chat.prompts = newPrompts);
+                    _onOptionsDirty();
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
-        Divider(),
-        ListTile(
-          title: Text('删除群聊'),
-          leading: Icon(Icons.delete_forever),
-          textColor: Colors.red,
-          iconColor: Colors.red,
-          onTap: _deleteChat,
+        SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('对话参数设置', style: Theme.of(context).textTheme.titleMedium),
+                SizedBox(height: 16),
+                RequestOptionsEditor(
+                  options: chat.requestOptions,
+                  onChanged: (newOptions) {
+                    setState(() {
+                      chat.requestOptions = newOptions;
+                    });
+                    _onOptionsDirty();
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
         SizedBox(
           height: 64,
@@ -453,14 +550,17 @@ class _EditChatPageState extends State<EditChatPage>
     );
   }
 
-  void _saveChanges() async {
-    if(widget.chat.id == -1){
+  void _saveChanges({bool isBack = true}) async {
+    if (widget.chat.id == -1 && isBack) {
       Get.back();
     }
     if (_formKey.currentState?.validate() ?? true) {
-      _chatController.refleshAll();
+      await _chatController.refleshAll();
       await _chatController.saveChats(widget.chat.fileId);
-      Get.back();
+      if (isBack) {
+        Get.back();
+      }
+
       // Get.snackbar('成功', '群聊信息已更新');
     }
   }
@@ -505,7 +605,7 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   void _deleteChat() {
-    if(widget.chat.id == -1){
+    if (widget.chat.id == -1) {
       return;
     }
     Get.dialog(

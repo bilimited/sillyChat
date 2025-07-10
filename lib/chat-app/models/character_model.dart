@@ -17,14 +17,13 @@ class Relation {
 enum MessageStyle {
   common,
   narration,
-
 }
 
 class CharacterModel {
   final int id;
   MessageStyle messageStyle = MessageStyle.common;
 
-  String remark;       // 备注
+  String remark;          // 备注
   String roleName;        // 唯一名称
   String avatar;
   String? description;
@@ -55,8 +54,6 @@ class CharacterModel {
       'name': remark,
       'nickname': roleName,
       'avatar': avatar,
-      // 'gender': gender.toString().split('.').last,
-      // 'age': age,
       'description': description,
       'backgroundImage': backgroundImage,
       'category': category,

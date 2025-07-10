@@ -16,7 +16,7 @@ class ChatOptionController extends GetxController {
           requestOptions: LLMRequestOptions(messages: []),
           prompts: [],
           //promptId: [],
-          )
+        )
       : chatOptions[0];
 
   @override
@@ -63,7 +63,10 @@ class ChatOptionController extends GetxController {
   }
 
   // 更新聊天选项
-  Future<void> updateChatOption(ChatOptionModel chatOption, int index) async {
+  Future<void> updateChatOption(ChatOptionModel chatOption, int? index) async {
+    if (index == null) {
+      index = chatOptions.indexWhere((option) => option.id == chatOption.id);
+    }
     if (index >= 0 && index < chatOptions.length) {
       chatOptions[index] = chatOption;
       await saveChatOptions();
