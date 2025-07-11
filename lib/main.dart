@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
@@ -45,6 +46,7 @@ class SillyChatApp extends StatelessWidget {
   final ChatController chats = Get.put(ChatController());
   final LogController logs = Get.put(LogController());
   final ChatOptionController chatOptions = Get.put(ChatOptionController());
+  final LoreBookController loreBooks = Get.put(LoreBookController());
 
   static void restart() {
     Get.find<CharacterController>().characters.value = [];
@@ -57,6 +59,8 @@ class SillyChatApp extends StatelessWidget {
     Get.find<VaultSettingController>().loadSettings();
     Get.find<ChatOptionController>().chatOptions.value = [];
     Get.find<ChatOptionController>().loadChatOptions();
+    Get.find<LoreBookController>().lorebooks.value = [];
+    Get.find<LoreBookController>().loadLorebooks();
   }
 
   static String getVersion() {
@@ -64,7 +68,7 @@ class SillyChatApp extends StatelessWidget {
   }
 
   static bool isDesktop() {
-    return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+    return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
   }
 
   @override

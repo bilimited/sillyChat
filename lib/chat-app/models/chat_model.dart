@@ -14,7 +14,7 @@ class ChatModel {
   String? backgroundImage;
   String lastMessage;
   String time;
-  int? userId; // 新增：用户ID
+  int? userId; // 用户ID。留空则使用全局用户ID
   int? assistantId; // 新增：助手ID
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];

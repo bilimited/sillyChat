@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/pages/prompt/edit_prompt.dart';
+import 'package:flutter_example/chat-app/pages/other/edit_prompt.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
-import '../../pages/prompt/prompt_manager.dart';
+import '../../pages/other/prompt_manager.dart';
 
 class PromptEditor extends StatefulWidget {
   final List<PromptModel> prompts;

@@ -69,10 +69,12 @@ class PromptModel {
         ? characterController.getCharacterById(chat.assistantId ?? -1)
         : sender;
     var prompt = content;
-    prompt = prompt.replaceAll('<user>',
-        characterController.getCharacterById(chat.userId ?? -1).roleName);
-    prompt = prompt.replaceAll('<userbrief>',
-        characterController.getCharacterById(chat.userId ?? -1).brief ?? '');
+
+    var user = chat.userId == null
+        ? characterController.me
+        : characterController.getCharacterById(chat.userId!);
+    prompt = prompt.replaceAll('<user>', user.roleName);
+    prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);

@@ -36,6 +36,8 @@ class CharacterModel {
 
   List<CharacterModel>? backups;
 
+  List<int> lorebookIds = []; // 关联的世界书ID列表
+
   CharacterModel({
     required this.id,
     required this.remark,
@@ -46,7 +48,12 @@ class CharacterModel {
     this.messageStyle = MessageStyle.common,
     this.brief,
     this.backups,
-  });
+    lorebookIds,
+  }) {
+    if (lorebookIds != null) {
+      this.lorebookIds = lorebookIds;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -66,6 +73,7 @@ class CharacterModel {
           })),
       'messageStyle': messageStyle.toString().split('.').last, // 序列化messageStyle
       'backups': backups!=null ? backups!.map((e) => e.toJson()).toList() : null, // 添加isBackup字段
+      'lorebookIds': lorebookIds, // 添加lorebookIds字段
     };
   }
 
@@ -78,15 +86,16 @@ class CharacterModel {
       description: json['description'],
       category: json['category'],
       brief: json['brief'],
+      lorebookIds: (json['lorebookIds'] as List<dynamic>?)
+          ?.map((e) => e as int)
+          .toList() ?? [],
     );
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
-    // char.gender = json['gender'] ?? '女';
-    // char.age = json['age'] ?? 18;
     // 版本迁移
     if (json['gender'] != null && json['age'] != null) {
       String genderAge = '性别：${json['gender']}，年龄：${json['age']}\n';
-      char.archive = genderAge + (char.archive ?? '');
+      char.archive = genderAge + (char.archive);
       char.brief = genderAge + (char.brief ?? '');
     }
     char.backgroundImage = json['backgroundImage'];
@@ -123,16 +132,13 @@ class CharacterModel {
       brief: brief,
       messageStyle: messageStyle,
       backups: backups?.map((e) => e.copy()).toList(),
+      lorebookIds: List<int>.from(lorebookIds), // 深拷贝lorebookIds
     );
 
     newChar.archive = archive; // 添加archive字段的复制
-
-    // newChar.gender = gender;
-    // newChar.age = age;
     newChar.backgroundImage = backgroundImage;
     newChar.roleName = roleName;
     newChar.messageStyle = messageStyle;
-
     // 深拷贝关系
     relations.forEach((key, value) {
       newChar.relations[key] = Relation(targetId: value.targetId)

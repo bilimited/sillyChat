@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
-import 'package:flutter_example/chat-app/pages/prompt/api_manager.dart';
-import 'package:flutter_example/chat-app/pages/prompt/prompt_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_option_controller.dart';

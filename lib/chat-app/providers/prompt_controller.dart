@@ -7,18 +7,13 @@ import '../models/prompt_model.dart';
 class PromptController extends GetxController {
   final RxList<PromptModel> prompts = <PromptModel>[].obs;
   final String fileName = 'prompts.json';
-  final Rx<PromptSort> _sortMethod = PromptSort.timeDesc.obs;
 
-  PromptSort get sortMethod => _sortMethod.value;
-  set sortMethod(PromptSort value) => _sortMethod.value = value;
 
   @override
   void onInit() {
     super.onInit();
     loadPrompts();
   }
-
-
 
   // 从本地加载提示词数据
   Future<void> loadPrompts() async {
@@ -90,10 +85,4 @@ class PromptController extends GetxController {
     savePrompts();
   }
 
-}
-
-enum PromptSort {
-  timeAsc,
-  timeDesc,
-  name,
 }

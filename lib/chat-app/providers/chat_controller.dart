@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
+import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
@@ -75,7 +76,7 @@ class ChatController extends GetxController {
             lastMessage: "聊天已创建",
             time: DateTime.now().toString(),
             messages: [],
-            userId: characterController.myId,
+            userId: null,
             // characterIds: [],
             mode: ChatMode.auto)
         .obs;
@@ -387,6 +388,7 @@ class ChatController extends GetxController {
 
   // sender!=null ,则为群聊模式
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+    // TODO:把提示词格式化放到最后
     var sysPrompts = chat.prompts
         .where((prompt) => prompt.isEnable)
         .map((prompt) => LLMMessage(
@@ -454,33 +456,25 @@ class ChatController extends GetxController {
       return a.isPrompt ? -1 : 1; // sysPrompts更靠后
     });
 
-    // 修正最后一条消息内容
-    // if (msglst.isNotEmpty) {
-    //   final last = msglst.last;
-    //   final fixedContent =
-    //       chat.messageTemplate.replaceAll('{{msg}}', last.content);
-    //   if (sender != null) {
-    //     // 强制修正发言者；防止人名重复出现
-    //     msglst[msglst.length - 1] = LLMMessage(
-    //       content: "$fixedContent\n${sender.roleName}:",
-    //       role: last.role,
-    //       fileDirs: last.fileDirs,
-    //     );
-    //   } else {
-    //     msglst[msglst.length - 1] = LLMMessage(
-    //       content: fixedContent,
-    //       role: last.role,
-    //       fileDirs: last.fileDirs,
-    //     );
-    //   }
-    // }
+    final Stopwatch stopwatch = Stopwatch()..start();
+    final loreBook = Lorebookutil(
+        messages: msglst,
+        chat: chat,
+        sender: sender ??
+            Get.find<CharacterController>()
+                .getCharacterById(chat.assistantId ?? 0));
+    final result = loreBook.activateLorebooks();
+    stopwatch.stop();
+    print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
+
     // if (sender == null && msglst.isNotEmpty && msglst.last.role != 'user') {
     //   msglst.add(LLMMessage(
     //     content: '请接着刚才的话题继续。',
     //     role: 'user',
     //   ));
     // }
-    return msglst;
+
+    return result;
   }
 
   // 按行分割功能:已弃用

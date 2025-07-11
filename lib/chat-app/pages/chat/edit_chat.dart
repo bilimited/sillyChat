@@ -155,34 +155,21 @@ class _EditChatPageState extends State<EditChatPage>
                             value?.isEmpty ?? true ? '请输入聊天标题' : null,
                       ),
                       SizedBox(height: 16),
+                      _buildRoleSelector(
+                          label: '你扮演：',
+                          roleId: widget.chat.userId,
+                          onSelect: (id) =>
+                              setState(() => widget.chat.userId = id),
+                          placeholder: '留空以使用全局自设'),
+                      SizedBox(height: 8),
+                      _buildRoleSelector(
+                        label: 'AI扮演：',
+                        roleId: widget.chat.assistantId,
+                        onSelect: (id) =>
+                            setState(() => widget.chat.assistantId = id),
+                      ),
                     ],
                   )),
-            ),
-            SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('角色设定',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    SizedBox(height: 16),
-                    _buildRoleSelector(
-                      label: '你扮演：',
-                      roleId: widget.chat.userId,
-                      onSelect: (id) => setState(() => widget.chat.userId = id),
-                    ),
-                    SizedBox(height: 8),
-                    _buildRoleSelector(
-                      label: 'AI扮演：',
-                      roleId: widget.chat.assistantId,
-                      onSelect: (id) =>
-                          setState(() => widget.chat.assistantId = id),
-                    ),
-                  ],
-                ),
-              ),
             ),
             SizedBox(height: 16),
             Card(
@@ -237,11 +224,11 @@ class _EditChatPageState extends State<EditChatPage>
     );
   }
 
-  Widget _buildRoleSelector({
-    required String label,
-    required int? roleId,
-    required Function(int?) onSelect,
-  }) {
+  Widget _buildRoleSelector(
+      {required String label,
+      required int? roleId,
+      required Function(int?) onSelect,
+      String? placeholder}) {
     final character =
         roleId != null ? _characterController.getCharacterById(roleId) : null;
 
@@ -284,7 +271,7 @@ class _EditChatPageState extends State<EditChatPage>
                       children: [
                         Icon(Icons.person_add_outlined),
                         SizedBox(width: 8),
-                        Text('选择角色'),
+                        Text(placeholder ?? '选择角色'),
                       ],
                     ),
             ),

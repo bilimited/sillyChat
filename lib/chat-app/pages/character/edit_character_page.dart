@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:get/get.dart';
@@ -21,6 +22,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _characterController = Get.find<CharacterController>();
+  final _lorebookController = Get.find<LoreBookController>();
   final _imagePicker = ImagePicker();
 
   late TabController _tabController;
@@ -87,6 +89,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       description: _descriptionController.text,
       category:
           _categoryController.text.isEmpty ? "默认" : _categoryController.text,
+      lorebookIds: _character?.lorebookIds ?? [],
     )
       ..backgroundImage = _backgroundPath
       ..brief = _briefController.text
@@ -97,7 +100,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   }
 
   void _applyBackup(CharacterModel backup) {
-
     setState(() {
       _nickNameController.text = backup.roleName;
       _nameController.text = backup.remark;
@@ -234,8 +236,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ),
                 const SizedBox(height: 16),
                 Row(
-                  children: [
-                  ],
+                  children: [],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -522,7 +523,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                                 if (confirmed == true) {
                                   setState(() {
                                     final backup = _saveCharacter();
-                                    
+
                                     if (backup != null) {
                                       backup.backups = null;
                                       _character!.backups![i] = backup;
@@ -588,6 +589,91 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
+          // 角色绑定的世界书管理
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '世界书绑定',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_character != null && _character!.lorebookIds.isEmpty)
+                  const SizedBox(
+                    height: 40,
+                    child: Center(
+                      child: Text(
+                        '当前角色未绑定任何世界书',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else if (_character != null &&
+                    _character!.lorebookIds.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _character!.lorebookIds.map((id) {
+                      final lorebook =
+                          _lorebookController.getLorebookById(id); // 获取绑定的世界书
+                      return Chip(
+                        label: Text(lorebook?.name ?? '未知世界书'),
+                        onDeleted: () {
+                          setState(() {
+                            _character!.lorebookIds.remove(id);
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                    onPressed: () {
+                      // 显示一个弹窗，从中选择一个世界书
+                      Get.dialog(
+                        AlertDialog(
+                          title: const Text('选择世界书'),
+                          content: SizedBox(
+                            width: double.maxFinite,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _lorebookController.lorebooks.length,
+                              itemBuilder: (context, index) {
+                                final lorebook =
+                                    _lorebookController.lorebooks[index];
+                                return ListTile(
+                                  title: Text(lorebook.name),
+                                  onTap: () {
+                                    setState(() {
+                                      _character?.lorebookIds.add(lorebook.id);
+                                    });
+                                    Get.back();
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    label: const Text('绑定世界书'),
+                    icon: const Icon(Icons.link)),
+              ],
+            ),
+          ),
+        )
       ],
     );
   }
@@ -688,32 +774,43 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditPlayer ? '编辑用户角色' : isEditMode ? '编辑角色' : '新建角色'),
-        bottom: isEditPlayer ? null : TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: '基本信息'),
-            Tab(text: '其他设置'),
-          ],
-        ),
-        actions: isEditPlayer ? [] : [
-          IconButton(onPressed: _copyCharacter, icon: const Icon(Icons.copy)),
-          if (isEditMode)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteCharacter,
-            ),
-        ],
+        title: Text(isEditPlayer
+            ? '编辑用户角色'
+            : isEditMode
+                ? '编辑角色'
+                : '新建角色'),
+        bottom: isEditPlayer
+            ? null
+            : TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: '基本信息'),
+                  Tab(text: '其他设置'),
+                ],
+              ),
+        actions: isEditPlayer
+            ? []
+            : [
+                IconButton(
+                    onPressed: _copyCharacter, icon: const Icon(Icons.copy)),
+                if (isEditMode)
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: _deleteCharacter,
+                  ),
+              ],
       ),
       body: Form(
         key: _formKey,
-        child: isEditPlayer ? _buildPlayerSetting() : TabBarView(
-          controller: _tabController,
-          children: [
-            _buildBasicInfoTab(),
-            _buildSettingsTab(),
-          ],
-        ),
+        child: isEditPlayer
+            ? _buildPlayerSetting()
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildBasicInfoTab(),
+                  _buildSettingsTab(),
+                ],
+              ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saveAndBack,

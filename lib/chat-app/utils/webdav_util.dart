@@ -53,6 +53,7 @@ class WebDavUtil {
         'settings.json',
         'chat_options.json',
         'character_avatars.zip'
+        'lorebooks.json',
       ];
 
       // 添加所有聊天数据文件

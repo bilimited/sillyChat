@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
@@ -46,7 +47,8 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               onChanged: (value) => searchText.value = value,
             ),
@@ -54,8 +56,12 @@ class _CharacterSelectorState extends State<CharacterSelector> {
           Expanded(
             child: Obx(() {
               final availableCharacters = characterController.characters
-                  .where((char) => !(widget.excludeCharacters?.any((excluded) => excluded.id == char.id) ?? false))
-                  .where((char) => char.roleName.toLowerCase().contains(searchText.value.toLowerCase()))
+                  .where((char) => !(widget.excludeCharacters
+                          ?.any((excluded) => excluded.id == char.id) ??
+                      false))
+                  .where((char) => char.roleName
+                      .toLowerCase()
+                      .contains(searchText.value.toLowerCase()))
                   .toList();
 
               final groupedCharacters = <String, List<CharacterModel>>{};
@@ -90,7 +96,7 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                         physics: NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: 8),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
+                          crossAxisCount: SillyChatApp.isDesktop() ? 5 : 4,
                           childAspectRatio: 0.8,
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,
@@ -101,19 +107,61 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                           return InkWell(
                             onTap: () => Get.back(result: char),
                             child: Card(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              clipBehavior: Clip.antiAlias,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Stack(
                                 children: [
-                                  CircleAvatar(
-                                    backgroundImage: FileImage(File(char.avatar)),
-                                    radius: 25,
+                                  Positioned.fill(
+                                    child: Image.file(
+                                      File(char.avatar),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    char.roleName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
+                                  Positioned(
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    height: 60,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.8),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 8,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      child: Text(
+                                        char.roleName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black54,
+                                              blurRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

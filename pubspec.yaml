@@ -62,6 +62,7 @@ dependencies:
 
   scrollable_positioned_list: ^0.3.8
   package_info_plus: ^6.0.0
+  logger: ^2.6.0
 
 
 dev_dependencies:

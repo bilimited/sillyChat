@@ -221,7 +221,7 @@ class _NewChatPageState extends State<NewChatPage> {
       lastMessage: '对话已创建',
       time: DateTime.now().toString(),
       messages: [],
-      userId: _selectedUserId,
+      userId: null,
       assistantId: _selectedAssistantId,
     )..mode = _selectedMode
     ..characterIds = _selectedIds

@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/character/character_selector.dart
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
+import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -239,6 +240,7 @@ class _MainPageState extends State<MainPage> {
       }),
       ContactsPage(),
       ChatOptionsManagerPage(),
+      LoreBookManagerPage(),
       Obx(() => SearchPage(
           chats: _chatController.chats.value,
           onMessageTap: (msg, chat) {
@@ -246,7 +248,8 @@ class _MainPageState extends State<MainPage> {
               desktop_initialPosition = msg;
               desktop_switchChat(chat.id);
             });
-          }))
+          })),
+      
     ];
     webDav.init();
   }
@@ -282,8 +285,9 @@ class _MainPageState extends State<MainPage> {
 
   final List<Widget> _pages = [
     ChatPage(),
-    const ContactsPage(), // 更新这一行
-    ChatOptionsManagerPage(), // 更新这一行
+    const ContactsPage(),
+    ChatOptionsManagerPage(),
+    LoreBookManagerPage(),
   ];
 
   Widget _buildDesktop(BuildContext context) {
@@ -326,6 +330,9 @@ class _MainPageState extends State<MainPage> {
                             label: const Text('对话预设'),
                           ),
                           NavigationRailDestination(
+                              icon: const Icon(Icons.book),
+                              label: const Text('世界书')),
+                          NavigationRailDestination(
                             icon: const Icon(Icons.search),
                             label: const Text('搜索'),
                           ),
@@ -355,7 +362,7 @@ class _MainPageState extends State<MainPage> {
                               _showBackupDialog();
                             } else if (value == 2) {
                               customNavigate(VaultManagerPage());
-                            } else if(value == 3){
+                            } else if (value == 3) {
                               showLicensePage(context: context);
                             }
                           },
@@ -594,6 +601,11 @@ class _MainPageState extends State<MainPage> {
             icon: Icon(Icons.settings_applications_outlined),
             selectedIcon: Icon(Icons.settings_applications),
             label: '聊天预设',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.book),
+            selectedIcon: Icon(Icons.settings_applications),
+            label: '世界书',
           ),
         ],
       ),

@@ -59,8 +59,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   bool _showWheel = false;
   // bool _autoSplit = false;
 
-  CharacterModel get me =>
-      _characterController.getCharacterById(chat.userId ?? -1);
+  CharacterModel get user => chat.userId == null
+      ? _characterController.me
+      : _characterController.getCharacterById(chat.userId!);
+  int get userId => chat.userId ?? (_characterController.myId ?? -1);
   CharacterModel get assistantCharacter =>
       _characterController.getCharacterById(chat.assistantId ?? -1);
   int get assistantCharacterId => assistantCharacter.id;
@@ -608,7 +610,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   ) {
     final colors = Theme.of(context).colorScheme;
     final character = _characterController.getCharacterById(message.sender);
-    final isMe = chat.userId == message.sender;
+    final isMe = userId == message.sender;
     final avatar = character.avatar;
     final isSelected = _selectedMessage?.time == message.time;
 
@@ -923,9 +925,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       final message = MessageModel(
           id: DateTime.now().microsecondsSinceEpoch,
           content: text,
-          sender: chat.userId ?? -1,
+          sender: userId,
           time: DateTime.now(),
-          type: MessageTypeExtension.fromMessageStyle(me.messageStyle),
+          type: MessageTypeExtension.fromMessageStyle(user.messageStyle),
           role: MessageRole.user,
           alternativeContent: [null],
           resPath: selectedPath);
@@ -1044,7 +1046,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
-  
   // 多选时的底部按钮组
   Widget _buildBottomButtonGroup() {
     final colors = Theme.of(context).colorScheme;
@@ -1299,30 +1300,29 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                       messages.length == 0 ? null : messages[0])
                                   : const SizedBox.shrink());
                             } else {
-                              if (_isMultiSelecting) {
-                                return Row(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
-                                      child: Icon(
-                                        color: colors.secondary,
-                                        _selectedMessages
-                                                .contains(messages[index - 1])
-                                            ? Icons.check_circle
-                                            : Icons.radio_button_unchecked,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: _buildMessge(
-                                          context, index, messages),
-                                    )
-                                  ],
-                                );
-                              } else {
-                                return _buildMessge(context, index, messages);
-                              }
+                              return Row(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeOutCubic,
+                                    width: _isMultiSelecting ? 36 : 0,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: _isMultiSelecting ? Icon(
+                                      color: colors.secondary,
+                                      _selectedMessages
+                                              .contains(messages[index - 1])
+                                          ? Icons.check_circle
+                                          : Icons.radio_button_unchecked,
+                                      size: 20,
+                                    ): SizedBox.shrink(),
+                                  ),
+                                  Expanded(
+                                    child:
+                                        _buildMessge(context, index, messages),
+                                  )
+                                ],
+                              );
                             }
                           }
                           //},

@@ -36,7 +36,7 @@ class _NewChatState extends State<NewChat> {
 
   bool get isFirstCharSelected => chat.assistantId != null;
   bool get isGroupMode => chat.mode == ChatMode.group;
-  bool get canCreateNewChat => chat.assistantId != null && chat.userId != null;
+  bool get canCreateNewChat => chat.assistantId != null;
 
   @override
   void initState() {
