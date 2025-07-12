@@ -84,10 +84,18 @@ class LoreBookManagerPage extends StatelessWidget {
                       children: [
                         IconButton(
                           icon: Icon(
-                            Icons.edit,
+                            isGlobal ? Icons.star : Icons.star_border,
+                            color: isGlobal ? Colors.amber : Theme.of(context).colorScheme.outline,
                           ),
                           onPressed: () {
-                            customNavigate(LoreBookEditorPage(lorebook: lorebook,),context: context);
+                            if (isGlobal) {
+                              controller.globalActivitedLoreBookIds
+                                  .remove(lorebook.id);
+                            } else {
+                              controller.globalActivitedLoreBookIds
+                                  .add(lorebook.id);
+                            }
+                            controller.saveLorebooks();
                           },
                         ),
                         IconButton(
@@ -122,15 +130,11 @@ class LoreBookManagerPage extends StatelessWidget {
                       ],
                     ),
                     onTap: () {
-                      if (isGlobal) {
-                        controller.globalActivitedLoreBookIds
-                            .remove(lorebook.id);
-                      } else {
-                        controller.globalActivitedLoreBookIds.add(lorebook.id);
-                      }
-                      controller.saveLorebooks();
-                      // 跳转到详情或编辑页
-                      // Navigator.push(...);
+                      customNavigate(
+                          LoreBookEditorPage(
+                            lorebook: lorebook,
+                          ),
+                          context: context);
                     },
                   );
                 },

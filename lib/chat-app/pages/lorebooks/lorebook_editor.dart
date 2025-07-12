@@ -6,7 +6,6 @@ import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_item_editor.dart';
 
-
 class LoreBookEditorPage extends StatefulWidget {
   final LorebookModel? lorebook;
   final bool isNew;
@@ -244,7 +243,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
                       dense: true,
-                      leading: const Icon(Icons.drag_handle),
                       title: Text(
                         item.name,
                         style: theme.textTheme.bodyLarge,
@@ -265,7 +263,8 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                             width: 30, // Example width
                             height: 20, // Example height
                             child: Transform.scale(
-                              scale: 0.7, // Scale down to fit within the SizedBox
+                              scale:
+                                  0.7, // Scale down to fit within the SizedBox
                               child: Switch(
                                 value: item.isActive,
                                 onChanged: (v) => toggleItemActive(index, v),
@@ -275,30 +274,28 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 10,),
-                          
+                          SizedBox(
+                            width: 10,
+                          ),
                           DropdownButton<ActivationType>(
                             value: item.activationType,
                             onChanged: (v) => {
                               if (v != null)
                                 setState(() {
-                                  items[index] = item.copyWith(activationType: v);
+                                  items[index] =
+                                      item.copyWith(activationType: v);
                                   saveLorebook();
                                 })
                             },
                             items: ActivationType.values.map((type) {
                               return DropdownMenuItem(
                                 value: type,
-                                child: Text(_activationTypeLabel(type),style: TextStyle(fontSize: 13),),
+                                child: Text(
+                                  _activationTypeLabel(type),
+                                  style: TextStyle(fontSize: 13),
+                                ),
                               );
                             }).toList(),
-                          ),
-
-                          
-                          IconButton(
-                            icon: const Icon(Icons.copy, size: 20),
-                            tooltip: '复制',
-                            onPressed: () => copyItem(index),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete,
@@ -310,15 +307,17 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                       ),
                       onTap: () {
                         // 可跳转到条目详细编辑页
-                        customNavigate(LoreBookItemEditorPage(
-                          item: items[index],
-                          onSave: (item) {
-                            setState(() {
-                              items[index] = item;
-                              saveLorebook();
-                            });
-                          },
-                        ));
+                        customNavigate(
+                            LoreBookItemEditorPage(
+                              item: items[index],
+                              onSave: (item) {
+                                setState(() {
+                                  items[index] = item;
+                                  saveLorebook();
+                                });
+                              },
+                            ),
+                            context: context);
                       },
                     ),
                   );
@@ -333,15 +332,15 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   }
 }
 
- String _activationTypeLabel(ActivationType type) {
+String _activationTypeLabel(ActivationType type) {
   switch (type) {
     case ActivationType.always:
-      return '🟢  总是';
+      return '🔵总是';
     case ActivationType.keywords:
-      return '🔵 关键词';
+      return '🟢关键词';
     case ActivationType.rag:
-      return '⛓️ RAG';
+      return '⛓️RAG';
     case ActivationType.manual:
-      return '✋ 手动';
+      return '✋手动';
   }
 }

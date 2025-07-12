@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -28,6 +30,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  // ignore: unused_field
   static const String AppVersion = 'v1.9.0-alpha';
 
   int _currentIndex = 0;
@@ -49,7 +52,7 @@ class _MainPageState extends State<MainPage> {
 
   void _showCharacterSelectDialog() async {
     CharacterModel? character =
-        await customNavigate<CharacterModel>(CharacterSelector());
+        await customNavigate<CharacterModel>(CharacterSelector(),context: context);
     if (character != null) {
       _vaultSettingController.myId.value = character.id;
       await _vaultSettingController.saveSettings();
@@ -361,7 +364,7 @@ class _MainPageState extends State<MainPage> {
                             } else if (value == 1) {
                               _showBackupDialog();
                             } else if (value == 2) {
-                              customNavigate(VaultManagerPage());
+                              customNavigate(VaultManagerPage(),context: context);
                             } else if (value == 3) {
                               showLicensePage(context: context);
                             }

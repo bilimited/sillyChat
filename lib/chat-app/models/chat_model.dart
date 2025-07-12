@@ -1,7 +1,9 @@
+import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:get/get.dart';
 import '../utils/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 
@@ -14,8 +16,8 @@ class ChatModel {
   String? backgroundImage;
   String lastMessage;
   String time;
-  int? userId; // 用户ID。留空则使用全局用户ID
-  int? assistantId; // 新增：助手ID
+  int? userId;
+  int? assistantId; // TODO:解除外部对id的应用，直接从get方法获取实体类
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
   String? description; // 对话摘要或介绍
@@ -26,9 +28,28 @@ class ChatModel {
   set requestOptions(LLMRequestOptions value) {
     chatOption.requestOptions = value;
   }
+
   List<PromptModel> get prompts => chatOption.prompts; // 新增：存储实际的PromptModel对象
   set prompts(List<PromptModel> value) {
     chatOption.prompts = value;
+  }
+
+  List<CharacterModel> get characters {
+    CharacterController controller = Get.find();
+    return characterIds
+        .map((id) => controller.getCharacterById(id))
+        .nonNulls
+        .toList();
+  }
+
+  CharacterModel get assistant {
+    CharacterController controller = Get.find();
+    return controller.getCharacterById(assistantId ?? -1);
+  }
+
+  CharacterModel get user {
+    CharacterController controller = Get.find();
+    return controller.getCharacterById(userId ?? -1);
   }
 
   String messageTemplate = "{{msg}}"; // 新增：消息模板字段

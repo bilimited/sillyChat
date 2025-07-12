@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import '../../providers/chat_option_controller.dart';
 import '../../models/chat_option_model.dart';
 
@@ -12,12 +13,12 @@ class ChatOptionsManagerPage extends StatelessWidget {
 
   ChatOptionsManagerPage({Key? key}) : super(key: key);
 
-  Widget _buildOptionCard(ChatOptionModel option, int index) {
+  Widget _buildOptionCard(ChatOptionModel option, int index, BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         onTap: () {
-          customNavigate(EditChatOptionPage(option: option,));
+          customNavigate(EditChatOptionPage(option: option,),context: context);
         },
         child: ListTile(
           title: Text(option.name),
@@ -54,12 +55,12 @@ class ChatOptionsManagerPage extends StatelessWidget {
         actions: [
           IconButton(
               onPressed: () {
-                customNavigate(PromptManagerPage());
+                customNavigate(PromptManagerPage(),context: context);
               },
               icon: Icon(Icons.article)),
           IconButton(
               onPressed: () {
-                customNavigate(ApiManagerPage());
+                customNavigate(ApiManagerPage(),context: context);
               },
               icon: Icon(Icons.api))
         ],
@@ -72,14 +73,14 @@ class ChatOptionsManagerPage extends StatelessWidget {
           itemBuilder: (context, index) {
             return KeyedSubtree(
               key: ValueKey(_controller.chatOptions[index].id),
-              child: _buildOptionCard(_controller.chatOptions[index], index),
+              child: _buildOptionCard(_controller.chatOptions[index], index, context),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          customNavigate(EditChatOptionPage());
+          customNavigate(EditChatOptionPage(), context: context);
         },
         child: const Icon(Icons.add),
       ),

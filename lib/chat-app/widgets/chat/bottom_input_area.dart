@@ -7,8 +7,11 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 // import 'package:flutter_example/chat-app/pages/chat_detail_page.dart'; // For ChatMode enum
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/icon_switch_button.dart';
+import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,6 +21,7 @@ class BottomInputArea extends StatefulWidget {
   final ChatController chatController = Get.find();
   final ChatOptionController chatOptionController = Get.find();
   final VaultSettingController settingController = Get.find();
+  final LoreBookController loreBookController = Get.find();
   bool get isDesktop => SillyChatApp.isDesktop();
 
   final Function(String, List<String>) onSendMessage;
@@ -200,6 +204,32 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                           },
                           icon: Icon(
                             Icons.settings_applications,
+                            color: colors.outline,
+                          )),
+
+                      IconButton(
+                          onPressed: () {
+                            final global = widget
+                                .loreBookController.globalActivitedLoreBooks;
+                            final chars = widget.chat.characters
+                                .expand((char) => char.loreBooks)
+                                .toList();
+                            customNavigate(LoreBookActivator(
+                                      lorebooks: [
+                                      ...{...global, ...chars}
+                                      ]), context: context);
+                            // Get.dialog(
+                            //   AlertDialog(
+                            //     title: const Text('手动激活世界书'),
+                            //     content: SizedBox(
+                            //       width: double.maxFinite,
+                            //         child: 
+                            //     ),
+                            //   ),
+                            // );
+                          },
+                          icon: Icon(
+                            Icons.book,
                             color: colors.outline,
                           )),
                       // Think mode toggle

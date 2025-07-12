@@ -68,7 +68,7 @@ class SillyChatApp extends StatelessWidget {
   }
 
   static bool isDesktop() {
-    return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+    return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
   }
 
   @override

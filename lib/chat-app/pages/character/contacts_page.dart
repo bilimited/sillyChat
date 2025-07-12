@@ -111,7 +111,7 @@ class _ContactsPageState extends State<ContactsPage> {
             )
           : null,
       onTap: () {
-        customNavigate(EditCharacterPage(characterId: contact.id,));
+        customNavigate(EditCharacterPage(characterId: contact.id,),context: context);
         // Navigator.push(
         //   context,
         //   MaterialPageRoute(

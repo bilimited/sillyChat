@@ -6,7 +6,8 @@ import 'package:get/get.dart';
 /// [page] 目标页面
 /// [context] 安卓端有些页面无法跳转，需要用另一种方法跳转
 /// 返回Future<T?>，可await获取返回值
-Future<T?> customNavigate<T>(Widget page, {BuildContext? context}) async {
+/// WARNING：在手机端若不传context参数可能导致无法跳转页面
+Future<T?> customNavigate<T>(Widget page, {required BuildContext context}) async {
   
   if (SillyChatApp.isDesktop()) {
     // 桌面端：用Dialog包裹页面

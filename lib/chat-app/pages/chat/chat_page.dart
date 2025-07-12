@@ -140,7 +140,7 @@ class _ChatPageState extends State<ChatPage> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
-                                customNavigate(NewChatPage());
+                                customNavigate(NewChatPage(),context: context);
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(

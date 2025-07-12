@@ -194,9 +194,11 @@ class _EditChatPageState extends State<EditChatPage>
               leading: Icon(Icons.preview),
               onTap: () {
                 final messages = _chatController.getLLMMessageList(widget.chat);
-                customNavigate(PromptPreviewPage(
-                    messages:
-                        messages.map((ele) => ele.toOpenAIJson()).toList()));
+                customNavigate(
+                    PromptPreviewPage(
+                        messages:
+                            messages.map((ele) => ele.toOpenAIJson()).toList()),
+                    context: context);
               },
             ),
             Divider(),
@@ -238,7 +240,8 @@ class _EditChatPageState extends State<EditChatPage>
         Expanded(
           child: InkWell(
             onTap: () async {
-              CharacterModel? char = await customNavigate(CharacterSelector());
+              CharacterModel? char =
+                  await customNavigate(CharacterSelector(), context: context);
               if (char == null) {
                 return;
               }
@@ -368,122 +371,131 @@ class _EditChatPageState extends State<EditChatPage>
                     chat.chatOption.name = value;
                   },
                   decoration: InputDecoration(
-                    labelText: '配置名称',
+                    labelText: '预设名称',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 SizedBox(
                   height: 16,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                Flex(
+                  direction: Axis.horizontal,
                   children: [
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.download),
-                      label: Text('替换预设'),
-                      onPressed: () async {
-                        Get.dialog(
-                          AlertDialog(
-                            title: const Text('切换对话预设'),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount:
-                                    _chatOptionController.chatOptions.length,
-                                itemBuilder: (context, index) {
-                                  final option =
-                                      _chatOptionController.chatOptions[index];
-                                  return ListTile(
-                                    title: Text(option.name),
-                                    onTap: () {
-                                      setState(() {
-                                        chat.initOptions(option);
-                                        Get.back();
-                                      });
-                                      _advanceTabKey = UniqueKey();
-                                    },
-                                  );
-                                },
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.refresh),
+                        label: Text('替换'),
+                        onPressed: () async {
+                          Get.dialog(
+                            AlertDialog(
+                              title: const Text('切换对话预设'),
+                              content: SizedBox(
+                                width: double.maxFinite,
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount:
+                                      _chatOptionController.chatOptions.length,
+                                  itemBuilder: (context, index) {
+                                    final option = _chatOptionController
+                                        .chatOptions[index];
+                                    return ListTile(
+                                      title: Text(option.name),
+                                      onTap: () {
+                                        setState(() {
+                                          chat.initOptions(option);
+                                          Get.back();
+                                        });
+                                        _advanceTabKey = UniqueKey();
+                                      },
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                    if (chat.chatOption.id != 0) ...[
-                      ElevatedButton.icon(
-                        icon: Icon(Icons.refresh),
-                        label: Text('重置预设'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade200,
-                          foregroundColor: Colors.black87,
+
+                    //   SizedBox(width: 12),
+                    //   Flexible(
+                    //   child: ElevatedButton.icon(
+                    //     icon: Icon(Icons.refresh),
+                    //     label: Text('重置'),
+                    //     onPressed: () async {
+                    //     await Get.dialog(
+                    //       AlertDialog(
+                    //       title: Text('重置预设'),
+                    //       content: Text('确定要重置该预设为默认值吗？此操作不可恢复。'),
+                    //       actions: [
+                    //         TextButton(
+                    //         onPressed: () => Get.back(result: false),
+                    //         child: Text('取消'),
+                    //         ),
+                    //         TextButton(
+                    //         onPressed: () {
+                    //           final option = _chatOptionController
+                    //             .getChatOptionById(chat.chatOption.id);
+                    //           if (option != null) {
+                    //           setState(() {
+                    //             chat.initOptions(option);
+                    //             Get.back();
+                    //           });
+                    //           }
+                    //         },
+                    //         child: Text('确定'),
+                    //         ),
+                    //       ],
+                    //       ),
+                    //     );
+                    //     },
+                    //   ),
+                    //   ),
+                    SizedBox(width: 12),
+                    if (chat.chatOption.id != 0)
+                      Flexible(
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.upload),
+                          label: Text('更新'),
+                          onPressed: () async {
+                            await Get.dialog(
+                              AlertDialog(
+                                title: Text('更新预设'),
+                                content: Text('确定要用当前聊天配置更新聊天预设吗？此操作不可恢复。'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Get.back(result: false),
+                                    child: Text('取消'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      final option = _chatOptionController
+                                          .getChatOptionById(
+                                              chat.chatOption.id);
+                                      if (option != null) {
+                                        setState(() {
+                                          _chatOptionController
+                                              .updateChatOption(
+                                                  chat.chatOption
+                                                      .copyWith(true),
+                                                  null);
+                                          Get.back();
+                                        });
+                                        _advanceTabKey = UniqueKey();
+                                      }
+                                    },
+                                    child: Text('确定'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                        onPressed: () async {
-                          await Get.dialog(
-                            AlertDialog(
-                              title: Text('重置预设'),
-                              content: Text('确定要重置该预设为默认值吗？此操作不可恢复。'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Get.back(result: false),
-                                  child: Text('取消'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    final option = _chatOptionController
-                                        .getChatOptionById(chat.chatOption.id);
-                                    if (option != null) {
-                                      setState(() {
-                                        chat.initOptions(option);
-                                        Get.back();
-                                      });
-                                    }
-                                  },
-                                  child: Text('确定'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
                       ),
-                      SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        icon: Icon(Icons.upload),
-                        label: Text('更新预设'),
-                        onPressed: () async {
-                          await Get.dialog(
-                            AlertDialog(
-                              title: Text('更新预设'),
-                              content: Text('确定要用当前聊天配置更新聊天预设吗？此操作不可恢复。'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Get.back(result: false),
-                                  child: Text('取消'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    final option = _chatOptionController
-                                        .getChatOptionById(chat.chatOption.id);
-                                    if (option != null) {
-                                      setState(() {
-                                        _chatOptionController.updateChatOption(
-                                            chat.chatOption.copyWith(true),
-                                            null);
-                                        Get.back();
-                                      });
-                                      _advanceTabKey = UniqueKey();
-                                    }
-                                  },
-                                  child: Text('确定'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ]
                   ],
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  clipBehavior: Clip.hardEdge,
                 ),
               ],
             ),

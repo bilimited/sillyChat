@@ -62,7 +62,7 @@ class _NewChatState extends State<NewChat> {
                 final character =
                     await customNavigate<CharacterModel>(CharacterSelector(
                   excludeCharacters: [_characterController.me],
-                ));
+                ),context: context);
                 if (character != null) {
                   _chatController.updateDefaultChat(assistantId: character.id);
                 }
@@ -80,7 +80,7 @@ class _NewChatState extends State<NewChat> {
                                   await customNavigate<CharacterModel>(
                                       CharacterSelector(
                                 excludeCharacters: [_characterController.me],
-                              ));
+                              ),context: context);
                               if (character != null) {
                                 _chatController.updateDefaultChat(
                                     assistantId: character.id);

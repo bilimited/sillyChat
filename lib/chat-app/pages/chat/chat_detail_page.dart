@@ -122,7 +122,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   // 显示编辑消息对话框
   void _showEditDialog(MessageModel message) {
-    customNavigate(EditMessagePage(chatId: chatId, message: message));
+    customNavigate(EditMessagePage(chatId: chatId, message: message),context: context);
   }
 
   void _showDeleteConfirmation(MessageModel message) {
@@ -272,7 +272,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 onTap: () async {
                   Get.back();
                   final result = await customNavigate<String?>(ContentGenerator(
-                      messages: [LLMMessage.fromMessageModel(message)]));
+                      messages: [LLMMessage.fromMessageModel(message)]),context: context);
                   if (result != null) {
                     message.content = result;
                     _updateChat();
@@ -1414,7 +1414,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  customNavigate(EditChatPage(chat: chat));
+                  customNavigate(EditChatPage(chat: chat),context: context);
                 },
               ),
             ],
@@ -1466,7 +1466,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       Get.back();
                       _scrollToMessage(message);
                     },
-                  ));
+                  ),context: context);
                 },
               ),
               IconButton(
@@ -1516,7 +1516,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  customNavigate(EditChatPage(chat: chat));
+                  customNavigate(EditChatPage(chat: chat),context: context);
                 },
               ),
             ],

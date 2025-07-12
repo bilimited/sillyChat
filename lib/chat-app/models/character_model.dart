@@ -1,3 +1,6 @@
+import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
+import 'package:get/get.dart';
 
 class Relation {
   final int targetId;
@@ -9,8 +12,9 @@ class Relation {
   Relation copy() {
     return Relation(
       targetId: targetId,
-    )..type = type
-     ..brief = brief;
+    )
+      ..type = type
+      ..brief = brief;
   }
 }
 
@@ -23,8 +27,8 @@ class CharacterModel {
   final int id;
   MessageStyle messageStyle = MessageStyle.common;
 
-  String remark;          // 备注
-  String roleName;        // 唯一名称
+  String remark; // 备注
+  String roleName; // 唯一名称
   String avatar;
   String? description;
   String? backgroundImage;
@@ -37,6 +41,13 @@ class CharacterModel {
   List<CharacterModel>? backups;
 
   List<int> lorebookIds = []; // 关联的世界书ID列表
+  List<LorebookModel> get loreBooks {
+    LoreBookController controller = Get.find();
+    return lorebookIds
+        .map((id) => controller.getLorebookById(id))
+        .nonNulls
+        .toList();
+  }
 
   CharacterModel({
     required this.id,
@@ -71,8 +82,11 @@ class CharacterModel {
             'type': value.type,
             'brief': value.brief,
           })),
-      'messageStyle': messageStyle.toString().split('.').last, // 序列化messageStyle
-      'backups': backups!=null ? backups!.map((e) => e.toJson()).toList() : null, // 添加isBackup字段
+      'messageStyle':
+          messageStyle.toString().split('.').last, // 序列化messageStyle
+      'backups': backups != null
+          ? backups!.map((e) => e.toJson()).toList()
+          : null, // 添加isBackup字段
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
     };
   }
@@ -87,8 +101,9 @@ class CharacterModel {
       category: json['category'],
       brief: json['brief'],
       lorebookIds: (json['lorebookIds'] as List<dynamic>?)
-          ?.map((e) => e as int)
-          .toList() ?? [],
+              ?.map((e) => e as int)
+              .toList() ??
+          [],
     );
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析

@@ -41,16 +41,22 @@ class LorebookModel {
   }
 
   // copy method
-  LorebookModel copy({bool deep = false}) {
+  LorebookModel copyWith({
+    int? id,
+    String? name,
+    List<LorebookItemModel>? items,
+    int? scanDepth,
+    int? maxToken,
+  }) {
     return LorebookModel(
-      id: id,
-      name: name,
-      items: deep
-          ? items.map((item) => item.copyWith()).toList()
-          : List<LorebookItemModel>.from(items),
-      scanDepth: scanDepth,
-      maxToken: maxToken,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      items: items ?? List<LorebookItemModel>.from(this.items),
+      scanDepth: scanDepth ?? this.scanDepth,
+      maxToken: maxToken ?? this.maxToken,
     );
   }
+
+
 
 }
