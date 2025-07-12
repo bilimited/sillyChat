@@ -550,8 +550,9 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   void _saveChanges({bool isBack = true}) async {
-    if (widget.chat.id == -1 && isBack) {
+    if (widget.chat.id == -1 || isBack) {
       Get.back();
+      return;
     }
     if (_formKey.currentState?.validate() ?? true) {
       await _chatController.refleshAll();

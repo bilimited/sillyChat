@@ -33,11 +33,9 @@ class BottomInputArea extends StatefulWidget {
   ChatMode get mode => chat.mode ?? ChatMode.auto;
   // bool get canCreateNewChat => chat.assistantId != null && chat.userId != null;
   ApiModel? get api => settingController.getApiById(chat.requestOptions.apiId);
-  bool get isThinkModeToggable =>
-      api != null &&
-      ((api!.provider == ServiceProvider.deepseek &&
-              api!.modelName_think != '') ||
-          (api!.provider == ServiceProvider.google));
+
+  // TODO；给他删了
+  bool get isThinkModeToggable => false;
 
   final bool canSend;
   final bool showRetry;
@@ -214,16 +212,17 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             final chars = widget.chat.characters
                                 .expand((char) => char.loreBooks)
                                 .toList();
-                            customNavigate(LoreBookActivator(
-                                      lorebooks: [
-                                      ...{...global, ...chars}
-                                      ]), context: context);
+                            customNavigate(
+                                LoreBookActivator(lorebooks: [
+                                  ...{...global, ...chars}
+                                ]),
+                                context: context);
                             // Get.dialog(
                             //   AlertDialog(
                             //     title: const Text('手动激活世界书'),
                             //     content: SizedBox(
                             //       width: double.maxFinite,
-                            //         child: 
+                            //         child:
                             //     ),
                             //   ),
                             // );

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/utils/image_packer.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
@@ -139,7 +138,7 @@ class CharacterController extends GetxController {
       await file.writeAsString(jsonString);
     } catch (e) {
       print('保存角色数据失败: $e');
-      handleSevereError('Save Failed!',e);
+      Get.snackbar('角色数据保存失败', '$e');
       rethrow;
     }
   }
@@ -191,5 +190,35 @@ class CharacterController extends GetxController {
     if (myId == null) return;
     me.relations.remove(targetId);
     await saveCharacters();
+  }
+
+  // 获取所有角色的关系数据，并转换为一个类似list的json字符串
+  List<Map<String, dynamic>> getAllRelationsJson() {
+    final List<Map<String, dynamic>> relationList = [];
+    final Set<String> seenPairs = {};
+
+    for (var character in characters) {
+      final List<Map<String, dynamic>> nextList = [];
+      for (var rel in character.relations.values) {
+        final pairKey = character.id < rel.targetId
+            ? '${character.id}_${rel.targetId}'
+            : '${rel.targetId}_${character.id}';
+
+        // 只保留一条边（id小的发起的边）
+        if (character.id < rel.targetId && !seenPairs.contains(pairKey)) {
+          nextList.add({
+            'outcome': rel.targetId.toString(),
+            if (rel.type != null) 'type': rel.type,
+            if (rel.brief != null) 'brief': rel.brief,
+          });
+          seenPairs.add(pairKey);
+        }
+      }
+      relationList.add({
+        'id': character.id.toString(),
+        'next': nextList,
+      });
+    }
+    return relationList;
   }
 }

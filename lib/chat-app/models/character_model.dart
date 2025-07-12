@@ -1,4 +1,5 @@
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:get/get.dart';
 
@@ -15,6 +16,11 @@ class Relation {
     )
       ..type = type
       ..brief = brief;
+  }
+
+  CharacterModel get target{
+    CharacterController controller = Get.find();
+    return controller.getCharacterById(targetId);
   }
 }
 

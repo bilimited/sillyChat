@@ -117,15 +117,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                   },
                 ),
                 const SizedBox(height: 24),
-                // TextFormField(
-                //   controller: _msgTemplateController,
-                //   decoration: const InputDecoration(
-                //     labelText: '消息模板',
-                //     border: OutlineInputBorder(),
-                //   ),
-                //   maxLines: 3,
-                // ),
-                // const SizedBox(height: 24),
                 const Text('提示词列表',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/api_model.dart';
+import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../utils/RequestOptions.dart';
-
 
 class RequestOptionsEditor extends StatefulWidget {
   final LLMRequestOptions options;
@@ -31,8 +33,8 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         TextEditingController(text: widget.options.maxTokens.toString());
     _maxHistoryLengthController =
         TextEditingController(text: widget.options.maxHistoryLength.toString());
-    _seedController = TextEditingController(
-        text: widget.options.seed.toString());
+    _seedController =
+        TextEditingController(text: widget.options.seed.toString());
   }
 
   @override
@@ -134,7 +136,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           Text(label),
           Row(
             children: [
-                Expanded(
+              Expanded(
                 child: Slider(
                   value: value,
                   min: min,
@@ -186,36 +188,54 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           final apis = vaultSettingController.apis;
           int? selectedApiId;
 
-
-          selectedApiId = vaultSettingController.getApiById(widget.options.apiId)?.id;
+          selectedApiId =
+              vaultSettingController.getApiById(widget.options.apiId)?.id;
           // if(selectedApiId==null && apis.length>0){
           //   selectedApiId = apis[0].id;
           //   widget.onChanged(widget.options.copyWith(apiId: selectedApiId));
           // }
-          return DropdownButtonFormField<int>(
-            value: selectedApiId,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            hint: const Text('请选择API'),
-            items: apis.map((api) {
-              return DropdownMenuItem<int>(
-                value: api.id,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 250),
-                  child: Text(
-                  '${api.displayName} (${api.modelName})',
-                  overflow: TextOverflow.ellipsis,
+          return Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: selectedApiId,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
+                  hint: const Text('请选择API'),
+                  items: apis.map((api) {
+                    return DropdownMenuItem<int>(
+                      value: api.id,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: 250),
+                        child: Text(
+                          '${api.displayName} (${api.modelName})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (int? value) {
+                    if (value != null) {
+                      widget.onChanged(widget.options.copyWith(apiId: value));
+                    }
+                  },
                 ),
-              );
-            }).toList(),
-            onChanged: (int? value) {
-              if (value != null) {
-                widget.onChanged(widget.options.copyWith(apiId: value));
-              }
-            },
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: '添加API',
+                onPressed: () async {
+                  final api = await customNavigate<ApiModel?>(ApiEditPage(), context: context);
+                  if(api != null){
+                    widget.onChanged(widget.options.copyWith(apiId: api.id));
+                  }
+                },
+              ),
+            ],
           );
         }),
       ],
@@ -236,6 +256,5 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         Text(label),
       ],
     );
-
   }
 }

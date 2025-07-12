@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/api_data.dart';
+import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:get/get.dart';
 import '../../models/api_model.dart';
 
@@ -16,37 +18,35 @@ class _ApiEditPageState extends State<ApiEditPage> {
   final _formKey = GlobalKey<FormState>();
   final VaultSettingController controller = Get.find();
 
+  String modelName = "";
+
   late TextEditingController _apiKeyController;
-  late TextEditingController _modelNameController;
+  //late TextEditingController _modelNameController;
   late TextEditingController _urlController;
   late TextEditingController _remarksController;
   late TextEditingController _displayNameController;
-  late TextEditingController _modelNameThinkController;
   late ServiceProvider _selectedProvider;
 
   @override
   void initState() {
     super.initState();
     _apiKeyController = TextEditingController(text: widget.api?.apiKey ?? '');
-    _modelNameController =
-        TextEditingController(text: widget.api?.modelName ?? '');
+    modelName = widget.api?.modelName ?? '';
     _urlController = TextEditingController(text: widget.api?.url ?? '');
     _remarksController = TextEditingController(text: widget.api?.remarks ?? '');
     _displayNameController =
         TextEditingController(text: widget.api?.displayName ?? '');
-    _modelNameThinkController =
-        TextEditingController(text: widget.api?.modelName_think ?? '');
+
     _selectedProvider = widget.api?.provider ?? ServiceProvider.openai;
   }
 
   @override
   void dispose() {
     _apiKeyController.dispose();
-    _modelNameController.dispose();
+    // _modelNameController.dispose();
     _urlController.dispose();
     _remarksController.dispose();
     _displayNameController.dispose();
-    _modelNameThinkController.dispose();
     super.dispose();
   }
 
@@ -56,9 +56,10 @@ class _ApiEditPageState extends State<ApiEditPage> {
         id: widget.api?.id ?? DateTime.now().millisecondsSinceEpoch,
         apiKey: _apiKeyController.text,
         displayName: _displayNameController.text,
-        modelName: _modelNameController.text,
-        modelName_think: _modelNameThinkController.text,
-        url: _urlController.text,
+        modelName: modelName,
+        url: _selectedProvider.defaultUrl.isEmpty
+            ? _urlController.text
+            : _selectedProvider.defaultUrl,
         provider: _selectedProvider,
         remarks: _remarksController.text,
       );
@@ -69,7 +70,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
         await controller.updateApi(api);
       }
 
-      Get.back();
+      Get.back(result: api);
     }
   }
 
@@ -105,7 +106,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
               items: ServiceProvider.values
                   .map((provider) => DropdownMenuItem(
                         value: provider,
-                        child: Text(provider.name),
+                        child: Text(provider.toLocalString()),
                       ))
                   .toList(),
               onChanged: (ServiceProvider? value) {
@@ -118,24 +119,12 @@ class _ApiEditPageState extends State<ApiEditPage> {
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _displayNameController,
-              decoration: const InputDecoration(
-                labelText: '显示名称',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入显示名称';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
               controller: _apiKeyController,
+              obscureText: false,
               decoration: const InputDecoration(
                 labelText: 'API Key',
                 border: OutlineInputBorder(),
+                // suffixIcon: Icon(Icons.visibility_off),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -145,34 +134,21 @@ class _ApiEditPageState extends State<ApiEditPage> {
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _modelNameController,
-              decoration: const InputDecoration(
-                labelText: '模型名称',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (_selectedProvider == ServiceProvider.google) {
-                  return null;
+            CustomOptionInputWidget.fromStringOptions(
+              options: _selectedProvider.modelList,
+              labelText: "模型名称",
+              initialValue: modelName,
+              onChanged: (value) {
+                final oldval = modelName;
+                modelName = value;
+                if (_displayNameController.text.isEmpty ||
+                    _displayNameController.text == oldval) {
+                  _displayNameController.text = value;
                 }
-                if (value == null || value.isEmpty) {
-                  return '请输入模型名称';
-                }
-                return null;
               },
             ),
-            if (_selectedProvider == ServiceProvider.deepseek) ...[
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _modelNameThinkController,
-                decoration: const InputDecoration(
-                  labelText: '思考模型名称',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
             const SizedBox(height: 16),
-            if (_selectedProvider != ServiceProvider.google)
+            if (_selectedProvider.defaultUrl.isEmpty)
               TextFormField(
                 controller: _urlController,
                 decoration: const InputDecoration(
@@ -186,11 +162,20 @@ class _ApiEditPageState extends State<ApiEditPage> {
                   return null;
                 },
               ),
+            Divider(),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _displayNameController,
+              decoration: const InputDecoration(
+                labelText: '显示名称(选填)',
+                border: OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _remarksController,
               decoration: const InputDecoration(
-                labelText: '备注',
+                labelText: '备注(选填)',
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -241,9 +226,10 @@ class _ApiEditPageState extends State<ApiEditPage> {
       id: DateTime.now().millisecondsSinceEpoch,
       apiKey: _apiKeyController.text,
       displayName: "${_displayNameController.text} (复制)",
-      modelName: _modelNameController.text,
-      modelName_think: _modelNameThinkController.text,
-      url: _urlController.text,
+      modelName: modelName,
+      url: _selectedProvider.defaultUrl.isEmpty
+          ? _urlController.text
+          : _selectedProvider.defaultUrl,
       provider: _selectedProvider,
       remarks: _remarksController.text,
     );

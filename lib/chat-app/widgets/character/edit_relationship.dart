@@ -162,11 +162,6 @@ class _EditRelationshipState extends State<EditRelationship> {
                         icon: const Icon(Icons.close),
                         onPressed: () => _removeRelation(entry.key),
                       ),
-                      // 拖拽手柄
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, top: 8),
-                        child: Icon(Icons.drag_handle),
-                      ),
                     ],
                   ),
                 ),

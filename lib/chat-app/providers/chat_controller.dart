@@ -9,7 +9,6 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
-import 'package:flutter_example/chat-app/utils/handleSevereError.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
@@ -226,7 +225,7 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       print('保存聊天数据失败: $e');
-      handleSevereError('Save Failed!', e);
+      Get.snackbar('聊天数据保存失败', '$e');
       rethrow;
     }
   }

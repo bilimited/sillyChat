@@ -55,25 +55,15 @@ class Aihandler {
         Get.snackbar("未选择API", "请先选择一个API");
         return;
       }
-      if (api.provider == ServiceProvider.openai) {
+      if (api.provider.isOpenAICompatiable) {
         await for (final token in requestOpenAI(options, api)) {
           print("Token:$token");
           yield token;
         }
         // yield* requestOpenAI(options, api); yield* 会导致异常无法正常被catch
-      } else if (api.provider == ServiceProvider.google) {
+      } else if (api.provider.isGoogleCompatiable) {
         // 谷歌接口
         await for (final token in requestGoogle(options, api)) {
-          yield token;
-        }
-      } else if (api.provider == ServiceProvider.deepseek) {
-        // DeepSeek接口（主要区别：可切换思考模式）
-        String? overriteModelName = api.modelName;
-        if (options.isThinkMode && api.modelName_think.isNotEmpty) {
-          overriteModelName = api.modelName_think;
-        }
-        await for (final token in requestOpenAI(options, api,
-            overriteModelName: overriteModelName)) {
           yield token;
         }
       }
@@ -176,11 +166,11 @@ class Aihandler {
           "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:streamGenerateContent?key=${api.apiKey}&alt=sse";
 
       final requestBody = {
-        if (options.messages.where((msg) => msg.role == 'system').isNotEmpty)
-          "system_instruction": LLMMessage.toGeminiSystemPrompt(
-              options.messages.where((msg) => msg.role == 'system').toList()),
+        // if (options.messages.where((msg) => msg.role == 'system').isNotEmpty)
+        //   "system_instruction": LLMMessage.toGeminiSystemPrompt(
+        //       options.messages.where((msg) => msg.role == 'system').toList()),
         "contents": options.messages
-            .where((msg) => msg.role != 'system')
+            //.where((msg) => msg.role != 'system')
             .map((msg) => msg.toGeminiRestJson())
             .toList(),
         "generationConfig": {
@@ -188,8 +178,10 @@ class Aihandler {
           "maxOutputTokens": options.maxTokens,
           "topP": options.topP,
           "thinkingConfig": {
-            "thinkingBudget": options.isThinkMode ? -1 : 0,
-            "includeThoughts": options.isThinkMode ? true : false,
+            // Gemini 2.5 Pro: 我无法停止思考！
+            // TODO: 添加ThinkBudget设置和includeThoughts开关
+            // "thinkingBudget": options.isThinkMode ? -1 : 0,
+            // "includeThoughts": options.isThinkMode ? true : false,
           }, // 暂时只有两档,
 
           // if (options.seed >= 0) "seed": options.seed,
