@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';

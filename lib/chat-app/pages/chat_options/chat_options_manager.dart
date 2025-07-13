@@ -4,7 +4,6 @@ import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart';
 import '../../providers/chat_option_controller.dart';
 import '../../models/chat_option_model.dart';
 

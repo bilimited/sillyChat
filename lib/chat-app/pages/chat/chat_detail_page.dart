@@ -57,15 +57,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   ApiModel? get api => _settingController.getApiById(chat.requestOptions.apiId);
 
   bool _showWheel = false;
-  // bool _autoSplit = false;
-
-  CharacterModel get user => chat.userId == null
-      ? _characterController.me
-      : _characterController.getCharacterById(chat.userId!);
-  int get userId => chat.userId ?? (_characterController.myId ?? -1);
-  CharacterModel get assistantCharacter =>
-      _characterController.getCharacterById(chat.assistantId ?? -1);
-  int get assistantCharacterId => assistantCharacter.id;
 
   // 添加选中消息状态
   MessageModel? _selectedMessage;
@@ -355,8 +346,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   : null,
           onTap: () async {
             setState(() {
-              // TODO: 切换消息的Pin状态
-              // message.isPinned = !message.isPinned;
               if (message.isPinned) {
                 message.visbility = MessageVisbility.hidden;
               } else if (message.isHidden) {
@@ -611,9 +600,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     MessageModel message,
     MessageModel? lastMessage,
   ) {
-    final colors = Theme.of(context).colorScheme;
     final character = _characterController.getCharacterById(message.sender);
-    final isMe = userId == message.sender;
+    final isMe = chat.user.id == message.sender;
     final avatar = character.avatar;
     final isSelected = _selectedMessage?.time == message.time;
 
@@ -625,19 +613,15 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     bool isThinking = false;
 
     // 内置正则：渲染<think>
-    if (message.content.contains('<think>')) {
-      int startIndex = message.content.indexOf('<think>') + 7;
-      int endIndex = message.content.indexOf('</think>');
-
-      if (endIndex == -1) {
-        // Only has opening <think>
-        thinkContent = message.content.substring(startIndex);
-        afterThink = '';
-        isThinking = true;
+    final thinkReg = RegExp(r'<think>([\s\S]*?)(?:<\/think>)?');
+    final match = thinkReg.firstMatch(message.content);
+    if (match != null) {
+      thinkContent = match.group(1) ?? '';
+      isThinking = !message.content.contains('</think>');
+      if (isThinking) {
+      afterThink = '';
       } else {
-        // Has both <think> and </think>
-        thinkContent = message.content.substring(startIndex, endIndex);
-        afterThink = message.content.substring(endIndex + 8);
+      afterThink = message.content.substring(match.end);
       }
     } else {
       afterThink = message.content;
@@ -701,69 +685,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         ThinkWidget(
                             isThinking: isThinking, thinkContent: thinkContent),
                       // 主消息气泡
-                      Container(
-                          decoration: BoxDecoration(
-                            color: isMe
-                                ? colors.primary
-                                : isDesktop
-                                    ? colors.surface
-                                    : colors.surfaceContainer,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          child: message.content.isEmpty
-                              // 消息为空显示转圈圈
-                              ? Container(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 200),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: isMe
-                                              ? colors.onPrimary
-                                              : colors.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (message.resPath.isNotEmpty)
-                                      _buildMessageImage(message),
-                                    MarkdownBody(
-                                      data: afterThink,
-                                      styleSheet: MarkdownStyleSheet(
-                                          p: TextStyle(
-                                            color: isMe
-                                                ? colors.onPrimary
-                                                : colors.onSurface,
-                                          ),
-                                          em: TextStyle(
-                                            color: isMe
-                                                ? colors.onPrimary
-                                                : colors.outline,
-                                            //fontStyle: isMe ? FontStyle.italic : FontStyle.normal,
-                                          )),
-                                      softLineBreak: true,
-                                      shrinkWrap: true,
-                                      // selectable: true,
-                                    ),
-                                  ],
-                                )),
+                      _buildMessageBubbleBody(message, afterThink, isMe),
                       SizedBox(height: 8.0),
                       _buildMessageButtonGroup(isSelected, message),
                     ],
@@ -786,6 +708,73 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMessageBubbleBody(
+      MessageModel message, String content, bool isMe) {
+    final colors = Theme.of(context).colorScheme;
+
+    return AnimatedSize(
+      alignment: Alignment.centerLeft,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      child: Container(
+          decoration: BoxDecoration(
+            color: isMe
+                ? colors.primary
+                : isDesktop
+                    ? colors.surface
+                    : colors.surfaceContainer,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: message.content.isEmpty
+              // 消息为空显示转圈圈
+              ? Container(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color:
+                              isMe ? colors.onPrimary : colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (message.resPath.isNotEmpty) _buildMessageImage(message),
+                    MarkdownBody(
+                      data: content,
+                      styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(
+                            color: isMe ? colors.onPrimary : colors.onSurface,
+                          ),
+                          em: TextStyle(
+                            color: isMe ? colors.onPrimary : colors.outline,
+                            //fontStyle: isMe ? FontStyle.italic : FontStyle.normal,
+                          )),
+                      softLineBreak: true,
+                      shrinkWrap: true,
+                      // selectable: true,
+                    ),
+                  ],
+                )),
     );
   }
 
@@ -1485,7 +1474,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    const LEFT_WIDTH = 300.0;
     return Scaffold(
       backgroundColor: colors.surfaceContainerHigh,
       body: Stack(

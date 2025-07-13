@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/api_data.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:get/get.dart';
 import '../../models/api_model.dart';

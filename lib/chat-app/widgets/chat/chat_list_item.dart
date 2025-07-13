@@ -62,8 +62,7 @@ class ChatListItem extends StatelessWidget {
       }
     } else {
       // 非群聊模式下只显示助手角色的头像
-      final assistant =
-          _characterController.getCharacterById(chat.assistantId ?? 0);
+      final assistant = chat.assistant;
       avatars.add(assistant.avatar);
     }
     if (avatars.isEmpty) {
@@ -91,9 +90,7 @@ class ChatListItem extends StatelessWidget {
                     avatarUrls: chat.getAllAvatars(_characterController))
                 : CircleAvatar(
                     radius: 24,
-                    backgroundImage: FileImage(File(_characterController
-                        .getCharacterById(chat.assistantId ?? 0)
-                        .avatar)),
+                    backgroundImage: FileImage(File(chat.assistant.avatar)),
                   ),
             const SizedBox(width: 16),
             Expanded(

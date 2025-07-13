@@ -119,7 +119,7 @@ class ApiModel {
       modelName: json['modelName'] as String,
       url: json['url'] as String,
       provider:
-          ServiceProvider.fromJson(json['provider'] ?? 'openai' as String),
+          ServiceProvider.fromJson(json['provider'] ?? 'openai'),
       remarks: json['remarks'] as String?,
     );
   }

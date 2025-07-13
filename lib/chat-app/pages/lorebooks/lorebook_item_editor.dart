@@ -86,7 +86,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('编辑世界书条目'),

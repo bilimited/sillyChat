@@ -6,7 +6,6 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
 
 class RequestOptions {}

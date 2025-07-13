@@ -65,9 +65,7 @@ class PromptModel {
 
   String getContent(ChatModel chat, {CharacterModel? sender = null}) {
     CharacterController characterController = Get.find();
-    var assistant = sender == null
-        ? characterController.getCharacterById(chat.assistantId ?? -1)
-        : sender;
+    var assistant = sender == null ? chat.assistant : sender;
     var prompt = content;
 
     var user = chat.userId == null
@@ -84,8 +82,6 @@ class PromptModel {
   static String BuildCharacterSystemPrompt(
       String prompt, CharacterModel character) {
     prompt = prompt.replaceAll('<char>', character.roleName);
-    // prompt = prompt.replaceAll('<age>', character.age.toString());
-    // prompt = prompt.replaceAll('<gender>', character.gender);
     prompt = prompt.replaceAll('<brief>', character.brief ?? "");
     prompt = prompt.replaceAll('<archive>', character.archive);
 

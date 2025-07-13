@@ -7,8 +7,8 @@ import 'package:get/get.dart';
 /// [context] 安卓端有些页面无法跳转，需要用另一种方法跳转
 /// 返回Future<T?>，可await获取返回值
 /// WARNING：在手机端若不传context参数可能导致无法跳转页面
-Future<T?> customNavigate<T>(Widget page, {required BuildContext context}) async {
-  
+Future<T?> customNavigate<T>(Widget page,
+    {required BuildContext context}) async {
   if (SillyChatApp.isDesktop()) {
     // 桌面端：用Dialog包裹页面
     return await Get.dialog<T>(
@@ -33,15 +33,9 @@ Future<T?> customNavigate<T>(Widget page, {required BuildContext context}) async
       barrierDismissible: true,
     );
   } else {
-    if (context != null) {
-      // 移动端：直接跳转
-      return await Navigator.of(context).push<T>(
-        MaterialPageRoute(builder: (_) => page),
-      );
-    } else {
-      return await Get.to(
-        () => page,
-      );
-    }
+    // 移动端：直接跳转
+    return await Navigator.of(context).push<T>(
+      MaterialPageRoute(builder: (_) => page),
+    );
   }
 }
