@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -51,8 +52,9 @@ class _MainPageState extends State<MainPage> {
   CharacterModel get me => _characterController.me;
 
   void _showCharacterSelectDialog() async {
-    CharacterModel? character =
-        await customNavigate<CharacterModel>(CharacterSelector(),context: context);
+    CharacterModel? character = await customNavigate<CharacterModel>(
+        CharacterSelector(),
+        context: context);
     if (character != null) {
       _vaultSettingController.myId.value = character.id;
       await _vaultSettingController.saveSettings();
@@ -129,107 +131,107 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  Future<void> _downloadAll() async {
-    await webDav.init();
-    final data = await webDav.downloadAllProps();
-    Get.back();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('云端数据'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final file = data[index];
-              return ListTile(
-                title: Text(file.name ?? "unknown"),
-                subtitle: Text(
-                    '${getSizeString(file.size ?? 0)} - 修改时间: ${file.mTime}'),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Get.back();
-              await webDav.downloadAllData(context);
-              refleshAll();
-              await _characterController.unpackAvatarFiles();
-            },
-            child: const Text('导入'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Future<void> _downloadAll() async {
+  //   await webDav.init();
+  //   final data = await webDav.downloadAllProps();
+  //   Get.back();
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('云端数据'),
+  //       content: SizedBox(
+  //         width: double.maxFinite,
+  //         height: 300,
+  //         child: ListView.builder(
+  //           itemCount: data.length,
+  //           itemBuilder: (context, index) {
+  //             final file = data[index];
+  //             return ListTile(
+  //               title: Text(file.name ?? "unknown"),
+  //               subtitle: Text(
+  //                   '${getSizeString(file.size ?? 0)} - 修改时间: ${file.mTime}'),
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('取消'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () async {
+  //             Get.back();
+  //             await webDav.downloadAllData(context);
+  //             refleshAll();
+  //             await _characterController.unpackAvatarFiles();
+  //           },
+  //           child: const Text('导入'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  void setupWebDav() {
-    final urlController =
-        TextEditingController(text: SettingController.webdav_url);
-    final usernameController =
-        TextEditingController(text: SettingController.webdav_username);
-    final passwordController =
-        TextEditingController(text: SettingController.webdav_password);
+  // void setupWebDav() {
+  //   final urlController =
+  //       TextEditingController(text: SettingController.webdav_url);
+  //   final usernameController =
+  //       TextEditingController(text: SettingController.webdav_username);
+  //   final passwordController =
+  //       TextEditingController(text: SettingController.webdav_password);
 
-    Get.dialog(
-      AlertDialog(
-        title: const Text('WebDAV 配置'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: urlController,
-              decoration: const InputDecoration(
-                labelText: 'WebDAV URL',
-                hintText: '请输入 WebDAV 服务器地址',
-              ),
-            ),
-            TextFormField(
-              controller: usernameController,
-              decoration: const InputDecoration(
-                labelText: '用户名',
-                hintText: '请输入用户名',
-              ),
-            ),
-            TextFormField(
-              controller: passwordController,
-              decoration: const InputDecoration(
-                labelText: '密码',
-                hintText: '请输入密码',
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              SettingController.webdav_url = urlController.text;
-              SettingController.webdav_username = usernameController.text;
-              SettingController.webdav_password = passwordController.text;
-              _settingController.saveGlobalSettings();
-              webDav.init();
-              Get.back();
-              Get.snackbar('成功', 'WebDAV 配置已更新');
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
+  //   Get.dialog(
+  //     AlertDialog(
+  //       title: const Text('WebDAV 配置'),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           TextFormField(
+  //             controller: urlController,
+  //             decoration: const InputDecoration(
+  //               labelText: 'WebDAV URL',
+  //               hintText: '请输入 WebDAV 服务器地址',
+  //             ),
+  //           ),
+  //           TextFormField(
+  //             controller: usernameController,
+  //             decoration: const InputDecoration(
+  //               labelText: '用户名',
+  //               hintText: '请输入用户名',
+  //             ),
+  //           ),
+  //           TextFormField(
+  //             controller: passwordController,
+  //             decoration: const InputDecoration(
+  //               labelText: '密码',
+  //               hintText: '请输入密码',
+  //             ),
+  //             obscureText: true,
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Get.back(),
+  //           child: const Text('取消'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             SettingController.webdav_url = urlController.text;
+  //             SettingController.webdav_username = usernameController.text;
+  //             SettingController.webdav_password = passwordController.text;
+  //             _settingController.saveGlobalSettings();
+  //             webDav.init();
+  //             Get.back();
+  //             Get.snackbar('成功', 'WebDAV 配置已更新');
+  //           },
+  //           child: const Text('保存'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   @override
   void initState() {
@@ -252,38 +254,8 @@ class _MainPageState extends State<MainPage> {
               desktop_switchChat(chat.id);
             });
           })),
-      
     ];
     webDav.init();
-  }
-
-  Future<void> _showBackupDialog() async {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('设置webdav'),
-              onTap: setupWebDav,
-            ),
-            ListTile(
-              leading: const Icon(Icons.cloud_download),
-              title: const Text('从云端导入'),
-              onTap: _downloadAll,
-            ),
-            ListTile(
-              leading: const Icon(Icons.cloud_upload),
-              title: const Text('上传到云端'),
-              onTap: _uploadAll,
-            ),
-            AboutListTile(),
-          ],
-        );
-      },
-    );
   }
 
   final List<Widget> _pages = [
@@ -360,13 +332,14 @@ class _MainPageState extends State<MainPage> {
                           onSelected: (value) {
                             // 根据 value 执行不同操作
                             if (value == 0) {
-                              _settingController.toggleDarkMode();
+                              customNavigate(SettingPage(), context: context);
                             } else if (value == 1) {
-                              _showBackupDialog();
+                              customNavigate(VaultManagerPage(),
+                                  context: context);
                             } else if (value == 2) {
-                              customNavigate(VaultManagerPage(),context: context);
-                            } else if (value == 3) {
                               showLicensePage(context: context);
+                            } else if (value == 3) {
+                              
                             }
                           },
                           itemBuilder: (context) => [
@@ -374,26 +347,14 @@ class _MainPageState extends State<MainPage> {
                               value: 0,
                               child: Row(
                                 children: [
-                                  _settingController.isDarkMode.value
-                                      ? Icon(Icons.nightlight)
-                                      : Icon(Icons.sunny),
+                                  Icon(Icons.settings, size: 20),
                                   SizedBox(width: 8),
-                                  Text('切换主题'),
+                                  Text('设置'),
                                 ],
                               ),
                             ),
                             PopupMenuItem(
                               value: 1,
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.cloud, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('云端同步'),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 2,
                               child: Row(
                                 children: const [
                                   Icon(Icons.switch_camera, size: 20),
@@ -403,7 +364,7 @@ class _MainPageState extends State<MainPage> {
                               ),
                             ),
                             PopupMenuItem(
-                              value: 3,
+                              value: 2,
                               child: Row(
                                 children: const [
                                   Icon(Icons.info, size: 20),
@@ -562,20 +523,25 @@ class _MainPageState extends State<MainPage> {
                     Get.to(() => VaultManagerPage());
                   },
                 ),
-                Obx(
-                  () => IconButton(
-                    icon: _settingController.isDarkMode.value
-                        ? Icon(Icons.nightlight)
-                        : Icon(Icons.sunny),
-                    onPressed: () {
-                      _settingController.toggleDarkMode();
-                    },
-                  ),
-                ),
                 IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: _showBackupDialog,
-                ),
+                    onPressed: () {
+                      customNavigate(SettingPage(), context: context);
+                    },
+                    icon: Icon(Icons.settings))
+                // Obx(
+                //   () => IconButton(
+                //     icon: _settingController.isDarkMode.value
+                //         ? Icon(Icons.nightlight)
+                //         : Icon(Icons.sunny),
+                //     onPressed: () {
+                //       _settingController.toggleDarkMode();
+                //     },
+                //   ),
+                // ),
+                // IconButton(
+                //   icon: const Icon(Icons.more_vert),
+                //   onPressed: _showBackupDialog,
+                // ),
               ],
             )
           : null,

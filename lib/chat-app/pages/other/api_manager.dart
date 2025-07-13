@@ -10,9 +10,6 @@ class ApiManagerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('API 管理'),
-      ),
       body: Obx(
         () => ReorderableListView.builder(
           itemCount: controller.apis.length,

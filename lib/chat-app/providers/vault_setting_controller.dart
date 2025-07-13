@@ -1,23 +1,30 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
+import 'package:flutter_example/chat-app/models/settings/setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../models/api_model.dart';
-import '../models/settings/vault_settings.dart';
 
 // 库配置
 class VaultSettingController extends GetxController {
   final String vaultSettingFileName = 'settings.json';
+
   final RxList<ApiModel> apis = <ApiModel>[].obs;
   final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
   final RxInt myId = 0.obs;
-  
-  String get lastSyncTimeString{
+  late Rx<ChatDisplaySettingModel> displaySettingModel =
+      ChatDisplaySettingModel().obs;
+
+  Rx<ThemeData> themeLight = ThemeData().obs;
+
+  Rx<ThemeData> themeNight = ThemeData().obs;
+
+  String get lastSyncTimeString {
     if (lastSyncTime.value == null) return "未同步";
-    
     final now = DateTime.now();
     final difference = now.difference(lastSyncTime.value!);
-    
     if (difference.inMinutes < 60) {
       return "${difference.inMinutes}分钟前";
     } else if (difference.inHours < 24) {
@@ -44,14 +51,26 @@ class VaultSettingController extends GetxController {
       if (await file.exists()) {
         final String contents = await file.readAsString();
         final Map<String, dynamic> jsonMap = json.decode(contents);
-        final settings = VaultSettings.fromJson(jsonMap);
-        
-        apis.value = settings.apis;
-        lastSyncTime.value = settings.lastSyncTime;
-        myId.value = settings.myId;
+
+        apis.value = (jsonMap['apis'] as List<dynamic>? ?? [])
+            .map((item) => ApiModel.fromJson(item))
+            .toList()
+            .cast<ApiModel>();
+        lastSyncTime.value = jsonMap['lastSyncTime'] != null
+            ? DateTime.tryParse(jsonMap['lastSyncTime'])
+            : null;
+        myId.value = jsonMap['myId'] ?? 0;
+        displaySettingModel.value = jsonMap['displaySettingModel'] != null
+            ? ChatDisplaySettingModel.fromJson(jsonMap['displaySettingModel'])
+            : ChatDisplaySettingModel();
+      } else {
+        displaySettingModel.value = ChatDisplaySettingModel();
       }
+
+      updateTheme(displaySettingModel.value.themeColor);
     } catch (e) {
       print('加载设置失败: $e');
+      displaySettingModel.value = ChatDisplaySettingModel();
     }
   }
 
@@ -61,18 +80,34 @@ class VaultSettingController extends GetxController {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$vaultSettingFileName');
 
-      final settings = VaultSettings(
-        vaultName: SettingController.currectValutName,
-        lastSyncTime: lastSyncTime.value,
-        apis: apis,
-        myId: myId.value,
-      );
+      final Map<String, dynamic> jsonMap = {
+        'vaultName': SettingController.currectValutName,
+        'lastSyncTime': lastSyncTime.value?.toIso8601String(),
+        'apis': apis.map((api) => api.toJson()).toList(),
+        'myId': myId.value,
+        'displaySettingModel': displaySettingModel.toJson(),
+      };
 
-      final String jsonString = json.encode(settings.toJson());
+      final String jsonString = json.encode(jsonMap);
       await file.writeAsString(jsonString);
     } catch (e) {
       print('保存设置失败: $e');
     }
+  }
+
+  void updateTheme(Color color) {
+    themeLight.value = ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: color),
+      useMaterial3: true,
+      fontFamily: Platform.isWindows ? "思源黑体" : null,
+    );
+
+    themeNight.value = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+          seedColor: color, brightness: Brightness.dark),
+      useMaterial3: true,
+      fontFamily: Platform.isWindows ? "思源黑体" : null,
+    );
   }
 
   // API管理方法
@@ -95,8 +130,8 @@ class VaultSettingController extends GetxController {
   }
 
   ApiModel? getApiByUrlAndModel(String url, String modelName) {
-    return apis.firstWhereOrNull(
-        (a) => a.url == url && a.modelName == modelName);
+    return apis
+        .firstWhereOrNull((a) => a.url == url && a.modelName == modelName);
   }
 
   ApiModel? getApiById(int id) {

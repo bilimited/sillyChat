@@ -96,7 +96,22 @@ class ChatController extends GetxController {
     newChat.characterIds = [
       if (newChat.userId != null) newChat.userId!,
       if (newChat.assistantId != null) newChat.assistantId!,
-    ]; // TODO:处理群聊初始化的情况
+    ];
+    if (newChat.assistantId != null &&
+        newChat.assistant.firstMessage != null &&
+        newChat.assistant.firstMessage!.isNotEmpty) {
+      newChat.messages = [
+        MessageModel(
+          id: DateTime.now().microsecondsSinceEpoch,
+          content: newChat.assistant.firstMessage!,
+          sender: newChat.assistantId!,
+          time: DateTime.now(),
+          alternativeContent: [null],
+          role: MessageRole.assistant,
+        )
+      ];
+    }
+
     addChat(newChat);
     resetDefaultChat();
     return newChat;
@@ -301,12 +316,10 @@ class ChatController extends GetxController {
       chats.refresh();
       await saveChats();
       print("AddMessage: ${message.content}");
-      
     } else {
       print("Unknown chat!");
     }
   }
-
 
   // 在指定聊天中删除消息
   Future<void> removeMessage(int chatId, DateTime messageTime) async {
@@ -320,7 +333,6 @@ class ChatController extends GetxController {
       }
       chats.refresh();
       await saveChats();
-      
     }
   }
 
@@ -398,8 +410,8 @@ class ChatController extends GetxController {
       if (chat.mode == ChatMode.group) {
         return;
       } else if (chat.mode == ChatMode.auto) {
-        await for (var content
-            in _handleLLMMessage(chat, think: chat.requestOptions.isThinkMode)) {
+        await for (var content in _handleLLMMessage(chat,
+            think: chat.requestOptions.isThinkMode)) {
           _handleAIResult(chat, content, chat.assistantId ?? -1);
         }
       } else {
@@ -560,18 +572,23 @@ class ChatController extends GetxController {
         sender: sender ??
             Get.find<CharacterController>()
                 .getCharacterById(chat.assistantId ?? 0));
-    final result = loreBook.activateLorebooks();
+    final afterInsertLore = loreBook.activateLorebooks();
     stopwatch.stop();
     print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
 
-    // if (sender == null && msglst.isNotEmpty && msglst.last.role != 'user') {
-    //   msglst.add(LLMMessage(
-    //     content: '请接着刚才的话题继续。',
-    //     role: 'user',
-    //   ));
-    // }
+    final notEmpty =
+        afterInsertLore.where((msg) => !(msg.content.isBlank ?? false)).toList();
 
-    return result;
+    if (sender == null &&
+        notEmpty.isNotEmpty &&
+        notEmpty.last.role != 'user') {
+      notEmpty.add(LLMMessage(
+        content: '请接着刚才的话题继续。',
+        role: 'user',
+      ));
+    }
+
+    return notEmpty;
   }
 
   // 按行分割功能:已弃用

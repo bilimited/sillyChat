@@ -10,13 +10,7 @@ class ChatOptionController extends GetxController {
   final String fileName = 'chat_options.json';
 
   ChatOptionModel get defaultOption => chatOptions.isEmpty
-      ? ChatOptionModel(
-          id: -1,
-          name: '空预设',
-          requestOptions: LLMRequestOptions(messages: []),
-          prompts: [],
-          //promptId: [],
-        )
+      ? ChatOptionModel.empty()
       : chatOptions[0];
 
   @override

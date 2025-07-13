@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
@@ -50,7 +52,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   final bool isDesktop = SillyChatApp.isDesktop();
 
-  static const double avatarRadius = 25;
+  ChatDisplaySettingModel get displaySetting =>
+      _settingController.displaySettingModel.value;
+
+  double get avatarRadius => displaySetting.AvatarSize;
 
   int chatId = 0;
   ChatModel get chat => _chatController.getChatById(chatId);
@@ -573,33 +578,89 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   // 若character为空则不显示发言者名称
   Widget _buildMessageUserName(
-      MessageModel message, CharacterModel? character, bool isMe) {
+      MessageModel message, CharacterModel? character, bool isMe,
+      {int index = 0}) {
     bool isNarration = character == null;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      // 用户名
+
+    bool shouldDisplayRoleName =
+        (displaySetting.displayAssistantName && !isMe) ||
+            (displaySetting.displayUserName && isMe);
+
+    final widgets = [
+      if (!isNarration && shouldDisplayRoleName) ...[
+        Text(
+          character.roleName,
+          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
+        ),
+        const SizedBox(width: 8)
+      ],
+      if (displaySetting.displayMessageIndex)
+        Text(
+          '#${chat.messages.length - index}',
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
+        ),
+      if (displaySetting.displayMessageDate)
+        Text(
+          ' ${message.time.toIso8601String()} ',
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
+        ),
+      // BookMark icon (blue)
+      if (message.bookmark != null)
+        const Icon(Icons.bookmark, color: Colors.blue, size: 16),
+      // Pin icon (orange)
+      if (message.isPinned)
+        const Icon(Icons.push_pin, color: Colors.orange, size: 16),
+      if (message.isHidden)
+        const Icon(Icons.hide_source, color: Colors.blueGrey, size: 16),
+    ];
+
+    return Column(
       children: [
-        if (!isMe && !isNarration) Text(character.roleName),
-        if (!isMe && !isNarration) const SizedBox(width: 8),
-        // BookMark icon (blue)
-        if (message.bookmark != null)
-          const Icon(Icons.bookmark, color: Colors.blue, size: 16),
-        // Pin icon (orange)
-        if (message.isPinned)
-          const Icon(Icons.push_pin, color: Colors.orange, size: 16),
-        if (message.isHidden)
-          const Icon(Icons.hide_source, color: Colors.blueGrey, size: 16),
-        if (isMe && !isNarration) const SizedBox(width: 8),
-        if (isMe && !isNarration) Text(character.roleName),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: isMe ? widgets.reversed.toList() : widgets,
+        ),
+        if (widgets.isNotEmpty)
+          SizedBox(
+            height: 4,
+          ),
       ],
     );
   }
 
+  Widget _buildMessageAvatar(CharacterModel character) {
+    switch (displaySetting.avatarStyle) {
+      case AvatarStyle.circle:
+        return CircleAvatar(
+          backgroundImage: Image.file(File(character.avatar)).image,
+          radius: avatarRadius,
+        );
+      case AvatarStyle.rounded:
+        return ClipRRect(
+          borderRadius:
+              BorderRadius.circular(displaySetting.AvatarBorderRadius),
+          child: Image.file(
+            File(character.avatar),
+            width: avatarRadius * 2,
+            height: avatarRadius * 2,
+            fit: BoxFit.cover,
+          ),
+        );
+      case AvatarStyle.hidden:
+        return SizedBox.shrink();
+      default:
+        return CircleAvatar(
+          backgroundImage: Image.file(File(character.avatar)).image,
+          radius: avatarRadius,
+        );
+    }
+  }
+
   // 消息气泡
-  Widget _buildMessageBubble(
-    MessageModel message,
-    MessageModel? lastMessage,
-  ) {
+  Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
+      {int index = 0}) {
     final character = _characterController.getCharacterById(message.sender);
     final isMe = chat.user.id == message.sender;
     final avatar = character.avatar;
@@ -613,15 +674,19 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     bool isThinking = false;
 
     // 内置正则：渲染<think>
-    final thinkReg = RegExp(r'<think>([\s\S]*?)(?:<\/think>)?');
-    final match = thinkReg.firstMatch(message.content);
-    if (match != null) {
-      thinkContent = match.group(1) ?? '';
-      isThinking = !message.content.contains('</think>');
-      if (isThinking) {
-      afterThink = '';
+    if (message.content.contains('<think>')) {
+      int startIndex = message.content.indexOf('<think>') + 7;
+      int endIndex = message.content.indexOf('</think>');
+
+      if (endIndex == -1) {
+        // Only has opening <think>
+        thinkContent = message.content.substring(startIndex);
+        afterThink = '';
+        isThinking = true;
       } else {
-      afterThink = message.content.substring(match.end);
+        // Has both <think> and </think>
+        thinkContent = message.content.substring(startIndex, endIndex);
+        afterThink = message.content.substring(endIndex + 8);
       }
     } else {
       afterThink = message.content;
@@ -658,16 +723,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!isMe && !isHideName) ...[
-                  CircleAvatar(
-                    backgroundImage: Image.file(File(avatar)).image,
-                    radius: avatarRadius,
-                  ),
+                  _buildMessageAvatar(character),
                   const SizedBox(width: 10),
                 ],
 
                 // 用于让连续消息对齐
                 if (!isMe && isHideName)
-                  const SizedBox(
+                  SizedBox(
                     width: avatarRadius * 2 + 10,
                   ),
                 Flexible(
@@ -676,10 +738,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.start,
                     children: [
-                      if (!isHideName) ...[
-                        _buildMessageUserName(message, character, isMe),
-                        const SizedBox(height: 4),
-                      ],
+                      if (!isHideName)
+                        _buildMessageUserName(message, character, isMe,
+                            index: index),
+
                       if (thinkContent.isNotEmpty)
                         //思考过程块
                         ThinkWidget(
@@ -694,13 +756,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
                 if (isMe && !isHideName) ...[
                   const SizedBox(width: 10),
-                  CircleAvatar(
-                    backgroundImage: Image.file(File(avatar)).image,
-                    radius: avatarRadius,
-                  ),
+                  _buildMessageAvatar(character),
                 ],
                 if (isMe && isHideName)
-                  const SizedBox(
+                  SizedBox(
                     width: avatarRadius * 2 + 10,
                   ),
               ],
@@ -715,67 +774,84 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       MessageModel message, String content, bool isMe) {
     final colors = Theme.of(context).colorScheme;
 
-    return AnimatedSize(
-      alignment: Alignment.centerLeft,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      child: Container(
-          decoration: BoxDecoration(
-            color: isMe
-                ? colors.primary
-                : isDesktop
-                    ? colors.surface
-                    : colors.surfaceContainer,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 4,
-                offset: Offset(0, 2),
+    final textColor =
+        displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
+            ? (isMe ? colors.onPrimary : colors.onSurfaceVariant)
+            : colors.onSurfaceVariant;
+
+    final messageContent = message.content.isEmpty
+        // 消息为空显示转圈圈
+        ? Container(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.resPath.isNotEmpty) _buildMessageImage(message),
+              MarkdownBody(
+                data: content,
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(
+                    color: textColor,
+                  ),
+                  em: TextStyle(
+                    color: isMe ? textColor : colors.outline,
+                  ),
+                  textScaler:
+                      TextScaler.linear(displaySetting.ContentFontScale),
+                ),
+                softLineBreak: true,
+                shrinkWrap: true,
+                // selectable: true,
               ),
             ],
-          ),
-          padding: const EdgeInsets.all(12),
-          child: message.content.isEmpty
-              // 消息为空显示转圈圈
-              ? Container(
-                  constraints: const BoxConstraints(maxWidth: 200),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color:
-                              isMe ? colors.onPrimary : colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (message.resPath.isNotEmpty) _buildMessageImage(message),
-                    MarkdownBody(
-                      data: content,
-                      styleSheet: MarkdownStyleSheet(
-                          p: TextStyle(
-                            color: isMe ? colors.onPrimary : colors.onSurface,
-                          ),
-                          em: TextStyle(
-                            color: isMe ? colors.onPrimary : colors.outline,
-                            //fontStyle: isMe ? FontStyle.italic : FontStyle.normal,
-                          )),
-                      softLineBreak: true,
-                      shrinkWrap: true,
-                      // selectable: true,
-                    ),
-                  ],
-                )),
-    );
+          );
+
+    if (displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble) {
+      return AnimatedSize(
+        alignment: Alignment.centerLeft,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: Container(
+            decoration: BoxDecoration(
+              color: isMe
+                  ? colors.primary
+                  : isDesktop
+                      ? colors.surface
+                      : colors.surfaceContainer,
+              borderRadius: BorderRadius.circular(
+                  displaySetting.MessageBubbleBorderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(12),
+            child: messageContent),
+      );
+    } else if (displaySetting.messageBubbleStyle ==
+        MessageBubbleStyle.compact) {
+      return Column(
+        children: [messageContent, SizedBox(height: 16,)],
+      );
+    }
+    return messageContent;
   }
 
   // 消息操作按钮小组件
@@ -822,7 +898,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           );
   }
 
-  Widget _buildNarration(MessageModel message) {
+  Widget _buildNarration(MessageModel message, {int index = 0}) {
     final colors = Theme.of(context).colorScheme;
     final isSelected = _selectedMessage?.time == message.time;
     return GestureDetector(
@@ -846,7 +922,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               height: 16,
             ),
             if (message.resPath.isNotEmpty) _buildMessageImage(message),
-            _buildMessageUserName(message, null, false),
+            _buildMessageUserName(message, null, false, index: index),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: MarkdownBody(
@@ -855,7 +931,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   shrinkWrap: true,
                   styleSheet: MarkdownStyleSheet(
                     p: TextStyle(color: colors.outline),
-
+                    textScaler:
+                        TextScaler.linear(displaySetting.ContentFontScale),
                     // selectable: true,
                   )),
             ),
@@ -946,17 +1023,17 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       BuildContext context, int index, List<MessageModel> messages) {
     // 普通Message
     index = index - 1;
+
     final message = messages[index];
     if (message.type == MessageType.divider) {
       return _buildDivider(message);
     } else if (message.type == MessageType.narration) {
-      return _buildNarration(message);
+      return _buildNarration(message, index: index);
     }
 
     return _buildMessageBubble(
-      message,
-      index < messages.length - 1 ? messages[index + 1] : null,
-    );
+        message, index < messages.length - 1 ? messages[index + 1] : null,
+        index: index);
   }
 
   // 多选时的底部按钮组

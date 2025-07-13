@@ -32,6 +32,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _archiveController;
   late TextEditingController _categoryController;
   late TextEditingController _briefController;
+  late TextEditingController _firstMessageController;
 
   String? _avatarPath;
   String? _backgroundPath;
@@ -61,6 +62,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     // _selectedGender = _character?.gender ?? '女';
     _avatarPath = _character?.avatar;
     _backgroundPath = _character?.backgroundImage;
+    _firstMessageController =
+        TextEditingController(text: _character?.firstMessage ?? '');
   }
 
   Future<void> _pickImage(bool isAvatar) async {
@@ -90,6 +93,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       category:
           _categoryController.text.isEmpty ? "默认" : _categoryController.text,
       lorebookIds: _character?.lorebookIds ?? [],
+      firstMessage: _firstMessageController.text,
     )
       ..backgroundImage = _backgroundPath
       ..brief = _briefController.text
@@ -107,6 +111,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       _categoryController.text = backup.category;
       _briefController.text = backup.brief ?? '';
       _archiveController.text = backup.archive;
+      _firstMessageController.text = backup.firstMessage ?? '';
 
       // 头像和背景不拷贝
       //_avatarPath = backup.avatar;
@@ -247,6 +252,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   ),
                   maxLines: 2,
                 ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _firstMessageController,
+                  decoration: const InputDecoration(
+                    labelText: '首句台词(可选)',
+                    border: UnderlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
               ],
             ),
           ),
@@ -275,23 +289,24 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     height: 10,
                   ),
                   ElevatedButton(
-                      onPressed: () async {
-                        final char = _saveCharacter();
-                        if (char == null) {
-                          Get.snackbar("错误", "字段填写存在问题!");
-                          return;
-                        }
-                        final result = await customNavigate<String>(
-                            GenCharacterPromptPage(character: char),
-                            context: context);
+                    onPressed: () async {
+                      final char = _saveCharacter();
+                      if (char == null) {
+                        Get.snackbar("错误", "字段填写存在问题!");
+                        return;
+                      }
+                      final result = await customNavigate<String>(
+                          GenCharacterPromptPage(character: char),
+                          context: context);
 
-                        if (result != null) {
-                          setState(() {
-                            _archiveController.text = result;
-                          });
-                        }
-                      },
-                      child: Text("生成角色介绍")),
+                      if (result != null) {
+                        setState(() {
+                          _archiveController.text = result;
+                        });
+                      }
+                    },
+                    child: Text("生成角色介绍"),
+                  ),
                 ],
               )),
         ),

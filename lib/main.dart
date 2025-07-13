@@ -75,8 +75,8 @@ class SillyChatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() => GetMaterialApp(
           title: 'Silly Chat',
-          theme: defalutThemeDay,
-          darkTheme: defaultThemeNight,
+          theme: vaultSettings.themeLight.value,
+          darkTheme: vaultSettings.themeNight.value,
           themeMode:
               setting.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
           home: const MainPage(),

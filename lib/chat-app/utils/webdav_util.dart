@@ -52,7 +52,7 @@ class WebDavUtil {
         'prompts.json',
         'settings.json',
         'chat_options.json',
-        'character_avatars.zip'
+        'character_avatars.zip',
         'lorebooks.json',
       ];
 

@@ -19,7 +19,7 @@ class EditChatOptionPage extends StatefulWidget {
 class _EditChatOptionPageState extends State<EditChatOptionPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _msgTemplateController = TextEditingController();
+  //final _msgTemplateController = TextEditingController();
   final ChatOptionController _controller = Get.find();
 
   late LLMRequestOptions _requestOptions;
@@ -30,19 +30,20 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
   void initState() {
     super.initState();
     isEditing = widget.option != null;
+    final defaultOption = ChatOptionModel.empty();
 
     _nameController.text = widget.option?.name ?? '';
-    _msgTemplateController.text = widget.option?.messageTemplate ?? '{{msg}}';
+    // _msgTemplateController.text = widget.option?.messageTemplate ?? '{{msg}}';
     _requestOptions = widget.option?.requestOptions ??
-        const LLMRequestOptions(messages: [], maxTokens: 2000);
-    _prompts = widget.option?.prompts ?? [];
+        defaultOption.requestOptions;
+    _prompts = widget.option?.prompts ?? defaultOption.prompts;
     //_promptId = widget.option?.promptId ?? [];
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _msgTemplateController.dispose();
+    //_msgTemplateController.dispose();
     super.dispose();
   }
 
@@ -57,7 +58,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text,
       requestOptions: _requestOptions,
       prompts: _prompts,
-      messageTemplate: _msgTemplateController.text,
     );
 
     if (isEditing) {
@@ -77,7 +77,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text+"的副本",
       requestOptions: _requestOptions.copyWith(),
       prompts: _prompts.map((ele) => ele.copy()).toList(),
-      messageTemplate: _msgTemplateController.text,
     );
     _controller.addChatOption(chatOption);
     Get.back();

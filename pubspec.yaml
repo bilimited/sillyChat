@@ -48,6 +48,7 @@ dependencies:
   dio: ^5.8.0+1
   path: ^1.8.3
   image_picker: ^1.0.7
+  flutter_colorpicker: ^1.1.0
   # image_cropper: ^5.0.1
   
   get: ^4.7.2

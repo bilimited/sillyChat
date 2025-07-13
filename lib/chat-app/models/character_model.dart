@@ -41,6 +41,8 @@ class CharacterModel {
   String? brief; // 简略个人信息
   String archive = ""; // 替代原来的个人信息
 
+  String? firstMessage;
+
   String category;
   Map<int, Relation> relations = {};
 
@@ -66,6 +68,7 @@ class CharacterModel {
     this.brief,
     this.backups,
     lorebookIds,
+    this.firstMessage
   }) {
     if (lorebookIds != null) {
       this.lorebookIds = lorebookIds;
@@ -94,6 +97,7 @@ class CharacterModel {
           ? backups!.map((e) => e.toJson()).toList()
           : null, // 添加isBackup字段
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
+      'firstMessage': firstMessage, // 添加firstMessage字段
     };
   }
 
@@ -110,6 +114,7 @@ class CharacterModel {
               ?.map((e) => e as int)
               .toList() ??
           [],
+      firstMessage: json['firstMessage'],
     );
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
@@ -154,6 +159,7 @@ class CharacterModel {
       messageStyle: messageStyle,
       backups: backups?.map((e) => e.copy()).toList(),
       lorebookIds: List<int>.from(lorebookIds), // 深拷贝lorebookIds
+      firstMessage: firstMessage,
     );
 
     newChar.archive = archive; // 添加archive字段的复制

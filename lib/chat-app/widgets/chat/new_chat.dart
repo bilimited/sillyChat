@@ -49,7 +49,6 @@ class _NewChatState extends State<NewChat> {
     chat.initOptions(chatOptionModel);
   }
 
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -59,10 +58,11 @@ class _NewChatState extends State<NewChat> {
           child: Center(
             child: GestureDetector(
               onTap: () async {
-                final character =
-                    await customNavigate<CharacterModel>(CharacterSelector(
-                  excludeCharacters: [_characterController.me],
-                ),context: context);
+                final character = await customNavigate<CharacterModel>(
+                    CharacterSelector(
+                      excludeCharacters: [_characterController.me],
+                    ),
+                    context: context);
                 if (character != null) {
                   _chatController.updateDefaultChat(assistantId: character.id);
                 }
@@ -79,43 +79,44 @@ class _NewChatState extends State<NewChat> {
                               final character =
                                   await customNavigate<CharacterModel>(
                                       CharacterSelector(
-                                excludeCharacters: [_characterController.me],
-                              ),context: context);
+                                        excludeCharacters: [
+                                          _characterController.me
+                                        ],
+                                      ),
+                                      context: context);
                               if (character != null) {
                                 _chatController.updateDefaultChat(
                                     assistantId: character.id);
                               }
                             },
                             child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: colors.secondary, // 边框颜色
-                                  width: 3, // 边框宽度
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.45),
-                                    blurRadius: 15,
-                                    offset: Offset(0, 5),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: colors.secondary, // 边框颜色
+                                    width: 3, // 边框宽度
                                   ),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                    radius: 60,
-                                    backgroundImage: !isFirstCharSelected
-                                        ? null
-                                        : Image.file(
-                                                File(assistantCharacter.avatar))
-                                            .image,
-                                    child: !isFirstCharSelected
-                                        ? Icon(Icons.account_circle,
-                                            size: 120, color: colors.outline)
-                                        : null,
-                                    backgroundColor:
-                                        colors.surfaceContainerHigh,
-                                  )
-                            ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.45),
+                                      blurRadius: 15,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 60,
+                                  backgroundImage: !isFirstCharSelected
+                                      ? null
+                                      : Image.file(
+                                              File(assistantCharacter.avatar))
+                                          .image,
+                                  child: !isFirstCharSelected
+                                      ? Icon(Icons.account_circle,
+                                          size: 120, color: colors.outline)
+                                      : null,
+                                  backgroundColor: colors.surfaceContainerHigh,
+                                )),
                           ),
 
                           // 待定：创建群聊用
@@ -165,18 +166,24 @@ class _NewChatState extends State<NewChat> {
                         height: 10,
                       ),
                       Text(
-                        !isFirstCharSelected ? '' : '无初始对话',
+                        !isFirstCharSelected
+                            ? ''
+                            : (assistantCharacter.firstMessage != null &&
+                                    assistantCharacter.firstMessage!.isNotEmpty)
+                                ? '初始对话:${assistantCharacter.firstMessage}'
+                                : '无初始对话',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           color: colors.outline,
                         ),
+                        maxLines: 5,
+                        overflow: TextOverflow.fade,
                       ),
                       SizedBox(
                         height: 20,
                       ),
                       if (isFirstCharSelected)
-
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: SillyChatApp.isDesktop()

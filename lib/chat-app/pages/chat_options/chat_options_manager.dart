@@ -57,11 +57,11 @@ class ChatOptionsManagerPage extends StatelessWidget {
                 customNavigate(PromptManagerPage(),context: context);
               },
               icon: Icon(Icons.article)),
-          IconButton(
-              onPressed: () {
-                customNavigate(ApiManagerPage(),context: context);
-              },
-              icon: Icon(Icons.api))
+          // IconButton(
+          //     onPressed: () {
+          //       customNavigate(ApiManagerPage(),context: context);
+          //     },
+          //     icon: Icon(Icons.api))
         ],
       ),
       body: Obx(
