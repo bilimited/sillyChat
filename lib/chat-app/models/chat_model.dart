@@ -24,6 +24,8 @@ class ChatModel {
 
   late ChatOptionModel chatOption;
 
+  bool get isChatNotCreated => id == -1;
+
   LLMRequestOptions get requestOptions => chatOption.requestOptions;
   set requestOptions(LLMRequestOptions value) {
     chatOption.requestOptions = value;
@@ -47,9 +49,12 @@ class ChatModel {
     return controller.getCharacterById(assistantId ?? -1);
   }
 
+  // 获取User，如User为空则取默认值
   CharacterModel get user {
     CharacterController controller = Get.find();
-    return controller.getCharacterById(userId ?? -1);
+    return userId == null
+        ? controller.me
+        : controller.getCharacterById(userId!);
   }
 
   String messageTemplate = "{{msg}}"; // 新增：消息模板字段

@@ -122,7 +122,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   // 显示编辑消息对话框
   void _showEditDialog(MessageModel message) {
-    customNavigate(EditMessagePage(chatId: chatId, message: message),context: context);
+    customNavigate(EditMessagePage(chatId: chatId, message: message),
+        context: context);
   }
 
   void _showDeleteConfirmation(MessageModel message) {
@@ -271,8 +272,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 title: const Text('LLM重写'),
                 onTap: () async {
                   Get.back();
-                  final result = await customNavigate<String?>(ContentGenerator(
-                      messages: [LLMMessage.fromMessageModel(message)]),context: context);
+                  final result = await customNavigate<String?>(
+                      ContentGenerator(
+                          messages: [LLMMessage.fromMessageModel(message)]),
+                      context: context);
                   if (result != null) {
                     message.content = result;
                     _updateChat();
@@ -921,69 +924,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       if (isNewChat) {
         await _updateChat();
       }
-
-      final message = MessageModel(
-          id: DateTime.now().microsecondsSinceEpoch,
-          content: text,
-          sender: userId,
-          time: DateTime.now(),
-          type: MessageTypeExtension.fromMessageStyle(user.messageStyle),
-          role: MessageRole.user,
-          alternativeContent: [null],
-          resPath: selectedPath);
       setState(() {
         selectedPath = [];
       });
-      await _chatController.addMessage(chatId: chatId, message: message);
-      //_messageController.clear();
 
-      if (mode == ChatMode.group) {
-        return;
-        //await _chatController.handleLLMMessage(chat);
-      } else if (mode == ChatMode.auto) {
-        await for (var content
-            in _chatController.handleLLMMessage(chat, think: isThinkMode)) {
-          _handleAIResult(content, assistantCharacterId);
-        }
-      } else {
-        return;
-      }
-    }
-  }
-
-  // 重新发送ai请求（会自动追加在最新的AI回复后面。若无最新AI回复且为群聊模式，则不可用）（该方法未完成）
-  Future<void> retry({int index = 1}) async {
-    final msgList = _chatController.getChatById(chat.id).messages;
-    // 重生成消息的下标
-    int indexToRetry = msgList.length - index;
-    if (indexToRetry < 0 || index < 1 || msgList.length == 0 || isNewChat) {
-      return;
-    }
-
-    MessageModel? message = msgList[indexToRetry];
-    if (message.isAssistant) {
-      _chatController.removeMessage(chat.id, message.time);
-    } else {
-      message = null;
-    }
-    if (mode == ChatMode.auto) {
-      await for (var content
-          in _chatController.handleLLMMessage(chat, think: isThinkMode)) {
-        _handleAIResult(content, assistantCharacterId, existedMessage: message);
-      }
-    } else if (mode == ChatMode.group && message != null) {
-      await for (var content in _chatController.handleLLMMessage(chat,
-          sender: _characterController.getCharacterById(message.sender),
-          think: isThinkMode)) {
-        _handleAIResult(content, message.sender, existedMessage: message);
-      }
-    }
-  }
-
-  void _groupMessage(CharacterModel sender) async {
-    await for (var content in _chatController.handleLLMMessage(chat,
-        sender: sender, think: isThinkMode)) {
-      _handleAIResult(content, sender.id);
+      _chatController.sendMessageAndGetReply(chat, text, selectedPath);
     }
   }
 
@@ -1005,27 +950,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         _selectedMessages.add(message);
       }
     });
-  }
-
-  Future<void> _handleAIResult(String content, int senderID,
-      {MessageModel? existedMessage}) async {
-    List<String?> existedContent = [null];
-    if (existedMessage != null) {
-      int firstNull = existedMessage.alternativeContent.indexOf(null);
-      existedMessage.alternativeContent[firstNull] = existedMessage.content;
-      existedMessage.alternativeContent.add(null);
-      existedContent = existedMessage.alternativeContent;
-    }
-
-    final AIMessage = MessageModel(
-      id: DateTime.now().microsecondsSinceEpoch,
-      content: content,
-      sender: senderID,
-      time: DateTime.now(),
-      role: MessageRole.assistant,
-      alternativeContent: existedContent,
-    );
-    await _chatController.addMessage(chatId: chatId, message: AIMessage);
   }
 
   // 构建消息，包括三种已有的消息类型
@@ -1308,14 +1232,16 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                     width: _isMultiSelecting ? 36 : 0,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8.0),
-                                    child: _isMultiSelecting ? Icon(
-                                      color: colors.secondary,
-                                      _selectedMessages
-                                              .contains(messages[index - 1])
-                                          ? Icons.check_circle
-                                          : Icons.radio_button_unchecked,
-                                      size: 20,
-                                    ): SizedBox.shrink(),
+                                    child: _isMultiSelecting
+                                        ? Icon(
+                                            color: colors.secondary,
+                                            _selectedMessages.contains(
+                                                    messages[index - 1])
+                                                ? Icons.check_circle
+                                                : Icons.radio_button_unchecked,
+                                            size: 20,
+                                          )
+                                        : SizedBox.shrink(),
                                   ),
                                   Expanded(
                                     child:
@@ -1347,7 +1273,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         child: BottomInputArea(
                           chatId: chatId,
                           onSendMessage: _sendMessage,
-                          onRetryLastest: retry,
+                          onRetryLastest: () {
+                            _chatController.retry(chat);
+                          },
                           onToggleGroupWheel: () {
                             setState(() => _showWheel = !_showWheel);
                           },
@@ -1386,7 +1314,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       .toList(),
                   onCharacterSelected: (character) {
                     setState(() => _showWheel = false);
-                    _groupMessage(character);
+                    _chatController.getGroupReply(chat, character);
                   },
                 ),
               ),
@@ -1414,7 +1342,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  customNavigate(EditChatPage(chat: chat),context: context);
+                  customNavigate(EditChatPage(chat: chat), context: context);
                 },
               ),
             ],
@@ -1460,13 +1388,15 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
-                  customNavigate(SearchPage(
-                    chats: [chat],
-                    onMessageTap: (message, chat) {
-                      Get.back();
-                      _scrollToMessage(message);
-                    },
-                  ),context: context);
+                  customNavigate(
+                      SearchPage(
+                        chats: [chat],
+                        onMessageTap: (message, chat) {
+                          Get.back();
+                          _scrollToMessage(message);
+                        },
+                      ),
+                      context: context);
                 },
               ),
               IconButton(
@@ -1516,7 +1446,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  customNavigate(EditChatPage(chat: chat),context: context);
+                  customNavigate(EditChatPage(chat: chat), context: context);
                 },
               ),
             ],

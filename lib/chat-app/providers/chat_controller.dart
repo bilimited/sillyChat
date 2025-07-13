@@ -298,13 +298,15 @@ class ChatController extends GetxController {
       chat.messages.add(message);
       chat.lastMessage = lastMessage != null ? lastMessage : message.content;
       chat.time = message.time.toString();
+      chats.refresh();
       await saveChats();
       print("AddMessage: ${message.content}");
-      chats.refresh();
+      
     } else {
       print("Unknown chat!");
     }
   }
+
 
   // 在指定聊天中删除消息
   Future<void> removeMessage(int chatId, DateTime messageTime) async {
@@ -316,8 +318,9 @@ class ChatController extends GetxController {
         chat.lastMessage = lastMsg.content;
         chat.time = lastMsg.time.toString();
       }
-      await saveChats();
       chats.refresh();
+      await saveChats();
+      
     }
   }
 
@@ -375,8 +378,103 @@ class ChatController extends GetxController {
         .toList();
   }
 
-  String propressMessage(String content, LLMRequestOptions options,
-      {bool isGroupMode = false}) {
+  /// 发送信息方法
+  /// 行为：创建一个新的消息插入该聊天；自动获取当前聊天默认assistant的回复
+  Future<void> sendMessageAndGetReply(
+      ChatModel chat, String text, List<String> selectedPath) async {
+    if (text.isNotEmpty) {
+      final message = MessageModel(
+          id: DateTime.now().microsecondsSinceEpoch,
+          content: text,
+          sender: chat.user.id,
+          time: DateTime.now(),
+          type: MessageTypeExtension.fromMessageStyle(chat.user.messageStyle),
+          role: MessageRole.user,
+          alternativeContent: [null],
+          resPath: selectedPath);
+
+      await addMessage(chatId: chat.id, message: message);
+
+      if (chat.mode == ChatMode.group) {
+        return;
+      } else if (chat.mode == ChatMode.auto) {
+        await for (var content
+            in _handleLLMMessage(chat, think: chat.requestOptions.isThinkMode)) {
+          _handleAIResult(chat, content, chat.assistantId ?? -1);
+        }
+      } else {
+        return;
+      }
+    }
+  }
+
+  void getGroupReply(ChatModel chat, CharacterModel sender) async {
+    await for (var content in _handleLLMMessage(chat,
+        sender: sender, think: chat.requestOptions.isThinkMode)) {
+      _handleAIResult(chat, content, sender.id);
+    }
+  }
+
+  // 重新发送ai请求（会自动追加在最新的AI回复后面。若无最新AI回复且为群聊模式，则不可用）（该方法未完成）
+  Future<void> retry(ChatModel chat, {int index = 1}) async {
+    final msgList = getChatById(chat.id).messages;
+
+    // 获取需要重生成的消息
+    int indexToRetry = msgList.length - index;
+    if (indexToRetry < 0 ||
+        index < 1 ||
+        msgList.length == 0 ||
+        chat.isChatNotCreated) {
+      return;
+    }
+    MessageModel? message = msgList[indexToRetry];
+
+    // 判断是重新生成，还是直接回复
+    if (message.isAssistant) {
+      removeMessage(chat.id, message.time);
+    } else {
+      message = null;
+    }
+
+    if (chat.mode == ChatMode.auto) {
+      //
+      await for (var content
+          in _handleLLMMessage(chat, think: chat.requestOptions.isThinkMode)) {
+        _handleAIResult(chat, content, chat.assistantId ?? -1,
+            existedMessage: message);
+      }
+    } else if (chat.mode == ChatMode.group && message != null) {
+      final CharacterController controller = Get.find();
+      await for (var content in _handleLLMMessage(chat,
+          sender: controller.getCharacterById(message.sender),
+          think: chat.requestOptions.isThinkMode)) {
+        _handleAIResult(chat, content, message.sender, existedMessage: message);
+      }
+    }
+  }
+
+  Future<void> _handleAIResult(ChatModel chat, String content, int senderID,
+      {MessageModel? existedMessage}) async {
+    List<String?> existedContent = [null];
+    if (existedMessage != null) {
+      int firstNull = existedMessage.alternativeContent.indexOf(null);
+      existedMessage.alternativeContent[firstNull] = existedMessage.content;
+      existedMessage.alternativeContent.add(null);
+      existedContent = existedMessage.alternativeContent;
+    }
+
+    final AIMessage = MessageModel(
+      id: DateTime.now().microsecondsSinceEpoch,
+      content: content,
+      sender: senderID,
+      time: DateTime.now(),
+      role: MessageRole.assistant,
+      alternativeContent: existedContent,
+    );
+    await addMessage(chatId: chat.id, message: AIMessage);
+  }
+
+  String _propressMessage(String content, LLMRequestOptions options) {
     // 处理消息内容，删除thinking标记
     if (options.isDeleteThinking) {
       content =
@@ -425,7 +523,7 @@ class ChatController extends GetxController {
       ...sysPrompts,
       ...msgIndexes.map((i) {
         final msg = chat.messages[i];
-        final content = propressMessage(msg.content, chat.requestOptions);
+        final content = _propressMessage(msg.content, chat.requestOptions);
         int priority = msgIndexes.length - 1 - msgIndexes.indexOf(i); // 最后一条为0
         if (sender == null) {
           return LLMMessage(
@@ -478,7 +576,7 @@ class ChatController extends GetxController {
 
   // 按行分割功能:已弃用
   // 处理消息功能，默认为单聊
-  Stream<String> handleLLMMessage(ChatModel chat,
+  Stream<String> _handleLLMMessage(ChatModel chat,
       {bool think = false, CharacterModel? sender = null}) async* {
     LLMMessageBuffer.value = "";
     isLLMGenerating.value = true;
@@ -495,11 +593,11 @@ class ChatController extends GetxController {
       LLMMessageBuffer.refresh();
     }
     isLLMGenerating.value = false;
-    yield fixMessage(LLMMessageBuffer.value);
+    yield _fixMessage(LLMMessageBuffer.value);
   }
 
   // 消除行首空格
-  String fixMessage(String content) {
+  String _fixMessage(String content) {
     String result = "";
     for (String line in content.split('\n')) {
       if (line.startsWith('    ')) {
@@ -512,10 +610,6 @@ class ChatController extends GetxController {
   }
 
   void interrupt() {
-    // chatAIHandler.isInterrupt = true;
-    // if(chatAIHandler.dio!=null){
-    //   chatAIHandler.dio!.close(force: true);
-    // }
     chatAIHandler.interrupt();
 
     isLLMGenerating.value = false;
