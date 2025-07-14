@@ -10,9 +10,8 @@
 
 > ⚠️本项目仍在开发中，不保证稳定性
 
-![桌面端预览](images/desktop.gif)
-
-![安卓端预览](images/android.jpg)
+<img src="images/desktop.gif" alt="桌面端预览" width="100%">
+<img src="images/android.jpg" alt="安卓端预览" width="300px">
 
 ---
 
