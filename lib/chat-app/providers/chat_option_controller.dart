@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:get/get.dart';
 import '../models/chat_option_model.dart';
 import 'setting_controller.dart';

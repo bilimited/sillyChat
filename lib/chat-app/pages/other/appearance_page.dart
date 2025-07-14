@@ -53,52 +53,57 @@ class AppearanceSettingsPage extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             children: <Widget>[
               // Dropdown for AvatarStyle
-              DropdownButtonFormField<AvatarStyle>(
-                value: setting.avatarStyle,
-                decoration: const InputDecoration(
-                  labelText: '头像风格', // 'Avatar Style'
-                  border: OutlineInputBorder(),
-                ),
-                items: AvatarStyle.values.map((AvatarStyle style) {
-                  return DropdownMenuItem<AvatarStyle>(
-                    value: style,
-                    child: Text(_translateAvatarStyle(style)), // 翻译枚举值
-                  );
-                }).toList(),
-                onChanged: (AvatarStyle? newValue) {
-                  if (newValue != null) {
-                    setting.avatarStyle = newValue;
-                    controller.displaySettingModel.refresh();
-                    controller.saveSettings();
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
+              ListTile(
+                title: Text('头像风格'),
+                trailing: SegmentedButton(
+                  segments: AvatarStyle.values.map((AvatarStyle style) {
+                    return ButtonSegment<AvatarStyle>(
+                      value: style,
+                      label: Text(_translateAvatarStyle(style)),
+                      // You can also add icons here if desired:
+                      // icon: Icon(Icons.star),
+                    );
+                  }).toList(),
+                  selected: <AvatarStyle>{setting.avatarStyle},
 
-              // Dropdown for MessageBubbleStyle
-              DropdownButtonFormField<MessageBubbleStyle>(
-                value: setting.messageBubbleStyle,
-                decoration: const InputDecoration(
-                  labelText: '消息气泡风格', // 'Message Bubble Style'
-                  border: OutlineInputBorder(),
+                  onSelectionChanged: (Set<AvatarStyle> newSelection) {
+                    if (newSelection.isNotEmpty) {
+                      final selectedStyle = newSelection.first;
+                      setting.avatarStyle = selectedStyle;
+                      controller.displaySettingModel.refresh();
+                      controller.saveSettings();
+                    }
+                  },
+                  // Ensure only one option can be selected at a time, like a radio button group
+                  multiSelectionEnabled: false,
                 ),
-                items:
-                    MessageBubbleStyle.values.map((MessageBubbleStyle style) {
-                  return DropdownMenuItem<MessageBubbleStyle>(
-                    value: style,
-                    child: Text(_translateMessageBubbleStyle(style)), // 翻译枚举值
-                  );
-                }).toList(),
-                onChanged: (MessageBubbleStyle? newValue) {
-                  if (newValue != null) {
-                    setting.messageBubbleStyle = newValue;
-                    controller.displaySettingModel.refresh();
-                    controller.saveSettings();
-                  }
-                },
               ),
-              const SizedBox(height: 24),
 
+              // 改为ListTile+SegmentedButton样式
+              ListTile(
+                title: const Text('消息气泡风格'), // 'Message Bubble Style'
+                trailing: SegmentedButton<MessageBubbleStyle>(
+                  segments:
+                      MessageBubbleStyle.values.map((MessageBubbleStyle style) {
+                    return ButtonSegment<MessageBubbleStyle>(
+                      value: style,
+                      label: Text(_translateMessageBubbleStyle(style)),
+                    );
+                  }).toList(),
+                  selected: <MessageBubbleStyle>{setting.messageBubbleStyle},
+                  onSelectionChanged: (Set<MessageBubbleStyle> newSelection) {
+                    if (newSelection.isNotEmpty) {
+                      final selectedStyle = newSelection.first;
+                      setting.messageBubbleStyle = selectedStyle;
+                      controller.displaySettingModel.refresh();
+                      controller.saveSettings();
+                    }
+                  },
+                  // Ensure only one option can be selected at a time, like a radio button group
+                  multiSelectionEnabled: false,
+                ),
+              ),
+              Divider(),
               // Switches for boolean values
               SwitchListTile(
                 title: const Text('显示用户名称'), // 'Display User Name'
@@ -136,7 +141,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   controller.saveSettings();
                 },
               ),
-              const SizedBox(height: 16),
+              Divider(),
 
               // Slider for ContentFontScale
               Column(
@@ -182,7 +187,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              
               // 新增：头像圆角滑块
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,8 +212,6 @@ class AppearanceSettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
               // 新增：消息气泡圆角滑块
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +236,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              Divider(),
               // 新增：主题色选择
               ListTile(
                 title: const Text('主题颜色'),
@@ -254,7 +257,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                       return AlertDialog(
                         title: const Text('选择主题颜色'),
                         content: SingleChildScrollView(
-                          child: ColorPicker(
+                          child: BlockPicker(
                             pickerColor: tempColor,
                             onColorChanged: (color) {
                               tempColor = color;

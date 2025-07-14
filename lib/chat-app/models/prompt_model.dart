@@ -75,6 +75,7 @@ class PromptModel {
         : characterController.getCharacterById(chat.userId!);
     prompt = prompt.replaceAll('<user>', user.roleName);
     prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
+    prompt = prompt.replaceAll('<description>', chat.description ?? '');
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);

@@ -151,8 +151,18 @@ class _EditChatPageState extends State<EditChatPage>
                           labelText: '聊天标题（可选）',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) =>
-                            value?.isEmpty ?? true ? '请输入聊天标题' : null,
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: widget.chat.description,
+                        onChanged: (value) {
+                          widget.chat.description = value;
+                        },
+                        decoration: InputDecoration(
+                          labelText: '作者注释（可选）',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: null,
                       ),
                       SizedBox(height: 16),
                       _buildRoleSelector(
@@ -511,7 +521,9 @@ class _EditChatPageState extends State<EditChatPage>
                                     onPressed: () {
                                       setState(() {
                                         _chatOptionController.addChatOption(
-                                          chat.chatOption.copyWith(true,id: DateTime.now().microsecondsSinceEpoch),
+                                          chat.chatOption.copyWith(true,
+                                              id: DateTime.now()
+                                                  .microsecondsSinceEpoch),
                                         );
                                         Get.back();
                                       });
@@ -583,7 +595,7 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   void _saveChanges({bool isBack = true}) async {
-    if (widget.chat.id == -1 || isBack) {
+    if (widget.chat.id == -1 && isBack) {
       Get.back();
       return;
     }
@@ -595,6 +607,8 @@ class _EditChatPageState extends State<EditChatPage>
       }
 
       // Get.snackbar('成功', '群聊信息已更新');
+    }else{
+
     }
   }
 

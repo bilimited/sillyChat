@@ -179,6 +179,20 @@ class _ApiEditPageState extends State<ApiEditPage> {
               ),
               maxLines: 3,
             ),
+            Divider(),
+            // ElevatedButton.icon(
+            //     onPressed: () {
+            //       Aihandler.testConnectivity(
+            //           _urlController.text
+            //               .replaceAll('/v1/chat/completions', '')
+            //               .replaceAll('/chat/completions', ''),
+            //           (isSuccess, message) {
+            //         Get.snackbar(isSuccess ? '成功' : '失败', message,
+            //             snackPosition: SnackPosition.BOTTOM,
+            //             colorText: isSuccess ? Colors.green : Colors.red);
+            //       });
+            //     },
+            //     label: Text('测试连通性'))
           ],
         ),
       ),

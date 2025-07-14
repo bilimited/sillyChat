@@ -81,7 +81,7 @@ class ChatOptionModel {
     int id = DateTime.now().microsecondsSinceEpoch;
     const String bilimitedComments = "作者注释：\n"
         "<lore id=x default=xxx>代表了世界书条目插入的位置，世界书条目的'插入位置ID'为x，世界书就会被插入到<lore id=x ...> 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
-        "<user>代表用户的名称，<char>代表发言角色的名称,<archive>代表发言角色的详细介绍。\n"
+        "<user>代表用户的名称，<char>代表发言角色的名称,<archive>代表发言角色的详细介绍，<description>为当前聊天的作者注释。\n"
         "<relations>代表发言角色的关联人物列表。只有出现在群成员中，且与该角色有关联的角色会被插入到此处。\n"
         "<recent-characters:x>处会插入最近x条消息中提到，且没有出现在人物关系列表内的角色简介。\n"
         "在发送请求时，会自动去除空白的Prompt。";
@@ -100,8 +100,11 @@ class ChatOptionModel {
 ## 其他信息
 <lore id=1 default=无>
 
-<lore id=2>
+---
 
+<description>
+
+<lore id=2>
 
 我是<user>。
 现在，我将开始与你聊天。

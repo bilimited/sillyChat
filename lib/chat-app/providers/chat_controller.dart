@@ -20,13 +20,16 @@ class ChatController extends GetxController {
 
   // 与AI有关的状态变量
   final RxString LLMMessageBuffer = "".obs;
+  final RxString LLMGenerateState = "".obs;
   final RxBool isLLMGenerating = false.obs;
   final RxInt currentAssistant = 0.obs;
 
   // 仅桌面端：当前打开的聊天Id。
   final RxInt desktop_currentChat = (-1).obs;
 
-  final chatAIHandler = Aihandler();
+  late final chatAIHandler = Aihandler()..onGenerateStateChange = (state){
+    LLMGenerateState.value = state;
+  };
 
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
@@ -599,6 +602,8 @@ class ChatController extends GetxController {
     isLLMGenerating.value = true;
     late LLMRequestOptions options;
     late List<LLMMessage> messages;
+
+    LLMGenerateState.value = "正在激活世界书...";
 
     currentAssistant.value =
         sender == null ? (chat.assistantId ?? 0) : sender.id;

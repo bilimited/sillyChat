@@ -17,6 +17,8 @@ class Aihandler {
   static const String MODEL_NAME = "";
   static const bool enableSSE = true;
 
+  void Function(String newState) onGenerateStateChange = (newStat) {};
+
   bool isInterrupt = false;
   bool isBusy = false;
   dio.Dio? dioInstance;
@@ -34,6 +36,31 @@ class Aihandler {
       void Function(String) callback, LLMRequestOptions options) async {
     await for (String token in requestTokenStream(options)) {
       callback(token);
+    }
+  }
+
+  // 不好使
+  static Future<void> testConnectivity(String url,void Function(bool isSuccess,String message) callback) async {
+    final d = dio.Dio();
+    try {
+      // 尝试发送一个HEAD请求，通常比GET请求更轻量，且不返回响应体
+      // 或者发送一个GET请求到API的健康检查端点（如果有的话）
+      final response = await d.head(url,
+          options: dio.Options(receiveTimeout: const Duration(seconds: 5)));
+      callback(response.statusCode == 200, 'URL可正常连接'); // 检查HTTP状态码
+    } on dio.DioException catch (e) {
+      if (e.type == dio.DioExceptionType.connectionTimeout ||
+          e.type == dio.DioExceptionType.receiveTimeout ||
+          e.type == dio.DioExceptionType.sendTimeout ||
+          e.type == dio.DioExceptionType.unknown) {
+        print('网络连接超时或无网络: ${e.message}');
+        callback(false, '网络连接超时或无网络: ${e.message}');
+      }
+      print('API连通性测试失败: ${e.message}');
+      callback(false, 'API连通性测试失败: ${e.message}');
+    } catch (e) {
+      print('发生未知错误: $e');
+      callback(false, '发生未知错误: $e');
     }
   }
 
@@ -84,6 +111,7 @@ class Aihandler {
       String model = overriteModelName ?? api.modelName;
       String url = api.url;
 
+      onGenerateStateChange('正在建立连接...');
       dioInstance = dio.Dio();
       final rs = await dioInstance!.post(
         url,
@@ -102,58 +130,11 @@ class Aihandler {
           'stream': true,
         },
       );
-
+      onGenerateStateChange('正在生成...');
       await for (var chunk in parseSseStream(rs,
           (json) => json['choices'][0]['delta']['content'] as String? ?? '')) {
         yield chunk;
       }
-
-      // String buffer = ''; // 用于存储未完成的JSON数据
-      // await for (var data in rs.data.stream) {
-      //   final bytes = data as List<int>;
-      //   final decodedData = utf8.decode(bytes);
-
-      //   // 将新数据添加到缓冲区
-      //   buffer += decodedData;
-
-      //   // 处理所有完整的数据行
-      //   while (buffer.contains('\n')) {
-      //     var index = buffer.indexOf('\n');
-      //     var line = buffer.substring(0, index).trim();
-      //     buffer = buffer.substring(index + 1);
-
-      //     if (line.startsWith('data: ')) {
-      //       line = line.substring(6);
-
-      //       if (line == '[DONE]') break;
-      //       if (line.isEmpty) continue;
-
-      //       try {
-      //         final json = jsonDecode(line);
-      //         final content =
-      //             json['choices'][0]['delta']['content'] as String? ?? '';
-      //         final finishReason = json['choices'][0]['finish_reason'] ?? '';
-
-      //         if (json['usage']?['completion_tokens'] != null) {
-      //           token_used = json['usage']['completion_tokens'] as int;
-      //         }
-
-      //         if (content.isNotEmpty) {
-      //           yield content;
-      //         }
-
-      //         if (finishReason == 'stop') {
-      //           break;
-      //         }
-      //       } catch (e) {
-      //         LogController.log("JSON解析错误: $line\n错误信息: $e", LogLevel.warning);
-      //         continue;
-      //       }
-      //     }
-      //   }
-
-      //   if (isInterrupt) break;
-      // }
     } catch (e) {
       throw e;
     }
@@ -198,6 +179,7 @@ class Aihandler {
           },
         ],
       };
+      onGenerateStateChange('正在建立连接...');
       dioInstance = dio.Dio();
       final response = await dioInstance!.post(
         url,
@@ -213,6 +195,7 @@ class Aihandler {
       );
 
       bool isThinkStart = false;
+      onGenerateStateChange('正在生成...');
       await for (final chunk in parseSseStream(response, (json) {
         // 处理 Google Gemini SSE 响应，支持 <think> 标签
         final candidates = json['candidates'] as List?;

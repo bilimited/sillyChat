@@ -20,7 +20,11 @@ class ChatModel {
   int? assistantId; // TODO:解除外部对id的应用，直接从get方法获取实体类
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
-  String? description; // 对话摘要或介绍
+
+  // 对话摘要，介绍或作者注释
+  // 会被插入到提示词中
+  String? description; 
+
 
   late ChatOptionModel chatOption;
 
@@ -154,9 +158,7 @@ class ChatModel {
         'characterIds': characterIds,
         'messages': messages.map((msg) => msg.toJson()).toList(),
         'chatOption': chatOption.toJson(),
-        // 'requestOptions': requestOptions.toJson()
-        //   ..addAll({'max_history_length': requestOptions.maxHistoryLength}),
-        // 'prompts': _prompts.map((p) => p.toJson()).toList(), // 新增：保存实际的prompts
+
         'userId': userId, // 新增
         'assistantId': assistantId, // 新增
         'messageTemplate': messageTemplate, // 新增：序列化

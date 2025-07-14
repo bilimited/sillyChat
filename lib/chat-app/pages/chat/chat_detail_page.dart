@@ -778,7 +778,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ? (isMe ? colors.onPrimary : colors.onSurfaceVariant)
             : colors.onSurfaceVariant;
 
-    final messageContent = message.content.isEmpty
+    final messageContent = content.isEmpty
         // 消息为空显示转圈圈
         ? Container(
             constraints: const BoxConstraints(maxWidth: 200),
@@ -793,6 +793,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     color: textColor,
                   ),
                 ),
+                SizedBox(width: 10,),
+                Text(_chatController.LLMGenerateState.value,style: TextStyle(color: colors.outline),)
               ],
             ),
           )
@@ -1565,6 +1567,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             children: [
               _buildMainContent(),
               _buildCharacterWheelOverlay(),
+              _buildFloatingButtonOverlay(),
             ],
           ),
         ),

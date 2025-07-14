@@ -21,6 +21,8 @@ class ChatDisplaySettingModel {
   bool displayMessageDate = false;
   bool displayMessageIndex = false;
 
+  bool get displayAvatar => avatarStyle != AvatarStyle.hidden;
+
   ChatDisplaySettingModel({
     this.avatarStyle = AvatarStyle.circle,
     this.messageBubbleStyle = MessageBubbleStyle.bubble,
