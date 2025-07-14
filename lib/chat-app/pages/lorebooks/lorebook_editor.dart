@@ -297,11 +297,39 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                               );
                             }).toList(),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete,
-                                color: Colors.red, size: 20),
-                            tooltip: '删除',
-                            onPressed: () => deleteItem(index),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 20),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'copy',
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.copy, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('复制'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.delete,
+                                        color: Colors.red, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('删除',
+                                        style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onSelected: (value) {
+                              if (value == 'delete') {
+                                deleteItem(index);
+                              } else if (value == 'copy') {
+                                copyItem(index);
+                              }
+                            },
                           ),
                         ],
                       ),

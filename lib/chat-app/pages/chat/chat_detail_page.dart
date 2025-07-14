@@ -8,7 +8,6 @@ import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
-import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
@@ -822,7 +821,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
     if (displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble) {
       return AnimatedSize(
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.topLeft,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
         child: Container(
@@ -848,7 +847,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     } else if (displaySetting.messageBubbleStyle ==
         MessageBubbleStyle.compact) {
       return Column(
-        children: [messageContent, SizedBox(height: 16,)],
+        children: [
+          messageContent,
+          SizedBox(
+            height: 16,
+          )
+        ],
       );
     }
     return messageContent;
@@ -1039,214 +1043,142 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   // 多选时的底部按钮组
   Widget _buildBottomButtonGroup() {
     final colors = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Material(
-              color: colors.primaryContainer,
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () {
-                  setState(() {
-                    if (_selectedMessages.isEmpty) {
-                      return;
-                    }
-                    final lastSelected = _selectedMessages.last;
-                    // Find current message index
-                    int currentIndex = chat.messages
-                        .indexWhere((msg) => msg.id == lastSelected.id);
-                    if (currentIndex != -1) {
-                      // Select all messages before current message
-                      for (int i = currentIndex; i >= 0; i--) {
-                        if (!_selectedMessages.contains(chat.messages[i])) {
-                          _selectedMessages.add(chat.messages[i]);
-                        }
-                      }
-                    }
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    Icons.arrow_upward,
-                    color: colors.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            Material(
-              color: colors.primaryContainer,
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () {
-                  setState(() {
-                    if (_selectedMessages.isEmpty) {
-                      return;
-                    }
-                    final lastSelected = _selectedMessages.last;
-                    // Find current message index
-                    int currentIndex = chat.messages
-                        .indexWhere((msg) => msg.id == lastSelected.id);
-                    if (currentIndex != -1) {
-                      // Select all messages after current message
-                      for (int i = currentIndex;
-                          i < chat.messages.length;
-                          i++) {
-                        if (!_selectedMessages.contains(chat.messages[i])) {
-                          _selectedMessages.add(chat.messages[i]);
-                        }
-                      }
-                    }
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    Icons.arrow_downward,
-                    color: colors.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: EdgeInsets.only(bottom: 9),
-          child: Row(
-            children: [
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // COPY MSG
-                    IconButton(
-                      onPressed: () {
-                        _chatController.messageClipboard.value = [
-                          ..._selectedMessages
-                        ];
-                        setState(() {
-                          _isMultiSelecting = false;
-                          _selectedMessages.clear();
-                        });
-                      },
-                      icon: Icon(
-                        Icons.copy_all,
-                        color: colors.onPrimaryContainer,
-                      ),
-                    ),
-                    // CUT MSG
-                    IconButton(
-                      onPressed: () {
-                        _chatController.messageClipboard.value = [
-                          ..._selectedMessages
-                        ];
-                        _chatController.removeMessages(
-                            chatId, _selectedMessages);
-                        setState(() {
-                          _isMultiSelecting = false;
-                          _selectedMessages.clear();
-                        });
-                      },
-                      icon: Icon(
-                        Icons.cut,
-                        color: colors.onPrimaryContainer,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          for (final msg in _selectedMessages) {
-                            msg.visbility = MessageVisbility.hidden;
-                          }
-                          _updateChat();
-                          _isMultiSelecting = false;
-                          _selectedMessages.clear();
-                        });
-                      },
-                      icon: Icon(
-                        Icons.hide_source,
-                        color: colors.onPrimaryContainer,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          for (final msg in _selectedMessages) {
-                            msg.visbility = MessageVisbility.pinned;
-                          }
-                          _updateChat();
-                          _isMultiSelecting = false;
-                          _selectedMessages.clear();
-                        });
-                      },
-                      icon: Icon(
-                        Icons.push_pin,
-                        color: colors.onPrimaryContainer,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          for (final msg in _selectedMessages) {
-                            msg.visbility = MessageVisbility.common;
-                          }
-                          _updateChat();
-                          _isMultiSelecting = false;
-                          _selectedMessages.clear();
-                        });
-                      },
-                      icon: Icon(Icons.remove_red_eye),
-                      tooltip: '将可见性设为常规',
-                    ),
-                    IconButton(
+    return SizedBox(
+      height: 91,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: 9),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // COPY MSG
+                      IconButton(
                         onPressed: () {
-                          Get.dialog(
-                            AlertDialog(
-                              title: const Text('删除消息'),
-                              content:
-                                  Text('确定要删除${_selectedMessages.length}条消息吗？'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () => Get.back(),
-                                    child: const Text('取消')),
-                                TextButton(
-                                  child: const Text('确定'),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: colors.error,
-                                  ),
-                                  onPressed: () {
-                                    _chatController.removeMessages(
-                                        chatId, _selectedMessages);
-                                    setState(() {
-                                      _isMultiSelecting = false;
-                                      _selectedMessages.clear();
-                                    });
-                                    Get.back();
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
+                          _chatController.messageClipboard.value = [
+                            ..._selectedMessages
+                          ];
+                          setState(() {
+                            _isMultiSelecting = false;
+                            _selectedMessages.clear();
+                          });
                         },
                         icon: Icon(
-                          Icons.delete,
-                          color: colors.error,
-                        )),
-                  ],
+                          Icons.copy_all,
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      // CUT MSG
+                      IconButton(
+                        onPressed: () {
+                          _chatController.messageClipboard.value = [
+                            ..._selectedMessages
+                          ];
+                          _chatController.removeMessages(
+                              chatId, _selectedMessages);
+                          setState(() {
+                            _isMultiSelecting = false;
+                            _selectedMessages.clear();
+                          });
+                        },
+                        icon: Icon(
+                          Icons.cut,
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            for (final msg in _selectedMessages) {
+                              msg.visbility = MessageVisbility.hidden;
+                            }
+                            _updateChat();
+                            _isMultiSelecting = false;
+                            _selectedMessages.clear();
+                          });
+                        },
+                        icon: Icon(
+                          Icons.hide_source,
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            for (final msg in _selectedMessages) {
+                              msg.visbility = MessageVisbility.pinned;
+                            }
+                            _updateChat();
+                            _isMultiSelecting = false;
+                            _selectedMessages.clear();
+                          });
+                        },
+                        icon: Icon(
+                          Icons.push_pin,
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            for (final msg in _selectedMessages) {
+                              msg.visbility = MessageVisbility.common;
+                            }
+                            _updateChat();
+                            _isMultiSelecting = false;
+                            _selectedMessages.clear();
+                          });
+                        },
+                        icon: Icon(Icons.remove_red_eye),
+                        tooltip: '将可见性设为常规',
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            Get.dialog(
+                              AlertDialog(
+                                title: const Text('删除消息'),
+                                content: Text(
+                                    '确定要删除${_selectedMessages.length}条消息吗？'),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () => Get.back(),
+                                      child: const Text('取消')),
+                                  TextButton(
+                                    child: const Text('确定'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colors.error,
+                                    ),
+                                    onPressed: () {
+                                      _chatController.removeMessages(
+                                          chatId, _selectedMessages);
+                                      setState(() {
+                                        _isMultiSelecting = false;
+                                        _selectedMessages.clear();
+                                      });
+                                      Get.back();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.delete,
+                            color: colors.error,
+                          )),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        )
-      ],
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 
@@ -1367,6 +1299,89 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
+  Widget _buildFloatingButtonOverlay() {
+    final colors = Theme.of(context).colorScheme;
+    return _isMultiSelecting
+        ? Positioned(
+            bottom: 94,
+            right: 24,
+            child: Column(
+              children: [
+                Material(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: const CircleBorder(),
+                  elevation: 3,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      setState(() {
+                        if (_selectedMessages.isEmpty) {
+                          return;
+                        }
+                        final lastSelected = _selectedMessages.last;
+                        // Find current message index
+                        int currentIndex = chat.messages
+                            .indexWhere((msg) => msg.id == lastSelected.id);
+                        if (currentIndex != -1) {
+                          // Select all messages before current message
+                          for (int i = currentIndex; i >= 0; i--) {
+                            if (!_selectedMessages.contains(chat.messages[i])) {
+                              _selectedMessages.add(chat.messages[i]);
+                            }
+                          }
+                        }
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.arrow_upward,
+                          size: 20, color: colors.onPrimary),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Material(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: const CircleBorder(),
+                  elevation: 3,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      setState(() {
+                        if (_selectedMessages.isEmpty) {
+                          return;
+                        }
+                        final lastSelected = _selectedMessages.last;
+                        // Find current message index
+                        int currentIndex = chat.messages
+                            .indexWhere((msg) => msg.id == lastSelected.id);
+                        if (currentIndex != -1) {
+                          // Select all messages after current message
+                          for (int i = currentIndex;
+                              i < chat.messages.length;
+                              i++) {
+                            if (!_selectedMessages.contains(chat.messages[i])) {
+                              _selectedMessages.add(chat.messages[i]);
+                            }
+                          }
+                        }
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.arrow_downward,
+                          size: 20, color: colors.onPrimary),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
+        : SizedBox.shrink();
+  }
+
   Widget _buildCharacterWheelOverlay() {
     return Positioned.fill(
       child: SizeAnimatedWidget(
@@ -1397,6 +1412,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           index: index,
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut);
+  }
+
+  void _scrollToTop() {
+    _scrollController.scrollTo(
+        index: chat.messages.length - 1,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut);
   }
 
   PreferredSizeWidget? _buildAppBar() {
@@ -1535,6 +1557,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       },
       child: Scaffold(
         backgroundColor: colors.surface,
+
         // APPBar
         appBar: _buildAppBar(),
         body: Container(
@@ -1552,11 +1575,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      // floatingActionButton: _buildFloatingButtonOverlay(),
       backgroundColor: colors.surfaceContainerHigh,
       body: Stack(
         children: [
           _buildMainContent(),
           _buildCharacterWheelOverlay(),
+          _buildFloatingButtonOverlay()
         ],
       ),
       appBar: _buildAppBar(),

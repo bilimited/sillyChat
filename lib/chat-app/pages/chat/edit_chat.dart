@@ -382,9 +382,9 @@ class _EditChatPageState extends State<EditChatPage>
                   direction: Axis.horizontal,
                   children: [
                     Flexible(
-                      child: ElevatedButton.icon(
+                      child: IconButton(
                         icon: Icon(Icons.refresh),
-                        label: Text('替换'),
+                        tooltip: '替换',
                         onPressed: () async {
                           Get.dialog(
                             AlertDialog(
@@ -416,47 +416,47 @@ class _EditChatPageState extends State<EditChatPage>
                         },
                       ),
                     ),
-
-                    //   SizedBox(width: 12),
-                    //   Flexible(
-                    //   child: ElevatedButton.icon(
-                    //     icon: Icon(Icons.refresh),
-                    //     label: Text('重置'),
-                    //     onPressed: () async {
-                    //     await Get.dialog(
-                    //       AlertDialog(
-                    //       title: Text('重置预设'),
-                    //       content: Text('确定要重置该预设为默认值吗？此操作不可恢复。'),
-                    //       actions: [
-                    //         TextButton(
-                    //         onPressed: () => Get.back(result: false),
-                    //         child: Text('取消'),
-                    //         ),
-                    //         TextButton(
-                    //         onPressed: () {
-                    //           final option = _chatOptionController
-                    //             .getChatOptionById(chat.chatOption.id);
-                    //           if (option != null) {
-                    //           setState(() {
-                    //             chat.initOptions(option);
-                    //             Get.back();
-                    //           });
-                    //           }
-                    //         },
-                    //         child: Text('确定'),
-                    //         ),
-                    //       ],
-                    //       ),
-                    //     );
-                    //     },
-                    //   ),
-                    //   ),
-                    SizedBox(width: 12),
-                    if (chat.chatOption.id != 0)
+                    if (chat.chatOption.id != 0) ...[
+                      SizedBox(width: 12),
                       Flexible(
-                        child: ElevatedButton.icon(
-                          icon: Icon(Icons.upload),
-                          label: Text('更新'),
+                        child: IconButton(
+                          icon: Icon(Icons.restart_alt),
+                          tooltip: '重置',
+                          onPressed: () async {
+                            await Get.dialog(
+                              AlertDialog(
+                                title: Text('重置预设'),
+                                content: Text('确定要重置该预设为默认值吗？此操作不可恢复。'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Get.back(result: false),
+                                    child: Text('取消'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      final option = _chatOptionController
+                                          .getChatOptionById(
+                                              chat.chatOption.id);
+                                      if (option != null) {
+                                        setState(() {
+                                          chat.initOptions(option);
+                                          Get.back();
+                                        });
+                                      }
+                                    },
+                                    child: Text('确定'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: IconButton(
+                          icon: Icon(Icons.save),
+                          tooltip: '更新',
                           onPressed: () async {
                             await Get.dialog(
                               AlertDialog(
@@ -492,6 +492,39 @@ class _EditChatPageState extends State<EditChatPage>
                           },
                         ),
                       ),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: IconButton(
+                          icon: Icon(Icons.save_as),
+                          tooltip: '另存为',
+                          onPressed: () async {
+                            await Get.dialog(
+                              AlertDialog(
+                                title: Text('另存为预设'),
+                                content: Text('确定要将该预设保存为新预设吗？'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Get.back(result: false),
+                                    child: Text('取消'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _chatOptionController.addChatOption(
+                                          chat.chatOption.copyWith(true,id: DateTime.now().microsecondsSinceEpoch),
+                                        );
+                                        Get.back();
+                                      });
+                                    },
+                                    child: Text('确定'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ],
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,

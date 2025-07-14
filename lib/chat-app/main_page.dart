@@ -32,7 +32,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   // ignore: unused_field
-  static const String AppVersion = 'v1.9.0-alpha';
+  static const String AppVersion = 'v1.11.0-alpha';
 
   int _currentIndex = 0;
   final VaultSettingController _vaultSettingController = Get.find();
