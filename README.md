@@ -10,6 +10,10 @@
 
 > ⚠️本项目仍在开发中，不保证稳定性
 
+![桌面端预览](images/desktop.gif)
+
+![安卓端预览](images/android.jpg)
+
 ---
 
 ## 支持的功能
