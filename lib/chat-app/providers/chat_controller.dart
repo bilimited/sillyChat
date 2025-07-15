@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
+import 'package:flutter_example/chat-app/utils/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
@@ -18,18 +21,29 @@ class ChatController extends GetxController {
 
   final String fileName = 'chats.json';
 
-  // 与AI有关的状态变量
-  final RxString LLMMessageBuffer = "".obs;
-  final RxString LLMGenerateState = "".obs;
-  final RxBool isLLMGenerating = false.obs;
-  final RxInt currentAssistant = 0.obs;
 
-  // 仅桌面端：当前打开的聊天Id。
-  final RxInt desktop_currentChat = (-1).obs;
 
-  late final chatAIHandler = Aihandler()..onGenerateStateChange = (state){
-    LLMGenerateState.value = state;
-  };
+  final RxMap<int, ChatAIState> states = <int, ChatAIState>{}.obs;
+
+  ChatAIState getAIState(int chatId) {
+    if (!states.containsKey(chatId)) {
+      {
+        states[chatId] = ChatAIState(
+            aihandler: Aihandler()
+              ..onGenerateStateChange = (str) {
+                states[chatId] = states[chatId]!.copyWith(GenerateState: str);
+              });
+      }
+    }
+    return states[chatId]!;
+  }
+
+  void setAIState(int chatId, ChatAIState state) {
+    states[chatId] = state;
+  }
+
+  // 当前打开的聊天Id。只支持桌面端
+  final RxInt currentChat = (-1).obs;
 
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
@@ -498,8 +512,13 @@ class ChatController extends GetxController {
     return content;
   }
 
-  // sender!=null ,则为群聊模式
+  /// 史诗抽象超长代码
+  /// sender!=null ,则为群聊模式
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+    PromptSettingModel promptSetting =
+        Get.find<VaultSettingController>().promptSettingModel.value;
+
+
     // TODO:把提示词格式化放到最后
     var sysPrompts = chat.prompts
         .where((prompt) => prompt.isEnable)
@@ -534,6 +553,8 @@ class ChatController extends GetxController {
     final msgIndexes = List.generate(chat.messages.length, (i) => i)
         .where((i) => keepIndexes.contains(i))
         .toList();
+
+    // 计算主消息列表，并计算它们的priority
     final msglst = [
       ...sysPrompts,
       ...msgIndexes.map((i) {
@@ -542,19 +563,26 @@ class ChatController extends GetxController {
         int priority = msgIndexes.length - 1 - msgIndexes.indexOf(i); // 最后一条为0
         if (sender == null) {
           return LLMMessage(
-            content: content,
-            role: msg.isAssistant ? "assistant" : "user",
-            fileDirs: msg.resPath,
-            priority: priority,
-          );
+              content: content,
+              role: msg.isAssistant ? "assistant" : "user",
+              fileDirs: msg.resPath,
+              priority: priority,
+              senderId: msg.sender);
         } else {
           return LLMMessage(
               content: msg.sender == sender.id
                   ? content
-                  : "${characterController.getCharacterById(msg.sender).roleName}:\n${content}",
+                  : promptSetting.groupFormatter
+                      .replaceAll(
+                          '<char>',
+                          characterController
+                              .getCharacterById(msg.sender)
+                              .roleName)
+                      .replaceAll('<message>', content),
               role: msg.sender == sender.id ? "assistant" : "user",
               fileDirs: msg.resPath,
-              priority: priority);
+              priority: priority,
+              senderId: msg.sender);
         }
       })
     ];
@@ -568,6 +596,24 @@ class ChatController extends GetxController {
       return a.isPrompt ? -1 : 1; // sysPrompts更靠后
     });
 
+    // 如果出现了两个连续的assistant消息，且它们的senderId相同，则在它们之间插入一个用户消息
+    if (msglst.length >= 2) {
+      for (int i = 0; i < msglst.length-1; i++) {
+        if (msglst[i].role == "assistant" &&
+            msglst[i + 1].role == "assistant" &&
+            msglst[i].senderId == msglst[i + 1].senderId) {
+          msglst.insert(
+              i + 1,
+              LLMMessage(
+                  content: promptSetting.interAssistantUserSeparator,
+                  role: "user",
+                  priority: 0 //此时priority不重要
+                  ));
+          i++; // 跳过插入的用户消息
+        }
+      }
+    }
+
     final Stopwatch stopwatch = Stopwatch()..start();
     final loreBook = Lorebookutil(
         messages: msglst,
@@ -579,17 +625,11 @@ class ChatController extends GetxController {
     stopwatch.stop();
     print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
 
-    final notEmpty =
-        afterInsertLore.where((msg) => !(msg.content.isBlank ?? false)).toList();
+    final notEmpty = afterInsertLore
+        .where((msg) => !(msg.content.isBlank ?? false))
+        .toList();
 
-    if (sender == null &&
-        notEmpty.isNotEmpty &&
-        notEmpty.last.role != 'user') {
-      notEmpty.add(LLMMessage(
-        content: '请接着刚才的话题继续。',
-        role: 'user',
-      ));
-    }
+
 
     return notEmpty;
   }
@@ -598,24 +638,28 @@ class ChatController extends GetxController {
   // 处理消息功能，默认为单聊
   Stream<String> _handleLLMMessage(ChatModel chat,
       {bool think = false, CharacterModel? sender = null}) async* {
-    LLMMessageBuffer.value = "";
-    isLLMGenerating.value = true;
     late LLMRequestOptions options;
     late List<LLMMessage> messages;
 
-    LLMGenerateState.value = "正在激活世界书...";
-
-    currentAssistant.value =
-        sender == null ? (chat.assistantId ?? 0) : sender.id;
     messages = getLLMMessageList(chat, sender: sender);
     options = chat.requestOptions.copyWith(messages: messages);
 
-    await for (String token in chatAIHandler.requestTokenStream(options)) {
-      LLMMessageBuffer.value += token;
-      LLMMessageBuffer.refresh();
+    chat.setAIState(chat.aiState.copyWith(
+        LLMBuffer: "",
+        isGenerating: true,
+        GenerateState: "正在激活世界书...",
+        currentAssistant:
+            sender == null ? (chat.assistantId ?? 0) : sender.id));
+
+    await for (String token
+        in chat.aiState.aihandler.requestTokenStream(options)) {
+      final oldState = chat.aiState;
+      chat.setAIState(oldState.copyWith(LLMBuffer: oldState.LLMBuffer + token));
+      //LLMMessageBuffer.refresh();
     }
-    isLLMGenerating.value = false;
-    yield _fixMessage(LLMMessageBuffer.value);
+
+    chat.setAIState(chat.aiState.copyWith(isGenerating: false));
+    yield _fixMessage(chat.aiState.LLMBuffer);
   }
 
   // 消除行首空格
@@ -631,9 +675,8 @@ class ChatController extends GetxController {
     return result.trimRight();
   }
 
-  void interrupt() {
-    chatAIHandler.interrupt();
-
-    isLLMGenerating.value = false;
+  void interrupt(ChatModel chat) {
+    chat.setAIState(chat.aiState.copyWith(isGenerating: false));
+    chat.aiState.aihandler.interrupt();
   }
 }

@@ -10,7 +10,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
-import 'package:flutter_example/chat-app/pages/other/setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -32,11 +32,10 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   // ignore: unused_field
-  static const String AppVersion = 'v1.11.0-alpha';
+  static const String AppVersion = 'v1.11.1-alpha';
 
   int _currentIndex = 0;
   final VaultSettingController _vaultSettingController = Get.find();
-  final SettingController _settingController = Get.find();
   final CharacterController _characterController = Get.find();
   final ChatController _chatController = Get.find();
 
@@ -44,7 +43,6 @@ class _MainPageState extends State<MainPage> {
 
   int desktop_destination_left = 0;
   int desktop_destination_right = 0;
-  // int desktop_chatId = 0;
   MessageModel? desktop_initialPosition;
 
   late List<Widget> _desktop_pages;
@@ -71,54 +69,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   void desktop_switchChat(int chatId) {
-    _chatController.desktop_currentChat.value = chatId;
-  }
-
-  void _uploadAll() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认上传'),
-        content: const Text('上传将覆盖云端数据，是否继续？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('确认'),
-          ),
-        ],
-      ),
-    );
-    await webDav.init();
-
-    if (result != true) {
-      Get.back();
-      return;
-    }
-
-    // 关闭下拉框
-    Get.back();
-    _characterController.packageAvatarFiles();
-
-    final lastSyncTimeOnFail = _vaultSettingController.lastSyncTime.value;
-    _vaultSettingController.lastSyncTime.value = DateTime.now();
-    await _vaultSettingController.saveSettings();
-
-    webDav.backupAllData(context, onSuccess: (count) {
-      Get.back();
-      Get.snackbar("保存成功", "上传了${count}个文件");
-    }, onFail: (e) async {
-      Get.back();
-      Get.snackbar('备份数据失败', '$e');
-      // 若上传失败则同步时间不变
-      _vaultSettingController.lastSyncTime.value = lastSyncTimeOnFail;
-      await _vaultSettingController.saveSettings();
-    });
-
-    //Get.back();
+    _chatController.currentChat.value = chatId;
   }
 
   String getSizeString(int byteSize) {
@@ -130,108 +81,6 @@ class _MainPageState extends State<MainPage> {
       return '${(byteSize / (1024 * 1024)).toStringAsFixed(2)} MB';
     }
   }
-
-  // Future<void> _downloadAll() async {
-  //   await webDav.init();
-  //   final data = await webDav.downloadAllProps();
-  //   Get.back();
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: const Text('云端数据'),
-  //       content: SizedBox(
-  //         width: double.maxFinite,
-  //         height: 300,
-  //         child: ListView.builder(
-  //           itemCount: data.length,
-  //           itemBuilder: (context, index) {
-  //             final file = data[index];
-  //             return ListTile(
-  //               title: Text(file.name ?? "unknown"),
-  //               subtitle: Text(
-  //                   '${getSizeString(file.size ?? 0)} - 修改时间: ${file.mTime}'),
-  //             );
-  //           },
-  //         ),
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text('取消'),
-  //         ),
-  //         TextButton(
-  //           onPressed: () async {
-  //             Get.back();
-  //             await webDav.downloadAllData(context);
-  //             refleshAll();
-  //             await _characterController.unpackAvatarFiles();
-  //           },
-  //           child: const Text('导入'),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // void setupWebDav() {
-  //   final urlController =
-  //       TextEditingController(text: SettingController.webdav_url);
-  //   final usernameController =
-  //       TextEditingController(text: SettingController.webdav_username);
-  //   final passwordController =
-  //       TextEditingController(text: SettingController.webdav_password);
-
-  //   Get.dialog(
-  //     AlertDialog(
-  //       title: const Text('WebDAV 配置'),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           TextFormField(
-  //             controller: urlController,
-  //             decoration: const InputDecoration(
-  //               labelText: 'WebDAV URL',
-  //               hintText: '请输入 WebDAV 服务器地址',
-  //             ),
-  //           ),
-  //           TextFormField(
-  //             controller: usernameController,
-  //             decoration: const InputDecoration(
-  //               labelText: '用户名',
-  //               hintText: '请输入用户名',
-  //             ),
-  //           ),
-  //           TextFormField(
-  //             controller: passwordController,
-  //             decoration: const InputDecoration(
-  //               labelText: '密码',
-  //               hintText: '请输入密码',
-  //             ),
-  //             obscureText: true,
-  //           ),
-  //         ],
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Get.back(),
-  //           child: const Text('取消'),
-  //         ),
-  //         TextButton(
-  //           onPressed: () {
-  //             SettingController.webdav_url = urlController.text;
-  //             SettingController.webdav_username = usernameController.text;
-  //             SettingController.webdav_password = passwordController.text;
-  //             _settingController.saveGlobalSettings();
-  //             webDav.init();
-  //             Get.back();
-  //             Get.snackbar('成功', 'WebDAV 配置已更新');
-  //           },
-  //           child: const Text('保存'),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   @override
   void initState() {
@@ -446,10 +295,10 @@ class _MainPageState extends State<MainPage> {
                           borderRadius: BorderRadius.circular(16.0),
                           child: Obx(() => ChatDetailPage(
                                 key: ValueKey(
-                                    '${_chatController.desktop_currentChat}_${desktop_initialPosition?.id ?? 0}'),
+                                    '${_chatController.currentChat}_${desktop_initialPosition?.id ?? 0}'),
                                 chatId: _chatController.chats.isEmpty
                                     ? -1
-                                    : _chatController.desktop_currentChat.value,
+                                    : _chatController.currentChat.value,
                                 initialPosition: desktop_initialPosition,
                               )),
                         ),
@@ -467,7 +316,6 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildMobile(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    //final color = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: _currentIndex < 2
           ? AppBar(
@@ -528,20 +376,7 @@ class _MainPageState extends State<MainPage> {
                       customNavigate(SettingPage(), context: context);
                     },
                     icon: Icon(Icons.settings))
-                // Obx(
-                //   () => IconButton(
-                //     icon: _settingController.isDarkMode.value
-                //         ? Icon(Icons.nightlight)
-                //         : Icon(Icons.sunny),
-                //     onPressed: () {
-                //       _settingController.toggleDarkMode();
-                //     },
-                //   ),
-                // ),
-                // IconButton(
-                //   icon: const Icon(Icons.more_vert),
-                //   onPressed: _showBackupDialog,
-                // ),
+
               ],
             )
           : null,
@@ -580,6 +415,7 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

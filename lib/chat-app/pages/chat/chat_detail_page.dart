@@ -109,7 +109,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       setState(() {
         chatId = newChat.id;
       });
-      _chatController.desktop_currentChat.value = chatId;
+      _chatController.currentChat.value = chatId;
     } else {
       await _chatController.saveChats(chat.fileId);
     }
@@ -788,21 +788,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // if (isLoading) ...[
-                //   SizedBox(
-                //     width: 16,
-                //     height: 16,
-                //     child: CircularProgressIndicator(
-                //       strokeWidth: 2,
-                //       color: textColor,
-                //     ),
-                //   ),
-                //   SizedBox(
-                //     width: 10,
-                //   ),
-                // ],
                 Text(
-                  _chatController.LLMGenerateState.value,
+                  chat.aiState.GenerateState,
                   style: TextStyle(color: colors.outline),
                 )
               ],
@@ -820,6 +807,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   ),
                   em: TextStyle(
                     color: isMe ? textColor : colors.outline,
+                  ),
+                  horizontalRuleDecoration: BoxDecoration(
+                    border: Border.all(width: 1, color: colors.outlineVariant),
                   ),
                   textScaler:
                       TextScaler.linear(displaySetting.ContentFontScale),
@@ -965,6 +955,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     p: TextStyle(color: colors.outline),
                     textScaler:
                         TextScaler.linear(displaySetting.ContentFontScale),
+                    horizontalRuleDecoration: BoxDecoration(
+                      border:
+                          Border.all(width: 1, color: colors.outlineVariant),
+                    ),
                     // selectable: true,
                   )),
             ),
@@ -1236,15 +1230,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           itemBuilder: (context, index) {
                             if (index == 0) {
                               //正在（新）生成的Message，永远位于底部
-                              return Obx(() => _chatController
-                                      .isLLMGenerating.value
+                              return Obx(() => chat.aiState.isGenerating
                                   ? _buildMessageBubble(
                                       MessageModel(
                                           id: -9999,
-                                          content: _chatController
-                                              .LLMMessageBuffer.value,
-                                          sender: _chatController
-                                              .currentAssistant.value,
+                                          content: chat.aiState.LLMBuffer,
+                                          sender: chat.aiState.currentAssistant,
                                           time: DateTime.now(),
                                           alternativeContent: [null]),
                                       messages.length == 0 ? null : messages[0])

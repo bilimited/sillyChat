@@ -1,7 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
-import 'package:flutter_example/chat-app/models/settings/setting_model.dart';
+import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
@@ -19,6 +19,9 @@ class VaultSettingController extends GetxController {
   final RxInt myId = 0.obs;
   late Rx<ChatDisplaySettingModel> displaySettingModel =
       ChatDisplaySettingModel().obs;
+
+  late Rx<PromptSettingModel> promptSettingModel =
+      PromptSettingModel().obs;
 
   Rx<ThemeData> themeLight = ThemeData().obs;
 
@@ -66,6 +69,10 @@ class VaultSettingController extends GetxController {
         displaySettingModel.value = jsonMap['displaySettingModel'] != null
             ? ChatDisplaySettingModel.fromJson(jsonMap['displaySettingModel'])
             : ChatDisplaySettingModel();
+
+        promptSettingModel.value = jsonMap['promptSettingModel'] != null
+            ? PromptSettingModel.fromJson(jsonMap['promptSettingModel'])
+            : PromptSettingModel();
       } else {
         displaySettingModel.value = ChatDisplaySettingModel();
       }
@@ -89,6 +96,7 @@ class VaultSettingController extends GetxController {
         'apis': apis.map((api) => api.toJson()).toList(),
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
+        'promptSettingModel': promptSettingModel.toJson(),
       };
 
       final String jsonString = json.encode(jsonMap);

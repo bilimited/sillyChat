@@ -60,29 +60,20 @@ class _ChatPageState extends State<ChatPage> {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
             ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(30),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: '搜索聊天',
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                // You can also add contentPadding to adjust text position if needed
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: '搜索聊天',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface), // Style for entered text
+              cursorColor: theme.colorScheme.primary, // Modern cursor color
             ),
           ),
           Obx(() => AnimatedSize(
@@ -140,7 +131,7 @@ class _ChatPageState extends State<ChatPage> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
-                                customNavigate(NewChatPage(),context: context);
+                                customNavigate(NewChatPage(), context: context);
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(

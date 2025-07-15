@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -69,7 +70,10 @@ class SillyChatApp extends StatelessWidget {
 
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
-    return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+    if(kDebugMode){
+      return (!Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+    }
+    return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
-import 'package:flutter_example/chat-app/pages/other/appearance_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
 import '../../providers/vault_setting_controller.dart';
@@ -25,7 +26,7 @@ class _SettingPageState extends State<SettingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     webDav.init();
   }
 
@@ -231,6 +232,7 @@ class _SettingPageState extends State<SettingPage>
             Tab(text: '常规设置'),
             Tab(text: 'API管理'),
             Tab(text: '外观设置'),
+            Tab(text: '提示词设置'),
           ],
         ),
       ),
@@ -239,7 +241,8 @@ class _SettingPageState extends State<SettingPage>
         children: [
           _buildGeneralTab(),
           ApiManagerPage(),
-          AppearanceSettingsPage()
+          AppearanceSettingsPage(),
+          PromptSettingsPage(),
         ],
       ),
     );

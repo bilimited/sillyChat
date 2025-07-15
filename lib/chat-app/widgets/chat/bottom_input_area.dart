@@ -162,7 +162,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isGroupMode &&
-                          !widget.chatController.isLLMGenerating.value)
+                          !widget.chat.aiState.isGenerating)
                         Opacity(
                           opacity: 0.6,
                           child: IconButton(
@@ -297,7 +297,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
                             // Non-generating state buttons
                             if (!widget
-                                .chatController.isLLMGenerating.value) ...[
+                                .chat.aiState.isGenerating) ...[
                               if (widget.showPlus)
                                 Opacity(
                                   opacity: 0.6,
@@ -355,7 +355,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                     size: 18,
                                   ),
                                   onPressed: () {
-                                    widget.chatController.interrupt();
+                                    widget.chatController.interrupt(widget.chat);
                                   },
                                 ),
                               ),

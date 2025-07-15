@@ -134,6 +134,7 @@ class Aihandler {
           'stream': true,
         },
       );
+      print(options.toOpenAIJson());
       onGenerateStateChange('正在生成...');
       await for (var chunk in parseSseStream(rs,
           (json) => json['choices'][0]['delta']['content'] as String? ?? '')) {

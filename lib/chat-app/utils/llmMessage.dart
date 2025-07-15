@@ -11,12 +11,15 @@ class LLMMessage {
   final int priority; // 消息优先级，默认99999
   final bool isPrompt; // prompt消息比常规消息优先级更高
 
+  final int? senderId; // 这个没啥用
+
   LLMMessage({
     required this.content,
     required this.role,
     this.fileDirs = const [],
     this.priority = 99999,
     this.isPrompt = false,
+    this.senderId,
   });
 
   /// 从 MessageModel 创建
@@ -24,7 +27,9 @@ class LLMMessage {
     return LLMMessage(
         content: msg.content,
         role: msg.role.toString().split('.').last,
-        fileDirs: msg.resPath);
+        fileDirs: msg.resPath,
+        senderId: msg.sender
+        );
   }
 
   /// 从 PromptModel 创建

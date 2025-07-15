@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 
 class PromptPreviewPage extends StatefulWidget {
-  final List<Map<String, String>> messages;
 
+  final List<Map<String, String>> messages;
+  
   const PromptPreviewPage({Key? key, required this.messages}) : super(key: key);
 
   @override

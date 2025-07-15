@@ -130,17 +130,7 @@ class _ContactsPageState extends State<ContactsPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Obx(() => ListView(
             children: [
-              // 顶部搜索栏
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SearchBar(
-                  hintText: "搜索联系人",
-                  leading: const Icon(Icons.search),
-                  elevation: const WidgetStatePropertyAll(0),
-                  backgroundColor: WidgetStatePropertyAll(
-                      theme.colorScheme.surfaceContainer),
-                ),
-              ),
+              
               // 联系人分组列表
               ..._groupedContactsWidget(context)
             ],
