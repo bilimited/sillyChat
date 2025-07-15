@@ -101,7 +101,6 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
                       value: selectedPrompt,
                       decoration: const InputDecoration(
                         labelText: '选择提示词模板',
-                        border: OutlineInputBorder(),
                       ),
                       items: _promptController.prompts
                           .map((p) => DropdownMenuItem(
@@ -133,7 +132,6 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
               decoration: const InputDecoration(
                 labelText: '生成请求',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -164,7 +162,6 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
               decoration: const InputDecoration(
                 labelText: '结果',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(),
               ),
             ),
           ],

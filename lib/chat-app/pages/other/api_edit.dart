@@ -100,7 +100,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
               value: _selectedProvider,
               decoration: const InputDecoration(
                 labelText: '服务商',
-                border: OutlineInputBorder(),
               ),
               items: ServiceProvider.values
                   .map((provider) => DropdownMenuItem(
@@ -122,7 +121,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
               obscureText: false,
               decoration: const InputDecoration(
                 labelText: 'API Key',
-                border: OutlineInputBorder(),
                 // suffixIcon: Icon(Icons.visibility_off),
               ),
               validator: (value) {
@@ -152,7 +150,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
                 controller: _urlController,
                 decoration: const InputDecoration(
                   labelText: 'URL',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -167,7 +164,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
               controller: _displayNameController,
               decoration: const InputDecoration(
                 labelText: '显示名称(选填)',
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -175,7 +171,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
               controller: _remarksController,
               decoration: const InputDecoration(
                 labelText: '备注(选填)',
-                border: OutlineInputBorder(),
               ),
               maxLines: 3,
             ),

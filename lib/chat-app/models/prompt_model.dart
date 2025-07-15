@@ -63,8 +63,6 @@ class PromptModel {
       ..priority = priority;
   }
 
-  
-
   String getContent(ChatModel chat, {CharacterModel? sender = null}) {
     CharacterController characterController = Get.find();
     var assistant = sender == null ? chat.assistant : sender;

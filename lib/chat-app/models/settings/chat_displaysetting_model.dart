@@ -8,6 +8,8 @@ class ChatDisplaySettingModel {
   MessageBubbleStyle messageBubbleStyle = MessageBubbleStyle.bubble;
 
   Color themeColor = Colors.blue;
+  String schemeName = "sakura";
+
   double ContentFontScale = 1;
   double AvatarSize = 25;
   double AvatarBorderRadius = 8;
@@ -35,6 +37,7 @@ class ChatDisplaySettingModel {
     this.displayMessageIndex = false,
     this.AvatarSize = 25,
     this.themeColor = Colors.blue,
+    this.schemeName = "sakura",
     this.AvatarBorderRadius = 8,
     this.MessageBubbleBorderRadius = 16,
   });
@@ -55,6 +58,7 @@ class ChatDisplaySettingModel {
       'themeColor': themeColor.value,
       'AvatarBorderRadius': AvatarBorderRadius,
       'MessageBubbleBorderRadius': MessageBubbleBorderRadius,
+      'schemeName': schemeName,
     };
   }
 
@@ -73,5 +77,6 @@ class ChatDisplaySettingModel {
     themeColor = Color(json['themeColor'] ?? Colors.blue.value);
     AvatarBorderRadius = (json['AvatarBorderRadius'] ?? 8).toDouble();
     MessageBubbleBorderRadius = (json['MessageBubbleBorderRadius'] ?? 16).toDouble();
+    schemeName = json['schemeName'] ?? "sakura";
   }
 }

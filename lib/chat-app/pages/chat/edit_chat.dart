@@ -58,7 +58,7 @@ class _EditChatPageState extends State<EditChatPage>
 
     return Scaffold(
         appBar: AppBar(
-          title: Text('编辑群聊'),
+          title: Text('编辑聊天'),
           bottom: TabBar(
             controller: _tabController,
             tabs: [
@@ -149,7 +149,6 @@ class _EditChatPageState extends State<EditChatPage>
                         },
                         decoration: InputDecoration(
                           labelText: '聊天标题（可选）',
-                          border: OutlineInputBorder(),
                         ),
                       ),
                       SizedBox(height: 16),
@@ -160,7 +159,6 @@ class _EditChatPageState extends State<EditChatPage>
                         },
                         decoration: InputDecoration(
                           labelText: '作者注释（可选）',
-                          border: OutlineInputBorder(),
                         ),
                         maxLines: null,
                       ),
@@ -183,51 +181,52 @@ class _EditChatPageState extends State<EditChatPage>
             ),
             SizedBox(height: 16),
             Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('标签', style: Theme.of(context).textTheme.titleMedium),
-                    SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildTagsEditor(),
+  
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    title: Text('查看Prompt'),
+                    leading: Icon(Icons.preview),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () {
+                      final messages =
+                          _chatController.getLLMMessageList(widget.chat);
+                      customNavigate(
+                          PromptPreviewPage(
+                              messages: messages
+                                  .map((ele) => ele.toOpenAIJson())
+                                  .toList()),
+                          context: context);
+                    },
+                  ),
+                  // 一个视觉上的分隔
+                  const Divider(height: 1),
+                  const SizedBox(height: 8), // 增加一些垂直间距
+
+                  // 使用 TextButton 或 OutlinedButton 强调危险操作
+                  TextButton.icon(
+                    icon: Icon(Icons.delete_sweep),
+                    label: Text('清空聊天记录'),
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          Colors.orange, // foregroundColor 控制图标和文字颜色
                     ),
-                  ],
-                ),
+                    onPressed: _clearMessages,
+                  ),
+                  TextButton.icon(
+                    icon: Icon(Icons.delete_forever),
+                    label: Text('删除群聊'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                    onPressed: _deleteChat,
+                  ),
+                  const SizedBox(height: 16), // 底部留白
+                ],
               ),
             ),
-            Divider(),
-            ListTile(
-              title: Text('查看Prompt'),
-              leading: Icon(Icons.preview),
-              onTap: () {
-                final messages = _chatController.getLLMMessageList(widget.chat);
-                customNavigate(
-                    PromptPreviewPage(
-                        messages:
-                            messages.map((ele) => ele.toOpenAIJson()).toList()),
-                    context: context);
-              },
-            ),
-            Divider(),
-            ListTile(
-              title: Text('清空聊天记录'),
-              leading: Icon(Icons.delete_sweep),
-              textColor: Colors.orange,
-              iconColor: Colors.orange,
-              onTap: _clearMessages,
-            ),
-            Divider(),
-            ListTile(
-              title: Text('删除群聊'),
-              leading: Icon(Icons.delete_forever),
-              textColor: Colors.red,
-              iconColor: Colors.red,
-              onTap: _deleteChat,
-            ),
-            SizedBox(
+            const SizedBox(
               height: 64,
             )
           ],
@@ -260,8 +259,8 @@ class _EditChatPageState extends State<EditChatPage>
             child: Container(
               padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
+                color: Theme.of(context).colorScheme.surfaceBright,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: character != null
                   ? Row(
@@ -325,7 +324,6 @@ class _EditChatPageState extends State<EditChatPage>
                       controller: tagController,
                       decoration: InputDecoration(
                         hintText: '输入标签名称',
-                        border: OutlineInputBorder(),
                       ),
                       autofocus: true,
                     ),
@@ -368,11 +366,11 @@ class _EditChatPageState extends State<EditChatPage>
   Widget _buildAdvancedTab() {
     return ListView(
       key: _advanceTabKey,
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(10),
       children: [
         Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(10),
             child: Column(
               children: [
                 TextFormField(
@@ -382,7 +380,6 @@ class _EditChatPageState extends State<EditChatPage>
                   },
                   decoration: InputDecoration(
                     labelText: '预设名称',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 SizedBox(
@@ -546,14 +543,15 @@ class _EditChatPageState extends State<EditChatPage>
             ),
           ),
         ),
+        SizedBox(height: 10),
         Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('提示词设置', style: Theme.of(context).textTheme.titleMedium),
-                SizedBox(height: 16),
+                SizedBox(height: 10),
                 PromptEditor(
                   prompts: chat.prompts,
                   onPromptsChanged: (newPrompts) {
@@ -565,7 +563,7 @@ class _EditChatPageState extends State<EditChatPage>
             ),
           ),
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 10),
         Card(
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -607,9 +605,7 @@ class _EditChatPageState extends State<EditChatPage>
       }
 
       // Get.snackbar('成功', '群聊信息已更新');
-    }else{
-
-    }
+    } else {}
   }
 
   void _toggleMember(int characterId) {

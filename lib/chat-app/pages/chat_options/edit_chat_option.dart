@@ -106,7 +106,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: '预设名称',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {

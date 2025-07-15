@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
 import 'package:get/get.dart';
 
 class AppearanceSettingsPage extends StatelessWidget {
@@ -237,55 +238,13 @@ class AppearanceSettingsPage extends StatelessWidget {
                 ],
               ),
               Divider(),
-              // 新增：主题色选择
-              ListTile(
-                title: const Text('主题颜色'),
-                trailing: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: setting.themeColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey),
-                  ),
-                ),
-                onTap: () async {
-                  Color? picked = await showDialog<Color>(
-                    context: context,
-                    builder: (context) {
-                      Color tempColor = setting.themeColor;
-                      return AlertDialog(
-                        title: const Text('选择主题颜色'),
-                        content: SingleChildScrollView(
-                          child: BlockPicker(
-                            pickerColor: tempColor,
-                            onColorChanged: (color) {
-                              tempColor = color;
-                            },
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('取消'),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pop(tempColor),
-                            child: const Text('确定'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setting.themeColor = picked;
-                    controller.displaySettingModel.refresh();
-                    controller.updateTheme(picked);
-                    controller.saveSettings();
-                  }
-                },
-              ),
+              SizedBox(height: 16,),
+              ThemeSelector(initialValue: controller.displaySettingModel.value.schemeName, onThemeSelected: (theme){
+                setting.schemeName = theme;
+                controller.displaySettingModel.refresh();
+                controller.saveSettings();
+                controller.updateTheme(theme);
+              }),
               const SizedBox(height: 16),
             ],
           ),

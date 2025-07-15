@@ -81,7 +81,6 @@ class _SearchPageState extends State<SearchPage> {
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 hintText: '搜索内容',
-                border: OutlineInputBorder(),
               ),
               onChanged: _search,
             ),

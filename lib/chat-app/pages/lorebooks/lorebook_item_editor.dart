@@ -107,7 +107,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               focusNode: _focusNodes[0],
               decoration: const InputDecoration(
                 labelText: '条目名称',
-                border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.label),
               ),
             ),
@@ -119,7 +118,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               maxLines: 10,
               decoration: const InputDecoration(
                 labelText: '内容',
-                border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.notes),
               ),
             ),
@@ -129,7 +127,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               focusNode: _focusNodes[2],
               decoration: const InputDecoration(
                 labelText: '关键词（逗号分隔）',
-                border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
             ),
@@ -142,7 +139,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     focusNode: _focusNodes[3],
                     decoration: const InputDecoration(
                       labelText: '激活条件',
-                      border: OutlineInputBorder(),
                     ),
                     items: ActivationType.values.map((e) {
                       return DropdownMenuItem(
@@ -162,7 +158,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     focusNode: _focusNodes[4],
                     decoration: const InputDecoration(
                       labelText: '匹配逻辑',
-                      border: OutlineInputBorder(),
                     ),
                     items: MatchingLogic.values.map((e) {
                       return DropdownMenuItem(
@@ -187,7 +182,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '激活深度(填0使用世界书设置)',
-                      border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.layers),
                     ),
                   ),
@@ -200,7 +194,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '优先级(仅超过token上限时有用)',
-                      border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.star),
                     ),
                   ),
@@ -216,7 +209,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '插入位置ID',
-                      border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.place),
                     ),
                   ),

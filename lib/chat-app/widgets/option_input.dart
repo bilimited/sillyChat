@@ -168,7 +168,6 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
           },
           decoration: InputDecoration(
             labelText: widget.labelText,
-            border: OutlineInputBorder(),
             suffixIcon: IconButton(
               icon: Icon(Icons.arrow_drop_down),
               onPressed: _showOptionsOverlay, // 点击箭头弹出选项

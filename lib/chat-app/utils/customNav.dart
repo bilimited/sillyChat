@@ -11,8 +11,10 @@ Future<T?> customNavigate<T>(Widget page,
     {required BuildContext context}) async {
   if (SillyChatApp.isDesktop()) {
     // 桌面端：用Dialog包裹页面
+    final colors = Theme.of(context).colorScheme;
     return await Get.dialog<T>(
       Dialog(
+        backgroundColor: colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

@@ -28,7 +28,10 @@ class Aihandler {
     isInterrupt = true;
     isBusy = false;
     if (dioInstance != null) {
+      
       dioInstance!.close(force: true);
+
+      
     }
   }
 
@@ -94,6 +97,7 @@ class Aihandler {
         }
       }
     } catch (e) {
+      onGenerateStateChange('生成已停止');
       Get.snackbar("发生错误", "$e", colorText: Colors.red);
       LogController.log("发生错误:$e", LogLevel.error);
     }

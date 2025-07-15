@@ -78,7 +78,6 @@ class _EditMessagePageState extends State<EditMessagePage> {
               value: _messageType,
               decoration: const InputDecoration(
                 labelText: '消息类型',
-                border: OutlineInputBorder(),
               ),
               items: [
                 DropdownMenuItem(
@@ -108,7 +107,6 @@ class _EditMessagePageState extends State<EditMessagePage> {
                 controller: _editController,
                 decoration: const InputDecoration(
                   hintText: '输入新的消息内容',
-                  border: OutlineInputBorder(),
                 ),
                 maxLines: null,
                 expands: true,

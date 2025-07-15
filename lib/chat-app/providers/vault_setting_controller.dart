@@ -1,7 +1,10 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
+import 'package:flutter_example/chat-app/themes.dart';
+import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -67,7 +70,7 @@ class VaultSettingController extends GetxController {
         displaySettingModel.value = ChatDisplaySettingModel();
       }
 
-      updateTheme(displaySettingModel.value.themeColor);
+      updateTheme(displaySettingModel.value.schemeName);
     } catch (e) {
       print('加载设置失败: $e');
       displaySettingModel.value = ChatDisplaySettingModel();
@@ -95,19 +98,17 @@ class VaultSettingController extends GetxController {
     }
   }
 
-  void updateTheme(Color color) {
-    themeLight.value = ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: color),
-      useMaterial3: true,
-      fontFamily: Platform.isWindows ? "思源黑体" : null,
-    );
-
-    themeNight.value = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-          seedColor: color, brightness: Brightness.dark),
-      useMaterial3: true,
-      fontFamily: Platform.isWindows ? "思源黑体" : null,
-    );
+  void updateTheme(String themename) {
+    FlexScheme theme = schemeMap[themename] ?? FlexScheme.sakura;
+        FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
+    themeLight.value = SillyChatThemeBuilder.buildLight(theme);
+    themeNight.value = SillyChatThemeBuilder.buildNight(theme);
+    // ThemeData(
+    //   colorScheme: ColorScheme.fromSeed(
+    //       seedColor: color, brightness: Brightness.dark),
+    //   useMaterial3: true,
+    //   fontFamily: Platform.isWindows ? "思源黑体" : null,
+    // );
   }
 
   // API管理方法

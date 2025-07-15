@@ -130,13 +130,13 @@ class ChatOptionModel {
           PromptModel(
               id: id + 1,
               content: beforeUserMessage,
-              role: 'system',
+              role: 'user',
               name: '用户输入前')
             ..priority = 1,
           PromptModel(
               id: id + 2,
               content: afterUserMessage,
-              role: 'system',
+              role: 'user',
               name: '用户输入后')
             ..priority = 0,
         ]);

@@ -176,7 +176,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
             children: [
               // 基本信息
               Card(
-                elevation: 2,
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -187,7 +186,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                         focusNode: nameFocusNode,
                         decoration: const InputDecoration(
                           labelText: '世界书名称',
-                          border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.book),
                         ),
                       ),
@@ -201,7 +199,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: '激活深度',
-                                border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.layers),
                               ),
                             ),
@@ -214,7 +211,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: '最大Token',
-                                border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.memory),
                               ),
                             ),

@@ -169,7 +169,6 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
             keyboardType: TextInputType.number,
             onChanged: onChanged,
             decoration: InputDecoration(
-              border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           ),
@@ -200,7 +199,6 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                 child: DropdownButtonFormField<int>(
                   value: selectedApiId,
                   decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),

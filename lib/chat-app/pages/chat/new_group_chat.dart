@@ -46,75 +46,82 @@ class _NewChatPageState extends State<NewChatPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(10.0),
           children: [
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: '群聊标题（可选）',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Obx(() => DropdownButtonFormField<ChatOptionModel>(
-                    value: _selectedOption,
-                    decoration: InputDecoration(
-                      labelText: '对话预设',
-                      border: OutlineInputBorder(),
+            Card(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: '群聊标题（可选）',
+                      ),
                     ),
-                    items: _chatOptionController.chatOptions.map((option) {
-                      return DropdownMenuItem(
-                        value: option,
-                        child: Text(option.name),
-                      );
-                    }).toList(),
-                    onChanged: (ChatOptionModel? newValue) {
-                      setState(() {
-                        _selectedOption = newValue;
-                      });
-                    },
-                  )),
-            ),
-            Padding(
-                padding: EdgeInsets.all(16),
-                child: _selectedMode == ChatMode.group
-                    ? SizedBox(
-                        height: 300,
-                        child: MemberSelector(
-                          selectedMembers: _selectedIds,
-                          onToggleMember: (characterId) {
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Obx(() => DropdownButtonFormField<ChatOptionModel>(
+                          value: _selectedOption,
+                          decoration: InputDecoration(
+                            labelText: '对话预设',
+                          ),
+                          items:
+                              _chatOptionController.chatOptions.map((option) {
+                            return DropdownMenuItem(
+                              value: option,
+                              child: Text(option.name),
+                            );
+                          }).toList(),
+                          onChanged: (ChatOptionModel? newValue) {
                             setState(() {
-                              if (_selectedIds.contains(characterId)) {
-                                _selectedIds.remove(characterId);
-                              } else {
-                                _selectedIds.add(characterId);
-                              }
+                              _selectedOption = newValue;
                             });
                           },
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          _buildRoleSelector(
-                            label: '你扮演：',
-                            roleId: _selectedUserId,
-                            onSelect: (id) =>
-                                setState(() => _selectedUserId = id),
+                        )),
+                  )
+                ],
+              ),
+            ),
+            SizedBox(height: 10,),
+            Card(
+              child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: _selectedMode == ChatMode.group
+                      ? SizedBox(
+                          height: 400,
+                          child: MemberSelector(
+                            selectedMembers: _selectedIds,
+                            onToggleMember: (characterId) {
+                              setState(() {
+                                if (_selectedIds.contains(characterId)) {
+                                  _selectedIds.remove(characterId);
+                                } else {
+                                  _selectedIds.add(characterId);
+                                }
+                              });
+                            },
                           ),
-                          SizedBox(height: 8),
-                          _buildRoleSelector(
-                            label: 'AI扮演：',
-                            roleId: _selectedAssistantId,
-                            onSelect: (id) =>
-                                setState(() => _selectedAssistantId = id),
-                          ),
-                        ],
-                      )),
+                        )
+                      : Column(
+                          children: [
+                            _buildRoleSelector(
+                              label: '你扮演：',
+                              roleId: _selectedUserId,
+                              onSelect: (id) =>
+                                  setState(() => _selectedUserId = id),
+                            ),
+                            SizedBox(height: 8),
+                            _buildRoleSelector(
+                              label: 'AI扮演：',
+                              roleId: _selectedAssistantId,
+                              onSelect: (id) =>
+                                  setState(() => _selectedAssistantId = id),
+                            ),
+                          ],
+                        )),
+            ),
           ],
         ),
       ),
@@ -223,13 +230,12 @@ class _NewChatPageState extends State<NewChatPage> {
       messages: [],
       userId: null,
       assistantId: _selectedAssistantId,
-    )..mode = _selectedMode
-    ..characterIds = _selectedIds
-    ; // 设置选择的模式
-    if(_selectedOption!=null){
+    )
+      ..mode = _selectedMode
+      ..characterIds = _selectedIds; // 设置选择的模式
+    if (_selectedOption != null) {
       newChat.initOptions(_selectedOption!);
     }
-    
 
     await _chatController.addChat(newChat);
     Get.back();

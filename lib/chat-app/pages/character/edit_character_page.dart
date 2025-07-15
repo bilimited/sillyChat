@@ -176,7 +176,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   Widget _buildBasicInfoTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       children: [
         Center(
           child: GestureDetector(
@@ -207,59 +207,87 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 24),
         Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10.0), // 卡片内部的内边距
             child: Column(
+              mainAxisSize: MainAxisSize.min, // 让 Column 尽可能小地占用垂直空间
+              crossAxisAlignment: CrossAxisAlignment.stretch, // 子组件水平方向拉伸
               children: [
-                TextFormField(
-                  controller: _nickNameController,
-                  decoration: const InputDecoration(
-                    labelText: '角色名称',
-                    border: UnderlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return '角色名称';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: '备注',
-                    border: UnderlineInputBorder(),
-                  ),
-                  // validator: (value) {
-                  //   if (value?.isEmpty ?? true) return '备注';
-                  //   return null;
-                  // },
-                ),
-                const SizedBox(height: 16),
+                // 角色名称和备注
                 Row(
-                  children: [],
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _nickNameController,
+                        decoration: const InputDecoration(
+                          labelText: '角色名称',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16.0), // 间隔
+                    Expanded(
+                      child: TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: '备注',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // 间隔
+                // 简略介绍
                 TextFormField(
                   controller: _briefController,
                   decoration: const InputDecoration(
                     labelText: '简略介绍',
-                    border: UnderlineInputBorder(),
                   ),
-                  maxLines: 2,
+                  minLines: 2,
+                  maxLines: 4,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16), // 间隔
+                // 首句台词
                 TextFormField(
                   controller: _firstMessageController,
                   decoration: const InputDecoration(
                     labelText: '首句台词(可选)',
-                    border: UnderlineInputBorder(),
                   ),
-                  maxLines: 2,
+                  minLines: 2,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 16), // 间隔
+                const Divider(), // 分隔线
+                const SizedBox(height: 16), // 分隔线后的间隔
+                // 角色介绍
+                TextFormField(
+                  controller: _archiveController,
+                  decoration: const InputDecoration(
+                    labelText: '角色介绍',
+                  ),
+                  maxLines: null, // 允许多行输入
+                  style: const TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 10), // 间隔
+                // 生成角色介绍按钮
+                ElevatedButton(
+                  onPressed: () async {
+                    final char = _saveCharacter();
+                    if (char == null) {
+                      Get.snackbar("错误", "字段填写存在问题!");
+                      return;
+                    }
+                    final result = await customNavigate<String>(
+                        GenCharacterPromptPage(character: char),
+                        context: context);
+
+                    if (result != null) {
+                      setState(() {
+                        _archiveController.text = result;
+                      });
+                    }
+                  },
+                  child: const Text("生成角色介绍"),
                 ),
               ],
             ),
@@ -267,55 +295,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 16),
         Card(
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _archiveController,
-                    decoration: const InputDecoration(
-                      labelText: '角色介绍',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: null,
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final char = _saveCharacter();
-                      if (char == null) {
-                        Get.snackbar("错误", "字段填写存在问题!");
-                        return;
-                      }
-                      final result = await customNavigate<String>(
-                          GenCharacterPromptPage(character: char),
-                          context: context);
-
-                      if (result != null) {
-                        setState(() {
-                          _archiveController.text = result;
-                        });
-                      }
-                    },
-                    child: Text("生成角色介绍"),
-                  ),
-                ],
-              )),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -354,7 +335,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade200),
@@ -445,7 +425,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 16),
         Card(
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade200),
@@ -606,7 +585,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 16),
         Card(
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade200),
@@ -727,7 +705,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 24),
         Card(
-          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade200),

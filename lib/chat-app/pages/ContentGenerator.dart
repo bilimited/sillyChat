@@ -99,7 +99,6 @@ class _ContentGeneratorState extends State<ContentGenerator> {
               maxLines: 5,
               decoration: const InputDecoration(
                 labelText: '附加要求',
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -128,7 +127,6 @@ class _ContentGeneratorState extends State<ContentGenerator> {
                 textAlignVertical: TextAlignVertical.top,
                 decoration: const InputDecoration(
                   labelText: '生成结果',
-                  border: OutlineInputBorder(),
                 ),
               ),
             ),

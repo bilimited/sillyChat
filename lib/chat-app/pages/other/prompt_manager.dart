@@ -132,7 +132,6 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
                     decoration: InputDecoration(
                       hintText: '搜索提示词...',
                       prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),

@@ -145,7 +145,6 @@ class _EditRelationshipState extends State<EditRelationship> {
                               initialValue: entry.value.brief ?? '',
                               decoration: const InputDecoration(
                                 hintText: '关系描述（可选）',
-                                border: OutlineInputBorder(),
                               ),
                               style: TextStyle(fontSize: 13),
                               maxLines: null,

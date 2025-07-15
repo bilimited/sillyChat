@@ -113,7 +113,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                 initialValue: _name,
                 decoration: InputDecoration(
                   labelText: '名称',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value?.isEmpty ?? true) return '请输入名称';
@@ -126,7 +125,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                 value: _role,
                 decoration: InputDecoration(
                   labelText: '角色',
-                  border: OutlineInputBorder(),
                 ),
                 items: ['user', 'assistant', 'system']
                     .map((role) => DropdownMenuItem(
@@ -162,7 +160,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                     initialValue: _priority?.toString(),
                     decoration: InputDecoration(
                       labelText: '优先级(0代表最后一条消息之后，1代表最后一条消息之前，99999代表消息列表开头)',
-                      border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -192,7 +189,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                 initialValue: _content,
                 decoration: InputDecoration(
                   labelText: '内容',
-                  border: OutlineInputBorder(),
                 ),
                 maxLines: 18,
                 style: TextStyle(fontSize: 14),
