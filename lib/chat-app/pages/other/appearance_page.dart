@@ -3,6 +3,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
 class AppearanceSettingsPage extends StatelessWidget {
@@ -188,7 +189,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // 新增：头像圆角滑块
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,13 +239,17 @@ class AppearanceSettingsPage extends StatelessWidget {
                 ],
               ),
               Divider(),
-              SizedBox(height: 16,),
-              ThemeSelector(initialValue: controller.displaySettingModel.value.schemeName, onThemeSelected: (theme){
-                setting.schemeName = theme;
-                controller.displaySettingModel.refresh();
-                controller.saveSettings();
-                controller.updateTheme(theme);
-              }),
+              SizedBox(
+                height: 16,
+              ),
+              ThemeSelector(
+                  initialValue: controller.displaySettingModel.value.schemeName,
+                  onThemeSelected: (theme) {
+                    setting.schemeName = theme;
+                    controller.displaySettingModel.refresh();
+                    controller.saveSettings();
+                    controller.updateTheme(theme);
+                  }),
               const SizedBox(height: 16),
             ],
           ),

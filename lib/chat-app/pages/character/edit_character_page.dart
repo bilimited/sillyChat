@@ -348,7 +348,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   controller: _categoryController,
                   decoration: const InputDecoration(
                     labelText: '分类',
-                    border: UnderlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -356,7 +355,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   value: _character?.messageStyle,
                   decoration: const InputDecoration(
                     labelText: '对话样式',
-                    border: UnderlineInputBorder(),
                   ),
                   items: const [
                     DropdownMenuItem(
@@ -717,7 +715,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   controller: _nickNameController,
                   decoration: const InputDecoration(
                     labelText: '角色名称',
-                    border: UnderlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) return '角色名称';
@@ -729,7 +726,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   controller: _briefController,
                   decoration: const InputDecoration(
                     labelText: '简略介绍',
-                    border: UnderlineInputBorder(),
                   ),
                   maxLines: 2,
                 ),
@@ -738,7 +734,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   value: _character?.messageStyle,
                   decoration: const InputDecoration(
                     labelText: '对话样式',
-                    border: UnderlineInputBorder(),
                   ),
                   items: const [
                     DropdownMenuItem(

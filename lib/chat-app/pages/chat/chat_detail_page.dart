@@ -778,6 +778,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ? (isMe ? colors.onPrimary : colors.onSurfaceVariant)
             : colors.onSurfaceVariant;
 
+    final isLoading = message.id == -9999;
+
+    // 消息气泡里面的
     final messageContent = content.isEmpty
         // 消息为空显示转圈圈
         ? Container(
@@ -785,16 +788,23 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: textColor,
-                  ),
-                ),
-                SizedBox(width: 10,),
-                Text(_chatController.LLMGenerateState.value,style: TextStyle(color: colors.outline),)
+                // if (isLoading) ...[
+                //   SizedBox(
+                //     width: 16,
+                //     height: 16,
+                //     child: CircularProgressIndicator(
+                //       strokeWidth: 2,
+                //       color: textColor,
+                //     ),
+                //   ),
+                //   SizedBox(
+                //     width: 10,
+                //   ),
+                // ],
+                Text(
+                  _chatController.LLMGenerateState.value,
+                  style: TextStyle(color: colors.outline),
+                )
               ],
             ),
           )
@@ -821,43 +831,59 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ],
           );
 
-    if (displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble) {
-      return AnimatedSize(
-        alignment: Alignment.topLeft,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: Container(
-            decoration: BoxDecoration(
-              color: isMe
-                  ? colors.primary
-                  : isDesktop
-                      ? colors.surface
-                      : colors.surfaceContainer,
-              borderRadius: BorderRadius.circular(
-                  displaySetting.MessageBubbleBorderRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
+    // 气泡本身
+    final bubble =
+        displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
+            ? Container(
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? colors.primary
+                      : isDesktop
+                          ? colors.surface
+                          : colors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(
+                      displaySetting.MessageBubbleBorderRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.all(12),
-            child: messageContent),
-      );
-    } else if (displaySetting.messageBubbleStyle ==
-        MessageBubbleStyle.compact) {
-      return Column(
+                padding: const EdgeInsets.all(12),
+                child: messageContent)
+            : displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
+                ? Column(
+                    children: [
+                      messageContent,
+                      SizedBox(
+                        height: 16,
+                      )
+                    ],
+                  )
+                : messageContent;
+
+    // 气泡外的动画效果、加载条
+    return AnimatedSize(
+      alignment: Alignment.topLeft,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      child: Stack(
         children: [
-          messageContent,
-          SizedBox(
-            height: 16,
-          )
+          bubble,
+          if (isLoading)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0, // 假设一个ProgressIndicator的高度
+              child: const LinearProgressIndicator(
+                backgroundColor: Colors.transparent,
+              ),
+            ),
         ],
-      );
-    }
-    return messageContent;
+      ),
+    );
   }
 
   // 消息操作按钮小组件
