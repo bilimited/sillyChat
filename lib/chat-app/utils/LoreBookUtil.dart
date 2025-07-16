@@ -2,6 +2,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
+import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
 import 'package:get/get.dart';
@@ -45,7 +46,7 @@ class Lorebookutil {
   }
 
   /// 世界书激活主流程
-  List<LLMMessage> activateLorebooks() {
+  Map<int, String> activateLorebooks() {
     // Step 1: 对每个Lorebook单独处理
     List<LorebookItemModel> activatedItems = [];
     for (var lorebook in lorebooks) {
@@ -65,10 +66,14 @@ class Lorebookutil {
       positionLoreMap[posId] = items.map((e) => e.content).join('\n');
     });
 
-    // Step 6: 替换Prompt Message中的<lore id=x>
-    List<LLMMessage> result = messages.map((msg) {
-      if (!msg.isPrompt) return msg;
-      String newContent = msg.content.replaceAllMapped(
+    return positionLoreMap;
+  }
+
+  // Step 6: 替换Prompt Message中的<lore id=x>
+  static List<PromptModel> insertIntoPrompt(
+      List<PromptModel> prompts, Map<int, String> positionLoreMap) {
+    return prompts.map((prompt) {
+      String newContent = prompt.content.replaceAllMapped(
         RegExp(r'<lore id=(\d+)(?:\s+default=(.*?))?>'), // 改进后的正则表达式
         (match) {
           int posId = int.tryParse(match.group(1) ?? '') ?? 0;
@@ -89,16 +94,8 @@ class Lorebookutil {
           }
         },
       );
-      return LLMMessage(
-        content: newContent,
-        role: msg.role,
-        fileDirs: msg.fileDirs,
-        priority: msg.priority,
-        isPrompt: msg.isPrompt,
-      );
+      return prompt.copyWith(content: newContent, role: prompt.role);
     }).toList();
-
-    return result;
   }
 
   /// 获取某个世界书中所有激活的条目
@@ -109,7 +106,8 @@ class Lorebookutil {
     for (var item in allItems) {
       // 跳过未启用、activationType为Always的条目
       if (!item.isActive) continue;
-      if (item.activationType == ActivationType.always || item.activationType == ActivationType.manual) {
+      if (item.activationType == ActivationType.always ||
+          item.activationType == ActivationType.manual) {
         activatedItems.add(item);
         continue;
       }

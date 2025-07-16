@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../models/prompt_model.dart';
@@ -52,7 +53,7 @@ class _GenCharacterPromptPageState extends State<GenCharacterPromptPage> {
 
     setState(() => isGenerating = true);
 
-    var promptContent = PromptModel.BuildCharacterSystemPrompt(
+    var promptContent = Promptformatter.BuildCharacterSystemPrompt(
         selectedPrompt!.content, widget.character);
 
     promptContent =

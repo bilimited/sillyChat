@@ -13,6 +13,8 @@ import 'package:flutter_example/chat-app/utils/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
@@ -20,8 +22,6 @@ class ChatController extends GetxController {
   final RxList<ChatModel> chats = <ChatModel>[].obs;
 
   final String fileName = 'chats.json';
-
-
 
   final RxMap<int, ChatAIState> states = <int, ChatAIState>{}.obs;
 
@@ -503,137 +503,6 @@ class ChatController extends GetxController {
     await addMessage(chatId: chat.id, message: AIMessage);
   }
 
-  String _propressMessage(String content, LLMRequestOptions options) {
-    // 处理消息内容，删除thinking标记
-    if (options.isDeleteThinking) {
-      content =
-          content.replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '');
-    }
-    return content;
-  }
-
-  /// 史诗抽象超长代码
-  /// sender!=null ,则为群聊模式
-  List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
-    PromptSettingModel promptSetting =
-        Get.find<VaultSettingController>().promptSettingModel.value;
-
-
-    // TODO:把提示词格式化放到最后
-    var sysPrompts = chat.prompts
-        .where((prompt) => prompt.isEnable)
-        .map((prompt) => LLMMessage(
-              content: prompt.getContent(chat, sender: sender),
-              role: prompt.role,
-              priority: prompt.priority ?? 99999,
-              isPrompt: true,
-            ))
-        .toList();
-
-    int maxMsgs = chat.requestOptions.maxHistoryLength;
-    final int total = chat.messages.length;
-    final int start = total > maxMsgs ? total - maxMsgs : 0;
-    final pinnedIndexes = <int>{};
-    final hiddenIndexs = <int>{};
-    for (int i = 0; i < chat.messages.length; i++) {
-      if (chat.messages[i].isPinned == true) {
-        pinnedIndexes.add(i);
-      } else if (chat.messages[i].isHidden == true) {
-        hiddenIndexs.add(i);
-      }
-    }
-
-    // 需要保留的消息索引：末尾maxMsgs条+所有pinned-所有hidden
-    final keepIndexes = <int>{
-      ...List.generate(total - start, (i) => start + i),
-      ...pinnedIndexes
-    }..removeAll(hiddenIndexs);
-
-    // 计算priority，使最后一条消息priority为0，倒数第二条为1，依此类推
-    final msgIndexes = List.generate(chat.messages.length, (i) => i)
-        .where((i) => keepIndexes.contains(i))
-        .toList();
-
-    // 计算主消息列表，并计算它们的priority
-    final msglst = [
-      ...sysPrompts,
-      ...msgIndexes.map((i) {
-        final msg = chat.messages[i];
-        final content = _propressMessage(msg.content, chat.requestOptions);
-        int priority = msgIndexes.length - 1 - msgIndexes.indexOf(i); // 最后一条为0
-        if (sender == null) {
-          return LLMMessage(
-              content: content,
-              role: msg.isAssistant ? "assistant" : "user",
-              fileDirs: msg.resPath,
-              priority: priority,
-              senderId: msg.sender);
-        } else {
-          return LLMMessage(
-              content: msg.sender == sender.id
-                  ? content
-                  : promptSetting.groupFormatter
-                      .replaceAll(
-                          '<char>',
-                          characterController
-                              .getCharacterById(msg.sender)
-                              .roleName)
-                      .replaceAll('<message>', content),
-              role: msg.sender == sender.id ? "assistant" : "user",
-              fileDirs: msg.resPath,
-              priority: priority,
-              senderId: msg.sender);
-        }
-      })
-    ];
-
-    // 按priority升序排序，priority相同则sysPrompts更靠后（稳定排序）
-    msglst.sort((b, a) {
-      if (a.priority != b.priority) {
-        return a.priority.compareTo(b.priority);
-      }
-      if (a.isPrompt == b.isPrompt) return 0;
-      return a.isPrompt ? -1 : 1; // sysPrompts更靠后
-    });
-
-    // 如果出现了两个连续的assistant消息，且它们的senderId相同，则在它们之间插入一个用户消息
-    if (msglst.length >= 2) {
-      for (int i = 0; i < msglst.length-1; i++) {
-        if (msglst[i].role == "assistant" &&
-            msglst[i + 1].role == "assistant" &&
-            msglst[i].senderId == msglst[i + 1].senderId) {
-          msglst.insert(
-              i + 1,
-              LLMMessage(
-                  content: promptSetting.interAssistantUserSeparator,
-                  role: "user",
-                  priority: 0 //此时priority不重要
-                  ));
-          i++; // 跳过插入的用户消息
-        }
-      }
-    }
-
-    final Stopwatch stopwatch = Stopwatch()..start();
-    final loreBook = Lorebookutil(
-        messages: msglst,
-        chat: chat,
-        sender: sender ??
-            Get.find<CharacterController>()
-                .getCharacterById(chat.assistantId ?? 0));
-    final afterInsertLore = loreBook.activateLorebooks();
-    stopwatch.stop();
-    print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
-
-    final notEmpty = afterInsertLore
-        .where((msg) => !(msg.content.isBlank ?? false))
-        .toList();
-
-
-
-    return notEmpty;
-  }
-
   // 按行分割功能:已弃用
   // 处理消息功能，默认为单聊
   Stream<String> _handleLLMMessage(ChatModel chat,
@@ -641,7 +510,7 @@ class ChatController extends GetxController {
     late LLMRequestOptions options;
     late List<LLMMessage> messages;
 
-    messages = getLLMMessageList(chat, sender: sender);
+    messages = Promptbuilder().getLLMMessageList(chat, sender: sender);
     options = chat.requestOptions.copyWith(messages: messages);
 
     chat.setAIState(chat.aiState.copyWith(

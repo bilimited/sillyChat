@@ -126,7 +126,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
                 decoration: InputDecoration(
                   labelText: '角色',
                 ),
-                items: ['user', 'assistant', 'system']
+                items: ['user', 'assistant', 'system',]
                     .map((role) => DropdownMenuItem(
                           value: role,
                           child: Text(role),

@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
@@ -181,7 +182,6 @@ class _EditChatPageState extends State<EditChatPage>
             ),
             SizedBox(height: 16),
             Card(
-  
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -191,7 +191,7 @@ class _EditChatPageState extends State<EditChatPage>
                     trailing: Icon(Icons.chevron_right),
                     onTap: () {
                       final messages =
-                          _chatController.getLLMMessageList(widget.chat);
+                          Promptbuilder().getLLMMessageList(widget.chat);
                       customNavigate(
                           PromptPreviewPage(
                               messages: messages

@@ -26,8 +26,11 @@ class _PromptEditorState extends State<PromptEditor> {
   @override
   void initState() {
     super.initState();
-    if (widget.prompts.where((p) => p.id < 0).isNotEmpty) {
-      widget.prompts.removeWhere((p) => p.id < 0);
+    if (widget.prompts.where((p) => p.isMessageList).isEmpty) {
+      widget.prompts.addAll([
+        PromptModel.messageListPlaceholder(),
+        PromptModel.userMessagePlaceholder(),
+      ]);
     }
   }
 
@@ -64,6 +67,55 @@ class _PromptEditorState extends State<PromptEditor> {
     }
   }
 
+  Widget _buildMessageListCard(PromptModel prompt, int index) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      child: ListTile(
+        title: Row(
+          children: [
+            Text(
+              prompt.name.isEmpty
+                  ? prompt.content.isEmpty
+                      ? "空白提示词"
+                      : prompt.content
+                  : prompt.name,
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: prompt.isEnable ? null : colors.outline),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform.scale(
+              scale: 0.6,
+              child: Switch(
+                value: prompt.isEnable,
+                onChanged: (bool value) {
+                  setState(() {
+                    prompt.isEnable = value;
+                    _updatePrompts();
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            // IconButton(
+            //   icon: Icon(Icons.swap_horiz),
+            //   onPressed: () => _replacePrompt(index),
+            // ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPromptCard(PromptModel prompt, int index) {
     final colors = Theme.of(context).colorScheme;
 
@@ -98,11 +150,13 @@ class _PromptEditorState extends State<PromptEditor> {
                   fontSize: 13, color: prompt.isEnable ? null : colors.outline),
               maxLines: 3,
             ),
-            SizedBox(width: 5,),
+            SizedBox(
+              width: 5,
+            ),
             if (prompt.priority != null)
               Text(
                 '@${prompt.priority}',
-                style: TextStyle(color: colors.outline,fontSize: 13),
+                style: TextStyle(color: colors.outline, fontSize: 13),
               )
           ],
         ),
@@ -177,7 +231,9 @@ class _PromptEditorState extends State<PromptEditor> {
             itemBuilder: (context, index) {
               return KeyedSubtree(
                 key: ValueKey(widget.prompts[index].id),
-                child: _buildPromptCard(widget.prompts[index], index),
+                child: widget.prompts[index].isMessageList
+                    ? _buildMessageListCard(widget.prompts[index], index)
+                    : _buildPromptCard(widget.prompts[index], index),
               );
             },
           ),

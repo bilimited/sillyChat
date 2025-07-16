@@ -30,6 +30,7 @@ class ChatModel {
   int? assistantId; // TODO:解除外部对id的应用，直接从get方法获取实体类
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
+  Map<String,String> chatVars = {};
 
   // 对话摘要，介绍或作者注释
   // 会被插入到提示词中
@@ -154,7 +155,10 @@ class ChatModel {
               .toList() ??
           []
       ..tags = (json['tags'] as List?)?.cast<String>() ?? []
-      ..characterIds = json['characterIds']?.cast<int>() ?? [];
+      ..characterIds = json['characterIds']?.cast<int>() ?? []
+      ..chatVars = (json['chatVars'] as Map<String, dynamic>?)
+              ?.map((key, value) => MapEntry(key, value.toString())) ??
+          {};
   }
 
   Map<String, dynamic> toJson() => {
@@ -175,6 +179,7 @@ class ChatModel {
         'tags': tags, // 新增：序列化
         'mode': mode?.toString().split('.').last,
         'bookmarks': bookmarks.map((b) => b.toJson()).toList(),
+        'chatVars': chatVars,
       };
 
   ChatModel shallowCopyWith({
@@ -196,6 +201,7 @@ class ChatModel {
     int? parentId,
     int? entranceId,
     List<BookMarkModel>? bookmarks,
+    Map<String, String>? chatVars,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -214,7 +220,8 @@ class ChatModel {
     )
       ..bookmarks = bookmarks ?? this.bookmarks
       ..tags = tags ?? []
-      ..characterIds = characterIds ?? this.characterIds;
+      ..characterIds = characterIds ?? this.characterIds
+      ..chatVars = chatVars ?? this.chatVars;
   }
 
   ChatModel deepCopyWith({
@@ -234,6 +241,7 @@ class ChatModel {
     String? messageTemplate,
     List<String>? tags,
     List<BookMarkModel>? bookmarks,
+    Map<String, String>? chatVars,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -252,7 +260,8 @@ class ChatModel {
     )
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
-      ..characterIds = characterIds ?? [...this.characterIds];
+      ..characterIds = characterIds ?? [...this.characterIds]
+      ..chatVars = chatVars ?? this.chatVars;
   }
 }
 

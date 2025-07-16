@@ -153,9 +153,6 @@ class Aihandler {
           "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:streamGenerateContent?key=${api.apiKey}&alt=sse";
 
       final requestBody = {
-        // if (options.messages.where((msg) => msg.role == 'system').isNotEmpty)
-        //   "system_instruction": LLMMessage.toGeminiSystemPrompt(
-        //       options.messages.where((msg) => msg.role == 'system').toList()),
         "contents": options.messages
             //.where((msg) => msg.role != 'system')
             .map((msg) => msg.toGeminiRestJson())
@@ -165,13 +162,7 @@ class Aihandler {
           "maxOutputTokens": options.maxTokens,
           "topP": options.topP,
           "thinkingConfig": {
-            // Gemini 2.5 Pro: 我无法停止思考！
-            // TODO: 添加ThinkBudget设置和includeThoughts开关
-            // "thinkingBudget": options.isThinkMode ? -1 : 0,
-            // "includeThoughts": options.isThinkMode ? true : false,
           }, // 暂时只有两档,
-
-          // if (options.seed >= 0) "seed": options.seed,
         },
         "safetySettings": [
           {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
