@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/kv_editor.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -40,7 +41,7 @@ class _EditChatPageState extends State<EditChatPage>
   void initState() {
     super.initState();
     chat = widget.chat;
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   void _onOptionsDirty() {
@@ -66,6 +67,7 @@ class _EditChatPageState extends State<EditChatPage>
               Tab(text: '聊天信息'),
               Tab(text: '聊天设置'),
               Tab(text: '成员管理'),
+              Tab(text: '高级设置'),
             ],
           ),
           actions: [
@@ -120,8 +122,9 @@ class _EditChatPageState extends State<EditChatPage>
                     controller: _tabController,
                     children: [
                       _buildBasicInfoTab(),
-                      _buildAdvancedTab(),
+                      _buildOptionTab(),
                       _buildMembersTab(),
+                      _buildAdvanceTab()
                     ],
                   ),
                 ),
@@ -235,135 +238,7 @@ class _EditChatPageState extends State<EditChatPage>
     );
   }
 
-  Widget _buildRoleSelector(
-      {required String label,
-      required int? roleId,
-      required Function(int?) onSelect,
-      String? placeholder}) {
-    final character =
-        roleId != null ? _characterController.getCharacterById(roleId) : null;
-
-    return Row(
-      children: [
-        Text(label),
-        Expanded(
-          child: InkWell(
-            onTap: () async {
-              CharacterModel? char =
-                  await customNavigate(CharacterSelector(), context: context);
-              if (char == null) {
-                return;
-              }
-              onSelect(char.id);
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceBright,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: character != null
-                  ? Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundImage: FileImage(File(character.avatar)),
-                        ),
-                        SizedBox(width: 8),
-                        Text(character.roleName),
-                        Spacer(),
-                        IconButton(
-                          icon: Icon(Icons.close, size: 16),
-                          onPressed: () => onSelect(null),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.person_add_outlined),
-                        SizedBox(width: 8),
-                        Text(placeholder ?? '选择角色'),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTagsEditor() {
-    return Column(
-      children: [
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.start,
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ...widget.chat.tags
-                .map((tag) => Chip(
-                      label: Text(tag),
-                      onDeleted: () {
-                        setState(() {
-                          widget.chat.tags.remove(tag);
-                        });
-                      },
-                    ))
-                .toList(),
-            ActionChip(
-              avatar: Icon(Icons.add, size: 18),
-              label: Text('添加标签'),
-              onPressed: () {
-                final TextEditingController tagController =
-                    TextEditingController();
-                Get.dialog(
-                  AlertDialog(
-                    title: Text('添加标签'),
-                    content: TextField(
-                      controller: tagController,
-                      decoration: InputDecoration(
-                        hintText: '输入标签名称',
-                      ),
-                      autofocus: true,
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text('取消'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (tagController.text.isNotEmpty) {
-                            setState(() {
-                              widget.chat.tags.add(tagController.text);
-                            });
-                            Get.back();
-                          }
-                        },
-                        child: Text('确定'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // 成员管理标签页
-  Widget _buildMembersTab() {
-    return MemberSelector(
-      selectedMembers: widget.chat.characterIds,
-      onToggleMember: _toggleMember,
-    );
-  }
-
-  // 高级设置标签页
-  Widget _buildAdvancedTab() {
+  Widget _buildOptionTab() {
     return ListView(
       key: _advanceTabKey,
       padding: EdgeInsets.all(10),
@@ -591,6 +466,146 @@ class _EditChatPageState extends State<EditChatPage>
       ],
     );
   }
+
+  Widget _buildRoleSelector(
+      {required String label,
+      required int? roleId,
+      required Function(int?) onSelect,
+      String? placeholder}) {
+    final character =
+        roleId != null ? _characterController.getCharacterById(roleId) : null;
+
+    return Row(
+      children: [
+        Text(label),
+        Expanded(
+          child: InkWell(
+            onTap: () async {
+              CharacterModel? char =
+                  await customNavigate(CharacterSelector(), context: context);
+              if (char == null) {
+                return;
+              }
+              onSelect(char.id);
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceBright,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: character != null
+                  ? Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundImage: FileImage(File(character.avatar)),
+                        ),
+                        SizedBox(width: 8),
+                        Text(character.roleName),
+                        Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.close, size: 16),
+                          onPressed: () => onSelect(null),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add_outlined),
+                        SizedBox(width: 8),
+                        Text(placeholder ?? '选择角色'),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTagsEditor() {
+    return Column(
+      children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.start,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ...widget.chat.tags
+                .map((tag) => Chip(
+                      label: Text(tag),
+                      onDeleted: () {
+                        setState(() {
+                          widget.chat.tags.remove(tag);
+                        });
+                      },
+                    ))
+                .toList(),
+            ActionChip(
+              avatar: Icon(Icons.add, size: 18),
+              label: Text('添加标签'),
+              onPressed: () {
+                final TextEditingController tagController =
+                    TextEditingController();
+                Get.dialog(
+                  AlertDialog(
+                    title: Text('添加标签'),
+                    content: TextField(
+                      controller: tagController,
+                      decoration: InputDecoration(
+                        hintText: '输入标签名称',
+                      ),
+                      autofocus: true,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('取消'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (tagController.text.isNotEmpty) {
+                            setState(() {
+                              widget.chat.tags.add(tagController.text);
+                            });
+                            Get.back();
+                          }
+                        },
+                        child: Text('确定'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 成员管理标签页
+  Widget _buildMembersTab() {
+    return MemberSelector(
+      selectedMembers: widget.chat.characterIds,
+      onToggleMember: _toggleMember,
+    );
+  }
+
+  Widget _buildAdvanceTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(10),
+      child: Column(
+        children: [
+
+        ],
+      ),
+    );
+  }
+
+  // 高级设置标签页
 
   void _saveChanges({bool isBack = true}) async {
     if (widget.chat.id == -1 && isBack) {

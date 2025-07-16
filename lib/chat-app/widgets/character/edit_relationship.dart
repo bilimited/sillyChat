@@ -92,6 +92,7 @@ class _EditRelationshipState extends State<EditRelationship> {
         SizedBox(
           height: 56.0 * _relationList.length + 80, // 估算高度，防止溢出
           child: ReorderableListView(
+            clipBehavior: Clip.antiAliasWithSaveLayer,
             shrinkWrap: true,
             physics: const ScrollPhysics(),
             onReorder: _onReorder,
