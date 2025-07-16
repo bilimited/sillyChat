@@ -82,6 +82,8 @@ class Aihandler {
       final ApiModel? api = settingController.getApiById(options.apiId);
       if (api == null) {
         Get.snackbar("未选择API", "请先选择一个API");
+        onGenerateStateChange('未选择API');
+        isBusy = false;
         return;
       }
       if (api.provider.isOpenAICompatiable) {

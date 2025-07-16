@@ -185,36 +185,131 @@ class _SettingPageState extends State<SettingPage>
 
   Widget _buildGeneralTab() {
     return ListView(
+      key: _pageKey, // Apply the key here
+      padding: const EdgeInsets.all(16.0),
       children: [
-        ListTile(
-          leading: Obx(() => Icon(_settingController.isDarkMode.value
-              ? Icons.nightlight
-              : Icons.sunny)),
-          title: const Text('切换主题'),
-          onTap: () {
-            setState(() {
-              _pageKey = UniqueKey(); // 更新页面键以强制重建
-            });
-            _settingController.toggleDarkMode();
-          },
+        // Theme Toggle
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Obx(
+              () => Icon(
+                _settingController.isDarkMode.value
+                    ? Icons.nightlight_round
+                    : Icons.wb_sunny_rounded,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+            title: Text(
+              '切换主题',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              _settingController.isDarkMode.value
+                  ? '切换到明亮主题'
+                  : '切换到暗黑主题',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            trailing: Obx(
+              () => Switch(
+                value: _settingController.isDarkMode.value,
+                onChanged: (newValue) {
+                  setState(() {
+                    _pageKey =
+                        UniqueKey(); // Update page key to force theme redraw
+                  });
+                  _settingController.toggleDarkMode();
+                },
+                activeColor: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+          ),
         ),
-        Divider(),
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: const Text('WebDAV 配置'),
-          onTap: _setupWebDav,
+
+        // WebDAV Configuration
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Icon(Icons.cloud_queue,
+                color: Theme.of(context).colorScheme.secondary),
+            title: Text(
+              'WebDAV 配置',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              '连接到你的WebDav网盘或服务器以同步数据。',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            onTap: _setupWebDav,
+            trailing: Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.grey[400]),
+          ),
         ),
-        Divider(),
-        ListTile(
-          leading: const Icon(Icons.cloud_upload),
-          title: const Text('上传数据到云端'),
-          onTap: _uploadAll,
-        ),
-        Divider(),
-        ListTile(
-          leading: const Icon(Icons.cloud_download),
-          title: const Text('从云端导入数据'),
-          onTap: _downloadAll,
+
+        // Cloud Data Management
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.cloud_upload_outlined,
+                    color: Theme.of(context).colorScheme.secondary),
+                title: Text(
+                  '上传到云端',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '将本地数据上传到WebDav云储存',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: _uploadAll,
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.cloud_download_outlined,
+                    color: Theme.of(context).colorScheme.secondary),
+                title: Text(
+                  '从云端导入',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '从云端下载数据，本地数据将会被覆盖。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: _downloadAll,
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+            ],
+          ),
         ),
       ],
     );
