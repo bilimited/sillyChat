@@ -18,21 +18,22 @@ class PromptSettingsPage extends StatelessWidget {
         () => ListView(
           padding: const EdgeInsets.all(16.0),
           children: <Widget>[
-            // 构建“连续输出提示词”的编辑区域
-            // _buildPromptSection(
-            //   context: context,
-            //   title: '连续输出提示词',
-            //   description: '用于在AI输出未完整时，要求其继续输出的指令。',
-            //   initialValue: settings.value.continuePrompt,
-            //   onChanged: (value) {
-            //     // 实时更新模型在内存中的值
-            //     settings.value.continuePrompt = value;
-            //   },
-            //   onSave: () {
-            //     // 结束编辑时保存设置
-            //     controller.saveSettings();
-            //   },
-            // ),
+            //构建“连续输出提示词”的编辑区域
+            _buildPromptSection(
+              context: context,
+              title: '连续输出提示词',
+              description: '用于在AI输出未完整时，要求其继续输出的指令。',
+              initialValue: settings.value.continuePrompt,
+              onChanged: (value) {
+                // 实时更新模型在内存中的值
+                settings.value.continuePrompt = value;
+              },
+              onSave: () {
+                // 结束编辑时保存设置
+                controller.saveSettings();
+              },
+            ),
+            const Divider(height: 32),
 
             // 构建“消息分隔符”的编辑区域
             _buildPromptSection(

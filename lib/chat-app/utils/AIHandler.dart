@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
 class RequestOptions {}
@@ -268,8 +268,6 @@ class Aihandler {
           try {
             // 尝试将数据行解析为 JSON
             final json = jsonDecode(line);
-            print("JSON (SSE)::: $json");
-
             final content = parser(json);
 
             if (content.isNotEmpty) {

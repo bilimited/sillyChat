@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../models/chat_option_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/chat_option_controller.dart';
-import '../../utils/RequestOptions.dart';
+import '../../utils/entitys/RequestOptions.dart';
 import '../../widgets/prompt/request_options_editor.dart';
 
 class EditChatOptionPage extends StatefulWidget {

@@ -5,13 +5,12 @@ import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.da
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 
 class Promptbuilder {
-
   // List<PromptModel> processVaribles(List<PromptModel> prompts){
 
   // }
@@ -25,9 +24,8 @@ class Promptbuilder {
     return content;
   }
 
-  /// 史诗抽象超长代码
-  /// sender!=null ,则为群聊模式
-  List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+  /// 获得全部消息的列表（不包括Prompt，不格式化）
+  List<LLMMessage> getMessageList(ChatModel chat, {CharacterModel? sender}) {
     final characterController = Get.find<CharacterController>();
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
@@ -45,11 +43,6 @@ class Promptbuilder {
       }
     }
 
-    /// 获取消息列表（不包含Prompt）
-    ///
-    /// -----------------------------------------------------------
-
-    // 需要保留的消息索引：末尾maxMsgs条+所有pinned-所有hidden
     final keepIndexes = <int>{
       ...List.generate(total - start, (i) => start + i),
       ...pinnedIndexes
@@ -58,18 +51,30 @@ class Promptbuilder {
         .where((i) => keepIndexes.contains(i))
         .toList();
 
-    // 计算主消息列表，并计算它们的priority
-    final msglst = [
+    return [
       //...sysPrompts,
       ...msgIndexes.map((i) {
         final msg = chat.messages[i];
         final content = _propressMessage(msg.content, chat.requestOptions);
-        if (sender == null) {
+
+        // 合并消息列表：在一切消息前添加名称
+        if (chat.requestOptions.isMergeMessageList) {
+          return LLMMessage(
+              content: promptSetting.groupFormatter
+                  .replaceAll('<char>',
+                      characterController.getCharacterById(msg.sender).roleName)
+                  .replaceAll('<message>', content),
+              role: msg.sender == (sender?.id ?? chat.assistantId) ? "assistant" : "user",
+              fileDirs: msg.resPath,
+              senderId: msg.sender);
+          // 不合并消息列表，聊天模式
+        } else if (sender == null) {
           return LLMMessage(
               content: content,
               role: msg.isAssistant ? "assistant" : "user",
               fileDirs: msg.resPath,
               senderId: msg.sender);
+          // 不合并消息列表，群聊模式
         } else {
           return LLMMessage(
               content: msg.sender == sender.id
@@ -87,23 +92,15 @@ class Promptbuilder {
         }
       })
     ];
+  }
 
-    // 如果出现了两个连续的assistant消息，且它们的senderId相同，则在它们之间插入一个用户消息
-    if (msglst.length >= 2) {
-      for (int i = 0; i < msglst.length - 1; i++) {
-        if (msglst[i].role == "assistant" &&
-            msglst[i + 1].role == "assistant" &&
-            msglst[i].senderId == msglst[i + 1].senderId) {
-          msglst.insert(
-              i + 1,
-              LLMMessage(
-                content: promptSetting.interAssistantUserSeparator,
-                role: "user",
-              ));
-          i++; // 跳过插入的用户消息
-        }
-      }
-    }
+  /// 史诗抽象超长代码
+  /// sender!=null ,则为群聊模式
+  List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+    PromptSettingModel promptSetting =
+        Get.find<VaultSettingController>().promptSettingModel.value;
+
+    final msglst = getMessageList(chat, sender: sender);
 
     late String userMessage;
     if (msglst.isNotEmpty && msglst.last.role == 'user') {
@@ -149,9 +146,25 @@ class Promptbuilder {
 
     return promptsNotEmpty.expand<LLMMessage>((prompt) {
       if (prompt.isMessageList) {
-        return msglst;
+        if (chat.requestOptions.isMergeMessageList) {
+          final merged = mergeMessageList(msglst);
+          return merged.content.isEmpty ? [] : [mergeMessageList(msglst)];
+        } else {
+          return msglst;
+        }
       }
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
+  }
+
+  LLMMessage mergeMessageList(List<LLMMessage> msglst) {
+    return msglst.fold(LLMMessage(content: '', role: 'user', fileDirs: []),
+        (res, msg) {
+      res.fileDirs.addAll(msg.fileDirs);
+      return LLMMessage(
+          content: res.content + '\n' + msg.content,
+          role: 'user',
+          fileDirs: res.fileDirs);
+    });
   }
 }

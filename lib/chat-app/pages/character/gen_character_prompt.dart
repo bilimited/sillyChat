@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
 import '../../widgets/prompt/request_options_editor.dart';
-import '../../utils/RequestOptions.dart';
+import '../../utils/entitys/RequestOptions.dart';
 
 class GenCharacterPromptPage extends StatefulWidget {
   final CharacterModel character;

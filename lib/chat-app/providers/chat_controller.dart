@@ -9,10 +9,10 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/ChatAIState.dart';
+import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
@@ -111,7 +111,10 @@ class ChatController extends GetxController {
     newChat.id = DateTime.now().microsecond;
     newChat.time = DateTime.now().toString();
     newChat.characterIds = [
-      if (newChat.userId != null) newChat.userId!,
+      if (newChat.userId != null)
+        newChat.userId!
+      else if (characterController.myId != null)
+        characterController.myId!,
       if (newChat.assistantId != null) newChat.assistantId!,
     ];
     if (newChat.assistantId != null &&

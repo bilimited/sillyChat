@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/chat_option_model.dart';
 import '../providers/chat_option_controller.dart';
-import '../utils/llmMessage.dart';
+import '../utils/entitys/llmMessage.dart';
 import '../utils/AIHandler.dart';
 
 class ContentGenerator extends StatefulWidget {

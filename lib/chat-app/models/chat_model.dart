@@ -5,9 +5,9 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/ChatAIState.dart';
+import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:get/get.dart';
-import '../utils/RequestOptions.dart';
+import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 
 class ChatModel {

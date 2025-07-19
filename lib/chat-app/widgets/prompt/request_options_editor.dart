@@ -4,7 +4,7 @@ import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
-import '../../utils/RequestOptions.dart';
+import '../../utils/entitys/RequestOptions.dart';
 
 class RequestOptionsEditor extends StatefulWidget {
   final LLMRequestOptions options;
@@ -100,19 +100,19 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
             }
           },
         ),
-        // _buildNumberInput(
-        //   label: 'Seed（仅部分模型有效，-1代表随机生成）',
-        //   controller: _seedController,
-        //   onChanged: (value) {
-        //     final intValue = int.tryParse(value);
-        //     widget.onChanged(widget.options.copyWith(seed: intValue));
-        //   },
-        // ),
         _buildCheckbox(
           label: '是否删除思考消息',
           value: widget.options.isDeleteThinking,
           onChanged: (value) {
             widget.onChanged(widget.options.copyWith(isDeleteThinking: value));
+          },
+        ),
+        _buildCheckbox(
+          label: '是否合并消息列表',
+          value: widget.options.isMergeMessageList,
+          onChanged: (value) {
+            widget
+                .onChanged(widget.options.copyWith(isMergeMessageList: value));
           },
         ),
         const SizedBox(height: 16),
@@ -227,8 +227,9 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                 icon: const Icon(Icons.add),
                 tooltip: '添加API',
                 onPressed: () async {
-                  final api = await customNavigate<ApiModel?>(ApiEditPage(), context: context);
-                  if(api != null){
+                  final api = await customNavigate<ApiModel?>(ApiEditPage(),
+                      context: context);
+                  if (api != null) {
                     widget.onChanged(widget.options.copyWith(apiId: api.id));
                   }
                 },

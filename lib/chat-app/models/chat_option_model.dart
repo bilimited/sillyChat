@@ -1,6 +1,6 @@
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
-import 'package:flutter_example/chat-app/utils/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
 class ChatOptionModel {
@@ -109,10 +109,10 @@ class ChatOptionModel {
 我是<user>。
 现在，我将开始与你聊天。
 """;
-
-    const String beforeUserMessage = "<lore id=4>";
-    const String afterUserMessage = "<lore id=5>\n"
-        "<char>:";
+    const String userMessage = """<lore id=4>
+<lastUserMessage>
+<lore id=5>
+<char>:""";
 
     return ChatOptionModel(
         id: 0,
@@ -129,16 +129,12 @@ class ChatOptionModel {
               id: id, content: userDefine, role: 'system', name: '角色定义'),
           PromptModel(
               id: id + 1,
-              content: beforeUserMessage,
-              role: 'user',
-              name: '用户输入前')
-            ..priority = 1,
+              content: '<messageList>',
+              role: 'system',
+              name: '消息列表',
+              isMessageList: true),
           PromptModel(
-              id: id + 2,
-              content: afterUserMessage,
-              role: 'user',
-              name: '用户输入后')
-            ..priority = 0,
+              id: id + 2, content: userMessage, role: 'user', name: '用户输入')
         ]);
   }
 }

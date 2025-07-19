@@ -335,10 +335,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
+
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -423,10 +420,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 16),
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -583,10 +576,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
         const SizedBox(height: 16),
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
           // 角色绑定的世界书管理
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -682,8 +671,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
               width: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-                color: Colors.grey.shade100,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(60),
@@ -705,7 +692,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),

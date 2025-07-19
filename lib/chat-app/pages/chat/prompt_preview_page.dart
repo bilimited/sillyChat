@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 
 class PromptPreviewPage extends StatefulWidget {
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
 import '../../providers/vault_setting_controller.dart';
@@ -17,6 +19,7 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final CharacterController _characterController = Get.find();
   final SettingController _settingController = Get.find();
   final VaultSettingController _vaultSettingController = Get.find();
   final webDav = WebDavUtil();
@@ -119,8 +122,14 @@ class _SettingPageState extends State<SettingPage>
     );
     await webDav.init();
 
-    if (result != true) return;
+    if (result != true) {
+      Get.back();
+      return;
+    }
 
+    // 关闭下拉框
+    Get.back();
+    _characterController.packageAvatarFiles();
     _vaultSettingController.lastSyncTime.value = DateTime.now();
     await _vaultSettingController.saveSettings();
 
@@ -174,6 +183,9 @@ class _SettingPageState extends State<SettingPage>
             onPressed: () async {
               Navigator.pop(context);
               await webDav.downloadAllData(context);
+
+              SillyChatApp.restart();
+              await Get.find<CharacterController>().unpackAvatarFiles();
               Get.snackbar('导入完成', '数据已导入');
             },
             child: const Text('导入'),
@@ -212,9 +224,7 @@ class _SettingPageState extends State<SettingPage>
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              _settingController.isDarkMode.value
-                  ? '切换到明亮主题'
-                  : '切换到暗黑主题',
+              _settingController.isDarkMode.value ? '切换到明亮主题' : '切换到暗黑主题',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             trailing: Obx(

@@ -1,4 +1,4 @@
-import 'package:flutter_example/chat-app/utils/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 
 class LLMRequestOptions {
   final List<LLMMessage> messages; // 消息记录
@@ -14,6 +14,8 @@ class LLMRequestOptions {
   final bool isDeleteThinking; // 是否删除思考消息
   final bool isThinkMode; // 是否思考模式
 
+  final bool isMergeMessageList;
+
   const LLMRequestOptions({
     required this.messages,
     this.maxTokens = 4000,
@@ -26,6 +28,7 @@ class LLMRequestOptions {
     this.isThinkMode = false,
     this.isDeleteThinking = true,
     this.seed = -1,
+    this.isMergeMessageList = false,
   });
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
@@ -41,6 +44,7 @@ class LLMRequestOptions {
       isDeleteThinking: json['is_delete_thinking'] ?? true,
       isThinkMode: json['is_think_mode'] ?? false,
       seed: json['seed'] ?? -1,
+      isMergeMessageList: json['is_merge_message_list'] ?? false,
     );
   }
 
@@ -56,6 +60,7 @@ class LLMRequestOptions {
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
       'seed': seed,
+      'is_merge_message_list': isMergeMessageList,
     };
   }
 
@@ -87,6 +92,7 @@ class LLMRequestOptions {
     bool? isDeleteThinking,
     bool? isThinkMode,
     int? seed,
+    bool? isMergeMessageList,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -100,6 +106,7 @@ class LLMRequestOptions {
       isDeleteThinking: isDeleteThinking ?? this.isDeleteThinking,
       isThinkMode: isThinkMode ?? this.isThinkMode,
       seed: seed ?? this.seed,
+      isMergeMessageList: isMergeMessageList ?? this.isMergeMessageList,
     );
   }
 }

@@ -40,7 +40,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
     activationType = item?.activationType ?? ActivationType.keywords;
     logic = item?.logic ?? MatchingLogic.or;
     isActive = item?.isActive ?? true;
-    _focusNodes = List.generate(7, (_) => FocusNode());
+    _focusNodes = List.generate(8, (_) => FocusNode());
     for (var node in _focusNodes) {
       node.addListener(() {
         if (!node.hasFocus) {
@@ -206,6 +206,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                 Expanded(
                   child: TextField(
                     controller: positionIdController,
+                    focusNode: _focusNodes[7],
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '插入位置ID',

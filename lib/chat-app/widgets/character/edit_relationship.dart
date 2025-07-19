@@ -91,82 +91,115 @@ class _EditRelationshipState extends State<EditRelationship> {
         // 用 ReorderableListView 替换原来的 Column
         SizedBox(
           height: 56.0 * _relationList.length + 80, // 估算高度，防止溢出
-          child: ReorderableListView(
-            clipBehavior: Clip.antiAliasWithSaveLayer,
-            shrinkWrap: true,
-            physics: const ScrollPhysics(),
-            onReorder: _onReorder,
-            children: [
-              for (final entry in _relationList)
-                Padding(
-                  key: ValueKey(entry.key),
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+
+          child: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    Colors.transparent, // 顶部完全透明
+                    Colors.black, // 顶部渐变到不透明的过渡点 (这里用黑色代表不透明区域)
+                    Colors.black, // 底部渐变到不透明的过渡点
+                    Colors.transparent, // 底部完全透明
+                  ],
+                  stops: const [
+                    0.0, // 从0%位置开始透明
+                    0.06, // 在10%位置变为不透明 (顶部渐隐区)
+                    0.94, // 在90%位置开始透明 (底部渐隐区)
+                    1.0, // 在100%位置完全透明
+                  ],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn, // 只显示Shader不透明的部分
+              child: ReorderableListView(
+                clipBehavior: Clip.antiAliasWithSaveLayer,
+                shrinkWrap: true,
+                physics: const ScrollPhysics(),
+                onReorder: _onReorder,
+                children: [
+                  for (final entry in _relationList)
+                    Padding(
+                      key: ValueKey(entry.key),
+                      padding: const EdgeInsets.only(bottom: 16,top: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundImage: _characterController.getCharacterById(entry.key).avatar.isNotEmpty
-                                      ? FileImage(File(_characterController.getCharacterById(entry.key).avatar))
-                                      : null,
-                                  child: _characterController.getCharacterById(entry.key).avatar.isEmpty
-                                      ? Text(_characterController.getCharacterById(entry.key).roleName[0])
-                                      : null,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(_characterController.getCharacterById(entry.key).roleName),
-                                const Text(' 是我的 '),
-                                Expanded(
-                                  child: TextFormField(
-                                    initialValue: entry.value.type ?? '',
-                                    decoration: const InputDecoration(
-                                      hintText: '关系',
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 8,
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundImage: _characterController
+                                              .getCharacterById(entry.key)
+                                              .avatar
+                                              .isNotEmpty
+                                          ? FileImage(File(_characterController
+                                              .getCharacterById(entry.key)
+                                              .avatar))
+                                          : null,
+                                      child: _characterController
+                                              .getCharacterById(entry.key)
+                                              .avatar
+                                              .isEmpty
+                                          ? Text(_characterController
+                                              .getCharacterById(entry.key)
+                                              .roleName[0])
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(_characterController
+                                        .getCharacterById(entry.key)
+                                        .roleName),
+                                    const Text(' 是我的 '),
+                                    Expanded(
+                                      child: TextFormField(
+                                        initialValue: entry.value.type ?? '',
+                                        decoration: const InputDecoration(
+                                          hintText: '关系',
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                        onChanged: (value) {
+                                          entry.value.type = value;
+                                          widget.onChanged(_relations);
+                                        },
                                       ),
                                     ),
-                                    onChanged: (value) {
-                                      entry.value.type = value;
-                                      widget.onChanged(_relations);
-                                    },
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  initialValue: entry.value.brief ?? '',
+                                  decoration: const InputDecoration(
+                                    hintText: '关系描述（可选）',
                                   ),
+                                  style: TextStyle(fontSize: 13),
+                                  maxLines: null,
+                                  minLines: 2,
+                                  onChanged: (value) {
+                                    entry.value.brief = value;
+                                    widget.onChanged(_relations);
+                                  },
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              initialValue: entry.value.brief ?? '',
-                              decoration: const InputDecoration(
-                                hintText: '关系描述（可选）',
-                              ),
-                              style: TextStyle(fontSize: 13),
-                              maxLines: null,
-                              minLines: 2,
-                              onChanged: (value) {
-                                entry.value.brief = value;
-                                widget.onChanged(_relations);
-                              },
-                            ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => _removeRelation(entry.key),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => _removeRelation(entry.key),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+                    ),
+                ],
+              )),
         ),
         TextButton.icon(
           onPressed: _addRelation,

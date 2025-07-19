@@ -174,21 +174,21 @@ class ChatListItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _getModeText(chat.mode),
-                        style: TextStyle(
-                          color: theme.colorScheme.outline,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(width: 4),
+                    // Container(
+                    //   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    //   decoration: BoxDecoration(
+                    //     color: theme.colorScheme.surfaceVariant,
+                    //     borderRadius: BorderRadius.circular(4),
+                    //   ),
+                    //   child: Text(
+                    //     _getModeText(chat.mode),
+                    //     style: TextStyle(
+                    //       color: theme.colorScheme.outline,
+                    //       fontSize: 10,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ],
