@@ -53,7 +53,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   void save() {
     final item = (widget.item ??
             LorebookItemModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              id: DateTime.now().millisecondsSinceEpoch,
               name: '',
               content: '',
             ))

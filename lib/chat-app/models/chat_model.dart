@@ -4,17 +4,15 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
-import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 
 class ChatModel {
-
   ChatAIState get aiState => Get.find<ChatController>().getAIState(id);
 
-  void setAIState(ChatAIState newState){
+  void setAIState(ChatAIState newState) {
     Get.find<ChatController>().setAIState(id, newState);
   }
 
@@ -27,15 +25,15 @@ class ChatModel {
   String lastMessage;
   String time;
   int? userId;
-  int? assistantId; // TODO:解除外部对id的应用，直接从get方法获取实体类
+  int? assistantId;
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
-  Map<String,String> chatVars = {};
+  Map<String, String> chatVars = {};
+  Map<String, bool> activitedLorebookItems = {}; // 手动激活的LorebookItem
 
   // 对话摘要，介绍或作者注释
   // 会被插入到提示词中
-  String? description; 
-
+  String? description;
 
   late ChatOptionModel chatOption;
 
@@ -112,6 +110,14 @@ class ChatModel {
         .toList();
   }
 
+  void setLorebookItemStat(int lorebookId, int itemId, bool val) {
+    activitedLorebookItems['$lorebookId@$itemId'] = val;
+  }
+
+  bool? getLorebookItemStat(int lorebookId, int itemId) {
+    return activitedLorebookItems['$lorebookId@$itemId'];
+  }
+
   factory ChatModel.fromJson(Map<String, dynamic> json) {
     // 版本迁移
     final requestOptions = json['requestOptions'] != null
@@ -121,7 +127,7 @@ class ChatModel {
         ?.map((e) => PromptModel.fromJson(e))
         .toList();
     return ChatModel(
-      id: json['id'] ?? -1,
+      id:  json['id'] ?? -1,
       name: json['name'],
       avatar: json['avatar'],
       backgroundImage: json['backgroundImage'],
@@ -158,7 +164,11 @@ class ChatModel {
       ..characterIds = json['characterIds']?.cast<int>() ?? []
       ..chatVars = (json['chatVars'] as Map<String, dynamic>?)
               ?.map((key, value) => MapEntry(key, value.toString())) ??
-          {};
+          {}
+      ..activitedLorebookItems =
+          (json['activitedLorebookItems'] as Map<String, dynamic>?)
+                  ?.map((key, value) => MapEntry(key, value == true)) ??
+              {};
   }
 
   Map<String, dynamic> toJson() => {
@@ -180,6 +190,7 @@ class ChatModel {
         'mode': mode?.toString().split('.').last,
         'bookmarks': bookmarks.map((b) => b.toJson()).toList(),
         'chatVars': chatVars,
+        'activitedLorebookItems': activitedLorebookItems,
       };
 
   ChatModel shallowCopyWith({
@@ -202,6 +213,7 @@ class ChatModel {
     int? entranceId,
     List<BookMarkModel>? bookmarks,
     Map<String, String>? chatVars,
+    Map<String, bool>? activitedLorebookItems,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -221,7 +233,9 @@ class ChatModel {
       ..bookmarks = bookmarks ?? this.bookmarks
       ..tags = tags ?? []
       ..characterIds = characterIds ?? this.characterIds
-      ..chatVars = chatVars ?? this.chatVars;
+      ..chatVars = chatVars ?? this.chatVars
+      ..activitedLorebookItems =
+          activitedLorebookItems ?? this.activitedLorebookItems;
   }
 
   ChatModel deepCopyWith({
@@ -242,6 +256,7 @@ class ChatModel {
     List<String>? tags,
     List<BookMarkModel>? bookmarks,
     Map<String, String>? chatVars,
+    Map<String, bool>? activitedLorebookItems,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -261,7 +276,9 @@ class ChatModel {
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
       ..characterIds = characterIds ?? [...this.characterIds]
-      ..chatVars = chatVars ?? this.chatVars;
+      ..chatVars = chatVars ?? this.chatVars
+      ..activitedLorebookItems =
+          activitedLorebookItems ?? this.activitedLorebookItems;
   }
 }
 

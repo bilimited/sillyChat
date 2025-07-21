@@ -213,7 +213,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                 .expand((char) => char.loreBooks)
                                 .toList();
                             customNavigate(
-                                LoreBookActivator(lorebooks: [
+                                LoreBookActivator(chat: widget.chat,lorebooks: [
                                   ...{...global, ...chars}
                                 ]),
                                 context: context);

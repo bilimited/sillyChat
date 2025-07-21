@@ -82,7 +82,7 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   void addItem() {
     setState(() {
       items.add(LorebookItemModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: DateTime.now().millisecondsSinceEpoch,
         name: '新条目',
         content: '',
       ));
@@ -95,7 +95,7 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
       items.insert(
           index + 1,
           item.copyWith(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            id: DateTime.now().millisecondsSinceEpoch,
             name: '${item.name}_副本',
           ));
     });

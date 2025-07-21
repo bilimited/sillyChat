@@ -1,6 +1,6 @@
 class LorebookItemModel {
   /// 唯一标识符，用于在数据库或列表中查找和管理条目
-  final String id;
+  final int id;
 
   /// 条目名称，供用户识别和管理
   final String name;
@@ -68,7 +68,7 @@ class LorebookItemModel {
 
   factory LorebookItemModel.fromJson(Map<String, dynamic> json) {
     return LorebookItemModel(
-      id: json['id'],
+      id: (json['id'] is String) ?  int.parse(json['id']) : json['id'],
       name: json['name'],
       content: json['content'],
       keywords: json['keywords'],
@@ -88,7 +88,7 @@ class LorebookItemModel {
   }
 
   LorebookItemModel copyWith({
-    String? id,
+    int? id,
     String? name,
     String? content,
     String? keywords,

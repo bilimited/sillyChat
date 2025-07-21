@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 class Lorebookutil {
   final List<LLMMessage> messages;
   late List<LorebookModel> lorebooks;
+  late ChatModel chat;
 
   final LoreBookController loreBookController = Get.find();
 
@@ -18,6 +19,7 @@ class Lorebookutil {
     required ChatModel chat,
     required CharacterModel? sender,
   }) {
+    this.chat = chat;
     this.lorebooks = getLorebooks(chat, sender);
   }
 
@@ -104,13 +106,24 @@ class Lorebookutil {
     List<LorebookItemModel> activatedItems = [];
 
     for (var item in allItems) {
+
+      // 手动模式特殊对待
+      if(item.activationType == ActivationType.manual) {
+        final stat = chat.getLorebookItemStat(loreBook.id, item.id);
+        if((stat == null && item.isActive) || stat == true){
+          activatedItems.add(item);
+        }
+        continue;
+      }
+
       // 跳过未启用、activationType为Always的条目
       if (!item.isActive) continue;
-      if (item.activationType == ActivationType.always ||
-          item.activationType == ActivationType.manual) {
+      if (item.activationType == ActivationType.always) {
         activatedItems.add(item);
         continue;
       }
+
+
 
       // 获取激活深度,取非Prompt消息,截取最后n条
       int depth =

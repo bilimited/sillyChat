@@ -8,8 +8,6 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
-class RequestOptions {}
-
 class Aihandler {
   // 默认API已禁用
   static const String API_URL = "";

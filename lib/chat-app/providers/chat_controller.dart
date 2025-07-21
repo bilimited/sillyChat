@@ -334,7 +334,7 @@ class ChatController extends GetxController {
       chat.lastMessage = lastMessage != null ? lastMessage : message.content;
       chat.time = message.time.toString();
       chats.refresh();
-      await saveChats();
+      await saveChats(chat.fileId);
       print("AddMessage: ${message.content}");
     } else {
       print("Unknown chat!");
@@ -352,7 +352,7 @@ class ChatController extends GetxController {
         chat.time = lastMsg.time.toString();
       }
       chats.refresh();
-      await saveChats();
+      await saveChats(chat.fileId);
     }
   }
 
@@ -364,7 +364,7 @@ class ChatController extends GetxController {
         chat.lastMessage = messages.last.content;
         chat.time = messages.last.time.toString();
       }
-      await saveChats();
+      await saveChats(chat.fileId);
       chats.refresh();
     } else {
       print("Unknown chat!");
@@ -380,7 +380,7 @@ class ChatController extends GetxController {
         chat.lastMessage = lastMsg.content;
         chat.time = lastMsg.time.toString();
       }
-      await saveChats();
+      await saveChats(chat.fileId);
       chats.refresh();
     }
   }
@@ -397,7 +397,7 @@ class ChatController extends GetxController {
           chat.lastMessage = updatedMessage.content;
           chat.time = updatedMessage.time.toString();
         }
-        await saveChats();
+        await saveChats(chat.fileId);
         chats.refresh();
       }
     }

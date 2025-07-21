@@ -65,6 +65,7 @@ dependencies:
   package_info_plus: ^6.0.0
   logger: ^2.6.0
   flex_color_scheme: ^8.0.2
+  permission_handler: ^12.0.1
 
 
 

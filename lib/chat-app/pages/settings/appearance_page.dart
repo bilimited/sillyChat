@@ -1,13 +1,47 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/fontManager.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
-import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
-class AppearanceSettingsPage extends StatelessWidget {
+class AppearanceSettingsPage extends StatefulWidget {
   const AppearanceSettingsPage({super.key});
+
+  @override
+  State<AppearanceSettingsPage> createState() => _AppearanceSettingsPageState();
+}
+
+class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
+  late TextEditingController _globalFontController;
+  late FocusNode _globalFontFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    final controller = Get.find<VaultSettingController>();
+    _globalFontController = TextEditingController(
+        text: controller.displaySettingModel.value.GlobalFont);
+    _globalFontFocusNode = FocusNode();
+
+    _globalFontFocusNode.addListener(() {
+      if (!_globalFontFocusNode.hasFocus) {
+        // If the focus node has lost focus
+        controller.saveSettings();
+        controller.updateTheme(fontName: _globalFontController.text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _globalFontController.dispose();
+    _globalFontFocusNode.removeListener(() {}); // Remove the listener
+    _globalFontFocusNode.dispose();
+    super.dispose();
+  }
 
   // 辅助函数：翻译 AvatarStyle 枚举值为中文
   String _translateAvatarStyle(AvatarStyle style) {
@@ -50,13 +84,20 @@ class AppearanceSettingsPage extends StatelessWidget {
         // displaySettingModel changes.
         final setting = controller.displaySettingModel.value;
 
+        // Update the text controller if the setting changes from elsewhere
+        // This is important if `setting.GlobalFont` can be changed from another part of the app
+        if (_globalFontController.text != setting.GlobalFont &&
+            !_globalFontFocusNode.hasFocus) {
+          _globalFontController.text = setting.GlobalFont ?? '';
+        }
+
         return Scaffold(
           body: ListView(
             padding: const EdgeInsets.all(16.0),
             children: <Widget>[
               // Dropdown for AvatarStyle
               ListTile(
-                title: Text('头像风格'),
+                title: const Text('头像风格'),
                 trailing: SegmentedButton(
                   segments: AvatarStyle.values.map((AvatarStyle style) {
                     return ButtonSegment<AvatarStyle>(
@@ -105,7 +146,49 @@ class AppearanceSettingsPage extends StatelessWidget {
                   multiSelectionEnabled: false,
                 ),
               ),
-              Divider(),
+              const Divider(),
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        decoration: const InputDecoration(
+                          labelText: '全局字体', // 'Global Font'
+                          hintText: '请输入全局字体名称',
+                        ),
+                        controller: _globalFontController,
+                        focusNode: _globalFontFocusNode,
+                        onChanged: (value) {
+                          // Update the model immediately for responsiveness
+                          setting.GlobalFont = value;
+                          controller.displaySettingModel.refresh();
+                          // Saving happens on focus loss, not here.
+                        },
+                        // Removed onEditingComplete as save is handled by FocusNode listener
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      if (Platform.isAndroid)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            FontManager.loadFont(
+                                context: context,
+                                onFontLoaded: (fontFamily, fontPath) {
+                                  controller.updateTheme(fontName: fontFamily);
+                                  _globalFontController.text = fontFamily;
+                                  setting.GlobalFont = fontFamily;
+                                  controller.displaySettingModel.refresh();
+                                  controller.saveSettings();
+                                });
+                          },
+                          label: Text('加载字体'),
+                          icon: Icon(Icons.android),
+                        )
+                    ],
+                  )),
+
+              const Divider(),
               // Switches for boolean values
               SwitchListTile(
                 title: const Text('显示用户名称'), // 'Display User Name'
@@ -143,7 +226,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   controller.saveSettings();
                 },
               ),
-              Divider(),
+              const Divider(),
 
               // Slider for ContentFontScale
               Column(
@@ -238,8 +321,8 @@ class AppearanceSettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              Divider(),
-              SizedBox(
+              const Divider(),
+              const SizedBox(
                 height: 16,
               ),
               ThemeSelector(
@@ -248,7 +331,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                     setting.schemeName = theme;
                     controller.displaySettingModel.refresh();
                     controller.saveSettings();
-                    controller.updateTheme(theme);
+                    controller.updateTheme(themename: theme);
                   }),
               const SizedBox(height: 16),
             ],

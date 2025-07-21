@@ -20,8 +20,7 @@ class VaultSettingController extends GetxController {
   late Rx<ChatDisplaySettingModel> displaySettingModel =
       ChatDisplaySettingModel().obs;
 
-  late Rx<PromptSettingModel> promptSettingModel =
-      PromptSettingModel().obs;
+  late Rx<PromptSettingModel> promptSettingModel = PromptSettingModel().obs;
 
   Rx<ThemeData> themeLight = ThemeData().obs;
 
@@ -77,7 +76,8 @@ class VaultSettingController extends GetxController {
         displaySettingModel.value = ChatDisplaySettingModel();
       }
 
-      updateTheme(displaySettingModel.value.schemeName);
+      updateTheme(themename:  displaySettingModel.value.schemeName,
+          fontName: displaySettingModel.value.GlobalFont);
     } catch (e) {
       print('加载设置失败: $e');
       displaySettingModel.value = ChatDisplaySettingModel();
@@ -106,11 +106,15 @@ class VaultSettingController extends GetxController {
     }
   }
 
-  void updateTheme(String themename) {
-    FlexScheme theme = schemeMap[themename] ?? FlexScheme.sakura;
-        FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
-    themeLight.value = SillyChatThemeBuilder.buildLight(theme);
-    themeNight.value = SillyChatThemeBuilder.buildNight(theme);
+  void updateTheme({String? fontName, String? themename}) {
+    FlexScheme theme =
+        schemeMap[themename ?? displaySettingModel.value.schemeName] ??
+            FlexScheme.sakura;
+    FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
+    themeLight.value = SillyChatThemeBuilder.buildLight(
+        theme, fontName ?? displaySettingModel.value.GlobalFont);
+    themeNight.value = SillyChatThemeBuilder.buildNight(
+        theme, fontName ?? displaySettingModel.value.GlobalFont);
     // ThemeData(
     //   colorScheme: ColorScheme.fromSeed(
     //       seedColor: color, brightness: Brightness.dark),

@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 
+// TODO: 恢复Prompt按深度插入
 class Promptbuilder {
   // List<PromptModel> processVaribles(List<PromptModel> prompts){
 

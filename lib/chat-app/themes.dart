@@ -10,7 +10,7 @@ enum ThemeStyle {
 
 abstract final class SillyChatThemeBuilder {
 
-  static buildLight(FlexScheme scheme) {
+  static buildLight(FlexScheme scheme, String? font) {
     return FlexThemeData.light(
       // Playground built-in scheme made with FlexSchemeColor.from() API.
       scheme: scheme,
@@ -59,11 +59,11 @@ abstract final class SillyChatThemeBuilder {
       ),
       // Direct ThemeData properties.
       cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-      fontFamily: Platform.isWindows ? "思源黑体" : null,
+      fontFamily: font ??( Platform.isWindows ? "思源黑体" : null),
     );
   }
 
-  static buildNight(FlexScheme scheme) {
+  static buildNight(FlexScheme scheme,String? font) {
     return FlexThemeData.dark(
       // Playground built-in scheme made with FlexSchemeColor.from() API
       scheme: scheme,
@@ -113,7 +113,7 @@ abstract final class SillyChatThemeBuilder {
       ),
       // Direct ThemeData properties.
       cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-      fontFamily: Platform.isWindows ? "思源黑体" : null,
+      fontFamily: font ??( Platform.isWindows ? "思源黑体" : null),
     );
   }
 
