@@ -26,10 +26,7 @@ class Aihandler {
     isInterrupt = true;
     isBusy = false;
     if (dioInstance != null) {
-      
       dioInstance!.close(force: true);
-
-      
     }
   }
 
@@ -41,7 +38,8 @@ class Aihandler {
   }
 
   // 不好使
-  static Future<void> testConnectivity(String url,void Function(bool isSuccess,String message) callback) async {
+  static Future<void> testConnectivity(String url,
+      void Function(bool isSuccess, String message) callback) async {
     final d = dio.Dio();
     try {
       // 尝试发送一个HEAD请求，通常比GET请求更轻量，且不返回响应体
@@ -134,7 +132,13 @@ class Aihandler {
           'stream': true,
         },
       );
-      print(options.toOpenAIJson());
+      
+      Get.find<LogController>().addLog(
+        json.encode(options.toOpenAIJson()) ,
+        LogLevel.info,
+        title: 'OpenAI请求',
+        type: LogType.json,
+      );
       onGenerateStateChange('正在生成...');
       await for (var chunk in parseSseStream(rs,
           (json) => json['choices'][0]['delta']['content'] as String? ?? '')) {
@@ -159,8 +163,7 @@ class Aihandler {
           "temperature": options.temperature,
           "maxOutputTokens": options.maxTokens,
           "topP": options.topP,
-          "thinkingConfig": {
-          }, // 暂时只有两档,
+          "thinkingConfig": {}, // 暂时只有两档,
         },
         "safetySettings": [
           {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},

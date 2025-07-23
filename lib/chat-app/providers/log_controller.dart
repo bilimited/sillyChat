@@ -1,3 +1,4 @@
+// log_controller.dart
 import 'package:get/get.dart';
 
 enum LogLevel {
@@ -6,15 +7,24 @@ enum LogLevel {
   error,
 }
 
+enum LogType {
+  text,
+  json // 假设未来可能需要展示JSON类型
+}
+
 class LogEntry {
   final String message;
   final LogLevel level;
   final DateTime timestamp;
+  final LogType type; // 新增：日志类型
+  final String? title; // 新增：日志标题
 
   LogEntry({
     required this.message,
     required this.level,
     required this.timestamp,
+    this.type = LogType.text, // 默认为文本类型
+    this.title // 标题可以为空
   });
 }
 
@@ -28,11 +38,14 @@ class LogController extends GetxController {
   List<LogEntry> get logs => _logs.toList();
   int get unread => _unread.value;
   
-  void addLog(String message, LogLevel level) {
+  // 修改addLog方法，支持type和title
+  void addLog(String message, LogLevel level, {LogType type = LogType.text, String? title}) {
     _logs.insert(0, LogEntry(
       message: message,
       level: level,
       timestamp: DateTime.now(),
+      type: type,
+      title: title,
     ));
     
     if (_logs.length > _maxLogs) {
@@ -53,8 +66,8 @@ class LogController extends GetxController {
     return _logs.where((log) => log.level == level).toList();
   }
 
-  // 静态方法用于快速记录日志
-  static void log(String message, [LogLevel level = LogLevel.info]) {
-    LogController.to.addLog(message, level);
+  // 静态方法用于快速记录日志，支持title
+  static void log(String message, [LogLevel level = LogLevel.info, String? title]) {
+    LogController.to.addLog(message, level, title: title);
   }
 }

@@ -126,6 +126,7 @@ class _ChatPageState extends State<ChatPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
+
           // 在非排序模式下显示搜索框和新建按钮
           if (!_isSortingMode)
             Column(

@@ -17,29 +17,93 @@ class ContactsPage extends StatefulWidget {
 
 class _ContactsPageState extends State<ContactsPage> {
   final Map<String, bool> _expandedState = {};
-  bool _isSortingMode = false; // 新增状态：是否处于排序模式
-
+  bool _isSortingMode = false; // 控制排序模式
   final characterController = Get.find<CharacterController>();
 
-  Map<String, List<CharacterModel>> get groupedContacts {
-    return characterController.characters.fold(<String, List<CharacterModel>>{},
-        (map, contact) {
-      if (!map.containsKey(contact.category)) {
-        map[contact.category] = [];
-      }
-      map[contact.category]!.add(contact);
-      return map;
+  // 新增：搜索控制器和响应式字符串
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchText = ''.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听搜索框文本变化
+    _searchController.addListener(() {
+      _searchText.value = _searchController.text;
     });
   }
 
-  // 分组模式的视图
+  @override
+  void dispose() {
+    _searchController.dispose(); // 释放控制器
+    super.dispose();
+  }
+
+  // 处理搜索过滤后的分组
+  Map<String, List<CharacterModel>> get _filteredAndGroupedContacts {
+    // 如果搜索框为空，返回所有分组
+    if (_searchText.value.isEmpty) {
+      return characterController.characters.fold(
+          <String, List<CharacterModel>>{}, (map, contact) {
+        if (!map.containsKey(contact.category)) {
+          map[contact.category] = [];
+        }
+        map[contact.category]!.add(contact);
+        return map;
+      });
+    } else {
+      // 如果有搜索文本，过滤后再分组
+      final filteredContacts = characterController.characters
+          .where((contact) =>
+              contact.roleName
+                  .toLowerCase()
+                  .contains(_searchText.value.toLowerCase()) ||
+              contact.category
+                  .toLowerCase()
+                  .contains(_searchText.value.toLowerCase()) ||
+              (contact.brief?.toLowerCase() ?? '')
+                  .contains(_searchText.value.toLowerCase()))
+          .toList();
+
+      return filteredContacts.fold(<String, List<CharacterModel>>{},
+          (map, contact) {
+        // 即使搜索，也保持分组逻辑，但只显示包含搜索词的组
+        if (!map.containsKey(contact.category)) {
+          map[contact.category] = [];
+        }
+        map[contact.category]!.add(contact);
+        return map;
+      });
+    }
+  }
+
+
+  // 分组模式的视图 (根据搜索结果调整)
   Iterable<Column> _groupedContactsWidget(BuildContext context) {
     final theme = Theme.of(context);
+    final groupedContacts = _filteredAndGroupedContacts;
+
+    // 如果搜索结果为空，显示提示
+    if (groupedContacts.isEmpty && _searchText.value.isNotEmpty) {
+       return [
+         Column(
+           children: [
+             const SizedBox(height: 50),
+             Icon(Icons.search_off, size: 60, color: theme.colorScheme.outline),
+             const SizedBox(height: 16),
+             Text('未找到匹配的角色', style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.outline)),
+           ],
+         ),
+       ];
+    }
+
+
     return groupedContacts.entries.map((entry) {
+      // 确保每个组在 _expandedState 中有状态，默认展开
       _expandedState.putIfAbsent(entry.key, () => true);
       return Column(
         children: [
-          // 分组标题
+          // 分组标题 (搜索时可能总是展开)
           ListTile(
             title: Text(
               "${entry.key} (${entry.value.length})",
@@ -48,58 +112,99 @@ class _ContactsPageState extends State<ContactsPage> {
                 fontSize: 14,
               ),
             ),
-            trailing: AnimatedRotation(
-              turns: _expandedState[entry.key]! ? 0.5 : 0,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.fastOutSlowIn,
-              child: const Icon(Icons.expand_more),
-            ),
-            onTap: () {
-              setState(() {
-                _expandedState[entry.key] = !_expandedState[entry.key]!;
-              });
-            },
+            trailing: _searchText.value.isEmpty // 搜索时隐藏展开图标
+                ? AnimatedRotation(
+                    turns: _expandedState[entry.key]! ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.fastOutSlowIn,
+                    child: const Icon(Icons.expand_more),
+                  )
+                : null,
+            onTap: _searchText.value.isEmpty // 搜索时禁用标题点击
+                ? () {
+                    setState(() {
+                      _expandedState[entry.key] = !_expandedState[entry.key]!;
+                    });
+                  }
+                : null,
           ),
           // 分组内容
-          ClipRect(
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
-              child: _expandedState[entry.key]!
-                  ? Column(
-                      children: entry.value
-                          .map((contact) => _contractWidget(context, contact))
-                          .toList())
-                  : const SizedBox(),
+          if (_searchText.value.isNotEmpty || _expandedState[entry.key]!)
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: Column(
+                  children: entry.value
+                      .map((contact) => _contractWidget(context, contact))
+                      .toList(),
+                ),
+              ),
             ),
-          ),
         ],
       );
     });
   }
-  
-  // 排序模式的视图
+
+  // 排序模式的视图 (根据搜索结果调整)
   Widget _reorderableListWidget(BuildContext context) {
-    // 中文注释: ReorderableListView.builder 是 Flutter 的一个内置组件, 它能够创建一个可重新排序的列表。用户可以通过长按并拖动列表项来改变它们的顺序。
+    List<CharacterModel> itemsToDisplay;
+    if (_searchText.value.isEmpty) {
+      itemsToDisplay = characterController.characters;
+    } else {
+      itemsToDisplay = characterController.characters
+          .where((contact) =>
+              contact.roleName
+                  .toLowerCase()
+                  .contains(_searchText.value.toLowerCase()) ||
+              contact.category
+                  .toLowerCase()
+                  .contains(_searchText.value.toLowerCase()) ||
+              (contact.brief?.toLowerCase() ?? '')
+                  .contains(_searchText.value.toLowerCase()))
+          .toList();
+    }
+
+    // 如果搜索结果为空且处于排序模式
+    if (itemsToDisplay.isEmpty && _searchText.value.isNotEmpty) {
+       return Center(
+         child: Column(
+           mainAxisSize: MainAxisSize.min,
+           children: [
+             Icon(Icons.search_off, size: 60, color: Theme.of(context).colorScheme.outline),
+             const SizedBox(height: 16),
+             Text('未找到匹配的角色', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.outline)),
+           ],
+         ),
+       );
+    }
+
     return ReorderableListView.builder(
-      itemCount: characterController.characters.length,
+      itemCount: itemsToDisplay.length,
       itemBuilder: (context, index) {
-        final contact = characterController.characters[index];
-        // 中文注释: 为了让 ReorderableListView 能够正确识别和移动项目, 每个列表项都必须有一个唯一的 Key。
+        final contact = itemsToDisplay[index];
         return Container(
           key: ValueKey(contact.id),
           child: _contractWidget(context, contact),
         );
       },
       onReorder: (int oldIndex, int newIndex) {
-        // 当用户拖拽结束后, 此回调函数会被调用
+        // 注意：搜索模式下的排序可能需要更复杂的逻辑来映射回原始列表
+        // 这里简化处理：只在未搜索时允许排序原始列表
+        if (_searchText.value.isNotEmpty) {
+          // 如果在搜索结果中排序，只更新 itemsToDisplay 的顺序（不会影响原始数据）
+          // 或者禁用搜索时的排序
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('请先清除搜索以对所有角色进行排序')),
+          );
+          return;
+        }
+
         setState(() {
-          // 如果项目被向下拖动, newIndex 会比实际的插入位置大 1
           if (oldIndex < newIndex) {
             newIndex -= 1;
           }
-          // 更新 characterController 中的数据顺序
           final character = characterController.characters.removeAt(oldIndex);
           characterController.characters.insert(newIndex, character);
         });
@@ -117,13 +222,14 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
         ],
       ),
-      trailing: _isSortingMode 
-        ? const Icon(Icons.drag_handle) // 排序模式下显示拖拽图标
-        : IconButton(
-            onPressed: () {
-              customNavigate(PersonalPage(character: contact), context: context);
-            },
-            icon: Icon(Icons.chevron_right)),
+      trailing: _isSortingMode
+          ? const Icon(Icons.drag_handle) // 排序模式下显示拖拽图标
+          : IconButton(
+              onPressed: () {
+                customNavigate(PersonalPage(character: contact),
+                    context: context);
+              },
+              icon: Icon(Icons.chevron_right)),
       title: Text(contact.roleName),
       subtitle: contact.brief != null
           ? Text(
@@ -137,7 +243,8 @@ class _ContactsPageState extends State<ContactsPage> {
       onTap: () {
         // 排序模式下禁用点击事件
         if (_isSortingMode) return;
-        customNavigate(EditCharacterPage(characterId: contact.id), context: context);
+        customNavigate(EditCharacterPage(characterId: contact.id),
+            context: context);
       },
     );
   }
@@ -147,6 +254,76 @@ class _ContactsPageState extends State<ContactsPage> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // 使用 AppBar
+      appBar: AppBar(
+        // AppBar 标题区域放置搜索框
+        title: Container(
+          height: 40, // 设置一个合适的高度
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface, // 背景色匹配原来的设计
+            borderRadius: BorderRadius.circular(20.0), // 圆角
+          ),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: '搜索角色',
+              hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              prefixIcon: Icon(
+                Icons.search,
+                color: theme.colorScheme.onSurfaceVariant,
+                size: 20, // 调整图标大小
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minHeight: 32, minWidth: 32, // 调整图标约束
+              ),
+              // 移除默认边框和填充，使用 Container 的装饰
+              // border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              // 可选：添加清除按钮
+              suffixIcon: _searchText.value.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                      onPressed: () {
+                        _searchController.clear();
+                        _searchText.value = '';
+                      },
+                    )
+                  : null,
+            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
+            cursorColor: theme.colorScheme.primary,
+          ),
+        ),
+        // AppBar 操作区域放置按钮
+        actions: [
+          // 新增角色按钮
+          IconButton(
+            icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
+            onPressed: () {
+              customNavigate(const EditCharacterPage(), context: context);
+            },
+            tooltip: '新增角色', // 添加提示
+          ),
+          // 排序模式切换按钮
+          IconButton(
+            icon: Icon(
+                _isSortingMode ? Icons.check : Icons.sort,
+                color: theme.colorScheme.onSurface),
+            onPressed: () {
+              setState(() {
+                _isSortingMode = !_isSortingMode;
+              });
+            },
+            tooltip: _isSortingMode ? '完成排序' : '进入排序', // 添加提示
+          ),
+          const SizedBox(width: 8), // 右边距
+        ],
+        // 可以根据需要调整 AppBar 的背景色等
+        backgroundColor: theme.appBarTheme.backgroundColor ??
+            theme.colorScheme.surface, // 使用主题色或默认surface色
+        elevation: theme.appBarTheme.elevation ?? 0, // 控制阴影
+      ),
       body: Obx(() {
         // 根据是否为排序模式来决定显示哪个视图
         if (_isSortingMode) {
@@ -159,43 +336,8 @@ class _ContactsPageState extends State<ContactsPage> {
           );
         }
       }),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // 排序模式切换按钮
-          FloatingActionButton.small(
-            heroTag: 'sort_button', // 中文注释: 为多个 FloatingActionButton 提供唯一的 heroTag
-            tooltip: _isSortingMode ? '完成排序' : '进入排序',
-            onPressed: () {
-              setState(() {
-                _isSortingMode = !_isSortingMode;
-              });
-            },
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) => ScaleTransition(
-                scale: animation,
-                child: child,
-              ),
-              child: Icon(
-                _isSortingMode ? Icons.check : Icons.sort,
-                key: ValueKey<bool>(_isSortingMode), // 中文注释: 为 AnimatedSwitcher 的子组件提供 Key 以触发动画
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // 新增角色按钮
-          FloatingActionButton(
-            heroTag: 'add_button',
-            tooltip: '新增角色',
-            child: const Icon(Icons.add),
-            onPressed: () {
-              customNavigate(EditCharacterPage(), context: context);
-            },
-          ),
-        ],
-      ),
+      // 移除原来的 floatingActionButton
+      // floatingActionButton: ...
     );
   }
 }

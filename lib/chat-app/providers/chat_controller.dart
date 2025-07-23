@@ -3,18 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
-import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
-import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
-import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
-import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
@@ -231,7 +227,9 @@ class ChatController extends GetxController {
     }
   }
 
-  // 保存聊天数据到本地
+  /// 保存聊天数据到本地
+  /// 
+  /// [fileId] 要保存聊天的文件Id。所有FileId相同的聊天会保存在同一个文件里。
   Future<void> saveChats([int? fileId]) async {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();

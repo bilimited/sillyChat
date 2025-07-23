@@ -152,6 +152,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                   child: Column(
                     children: [
                       TextField(
+                        enabled: setting.CustomFontPath == null,
                         decoration: const InputDecoration(
                           labelText: '全局字体', // 'Global Font'
                           hintText: '请输入全局字体名称',
@@ -169,20 +170,37 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                       SizedBox(
                         height: 10,
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          FontManager.loadFont(
-                              context: context,
-                              onFontLoaded: (fontFamily, fontPath) {
-                                controller.updateTheme(fontName: fontFamily);
-                                _globalFontController.text = fontFamily;
-                                setting.GlobalFont = fontFamily;
-                                setting.CustomFontPath = fontPath;
-                                controller.displaySettingModel.refresh();
-                                controller.saveSettings();
-                              });
-                        },
-                        label: Text('加载字体'),
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              FontManager.loadFont(
+                                  context: context,
+                                  onFontLoaded: (fontFamily, fontPath) {
+                                    controller.updateTheme(
+                                        fontName: fontFamily);
+                                    _globalFontController.text = fontFamily;
+                                    setting.GlobalFont = fontFamily;
+                                    setting.CustomFontPath = fontPath;
+                                    controller.displaySettingModel.refresh();
+                                    controller.saveSettings();
+                                  });
+                            },
+                            label: Text('加载字体'),
+                          ),
+                          SizedBox(width: 10,),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              _globalFontController.text = '';
+                              controller.updateTheme(fontName: '');
+                              setting.GlobalFont = null;
+                              setting.CustomFontPath = null;
+                              controller.displaySettingModel.refresh();
+                              controller.saveSettings();
+                            },
+                            label: Text('重置字体'),
+                          )
+                        ],
                       )
                     ],
                   )),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
@@ -319,6 +321,34 @@ class _SettingPageState extends State<SettingPage>
                     size: 16, color: Colors.grey[400]),
               ),
             ],
+          ),
+        ),
+
+                Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Icon(Icons.cloud_queue,
+                color: Theme.of(context).colorScheme.secondary),
+            title: Text(
+              '查看日志',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              '查看应用内运行日志（主要是API请求记录）',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            onTap: (){
+              customNavigate(LogPage(), context: context);
+            },
+            trailing: Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.grey[400]),
           ),
         ),
       ],

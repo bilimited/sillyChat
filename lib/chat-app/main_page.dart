@@ -3,6 +3,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_example/chat-app/action_and_intents.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
@@ -117,201 +119,215 @@ class _MainPageState extends State<MainPage> {
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     const LEFT_WIDTH = 350.0;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: Row(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child:
-                    // NavigationRail as the left-side AppBar
-                    NavigationRail(
-                        selectedIndex: desktop_destination_left,
-                        backgroundColor: colors.surface,
-                        labelType: NavigationRailLabelType.all,
-                        leading: Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: GestureDetector(
-                              onTap: _showCharacterSelectDialog,
-                              child: Obx(() => CircleAvatar(
-                                    backgroundImage:
-                                        Image.file(File(me.avatar)).image,
-                                    radius: 24,
-                                  )),
+    return Shortcuts(
+        shortcuts: <LogicalKeySet, Intent>{
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyL):
+              const GotoLogPageIntent(),
+        },
+        child: Actions(
+            actions: <Type, Action<Intent>>{
+              GotoLogPageIntent: GotoLogPageAction(context),
+            },
+            child: FocusScope(
+              autofocus: true,
+                child: Scaffold(
+              backgroundColor: colors.surface,
+              body: Row(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child:
+                            // NavigationRail as the left-side AppBar
+                            NavigationRail(
+                                selectedIndex: desktop_destination_left,
+                                backgroundColor: colors.surface,
+                                labelType: NavigationRailLabelType.all,
+                                leading: Padding(
+                                    padding: const EdgeInsets.only(top: 16.0),
+                                    child: GestureDetector(
+                                      onTap: _showCharacterSelectDialog,
+                                      child: Obx(() => CircleAvatar(
+                                            backgroundImage:
+                                                Image.file(File(me.avatar))
+                                                    .image,
+                                            radius: 24,
+                                          )),
+                                    )),
+                                destinations: [
+                                  NavigationRailDestination(
+                                    icon: const Icon(Icons.chat_bubble_outline),
+                                    label: const Text('聊天'),
+                                  ),
+                                  NavigationRailDestination(
+                                    icon: const Icon(Icons.person),
+                                    label: const Text('角色'),
+                                  ),
+                                  NavigationRailDestination(
+                                    icon:
+                                        const Icon(Icons.settings_applications),
+                                    label: const Text('对话预设'),
+                                  ),
+                                  NavigationRailDestination(
+                                      icon: const Icon(Icons.book),
+                                      label: const Text('世界书')),
+                                  NavigationRailDestination(
+                                    icon: const Icon(Icons.search),
+                                    label: const Text('搜索'),
+                                  ),
+                                ],
+                                onDestinationSelected: (index) {
+                                  setState(() {
+                                    desktop_destination_left = index;
+                                  });
+                                },
+                                trailing: null),
+                      ),
+                      // 假Footer
+                      Container(
+                        width: 80, // 暂时和rail严丝合缝
+                        color: colors.surface,
+                        child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Column(
+                              children: [
+                                PopupMenuButton<int>(
+                                  icon: const Icon(Icons.more_vert),
+                                  onSelected: (value) {
+                                    // 根据 value 执行不同操作
+                                    if (value == 0) {
+                                      customNavigate(SettingPage(),
+                                          context: context);
+                                    } else if (value == 1) {
+                                      customNavigate(VaultManagerPage(),
+                                          context: context);
+                                    } else if (value == 2) {
+                                      showLicensePage(context: context);
+                                    } else if (value == 3) {}
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: 0,
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.settings, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('设置'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 1,
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.switch_camera, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('切换仓库'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 2,
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.info, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('查看第三方证书'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text('SillyChat',
+                                    style: TextStyle(
+                                        color: colors.outline, fontSize: 12)),
+                                Text(
+                                  SillyChatApp.getVersion(),
+                                  style: TextStyle(
+                                      color: colors.outline, fontSize: 12),
+                                ),
+                              ],
                             )),
-                        destinations: [
-                          NavigationRailDestination(
-                            icon: const Icon(Icons.chat_bubble_outline),
-                            label: const Text('聊天'),
+                      ),
+                    ],
+                  ),
+
+                  // 左侧内容区
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(
+                            color: colors.outline.withOpacity(0.2),
+                            width: 1,
                           ),
-                          NavigationRailDestination(
-                            icon: const Icon(Icons.person),
-                            label: const Text('角色'),
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // 左侧固定宽度容器
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(
+                                width: LEFT_WIDTH,
+                                color: colors.surfaceContainer, // 可自定义颜色
+                                child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    transitionBuilder: (Widget child,
+                                        Animation<double> animation) {
+                                      return SlideTransition(
+                                        position: Tween<Offset>(
+                                          begin: const Offset(-0.0, -0.2),
+                                          end: Offset.zero,
+                                        ).animate(CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutCubic,
+                                        )),
+                                        child: FadeTransition(
+                                          opacity: CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeIn,
+                                          ),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: IndexedStack(
+                                      key: ValueKey(desktop_destination_left),
+                                      index: desktop_destination_left,
+                                      children: _desktop_pages,
+                                    ))),
                           ),
-                          NavigationRailDestination(
-                            icon: const Icon(Icons.settings_applications),
-                            label: const Text('对话预设'),
-                          ),
-                          NavigationRailDestination(
-                              icon: const Icon(Icons.book),
-                              label: const Text('世界书')),
-                          NavigationRailDestination(
-                            icon: const Icon(Icons.search),
-                            label: const Text('搜索'),
+                          // 主内容区（右侧），留出左侧容器宽度
+                          Padding(
+                            padding: const EdgeInsets.only(left: LEFT_WIDTH),
+                            child: Container(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  child: Obx(() => ChatDetailPage(
+                                        key: ValueKey(
+                                            '${_chatController.currentChat}_${desktop_initialPosition?.id ?? 0}'),
+                                        chatId: _chatController.chats.isEmpty
+                                            ? -1
+                                            : _chatController.currentChat.value,
+                                        initialPosition:
+                                            desktop_initialPosition,
+                                      )),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
-                        onDestinationSelected: (index) {
-                          setState(() {
-                            desktop_destination_left = index;
-                          });
-                        },
-                        trailing: null),
-              ),
-              // 假Footer
-              Container(
-                width: 80, // 暂时和rail严丝合缝
-                color: colors.surface,
-                child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Column(
-                      children: [
-                        PopupMenuButton<int>(
-                          icon: const Icon(Icons.more_vert),
-                          onSelected: (value) {
-                            // 根据 value 执行不同操作
-                            if (value == 0) {
-                              customNavigate(SettingPage(), context: context);
-                            } else if (value == 1) {
-                              customNavigate(VaultManagerPage(),
-                                  context: context);
-                            } else if (value == 2) {
-                              showLicensePage(context: context);
-                            } else if (value == 3) {
-                              
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: 0,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.settings, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('设置'),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 1,
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.switch_camera, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('切换仓库'),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 2,
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.info, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('查看第三方证书'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text('SillyChat',
-                            style:
-                                TextStyle(color: colors.outline, fontSize: 12)),
-                        Text(
-                          SillyChatApp.getVersion(),
-                          style: TextStyle(color: colors.outline, fontSize: 12),
-                        ),
-                      ],
-                    )),
-              ),
-            ],
-          ),
-
-          // 左侧内容区
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: colors.outline.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // 左侧固定宽度容器
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: Container(
-                        width: LEFT_WIDTH,
-                        color: colors.surfaceContainer, // 可自定义颜色
-                        child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                              return SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(-0.0, -0.2),
-                                  end: Offset.zero,
-                                ).animate(CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutCubic,
-                                )),
-                                child: FadeTransition(
-                                  opacity: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeIn,
-                                  ),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: IndexedStack(
-                              key: ValueKey(desktop_destination_left),
-                              index: desktop_destination_left,
-                              children: _desktop_pages,
-                            ))),
-                  ),
-                  // 主内容区（右侧），留出左侧容器宽度
-                  Padding(
-                    padding: const EdgeInsets.only(left: LEFT_WIDTH),
-                    child: Container(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16.0),
-                          child: Obx(() => ChatDetailPage(
-                                key: ValueKey(
-                                    '${_chatController.currentChat}_${desktop_initialPosition?.id ?? 0}'),
-                                chatId: _chatController.chats.isEmpty
-                                    ? -1
-                                    : _chatController.currentChat.value,
-                                initialPosition: desktop_initialPosition,
-                              )),
-                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
+            ))));
   }
 
   Widget _buildMobile(BuildContext context) {
@@ -376,7 +392,6 @@ class _MainPageState extends State<MainPage> {
                       customNavigate(SettingPage(), context: context);
                     },
                     icon: Icon(Icons.settings))
-
               ],
             )
           : null,
@@ -415,7 +430,6 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
