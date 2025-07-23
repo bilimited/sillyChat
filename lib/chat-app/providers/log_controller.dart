@@ -67,7 +67,7 @@ class LogController extends GetxController {
   }
 
   // 静态方法用于快速记录日志，支持title
-  static void log(String message, [LogLevel level = LogLevel.info, String? title]) {
-    LogController.to.addLog(message, level, title: title);
+  static void log(String message, LogLevel level, {LogType type = LogType.text, String? title}) {
+    LogController.to.addLog(message, level, title: title,type: type);
   }
 }

@@ -13,6 +13,7 @@ class LLMRequestOptions {
 
   final bool isDeleteThinking; // 是否删除思考消息
   final bool isThinkMode; // 是否思考模式
+  final bool isStreaming; // 是否流式响应
 
   final bool isMergeMessageList;
 
@@ -29,6 +30,7 @@ class LLMRequestOptions {
     this.isDeleteThinking = true,
     this.seed = -1,
     this.isMergeMessageList = false,
+    this.isStreaming = true,
   });
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class LLMRequestOptions {
       isThinkMode: json['is_think_mode'] ?? false,
       seed: json['seed'] ?? -1,
       isMergeMessageList: json['is_merge_message_list'] ?? false,
+      isStreaming: json['is_streaming'] ?? true,
     );
   }
 
@@ -61,6 +64,7 @@ class LLMRequestOptions {
       'is_think_mode': isThinkMode,
       'seed': seed,
       'is_merge_message_list': isMergeMessageList,
+      'is_streaming': isStreaming,
     };
   }
 
@@ -77,8 +81,10 @@ class LLMRequestOptions {
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
       'seed': seed,
+      
     };
   }
+
 
   LLMRequestOptions copyWith({
     List<LLMMessage>? messages,
@@ -93,6 +99,7 @@ class LLMRequestOptions {
     bool? isThinkMode,
     int? seed,
     bool? isMergeMessageList,
+    bool? isStreaming,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -107,6 +114,7 @@ class LLMRequestOptions {
       isThinkMode: isThinkMode ?? this.isThinkMode,
       seed: seed ?? this.seed,
       isMergeMessageList: isMergeMessageList ?? this.isMergeMessageList,
+      isStreaming: isStreaming ?? this.isStreaming,
     );
   }
 }

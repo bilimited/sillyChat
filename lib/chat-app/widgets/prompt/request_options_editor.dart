@@ -101,6 +101,14 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           },
         ),
         _buildCheckbox(
+          label: '启用流式响应',
+          value: widget.options.isStreaming,
+          onChanged: (value) {
+            widget
+                .onChanged(widget.options.copyWith(isStreaming: value));
+          },
+        ),
+        _buildCheckbox(
           label: '是否删除思考消息',
           value: widget.options.isDeleteThinking,
           onChanged: (value) {

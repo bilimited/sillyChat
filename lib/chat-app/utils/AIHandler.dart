@@ -112,13 +112,26 @@ class Aihandler {
       String key = api.apiKey;
       String model = overriteModelName ?? api.modelName;
       String url = api.url;
-
-      onGenerateStateChange('正在建立连接...');
+      if(options.isStreaming){
+        onGenerateStateChange('正在建立连接...');
+      }else{
+        onGenerateStateChange('正在等待回应...');
+      }
+      
       dioInstance = dio.Dio();
+
+      LogController.log(
+        json.encode(options.toOpenAIJson()),
+        LogLevel.info,
+        title: 'OpenAI请求',
+        type: LogType.json,
+      );
       final rs = await dioInstance!.post(
         url,
         options: dio.Options(
-          responseType: dio.ResponseType.stream,
+          responseType: options.isStreaming
+              ? dio.ResponseType.stream
+              : dio.ResponseType.json,
           sendTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 180),
           headers: {
@@ -129,20 +142,24 @@ class Aihandler {
         data: {
           'model': model,
           ...options.toOpenAIJson(),
-          'stream': true,
+          'stream': options.isStreaming,
         },
       );
-      
-      Get.find<LogController>().addLog(
-        json.encode(options.toOpenAIJson()) ,
-        LogLevel.info,
-        title: 'OpenAI请求',
-        type: LogType.json,
-      );
+
       onGenerateStateChange('正在生成...');
-      await for (var chunk in parseSseStream(rs,
-          (json) => json['choices'][0]['delta']['content'] as String? ?? '')) {
-        yield chunk;
+      if (options.isStreaming) {
+        await for (var chunk in parseSseStream(
+            rs,
+            (json) =>
+                json['choices'][0]['delta']['content'] as String? ?? '')) {
+          yield chunk;
+        }
+      } else {
+        Map<String, dynamic> responseData = rs.data as Map<String, dynamic>;
+        LogController.log(json.encode(responseData), LogLevel.info,
+            type: LogType.json, title: "OpenAI响应");
+        yield responseData['choices'][0]['message']['content'] ?? '未发现可用消息';
+
       }
     } catch (e) {
       throw e;
@@ -178,6 +195,8 @@ class Aihandler {
           },
         ],
       };
+      LogController.log(json.encode(requestBody), LogLevel.info,
+          type: LogType.json, title: 'Gemini请求');
       onGenerateStateChange('正在建立连接...');
       dioInstance = dio.Dio();
       final response = await dioInstance!.post(
