@@ -16,6 +16,9 @@ class ChatDisplaySettingModel {
   double MessageBubbleBorderRadius = 16;
 
   String? GlobalFont = "";
+
+  /// 若不为空则说明使用了1自定义字体
+  String? CustomFontPath = ""; // TODO:自定义字体的路径；启动时自动加载字体+
   String? ContentFont = "";
 
   bool displayUserName = true;
@@ -49,6 +52,7 @@ class ChatDisplaySettingModel {
       'messageBubbleStyle': messageBubbleStyle.index,
       'ContentFontSize': ContentFontScale,
       'GlobalFont': GlobalFont,
+      'CustomFontPath': CustomFontPath,
       'ContentFont': ContentFont,
       'displayUserName': displayUserName,
       'displayAssistantName': displayAssistantName,
@@ -68,6 +72,7 @@ class ChatDisplaySettingModel {
     messageBubbleStyle = MessageBubbleStyle.values[json['messageBubbleStyle'] ?? 0];
     ContentFontScale = (json['ContentFontSize'] ?? 1).toDouble();
     GlobalFont = json['GlobalFont'];
+    CustomFontPath = json['CustomFontPath'] ?? "";
     ContentFont = json['ContentFont'];
     displayUserName = json['displayUserName'] ?? true;
     displayAssistantName = json['displayAssistantName'] ?? true;

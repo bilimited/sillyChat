@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_mod
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
+import 'package:flutter_example/chat-app/utils/fontManager.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
@@ -75,8 +76,14 @@ class VaultSettingController extends GetxController {
       } else {
         displaySettingModel.value = ChatDisplaySettingModel();
       }
+      if (displaySettingModel.value.CustomFontPath != null &&
+          displaySettingModel.value.CustomFontPath!.isNotEmpty) {
+        await FontManager.initCustomFont(displaySettingModel.value.GlobalFont ?? "",
+            displaySettingModel.value.CustomFontPath ?? "");
+      }
 
-      updateTheme(themename:  displaySettingModel.value.schemeName,
+      updateTheme(
+          themename: displaySettingModel.value.schemeName,
           fontName: displaySettingModel.value.GlobalFont);
     } catch (e) {
       print('加载设置失败: $e');

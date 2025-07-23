@@ -13,6 +13,18 @@ class FontManager {
   /// 获取当前正在使用的字体族名称。
   static String? get currentFontFamily => _currentFontFamily;
 
+  static Future<void> initCustomFont(String fontName, String path) async {
+    final targetFile = File(path);
+    if (!await targetFile.exists()) {
+      return;
+    }
+
+    final fontLoader = FontLoader(fontName);
+    final fontData = targetFile.readAsBytes();
+    fontLoader.addFont(fontData.then((bytes) => ByteData.view(bytes.buffer)));
+    await fontLoader.load();
+  }
+
   /// 加载本地字体文件并应用到应用中。
   ///
   /// [onFontLoaded]: 当字体成功加载时调用的回调函数。它会接收到字体族名称和字体文件路径。
@@ -52,33 +64,52 @@ class FontManager {
       fontName = manualFontName;
     } else {
       // 提示用户输入字体名或自动生成
-      fontName = await _getFontNameFromUser(context, fileName) ?? fileName.replaceAll('.', '_');
+      fontName = await _getFontNameFromUser(context, fileName) ??
+          fileName.replaceAll('.', '_');
       if (fontName.isEmpty) {
         _showSnackBar(context, '字体名称不能为空。');
         return false;
       }
     }
 
-    // 3. 将字体文件复制到应用沙盒
+    // 3. 将字体文件复制到应用沙盒（如果是Windows平台，则直接获取字体文件路径）
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final String targetPath = '${directory.path}${Platform.pathSeparator}$fileName';
-      final File sourceFile = File(selectedFilePath);
-      final File targetFile = await sourceFile.copy(targetPath);
+      if (Platform.isWindows) {
+        // Windows平台直接使用选择的文件路径
 
-      // 4. 加载字体
-      final fontLoader = FontLoader(fontName);
-      final fontData = targetFile.readAsBytes();
-      fontLoader.addFont(fontData.then((bytes) => ByteData.view(bytes.buffer)));
-      await fontLoader.load();
+        final File targetFile = File(selectedFilePath);
+        final fontLoader = FontLoader(fontName);
+        final fontData = targetFile.readAsBytes();
+        fontLoader
+            .addFont(fontData.then((bytes) => ByteData.view(bytes.buffer)));
+        await fontLoader.load();
 
-      // 5. 更新当前字体族名称
-      _currentFontFamily = fontName;
+        _currentFontFamily = fontName;
+        onFontLoaded(_currentFontFamily!, selectedFilePath);
+        _showSnackBar(context, '字体 "${_currentFontFamily}" 加载成功！');
+        return true;
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final String targetPath =
+            '${directory.path}${Platform.pathSeparator}$fileName';
+        final File sourceFile = File(selectedFilePath);
+        final File targetFile = await sourceFile.copy(targetPath);
 
-      // 6. 持久化字体信息 (通过回调函数)
-      onFontLoaded(_currentFontFamily!, targetPath);
-      _showSnackBar(context, '字体 "${_currentFontFamily}" 加载成功！');
-      return true;
+        // 4. 加载字体
+        final fontLoader = FontLoader(fontName);
+        final fontData = targetFile.readAsBytes();
+        fontLoader
+            .addFont(fontData.then((bytes) => ByteData.view(bytes.buffer)));
+        await fontLoader.load();
+
+        // 5. 更新当前字体族名称
+        _currentFontFamily = fontName;
+
+        // 6. 持久化字体信息 (通过回调函数)
+        onFontLoaded(_currentFontFamily!, targetPath);
+        _showSnackBar(context, '字体 "${_currentFontFamily}" 加载成功！');
+        return true;
+      }
     } catch (e) {
       print('加载字体失败: $e');
       _showSnackBar(context, '加载字体失败: ${e.toString()}');
@@ -87,7 +118,8 @@ class FontManager {
   }
 
   /// 内部方法：弹出对话框让用户输入字体名称。
-  static Future<String?> _getFontNameFromUser(BuildContext context, String defaultName) async {
+  static Future<String?> _getFontNameFromUser(
+      BuildContext context, String defaultName) async {
     String? inputFontName;
     await showDialog<String>(
       context: context,
@@ -139,19 +171,4 @@ class FontManager {
       ),
     );
   }
-
-  // TODO: 预留一个函数，用于在加载字体时持久化保存字体名称和路径
-  /// 在这里你可以实现持久化逻辑，例如使用 `shared_preferences`。
-  ///
-  /// 示例 (需要添加 `shared_preferences` 依赖):
-  /// ```dart
-  /// static Future<void> _saveFontInfo(String fontFamily, String fontPath) async {
-  ///   final prefs = await SharedPreferences.getInstance();
-  ///   await prefs.setString('last_font_family', fontFamily);
-  ///   await prefs.setString('last_font_path', fontPath);
-  ///   print('字体信息已保存: $fontFamily, $fontPath');
-  /// }
-  /// ```
-  ///
-  /// 你的 `onFontLoaded` 回调函数可以调用此方法。
 }

@@ -169,22 +169,21 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                       SizedBox(
                         height: 10,
                       ),
-                      if (Platform.isAndroid)
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            FontManager.loadFont(
-                                context: context,
-                                onFontLoaded: (fontFamily, fontPath) {
-                                  controller.updateTheme(fontName: fontFamily);
-                                  _globalFontController.text = fontFamily;
-                                  setting.GlobalFont = fontFamily;
-                                  controller.displaySettingModel.refresh();
-                                  controller.saveSettings();
-                                });
-                          },
-                          label: Text('加载字体'),
-                          icon: Icon(Icons.android),
-                        )
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          FontManager.loadFont(
+                              context: context,
+                              onFontLoaded: (fontFamily, fontPath) {
+                                controller.updateTheme(fontName: fontFamily);
+                                _globalFontController.text = fontFamily;
+                                setting.GlobalFont = fontFamily;
+                                setting.CustomFontPath = fontPath;
+                                controller.displaySettingModel.refresh();
+                                controller.saveSettings();
+                              });
+                        },
+                        label: Text('加载字体'),
+                      )
                     ],
                   )),
 
