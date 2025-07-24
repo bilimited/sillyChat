@@ -7,6 +7,9 @@ import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
 abstract class SillytavernConfigImporter {
+  /// 提示词机制：
+  /// 相邻同role会合并成一条
+  /// "聊天中"独立于其他提示词，按照Assistant,User,System的顺序排序。我草神经病吧
   static void fromJson(Map<String, dynamic> json, String fileName) {
     String ErrMsg = '导入未开始';
     try {
@@ -18,6 +21,7 @@ abstract class SillytavernConfigImporter {
         frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
         presencePenalty: (json['presence_penalty'] as num).toDouble(),
         topP: (json['top_p'] as num).toDouble(),
+        isStreaming: json['stream_openai']
       );
       List<PromptModel> prompts = [];
 
@@ -91,15 +95,20 @@ abstract class SillytavernConfigImporter {
               }
           }
           if (!isPass) {
-            prompts.add(PromptModel(
-                id: initialId,
-                content: content,
-                role: prompt['system_prompt'] == true
-                    ? 'system'
-                    : prompt['role'] ?? 'user',
-                name: prompt['name'],
-                isMessageList: prompt['identifier'] == 'chatHistory')
-              ..isEnable = po['enabled']);
+            prompts.add(
+              PromptModel(
+                  id: initialId,
+                  content: content,
+                  role: prompt['system_prompt'] == true
+                      ? 'system'
+                      : prompt['role'] ?? 'user',
+                  name: prompt['name'],
+                  isInChat: prompt['injection_position'] == 1,
+                  depth: prompt['injection_depth'] ?? 4,
+                  priority: 100, // 未实现，不知道对应字段是啥
+                  isChatHistory: prompt['identifier'] == 'chatHistory')
+                ..isEnable = po['enabled'],
+            );
           }
         } else {
           prompts.add(PromptModel(
@@ -108,6 +117,9 @@ abstract class SillytavernConfigImporter {
               role: prompt['system_prompt'] == true
                   ? 'system'
                   : prompt['role'] ?? 'user',
+              isInChat: prompt['injection_position'] == 1,
+              depth: prompt['injection_depth'] ?? 4,
+              priority: 100, // 未实现，不知道对应字段是啥
               name: prompt['name'])
             ..isEnable = po['enabled']);
         }

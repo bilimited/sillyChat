@@ -132,7 +132,7 @@ class ChatOptionModel {
               content: '<messageList>',
               role: 'system',
               name: '消息列表',
-              isMessageList: true),
+              isChatHistory: true),
           PromptModel(
               id: id + 2, content: userMessage, role: 'user', name: '用户输入')
         ]);

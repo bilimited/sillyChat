@@ -9,6 +9,7 @@ import 'package:flutter_json_view/flutter_json_view.dart'; // 引入JSON视图�
 class LogDetailPage extends StatelessWidget {
   final LogEntry logEntry;
 
+  
   const LogDetailPage({Key? key, required this.logEntry}) : super(key: key);
 
   // 辅助函数，根据日志级别获取颜色

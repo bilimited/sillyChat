@@ -26,9 +26,9 @@ class _PromptEditorState extends State<PromptEditor> {
   @override
   void initState() {
     super.initState();
-    if (widget.prompts.where((p) => p.isMessageList).isEmpty) {
+    if (widget.prompts.where((p) => p.isChatHistory).isEmpty) {
       widget.prompts.addAll([
-        PromptModel.messageListPlaceholder(),
+        PromptModel.chatHistoryPlaceholder(),
         PromptModel.userMessagePlaceholder(),
       ]);
     }
@@ -67,7 +67,7 @@ class _PromptEditorState extends State<PromptEditor> {
     }
   }
 
-  Widget _buildMessageListCard(PromptModel prompt, int index) {
+  Widget _buildChatHistoryCard(PromptModel prompt, int index) {
     final colors = Theme.of(context).colorScheme;
 
     return Card(
@@ -76,11 +76,7 @@ class _PromptEditorState extends State<PromptEditor> {
         title: Row(
           children: [
             Text(
-              prompt.name.isEmpty
-                  ? prompt.content.isEmpty
-                      ? "空白提示词"
-                      : prompt.content
-                  : prompt.name,
+              '聊天记录',
               style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -153,9 +149,9 @@ class _PromptEditorState extends State<PromptEditor> {
             SizedBox(
               width: 5,
             ),
-            if (prompt.priority != null)
+            if (prompt.isInChat)
               Text(
-                '@${prompt.priority}',
+                '@${prompt.depth}',
                 style: TextStyle(color: colors.outline, fontSize: 13),
               )
           ],
@@ -170,11 +166,10 @@ class _PromptEditorState extends State<PromptEditor> {
           if (newPrompt == null) {
             return;
           }
+          
           setState(() {
-            prompt.name = newPrompt.name;
-            prompt.role = newPrompt.role;
-            prompt.content = newPrompt.content;
-            prompt.priority = newPrompt.priority;
+            widget.prompts[widget.prompts.indexOf(prompt)] = newPrompt;
+            _updatePrompts();
           });
         },
         trailing: Row(
@@ -231,8 +226,8 @@ class _PromptEditorState extends State<PromptEditor> {
             itemBuilder: (context, index) {
               return KeyedSubtree(
                 key: ValueKey(widget.prompts[index].id),
-                child: widget.prompts[index].isMessageList
-                    ? _buildMessageListCard(widget.prompts[index], index)
+                child: widget.prompts[index].isChatHistory
+                    ? _buildChatHistoryCard(widget.prompts[index], index)
                     : _buildPromptCard(widget.prompts[index], index),
               );
             },

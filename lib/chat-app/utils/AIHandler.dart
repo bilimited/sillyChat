@@ -112,12 +112,12 @@ class Aihandler {
       String key = api.apiKey;
       String model = overriteModelName ?? api.modelName;
       String url = api.url;
-      if(options.isStreaming){
+      if (options.isStreaming) {
         onGenerateStateChange('正在建立连接...');
-      }else{
+      } else {
         onGenerateStateChange('正在等待回应...');
       }
-      
+
       dioInstance = dio.Dio();
 
       LogController.log(
@@ -159,7 +159,6 @@ class Aihandler {
         LogController.log(json.encode(responseData), LogLevel.info,
             type: LogType.json, title: "OpenAI响应");
         yield responseData['choices'][0]['message']['content'] ?? '未发现可用消息';
-
       }
     } catch (e) {
       throw e;
@@ -168,19 +167,19 @@ class Aihandler {
 
   Stream<String> requestGoogle(LLMRequestOptions options, ApiModel api) async* {
     try {
-      final url =
+      final streamingUrl =
           "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:streamGenerateContent?key=${api.apiKey}&alt=sse";
+      final notStreamingUrl =
+          "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:generateContent?key=${api.apiKey}";
 
       final requestBody = {
-        "contents": options.messages
-            //.where((msg) => msg.role != 'system')
-            .map((msg) => msg.toGeminiRestJson())
-            .toList(),
+        "contents": _geminiMergeAdjacentMessages(
+            options.messages.map((msg) => msg.toGeminiRestJson()).toList()),
         "generationConfig": {
           "temperature": options.temperature,
           "maxOutputTokens": options.maxTokens,
           "topP": options.topP,
-          "thinkingConfig": {}, // 暂时只有两档,
+          //"thinkingConfig": {}, // 暂时只有两档,
         },
         "safetySettings": [
           {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
@@ -197,12 +196,18 @@ class Aihandler {
       };
       LogController.log(json.encode(requestBody), LogLevel.info,
           type: LogType.json, title: 'Gemini请求');
-      onGenerateStateChange('正在建立连接...');
+      if (options.isStreaming) {
+        onGenerateStateChange('正在建立连接...');
+      } else {
+        onGenerateStateChange('正在等待回应...');
+      }
       dioInstance = dio.Dio();
       final response = await dioInstance!.post(
-        url,
+        options.isStreaming ? streamingUrl : notStreamingUrl,
         options: dio.Options(
-          responseType: dio.ResponseType.stream,
+          responseType: options.isStreaming
+              ? dio.ResponseType.stream
+              : dio.ResponseType.json,
           sendTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 180),
           headers: {
@@ -214,34 +219,56 @@ class Aihandler {
 
       bool isThinkStart = false;
       onGenerateStateChange('正在生成...');
-      await for (final chunk in parseSseStream(response, (json) {
-        // 处理 Google Gemini SSE 响应，支持 <think> 标签
-        final candidates = json['candidates'] as List?;
-        if (candidates == null || candidates.isEmpty) return '';
 
-        final content = candidates[0]?['content'];
-        final parts = content?['parts'] as List?;
-        if (parts == null || parts.isEmpty) return '';
+      if (options.isStreaming) {
+        await for (final chunk in parseSseStream(response, (json) {
+          // 处理 Google Gemini SSE 响应，支持 <think> 标签
+          final candidates = json['candidates'] as List?;
+          if (candidates == null || candidates.isEmpty) return '';
 
-        final part = parts[0] as Map<String, dynamic>? ?? {};
-        final text = part['text'] as String? ?? '';
-        final thought = part['thought'] as bool? ?? false;
+          final finish_reason = candidates[0]?['finishReason'] ?? null;
+          if (finish_reason != null && finish_reason != 'STOP') {
+            // TODO；重做错误处理机制
+            return '【回答被掐断：${finish_reason}】';
+          }
+          final content = candidates[0]?['content'];
+          final parts = content?['parts'] as List?;
+          if (parts == null || parts.isEmpty) return '';
 
-        String result = '';
+          final part = parts[0] as Map<String, dynamic>? ?? {};
+          final text = part['text'] as String? ?? '';
+          final thought = part['thought'] as bool? ?? false;
 
-        // 处理思考模式标签
-        if (thought && !isThinkStart) {
-          isThinkStart = true;
-          result += '<think>';
+          String result = '';
+
+          // 处理思考模式标签
+          if (thought && !isThinkStart) {
+            isThinkStart = true;
+            result += '<think>';
+          }
+          if (!thought && isThinkStart) {
+            isThinkStart = false;
+            result += '</think>';
+          }
+          result += text;
+          return result;
+        })) {
+          yield chunk;
         }
-        if (!thought && isThinkStart) {
-          isThinkStart = false;
-          result += '</think>';
+      } else {
+        Map<String, dynamic> responseData =
+            response.data as Map<String, dynamic>;
+        LogController.log(json.encode(responseData), LogLevel.info,
+            type: LogType.json, title: "Gemini响应");
+        if (responseData['candidates'][0]['finishReason'] != 'STOP') {
+          yield '回答被掐断了,原因：${responseData['candidates'][0]['finishReason']}';
+          return;
         }
-        result += text;
-        return result;
-      })) {
-        yield chunk;
+
+        final parts = responseData['candidates'][0]['content']['parts'] as List<dynamic>;
+        for(final item in parts){
+          yield item['text'] ?? '';
+        }
       }
     } catch (e) {
       if (e is dio.DioException && e.response?.data != null) {
@@ -365,4 +392,51 @@ class Aihandler {
   static bool isThinkEnd(String token) {
     return token == '</think>';
   }
+
+  // gemini的提示词预处理。兼容酒馆用
+List<Map<String, dynamic>> _geminiMergeAdjacentMessages(
+    List<Map<String, dynamic>> messages) {
+  if (messages.isEmpty) {
+    return [];
+  }
+
+  final mergedMessages = <Map<String, dynamic>>[];
+  Map<String, dynamic>? currentMergedMessage;
+  List<String> currentPartsTexts = []; // 新增：用于收集当前合并块的所有文本
+
+  for (final message in messages) {
+    final role = message['role'];
+    final partText = message['parts'][0]['text'] as String;
+
+    if (currentMergedMessage == null) {
+      currentMergedMessage = {
+        'role': role,
+      };
+      currentPartsTexts.add(partText);
+    } else if (currentMergedMessage['role'] == role) {
+      currentPartsTexts.add(partText);
+    } else {
+      currentMergedMessage!['parts'] = [
+        {'text': currentPartsTexts.join('\n')}
+      ];
+      mergedMessages.add(currentMergedMessage!);
+
+      // 开始新的合并块
+      currentMergedMessage = {
+        'role': role,
+      };
+      currentPartsTexts = [partText]; // 重置并添加当前文本
+    }
+  }
+
+  // 将最后一个合并块添加到结果列表
+  if (currentMergedMessage != null) {
+    currentMergedMessage['parts'] = [
+      {'text': currentPartsTexts.join('\n')}
+    ];
+    mergedMessages.add(currentMergedMessage);
+  }
+
+  return mergedMessages;
+}
 }

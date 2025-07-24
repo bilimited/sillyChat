@@ -816,6 +816,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 ),
                 softLineBreak: true,
                 shrinkWrap: true,
+                inlineSyntaxes: [],
                 // selectable: true,
               ),
             ],

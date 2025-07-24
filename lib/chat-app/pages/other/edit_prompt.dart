@@ -24,7 +24,9 @@ class _EditPromptPageState extends State<EditPromptPage> {
   late String _name = '';
   late String _content = '';
   late String _role = 'user';
-  late int? _priority = null;
+  int _depth = 4;
+  int _priority = 100;
+  bool _isInChat = false;
 
   @override
   void initState() {
@@ -33,7 +35,9 @@ class _EditPromptPageState extends State<EditPromptPage> {
       _name = widget.prompt!.name;
       _content = widget.prompt!.content;
       _role = widget.prompt!.role;
+      _depth = widget.prompt!.depth;
       _priority = widget.prompt!.priority;
+      _isInChat = widget.prompt!.isInChat;
     }
   }
 
@@ -43,13 +47,15 @@ class _EditPromptPageState extends State<EditPromptPage> {
     _formKey.currentState!.save();
 
     final prompt = PromptModel(
-      id: widget.prompt?.id ?? DateTime.now().millisecondsSinceEpoch,
-      name: _name,
-      content: _content,
-      role: _role,
-      createDate: widget.prompt?.createDate,
-      updateDate: DateTime.now(),
-    )..priority = _priority;
+        id: widget.prompt?.id ?? DateTime.now().millisecondsSinceEpoch,
+        name: _name,
+        content: _content,
+        role: _role,
+        createDate: widget.prompt?.createDate,
+        updateDate: DateTime.now(),
+        isInChat: _isInChat,
+        depth: _depth,
+        priority: _priority);
 
     if (widget.editTempPrompt) {
       Get.back(result: prompt);
@@ -71,11 +77,13 @@ class _EditPromptPageState extends State<EditPromptPage> {
     _formKey.currentState!.save();
 
     final prompt = PromptModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: _name,
-      content: _content,
-      role: _role,
-    )..priority = _priority;
+        id: DateTime.now().millisecondsSinceEpoch,
+        name: _name,
+        content: _content,
+        role: _role,
+        isInChat: _isInChat,
+        depth: _depth,
+        priority: _priority);
 
     await _promptController.addPrompt(prompt);
     if (widget.editTempPrompt) {
@@ -126,7 +134,11 @@ class _EditPromptPageState extends State<EditPromptPage> {
                 decoration: InputDecoration(
                   labelText: '角色',
                 ),
-                items: ['user', 'assistant', 'system',]
+                items: [
+                  'user',
+                  'assistant',
+                  'system',
+                ]
                     .map((role) => DropdownMenuItem(
                           value: role,
                           child: Text(role),
@@ -138,50 +150,74 @@ class _EditPromptPageState extends State<EditPromptPage> {
               Row(
                 children: [
                   Switch(
-                    value: _priority != null,
+                    value: _isInChat,
                     onChanged: (value) {
                       setState(() {
-                        if (value) {
-                          _priority = 99999;
-                        } else {
-                          _priority = null;
-                        }
+                        _isInChat = value;
                       });
                     },
                   ),
-                  Text('设置优先级'),
+                  Text('插入到聊天记录中'),
                 ],
               ),
               SizedBox(height: 16),
-              if (_priority != null)
+              if (_isInChat)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: TextFormField(
-                    initialValue: _priority?.toString(),
-                    decoration: InputDecoration(
-                      labelText: '优先级(0代表最后一条消息之后，1代表最后一条消息之前，99999代表消息列表开头)',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (_priority != null) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入优先级';
-                        }
-                        final n = int.tryParse(value);
-                        if (n == null) return '请输入有效的数字';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      if (_priority != null) {
-                        _priority = int.tryParse(value ?? '99999');
-                      }
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        _priority = int.tryParse(value);
-                      });
-                    },
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        initialValue: _depth.toString(),
+                        decoration: InputDecoration(
+                          labelText: '深度(0代表最后一条消息之后，1代表最后一条消息之前)',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '请输入深度';
+                          }
+                          final n = int.tryParse(value);
+                          if (n == null) return '请输入有效的数字';
+
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _depth = int.tryParse(value ?? '4') ?? 4;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _depth = int.tryParse(value) ?? 4;
+                          });
+                        },
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      TextFormField(
+                        initialValue: _priority.toString(),
+                        decoration: InputDecoration(
+                          labelText: '优先级',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '请输入优先级';
+                          }
+                          final n = int.tryParse(value);
+                          if (n == null) return '请输入有效的数字';
+
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _priority = int.tryParse(value ?? '4') ?? 4;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _priority = int.tryParse(value) ?? 4;
+                          });
+                        },
+                      ),
+                    ],
                   ),
                 ),
               SizedBox(height: 16),

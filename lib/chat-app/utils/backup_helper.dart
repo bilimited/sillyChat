@@ -13,7 +13,7 @@ class BackupData {
 
   Map<String, dynamic> toJson() => {
         'characters': characters.map((c) => c.toJson()).toList(),
-        'prompts': prompts.where((p) => !p.isDefault).map((p) => p.toJson()).toList(),
+        'prompts': prompts.where((p) => !p.isInChat).map((p) => p.toJson()).toList(),
       };
 
   static BackupData fromJson(Map<String, dynamic> json) {

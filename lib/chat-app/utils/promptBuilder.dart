@@ -12,9 +12,7 @@ import 'package:get/get.dart';
 
 // TODO: 恢复Prompt按深度插入
 class Promptbuilder {
-  // List<PromptModel> processVaribles(List<PromptModel> prompts){
 
-  // }
 
   String _propressMessage(String content, LLMRequestOptions options) {
     // 处理消息内容，删除thinking标记
@@ -65,7 +63,9 @@ class Promptbuilder {
                   .replaceAll('<char>',
                       characterController.getCharacterById(msg.sender).roleName)
                   .replaceAll('<message>', content),
-              role: msg.sender == (sender?.id ?? chat.assistantId) ? "assistant" : "user",
+              role: msg.sender == (sender?.id ?? chat.assistantId)
+                  ? "assistant"
+                  : "user",
               fileDirs: msg.resPath,
               senderId: msg.sender);
           // 不合并消息列表，聊天模式
@@ -97,12 +97,15 @@ class Promptbuilder {
 
   /// 史诗抽象超长代码
   /// sender!=null ,则为群聊模式
+  /// TODO:和酒馆有一个区别：最新消息（用户发的那条）会被移除并放到<lastUserMessage>宏里。需要加一个开关显式控制
+  /// 另一个 TODO:因为Gemini没有system，融合同role消息开关可能要与API绑定
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
 
     final msglst = getMessageList(chat, sender: sender);
 
+    /// 用户消息提取：一般是最后一条消息，如果最后一条消息为空则填充默认消息
     late String userMessage;
     if (msglst.isNotEmpty && msglst.last.role == 'user') {
       userMessage = msglst.removeLast().content;
@@ -117,9 +120,10 @@ class Promptbuilder {
     }
 
     /// Prompt处理
-    /// 步骤：1.世界书激活 2. 插入世界书 3. 格式化所有Prompt 4. 插入正文 5. 插入用户请求
+    /// 步骤：1.世界书激活 2.PM插入世界书 3.PM插入宏和用户消息 3.5:单独提取"聊天中"Prompt 4.将”聊天中“Prompt插入正文,PM->LLM 5.融并相邻同Role消息
     /// -----------------------------------------------------------
 
+    /// Step 1
     final Stopwatch stopwatch = Stopwatch()..start();
     final loreBook = Lorebookutil(
         messages: msglst,
@@ -131,34 +135,98 @@ class Promptbuilder {
     stopwatch.stop();
     print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
 
-    final activitedPrompts =
-        chat.prompts.where((prompt) => prompt.isEnable).toList();
+    final activitedPrompts = chat.prompts
+        .where((prompt) => prompt.isEnable)
+        .toList();
+    
+    /// Step 2
     final promptsAfterInsertLore =
         Lorebookutil.insertIntoPrompt(activitedPrompts, loreMap);
+
+    /// Step 3
     final promptsAfterFormat = promptsAfterInsertLore
         .map((prompt) => prompt.copyWith(
             content: Promptformatter.formatPrompt(prompt.content, chat,
                 sender: sender, userMessage: userMessage)))
         .toList();
-
     final promptsNotEmpty = promptsAfterFormat
         .where((msg) => !(msg.content.isBlank ?? false))
         .toList();
 
-    return promptsNotEmpty.expand<LLMMessage>((prompt) {
-      if (prompt.isMessageList) {
+    /// Step 3.5
+    final promptsInChat = <PromptModel>[];
+    promptsNotEmpty.removeWhere((prompt){
+      if(prompt.isInChat){
+        promptsInChat.add(prompt);
+        return true;
+      }else{
+        return false;
+      }
+    });
+
+    /// Step 4
+
+    _insertInChatPrompt(msglst, promptsInChat);
+
+    final llmMessages = promptsNotEmpty.expand<LLMMessage>((prompt) {
+      if (prompt.isChatHistory) {
         if (chat.requestOptions.isMergeMessageList) {
-          final merged = mergeMessageList(msglst);
-          return merged.content.isEmpty ? [] : [mergeMessageList(msglst)];
+          final merged = _mergeChatHistory(msglst);
+          return merged.content.isEmpty ? [] : [_mergeChatHistory(msglst)];
         } else {
           return msglst;
         }
       }
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
+
+
+    
+
+    return llmMessages;
   }
 
-  LLMMessage mergeMessageList(List<LLMMessage> msglst) {
+
+  /// 排序并插入”聊天中“Prompt
+  List<LLMMessage> _insertInChatPrompt(
+      List<LLMMessage> llmMessages, List<PromptModel> inChatPrompts) {
+
+    if(inChatPrompts.isEmpty){
+      return llmMessages;
+    }
+    /// Step 1: inChatPrompts按照priority排序，若priority相同则按照User,Assistant,System的顺序进行稳定排序
+    inChatPrompts.sort((a, b) {
+      if (a.priority == b.priority) {
+        return _compareRole(a.role, b.role);
+      }
+      return a.priority.compareTo(b.priority);
+    });
+
+    /// Step 2: 对排序后的Prompt进行遍历，按照其depth转换并插入llmMessages(0代表最后一条消息之后，1代表最后一条消息之前，以此类推)
+    for (final prompt in inChatPrompts) {
+      int depth = prompt.depth;
+      if (depth < 0) continue;
+
+      if(depth > llmMessages.length) depth = llmMessages.length;
+
+      llmMessages.insert(llmMessages.length - depth, LLMMessage.fromPromptModel(prompt));
+    }
+
+    return llmMessages;
+  }
+
+
+  int _compareRole(String role1, String role2) {
+    if (role1 == role2) return 0;
+    if (role1 == 'assistant') return -1; // assistant < user < system
+    if (role2 == 'assistant') return 1;
+    if (role1 == 'user') return -1; // user < system
+    if (role2 == 'user') return 1;
+    return 0; // system
+  }
+
+
+  LLMMessage _mergeChatHistory(List<LLMMessage> msglst) {
     return msglst.fold(LLMMessage(content: '', role: 'user', fileDirs: []),
         (res, msg) {
       res.fileDirs.addAll(msg.fileDirs);

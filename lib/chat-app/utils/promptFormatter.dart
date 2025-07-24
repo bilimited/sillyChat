@@ -16,7 +16,7 @@ abstract class Promptformatter {
     prompt = prompt.replaceAll('<user>', user.roleName);
     prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
     prompt = prompt.replaceAll('<description>', chat.description ?? '');
-    prompt = prompt.replaceAll('<lastUserMessage>', userMessage);
+    prompt = prompt.replaceAll(RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>'), userMessage); // 兼容酒馆
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);

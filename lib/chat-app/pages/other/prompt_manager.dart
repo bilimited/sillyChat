@@ -77,7 +77,7 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
               ),
             ],
           ),
-          trailing: widget.isSelector ? null : (prompt.isDefault ? null : Row(
+          trailing: widget.isSelector ? null : (prompt.isInChat ? null : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(

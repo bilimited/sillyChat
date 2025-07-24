@@ -7,13 +7,14 @@ class PromptModel {
   DateTime updateDate;
   String name;
 
-  bool isDefault = false;
+  bool isInChat = false;
 
   bool isEnable = true;
 
-  int? priority; // prompt排序，0代表最新消息之后，1代表最新消息之前
+  int priority;
+  int depth; // prompt排序，0代表最新消息之后，1代表最新消息之前
 
-  bool isMessageList; // 占位符，在提示词列表中代表整个消息列表
+  bool isChatHistory; // 占位符，在提示词列表中代表整个消息列表
 
   PromptModel({
     required this.id,
@@ -22,13 +23,15 @@ class PromptModel {
     required this.name,
     DateTime? createDate,
     DateTime? updateDate,
-    bool this.isDefault = false,
-    bool this.isMessageList = false,
+    bool this.isInChat = false,
+    bool this.isChatHistory = false,
+    this.priority = 100,
+    this.depth = 4,
   })  : this.createDate = createDate ?? DateTime.now(),
         this.updateDate = updateDate ?? DateTime.now();
 
 
-  PromptModel.messageListPlaceholder()
+  PromptModel.chatHistoryPlaceholder()
       : id = 0,
         content = '<messageList>',
         role = '',
@@ -36,17 +39,20 @@ class PromptModel {
         isEnable = true,
         createDate = DateTime.now(),
         updateDate = DateTime.now(),
-        isMessageList = true;
+        isChatHistory = true,
+        priority = 100,
+        depth = 4;
 
   PromptModel.userMessagePlaceholder()
       : id = -1,
-        content = '<lastUserMessage>',
+        content = '{{lastuserMessage}}',
         role = 'user',
         name = '用户消息',
         isEnable = true,
         createDate = DateTime.now(),
         updateDate = DateTime.now(),
-        isMessageList = false;
+        isChatHistory = false,priority = 100,
+        depth = 4;
 
   PromptModel.fromJson(Map<String, dynamic> json)
       : id = json['id'],
@@ -56,8 +62,11 @@ class PromptModel {
         createDate = DateTime.parse(json['createDate']),
         updateDate = DateTime.parse(json['updateDate']),
         isEnable = json['isEnable'] ?? true,
-        priority = json['priority'] ?? null,
-        isMessageList = json['isMessageList'] ?? false;
+        priority = json['priority'] ?? 100,
+        depth = json['depth'] ?? 4,
+        isInChat = json['isInChat'] ?? false,
+        isChatHistory = json['isMessageList'] ?? false
+        ;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -68,7 +77,9 @@ class PromptModel {
         'updateDate': updateDate.toIso8601String(),
         'isEnable': isEnable,
         'priority': priority,
-        'isMessageList' : isMessageList
+        'depth': depth,
+        'isInChat': isInChat,
+        'isMessageList' : isChatHistory
       };
 
   PromptModel copy() {
@@ -79,11 +90,12 @@ class PromptModel {
       name: name,
       createDate: createDate,
       updateDate: updateDate,
-      isDefault: isDefault,
-      isMessageList: isMessageList
+      isInChat: isInChat,
+      isChatHistory: isChatHistory,
+      depth: depth,
+      priority: priority,
     )
-      ..isEnable = isEnable
-      ..priority = priority;
+      ..isEnable = isEnable;
   }
 
   PromptModel copyWith({
@@ -93,9 +105,10 @@ class PromptModel {
     String? name,
     DateTime? createDate,
     DateTime? updateDate,
-    bool? isDefault,
+    bool? isInChat,
     bool? isEnable,
     int? priority,
+    int? depth,
   }) {
     return PromptModel(
       id: id ?? this.id,
@@ -104,10 +117,11 @@ class PromptModel {
       name: name ?? this.name,
       createDate: createDate ?? this.createDate,
       updateDate: updateDate ?? this.updateDate,
-      isDefault: isDefault ?? this.isDefault,
-      isMessageList: this.isMessageList, // 保持isMessageList不变
+      isInChat: isInChat ?? this.isInChat,
+      isChatHistory: this.isChatHistory, // 保持isMessageList不变
     )
       ..isEnable = isEnable ?? this.isEnable
-      ..priority = priority ?? this.priority;
+      ..priority = priority ?? this.priority
+      ..depth = depth ?? this.depth;
   }
 }

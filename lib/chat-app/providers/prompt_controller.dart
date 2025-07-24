@@ -39,7 +39,7 @@ class PromptController extends GetxController {
       final file = File('${directory}/$fileName');
 
       final String jsonString = json.encode(
-        prompts.where((prompt) => !prompt.isDefault).map((prompt) => prompt.toJson()).toList(),
+        prompts.where((prompt) => !prompt.isInChat).map((prompt) => prompt.toJson()).toList(),
       );
       await file.writeAsString(jsonString);
     } catch (e) {
