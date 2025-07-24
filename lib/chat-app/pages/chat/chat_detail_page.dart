@@ -662,7 +662,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       {int index = 0}) {
     final character = _characterController.getCharacterById(message.sender);
     final isMe = chat.user.id == message.sender;
-    final avatar = character.avatar;
     final isSelected = _selectedMessage?.time == message.time;
 
     final isHideName =

@@ -143,11 +143,12 @@ class Promptbuilder {
     final promptsAfterInsertLore =
         Lorebookutil.insertIntoPrompt(activitedPrompts, loreMap);
 
+    final STVars = <String,String>{};
     /// Step 3
     final promptsAfterFormat = promptsAfterInsertLore
         .map((prompt) => prompt.copyWith(
             content: Promptformatter.formatPrompt(prompt.content, chat,
-                sender: sender, userMessage: userMessage)))
+                sender: sender, userMessage: userMessage, STVaribles: STVars)))
         .toList();
     final promptsNotEmpty = promptsAfterFormat
         .where((msg) => !(msg.content.isBlank ?? false))

@@ -1,11 +1,12 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STMarcoProcesser.dart';
 import 'package:get/get.dart';
 
 abstract class Promptformatter {
   static String formatPrompt(String content, ChatModel chat,
-      {CharacterModel? sender = null,String userMessage = '' }) {
+      {CharacterModel? sender = null, String userMessage = '', Map<String,String>? STVaribles}) {
     CharacterController characterController = Get.find();
     var assistant = sender == null ? chat.assistant : sender;
     var prompt = content;
@@ -13,24 +14,36 @@ abstract class Promptformatter {
     var user = chat.userId == null
         ? characterController.me
         : characterController.getCharacterById(chat.userId!);
-    prompt = prompt.replaceAll('<user>', user.roleName);
+    prompt = prompt.replaceAll(
+        RegExp(r'\{\{user\}\}|<user>', caseSensitive: false), user.roleName);
     prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
     prompt = prompt.replaceAll('<description>', chat.description ?? '');
-    prompt = prompt.replaceAll(RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>'), userMessage); // 兼容酒馆
+    prompt = prompt.replaceAll(
+        RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>',
+            caseSensitive: false),
+        userMessage); // 兼容酒馆
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);
+    if(STVaribles != null){
+      prompt = handleSTMacro(prompt, STVaribles);
+    }
+    // 清除注释
+    prompt = prompt.replaceAll(RegExp(r"\{\{.*?\}\}"), '');
     return prompt;
   }
 
   static String BuildCharacterSystemPrompt(
       String prompt, CharacterModel character) {
-    prompt = prompt.replaceAll('<char>', character.roleName);
+    prompt = prompt.replaceAll(
+        RegExp(r'\{\{char\}\}|<char>', caseSensitive: false),
+        character.roleName);
     prompt = prompt.replaceAll('<brief>', character.brief ?? "");
     prompt = prompt.replaceAll('<archive>', character.archive);
 
     return prompt;
   }
+
 
   static String injectCharacterLore(
       String prompt, ChatModel chat, CharacterModel sender) {
@@ -105,5 +118,11 @@ ${typeText} ${brief}
           '<relations>', relationsText == "" ? "无人物关系。" : relationsText);
     }
     return prompt;
+  }
+
+    /// 兼容SillyTarvern宏
+  /// 对传入Prompt进行正则匹配
+  static String handleSTMacro(String prompt,Map<String,String> varibles){
+    return STMacroProcessor.handleSTMacro(prompt, varibles);
   }
 }

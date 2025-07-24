@@ -265,8 +265,9 @@ class Aihandler {
           return;
         }
 
-        final parts = responseData['candidates'][0]['content']['parts'] as List<dynamic>;
-        for(final item in parts){
+        final parts =
+            responseData['candidates'][0]['content']['parts'] as List<dynamic>;
+        for (final item in parts) {
           yield item['text'] ?? '';
         }
       }
@@ -394,49 +395,49 @@ class Aihandler {
   }
 
   // gemini的提示词预处理。兼容酒馆用
-List<Map<String, dynamic>> _geminiMergeAdjacentMessages(
-    List<Map<String, dynamic>> messages) {
-  if (messages.isEmpty) {
-    return [];
-  }
+  List<Map<String, dynamic>> _geminiMergeAdjacentMessages(
+      List<Map<String, dynamic>> messages) {
+    if (messages.isEmpty) {
+      return [];
+    }
 
-  final mergedMessages = <Map<String, dynamic>>[];
-  Map<String, dynamic>? currentMergedMessage;
-  List<String> currentPartsTexts = []; // 新增：用于收集当前合并块的所有文本
+    final mergedMessages = <Map<String, dynamic>>[];
+    Map<String, dynamic>? currentMergedMessage;
+    List<String> currentPartsTexts = []; // 新增：用于收集当前合并块的所有文本
 
-  for (final message in messages) {
-    final role = message['role'];
-    final partText = message['parts'][0]['text'] as String;
+    for (final message in messages) {
+      final role = message['role'];
+      final partText = message['parts'][0]['text'] as String;
 
-    if (currentMergedMessage == null) {
-      currentMergedMessage = {
-        'role': role,
-      };
-      currentPartsTexts.add(partText);
-    } else if (currentMergedMessage['role'] == role) {
-      currentPartsTexts.add(partText);
-    } else {
-      currentMergedMessage!['parts'] = [
+      if (currentMergedMessage == null) {
+        currentMergedMessage = {
+          'role': role,
+        };
+        currentPartsTexts.add(partText);
+      } else if (currentMergedMessage['role'] == role) {
+        currentPartsTexts.add(partText);
+      } else {
+        currentMergedMessage!['parts'] = [
+          {'text': currentPartsTexts.join('\n')}
+        ];
+        mergedMessages.add(currentMergedMessage!);
+
+        // 开始新的合并块
+        currentMergedMessage = {
+          'role': role,
+        };
+        currentPartsTexts = [partText]; // 重置并添加当前文本
+      }
+    }
+
+    // 将最后一个合并块添加到结果列表
+    if (currentMergedMessage != null) {
+      currentMergedMessage['parts'] = [
         {'text': currentPartsTexts.join('\n')}
       ];
-      mergedMessages.add(currentMergedMessage!);
-
-      // 开始新的合并块
-      currentMergedMessage = {
-        'role': role,
-      };
-      currentPartsTexts = [partText]; // 重置并添加当前文本
+      mergedMessages.add(currentMergedMessage);
     }
-  }
 
-  // 将最后一个合并块添加到结果列表
-  if (currentMergedMessage != null) {
-    currentMergedMessage['parts'] = [
-      {'text': currentPartsTexts.join('\n')}
-    ];
-    mergedMessages.add(currentMergedMessage);
+    return mergedMessages;
   }
-
-  return mergedMessages;
-}
 }

@@ -2,7 +2,6 @@
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
-import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
@@ -85,12 +84,13 @@ abstract class SillytavernConfigImporter {
               }
             case 'scenario':
               {
-                content = '<description>';
+                content = ((json['scenario_format']??'<description>') as String).replaceAll('{{scenario}}', '<description>');
                 break;
               }
             case 'personaDescription': // 用户角色描述
               {
-                content = '<user>的描述:<userbrief>';
+                content = ((json['personality_format']??'<user>:<userbrief>') as String).replaceAll('{{char}}', '<user>')
+                .replaceAll('{{personality}}', '<userbrief>');
                 break;
               }
           }
