@@ -3,112 +3,126 @@ class RegexModel {
   String name;
   String pattern; // 正则表达式
   String replacement; // 替换文本
-  int scope; // 作用范围（位掩码）
-  int timing; // 作用时刻（位掩码）
+  String? trim; // 修减掉，不知道有啥用
   bool enabled;
+
+  bool onRender = false; // 在渲染时应用正则
+  bool onRequest = false; // 在向AI发送请求时应用正则（对应ST仅格式提示词）
+  bool onResponse = false; // 在收到AI消息时应用正则，会影响消息记录
+
+  bool scopeUser = false;
+  bool scopeAssistant = false; // 作用域：应用于AI消息还是用户消息
+
+  int depthMin = -1;
+  int depthMax = -1; // 作用范围，-1代表无限
 
   RegexModel({
     required this.id,
     required this.name,
     required this.pattern,
     required this.replacement,
-    this.scope = 0,
-    this.timing = 0,
+    this.trim,
     this.enabled = true,
+    this.onRender = false,
+    this.onRequest = false,
+    this.onResponse = false,
+    this.scopeUser = false,
+    this.scopeAssistant = false,
+    this.depthMin = -1,
+    this.depthMax = -1,
   });
 
-  // 作用范围位掩码
-  static const int scopeUserInput = 1 << 0; // 用户输入
-  static const int scopeAIOutput = 1 << 1;  // AI输出
+  // 对传入字符串进行正则替换
+  // replacement字符串中，$1、$2会被替换为匹配到的分组内容
+  String process(String input) {
+    if (!enabled || pattern.isEmpty) return input;
 
-  // 作用时刻位掩码
-  static const int timingSendToAI = 1 << 0; // 发送给AI时
-  static const int timingSave = 1 << 1;     // 保存时
-  static const int timingRender = 1 << 2;   // 渲染时
+    final trims = this.trim?.split('\n') ?? [];
+    trims.forEach((t){
+      if(t.isNotEmpty){
+        input = input.replaceAll(t, '');
+      }
+    });
 
-  // 作用范围 getter/setter
-  bool get applyToUserInput => (scope & scopeUserInput) != 0;
-  set applyToUserInput(bool value) {
-    if (value) {
-      scope |= scopeUserInput;
-    } else {
-      scope &= ~scopeUserInput;
-    }
+
+    final regex = RegExp(pattern);
+    return input.replaceAllMapped(regex, (match) {
+      String result = replacement;
+      for (int i = 1; i < match.groupCount + 1; i++) {
+        result = result.replaceAll('\$$i', match.group(i) ?? '');
+      }
+      return result;
+    });
   }
 
-  bool get applyToAIOutput => (scope & scopeAIOutput) != 0;
-  set applyToAIOutput(bool value) {
-    if (value) {
-      scope |= scopeAIOutput;
-    } else {
-      scope &= ~scopeAIOutput;
-    }
-  }
-
-  // 作用时刻 getter/setter
-  bool get applyOnSendToAI => (timing & timingSendToAI) != 0;
-  set applyOnSendToAI(bool value) {
-    if (value) {
-      timing |= timingSendToAI;
-    } else {
-      timing &= ~timingSendToAI;
-    }
-  }
-
-  bool get applyOnSave => (timing & timingSave) != 0;
-  set applyOnSave(bool value) {
-    if (value) {
-      timing |= timingSave;
-    } else {
-      timing &= ~timingSave;
-    }
-  }
-
-  bool get applyOnRender => (timing & timingRender) != 0;
-  set applyOnRender(bool value) {
-    if (value) {
-      timing |= timingRender;
-    } else {
-      timing &= ~timingRender;
-    }
-  }
-
-  // 序列化
+  // JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'pattern': pattern,
       'replacement': replacement,
-      'scope': scope,
-      'timing': timing,
+      'trim': trim,
       'enabled': enabled,
+      'onRender': onRender,
+      'onRequest': onRequest,
+      'onResponse': onResponse,
+      'scopeUser': scopeUser,
+      'scopeAssistant': scopeAssistant,
+      'depthMin': depthMin,
+      'depthMax': depthMax,
     };
   }
 
-  // 反序列化
+  // JSON deserialization
   factory RegexModel.fromJson(Map<String, dynamic> json) {
     return RegexModel(
-      id: json['id'],
-      name: json['name'],
-      pattern: json['pattern'],
-      replacement: json['replacement'],
-      scope: json['scope'] ?? 0,
-      timing: json['timing'] ?? 0,
-      enabled: json['enabled'] ?? true,
+      id: json['id'] as int,
+      name: json['name'] as String,
+      pattern: json['pattern'] as String,
+      replacement: json['replacement'] as String,
+      trim: json['trim'] as String?,
+      enabled: json['enabled'] as bool? ?? true,
+      onRender: json['onRender'] as bool? ?? false,
+      onRequest: json['onRequest'] as bool? ?? false,
+      onResponse: json['onResponse'] as bool? ?? false,
+      scopeUser: json['scopeUser'] as bool? ?? false,
+      scopeAssistant: json['scopeAssistant'] as bool? ?? false,
+      depthMin: json['depthMin'] as int? ?? -1,
+      depthMax: json['depthMax'] as int? ?? -1,
     );
   }
 
-  // 拷贝方法
-  RegexModel copy() {
+  // copyWith method
+  RegexModel copyWith({
+    int? id,
+    String? name,
+    String? pattern,
+    String? replacement,
+    String? trim,
+    bool? enabled,
+    bool? onRender,
+    bool? onRequest,
+    bool? onResponse,
+    bool? scopeUser,
+    bool? scopeAssistant,
+    int? depthMin,
+    int? depthMax,
+  }) {
     return RegexModel(
-      id: id,
-      name: name,
-      pattern: pattern,
-      replacement: replacement,
-      scope: scope,
-      timing: timing,
-      enabled: enabled,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      pattern: pattern ?? this.pattern,
+      replacement: replacement ?? this.replacement,
+      trim: trim ?? this.trim,
+      enabled: enabled ?? this.enabled,
+      onRender: onRender ?? this.onRender,
+      onRequest: onRequest ?? this.onRequest,
+      onResponse: onResponse ?? this.onResponse,
+      scopeUser: scopeUser ?? this.scopeUser,
+      scopeAssistant: scopeAssistant ?? this.scopeAssistant,
+      depthMin: depthMin ?? this.depthMin,
+      depthMax: depthMax ?? this.depthMax,
     );
   }
 }

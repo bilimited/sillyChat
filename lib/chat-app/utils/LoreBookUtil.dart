@@ -7,6 +7,9 @@ import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:get/get.dart';
 
+/// 优化思路：
+/// 对Message,Chat和Global设Dirty标志位和激活条目缓存
+/// 对于群聊，每新增消息，计算所有角色世界书（不论）激活条目
 class Lorebookutil {
   final List<LLMMessage> messages;
   late List<LorebookModel> lorebooks;

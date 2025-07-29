@@ -331,7 +331,7 @@ class _SettingPageState extends State<SettingPage>
           child: ListTile(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: Icon(Icons.cloud_queue,
+            leading: Icon(Icons.clear_all,
                 color: Theme.of(context).colorScheme.secondary),
             title: Text(
               '查看日志',

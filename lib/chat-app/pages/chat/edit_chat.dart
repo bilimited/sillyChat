@@ -7,7 +7,6 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/kv_editor.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';

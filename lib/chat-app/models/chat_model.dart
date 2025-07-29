@@ -19,6 +19,7 @@ class ChatModel {
   late final int fileId;
 
   int id = 1;
+  int sortIndex = 0; // 排序用
   String name;
   String avatar;
   String? backgroundImage;
@@ -94,6 +95,7 @@ class ChatModel {
     this.assistantId, // 新增
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
+    this.sortIndex = 0,
   }) {
     //this._prompts = prompts ?? [];
     if (chatOption != null) {
@@ -145,11 +147,13 @@ class ChatModel {
                   id: 0,
                   name: '从旧版本导入的预设',
                   requestOptions: requestOptions,
-                  prompts: prompts)
+                  prompts: prompts,
+                  regex: [])
               : ChatOptionModel.empty(),
       userId: json['userId'], // 新增
       assistantId: json['assistantId'], // 新增
       messageTemplate: json['messageTemplate'] ?? "{{msg}}", // 新增：反序列化
+      sortIndex: json['sortIndex'] ?? 0,
     )
       ..mode = json['mode'] != null
           ? ChatMode.values.firstWhere(
@@ -191,6 +195,7 @@ class ChatModel {
         'bookmarks': bookmarks.map((b) => b.toJson()).toList(),
         'chatVars': chatVars,
         'activitedLorebookItems': activitedLorebookItems,
+        'sortIndex': sortIndex,
       };
 
   ChatModel shallowCopyWith({
@@ -214,6 +219,7 @@ class ChatModel {
     List<BookMarkModel>? bookmarks,
     Map<String, String>? chatVars,
     Map<String, bool>? activitedLorebookItems,
+    int? sortIndex,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -229,6 +235,7 @@ class ChatModel {
       mode: mode ?? this.mode,
       messageTemplate: messageTemplate ?? this.messageTemplate,
       chatOption: chatOptions ?? this.chatOption,
+      sortIndex: sortIndex ?? this.sortIndex,
     )
       ..bookmarks = bookmarks ?? this.bookmarks
       ..tags = tags ?? []
@@ -257,6 +264,7 @@ class ChatModel {
     List<BookMarkModel>? bookmarks,
     Map<String, String>? chatVars,
     Map<String, bool>? activitedLorebookItems,
+    int? sortIndex,
   }) {
     return ChatModel(
       id: id ?? this.id,
@@ -272,6 +280,7 @@ class ChatModel {
       mode: mode ?? this.mode,
       messageTemplate: messageTemplate ?? this.messageTemplate,
       chatOption: chatOptions ?? this.chatOption.copyWith(true),
+      sortIndex: sortIndex ?? this.sortIndex,
     )
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()

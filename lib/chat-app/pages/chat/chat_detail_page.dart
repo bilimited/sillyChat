@@ -340,7 +340,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           icon: message.isPinned
               ? Icons.push_pin_outlined
               : message.isHidden
-                  ? Icons.hide_source_rounded
+                  ? Icons.visibility_off
                   : Icons.remove_red_eye,
           label: 'Pin',
           iconColor: message.isPinned
@@ -612,7 +612,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       if (message.isPinned)
         const Icon(Icons.push_pin, color: Colors.orange, size: 16),
       if (message.isHidden)
-        const Icon(Icons.hide_source, color: Colors.blueGrey, size: 16),
+        const Icon(Icons.visibility_off, color: Colors.blueGrey, size: 16),
     ];
 
     return Column(
@@ -1125,7 +1125,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           });
                         },
                         icon: Icon(
-                          Icons.hide_source,
+                          Icons.visibility_off,
                           color: colors.onPrimaryContainer,
                         ),
                       ),

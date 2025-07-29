@@ -172,6 +172,10 @@ class ChatController extends GetxController {
 
       currentFileId.value = maxFileId - 1;
 
+      chats.sort((chat1,chat2){
+        return chat1.sortIndex - chat2.sortIndex;
+      });
+
       if (totalChats > 0) {
         Get.snackbar('Chat Data Loaded',
             'Loaded $totalChats chats from ${maxFileId - 1} files',

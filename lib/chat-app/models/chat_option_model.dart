@@ -1,4 +1,5 @@
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
+import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
@@ -9,6 +10,7 @@ class ChatOptionModel {
   String messageTemplate = "{{msg}}";
   LLMRequestOptions requestOptions;
   List<PromptModel> prompts = []; // 新增：存储实际的PromptModel对象
+  List<RegexModel> regex = [];
   // List<int> promptId = [];
 
   static List<PromptModel> getPromptsbyId(List<int> promptId) {
@@ -27,6 +29,7 @@ class ChatOptionModel {
     this.messageTemplate = "{{msg}}",
     required this.requestOptions,
     required this.prompts,
+    required this.regex,
   });
 
   factory ChatOptionModel.fromJson(Map<String, dynamic> json) {
@@ -41,10 +44,17 @@ class ChatOptionModel {
           ? (json['prompts'] as List<dynamic>)
               .map((p) => PromptModel.fromJson(p as Map<String, dynamic>))
               .toList()
-          : getPromptsbyId((json['promptId'] as List<dynamic>?)
-                  ?.map((e) => e as int)
-                  .toList() ??
-              []), // 版本迁移用
+          : getPromptsbyId(
+              (json['promptId'] as List<dynamic>?)
+                      ?.map((e) => e as int)
+                      .toList() ??
+                  [],
+            ), // 版本迁移用
+
+      regex: (json['regex'] as List<dynamic>?)
+              ?.map((e) => RegexModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -55,6 +65,7 @@ class ChatOptionModel {
         'requestOptions': requestOptions.toJson()
           ..addAll({'max_history_length': requestOptions.maxHistoryLength}),
         'prompts': prompts.map((p) => p.toJson()).toList(),
+        'regex': regex.map((r) => r.toJson()).toList(),
       };
 
   ChatOptionModel copyWith(
@@ -64,6 +75,7 @@ class ChatOptionModel {
     String? messageTemplate,
     LLMRequestOptions? requestOptions,
     List<PromptModel>? prompts,
+    List<RegexModel>? regexs,
   }) {
     return ChatOptionModel(
       id: id ?? this.id,
@@ -73,7 +85,8 @@ class ChatOptionModel {
           (isDeep ? this.requestOptions.copyWith() : this.requestOptions),
       prompts: prompts ??
           (isDeep ? this.prompts.map((p) => p.copy()).toList() : this.prompts),
-      //promptId: prompts?.map((p) => p.id).toList() ?? this.promptId,
+      regex: regexs ??
+          (isDeep ? this.regex.map((r) => r.copyWith()).toList() : this.regex),
     );
   }
 
@@ -135,6 +148,7 @@ class ChatOptionModel {
               isChatHistory: true),
           PromptModel(
               id: id + 2, content: userMessage, role: 'user', name: '用户输入')
-        ]);
+        ],
+        regex: []);
   }
 }

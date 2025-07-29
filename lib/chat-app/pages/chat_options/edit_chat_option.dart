@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
+import 'package:flutter_example/chat-app/widgets/prompt/regex_list_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_option_model.dart';
 import '../../models/prompt_model.dart';
@@ -24,6 +26,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
 
   late LLMRequestOptions _requestOptions;
   late List<PromptModel> _prompts;
+  late List<RegexModel> _regexs;
   bool isEditing = false;
 
   @override
@@ -37,6 +40,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
     _requestOptions = widget.option?.requestOptions ??
         defaultOption.requestOptions;
     _prompts = widget.option?.prompts ?? defaultOption.prompts;
+    _regexs = widget.option?.regex ?? [];
     //_promptId = widget.option?.promptId ?? [];
   }
 
@@ -58,6 +62,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text,
       requestOptions: _requestOptions,
       prompts: _prompts,
+      regex: _regexs,
     );
 
     if (isEditing) {
@@ -77,6 +82,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       name: _nameController.text+"的副本",
       requestOptions: _requestOptions.copyWith(),
       prompts: _prompts.map((ele) => ele.copy()).toList(),
+      regex: [],
     );
     _controller.addChatOption(chatOption);
     Get.back();
@@ -124,9 +130,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                     _prompts = prompts;
                   },
                 ),
-                // PromptRefEditor(initialItems: _promptId,onItemsChanged: (promptIds){
-                //   _promptId = promptIds;
-                // },),
                 const SizedBox(height: 24),
                 const Text('请求参数',
                     style:
@@ -139,6 +142,16 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                     });
                   },
                 ),
+                const SizedBox(height: 24),
+                const Text('正则表达式',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                RegexListEditor(regexList: _regexs,onChanged: (regex){
+                  setState(() {
+                    _regexs = regex;
+                  });
+                },),
+                const SizedBox(height: 64),
               ],
             ),
           ),

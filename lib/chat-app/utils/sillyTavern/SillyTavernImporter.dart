@@ -130,7 +130,8 @@ abstract class SillytavernConfigImporter {
           id: DateTime.now().microsecondsSinceEpoch,
           name: fileName,
           requestOptions: llmRequestOptions,
-          prompts: prompts);
+          prompts: prompts,
+          regex: []);
 
       ChatOptionController controller = Get.find();
       controller.addChatOption(chatOptionModel);

@@ -163,11 +163,11 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: addItem,
-        icon: const Icon(Icons.add),
-        label: const Text('添加条目'),
-      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: addItem,
+      //   icon: const Icon(Icons.add),
+      //   label: const Text('添加条目'),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -347,6 +347,8 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                   );
                 },
               ),
+              const SizedBox(height: 10,),
+              ElevatedButton.icon(onPressed: addItem,icon:  Icon(Icons.add), label: Text('新条目')),
               const SizedBox(height: 80),
             ],
           ),
