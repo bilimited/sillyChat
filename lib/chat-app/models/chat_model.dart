@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
@@ -27,6 +28,7 @@ class ChatModel {
   String time;
   int? userId;
   int? assistantId;
+  int? chatOptionId;
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
   Map<String, String> chatVars = {};
@@ -36,7 +38,9 @@ class ChatModel {
   // 会被插入到提示词中
   String? description;
 
-  late ChatOptionModel chatOption;
+  ChatOptionModel get chatOption =>
+      Get.find<ChatOptionController>().getChatOptionById(chatOptionId ?? -1) ??
+      Get.find<ChatOptionController>().defaultOption;
 
   bool get isChatNotCreated => id == -1;
 
@@ -78,7 +82,7 @@ class ChatModel {
   List<BookMarkModel> bookmarks = [];
 
   void initOptions(ChatOptionModel option) {
-    chatOption = option.copyWith(true);
+    chatOptionId = option.id;
   }
 
   ChatModel({
@@ -90,19 +94,13 @@ class ChatModel {
     required this.messages,
     this.backgroundImage,
     this.description,
-    chatOption,
+    this.chatOptionId,
     this.userId, // 新增
     this.assistantId, // 新增
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
     this.sortIndex = 0,
   }) {
-    //this._prompts = prompts ?? [];
-    if (chatOption != null) {
-      this.chatOption = chatOption;
-    } else {
-      this.chatOption = ChatOptionModel.empty();
-    }
   }
 
   List<String> getAllAvatars(CharacterController controller) {
@@ -122,14 +120,14 @@ class ChatModel {
 
   factory ChatModel.fromJson(Map<String, dynamic> json) {
     // 版本迁移
-    final requestOptions = json['requestOptions'] != null
-        ? LLMRequestOptions.fromJson(json['requestOptions'])
-        : null;
-    final prompts = (json['prompts'] as List?)
-        ?.map((e) => PromptModel.fromJson(e))
-        .toList();
+    // final requestOptions = json['requestOptions'] != null
+    //     ? LLMRequestOptions.fromJson(json['requestOptions'])
+    //     : null;
+    // final prompts = (json['prompts'] as List?)
+    //     ?.map((e) => PromptModel.fromJson(e))
+    //     .toList();
     return ChatModel(
-      id:  json['id'] ?? -1,
+      id: json['id'] ?? -1,
       name: json['name'],
       avatar: json['avatar'],
       backgroundImage: json['backgroundImage'],
@@ -140,16 +138,7 @@ class ChatModel {
               ?.map((e) => MessageModel.fromJson(e))
               .toList() ??
           [],
-      chatOption: json['chatOption'] != null
-          ? ChatOptionModel.fromJson(json['chatOption'])
-          : (requestOptions != null && prompts != null)
-              ? ChatOptionModel(
-                  id: 0,
-                  name: '从旧版本导入的预设',
-                  requestOptions: requestOptions,
-                  prompts: prompts,
-                  regex: [])
-              : ChatOptionModel.empty(),
+      chatOptionId: (json['chatOption']?['id']) ?? json['chatOptionId'], // 版本迁移
       userId: json['userId'], // 新增
       assistantId: json['assistantId'], // 新增
       messageTemplate: json['messageTemplate'] ?? "{{msg}}", // 新增：反序列化
@@ -185,7 +174,7 @@ class ChatModel {
         'description': description,
         'characterIds': characterIds,
         'messages': messages.map((msg) => msg.toJson()).toList(),
-        'chatOption': chatOption.toJson(),
+        'chatOptionId': chatOptionId, //chatOption.toJson(),
 
         'userId': userId, // 新增
         'assistantId': assistantId, // 新增
@@ -208,7 +197,7 @@ class ChatModel {
     String? description,
     List<int>? characterIds,
     List<MessageModel>? messages,
-    ChatOptionModel? chatOptions,
+    int? chatOptionId,
     int? userId,
     int? assistantId,
     ChatMode? mode,
@@ -234,7 +223,7 @@ class ChatModel {
       assistantId: assistantId ?? this.assistantId,
       mode: mode ?? this.mode,
       messageTemplate: messageTemplate ?? this.messageTemplate,
-      chatOption: chatOptions ?? this.chatOption,
+      chatOptionId: chatOptionId ?? this.chatOptionId,
       sortIndex: sortIndex ?? this.sortIndex,
     )
       ..bookmarks = bookmarks ?? this.bookmarks
@@ -255,7 +244,7 @@ class ChatModel {
     String? description,
     List<int>? characterIds,
     List<MessageModel>? messages,
-    ChatOptionModel? chatOptions,
+    int? chatOptionId,
     int? userId,
     int? assistantId,
     ChatMode? mode,
@@ -279,7 +268,7 @@ class ChatModel {
       assistantId: assistantId ?? this.assistantId,
       mode: mode ?? this.mode,
       messageTemplate: messageTemplate ?? this.messageTemplate,
-      chatOption: chatOptions ?? this.chatOption.copyWith(true),
+      chatOptionId: chatOptionId ?? this.chatOptionId,
       sortIndex: sortIndex ?? this.sortIndex,
     )
       ..tags = tags ?? [...this.tags]
