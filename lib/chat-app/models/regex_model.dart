@@ -1,3 +1,6 @@
+import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/message_model.dart';
+
 class RegexModel {
   int id;
   String name;
@@ -8,7 +11,7 @@ class RegexModel {
 
   bool onRender = false; // 在渲染时应用正则
   bool onRequest = false; // 在向AI发送请求时应用正则（对应ST仅格式提示词）
-  bool onResponse = false; // 在收到AI消息时应用正则，会影响消息记录
+  bool onAddMessage = false; // 在添加消息时应用正则，会影响消息记录
 
   bool scopeUser = false;
   bool scopeAssistant = false; // 作用域：应用于AI消息还是用户消息
@@ -25,7 +28,7 @@ class RegexModel {
     this.enabled = true,
     this.onRender = false,
     this.onRequest = false,
-    this.onResponse = false,
+    this.onAddMessage = false,
     this.scopeUser = false,
     this.scopeAssistant = false,
     this.depthMin = -1,
@@ -38,12 +41,11 @@ class RegexModel {
     if (!enabled || pattern.isEmpty) return input;
 
     final trims = this.trim?.split('\n') ?? [];
-    trims.forEach((t){
-      if(t.isNotEmpty){
+    trims.forEach((t) {
+      if (t.isNotEmpty) {
         input = input.replaceAll(t, '');
       }
     });
-
 
     final regex = RegExp(pattern);
     return input.replaceAllMapped(regex, (match) {
@@ -53,6 +55,36 @@ class RegexModel {
       }
       return result;
     });
+  }
+
+
+  /// [disableDepthCalc] :无视楼层，适用于新消息
+  bool isAvailable(ChatModel chat, MessageModel message, {
+    bool disableDepthCalc = false,
+  }) {
+    if (!enabled) {
+      return false;
+    }
+    if (!scopeUser && !message.isAssistant) {
+      return false;
+    }
+    if (!scopeAssistant && message.isAssistant) {
+      return false;
+    }
+
+    if (!disableDepthCalc) {
+      int index = chat.messages.indexOf(message);
+      if (index < 0) {
+        return false;
+      } else {
+        int position = chat.messages.length - index - 1;
+        if (position < depthMin || position > depthMax) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   // JSON serialization
@@ -66,7 +98,7 @@ class RegexModel {
       'enabled': enabled,
       'onRender': onRender,
       'onRequest': onRequest,
-      'onResponse': onResponse,
+      'onResponse': onAddMessage,
       'scopeUser': scopeUser,
       'scopeAssistant': scopeAssistant,
       'depthMin': depthMin,
@@ -85,7 +117,7 @@ class RegexModel {
       enabled: json['enabled'] as bool? ?? true,
       onRender: json['onRender'] as bool? ?? false,
       onRequest: json['onRequest'] as bool? ?? false,
-      onResponse: json['onResponse'] as bool? ?? false,
+      onAddMessage: json['onResponse'] as bool? ?? false,
       scopeUser: json['scopeUser'] as bool? ?? false,
       scopeAssistant: json['scopeAssistant'] as bool? ?? false,
       depthMin: json['depthMin'] as int? ?? -1,
@@ -118,7 +150,7 @@ class RegexModel {
       enabled: enabled ?? this.enabled,
       onRender: onRender ?? this.onRender,
       onRequest: onRequest ?? this.onRequest,
-      onResponse: onResponse ?? this.onResponse,
+      onAddMessage: onResponse ?? this.onAddMessage,
       scopeUser: scopeUser ?? this.scopeUser,
       scopeAssistant: scopeAssistant ?? this.scopeAssistant,
       depthMin: depthMin ?? this.depthMin,

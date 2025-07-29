@@ -21,19 +21,6 @@ class ChatListItem extends StatelessWidget {
   ChatListItem({Key? key, required this.chatId, this.onSelectChat})
       : super(key: key);
 
-  String _getModeText(ChatMode? mode) {
-    switch (mode) {
-      case ChatMode.auto:
-        return '单聊';
-      case ChatMode.group:
-        return '群聊';
-      case ChatMode.manual:
-        return '手动';
-      default:
-        return '单聊';
-    }
-  }
-
   String _formatTime(String time) {
     final dateTime = DateTime.parse(time);
     final now = DateTime.now();
@@ -116,7 +103,7 @@ class ChatListItem extends StatelessWidget {
                                     padding: EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceVariant,
+                                      color: theme.colorScheme.surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -163,7 +150,7 @@ class ChatListItem extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

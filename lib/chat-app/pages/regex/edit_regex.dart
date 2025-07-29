@@ -186,7 +186,7 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
                 title: const Text('在发送请求时应用',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                subtitle: const Text('在用户消息发送到AI前进行处理'),
+                subtitle: const Text('在消息记录发送到AI前处理,仅处理消息正文部分'),
                 value: _currentRegexModel.onRequest,
                 onChanged: (bool? value) {
                   if (value != null) {
@@ -201,11 +201,11 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
               ),
               CheckboxListTile(
                 dense: true,
-                title: const Text('在收到响应时应用',
+                title: const Text('在添加消息时应用',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                subtitle: const Text('在AI响应到达后进行处理'),
-                value: _currentRegexModel.onResponse,
+                subtitle: const Text('在消息添加进入聊天记录时应用正则'),
+                value: _currentRegexModel.onAddMessage,
                 onChanged: (bool? value) {
                   if (value != null) {
                     setState(() {
@@ -354,6 +354,7 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
       // Handle the "无限" (infinite) logic for -1 values
       // If the slider is at its min (0) or max (10) and the original value was -1, keep it -1.
       // Otherwise, use the slider's integer value.
+      // TODO:深度有点问题，不支持无限深度。
       if (_depthRangeValues.start.toInt() == 0 &&
           widget.regexModel?.depthMin == -1) {
         _currentRegexModel = _currentRegexModel.copyWith(depthMin: -1);

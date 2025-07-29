@@ -661,8 +661,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
       {int index = 0}) {
     final character = _characterController.getCharacterById(message.sender);
-    final isMe = chat.user.id == message.sender;
-    final isSelected = _selectedMessage?.time == message.time;
+    final isMe = displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
+        ? false
+        : chat.user.id == message.sender;
+    final isSelected = _selectedMessage == message;
+    final regexs = chat.regexs;
 
     final isHideName =
         lastMessage != null && lastMessage.sender == message.sender;
@@ -691,7 +694,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     }
 
     // 优化显示
-    afterThink = afterThink.replaceAll('~', '〜');
+    // afterThink = afterThink.replaceAll('~', '〜');
+    for (final regex in regexs
+        .where((reg) => reg.onRender)
+        .where((reg) => reg.isAvailable(chat, message))) {
+      afterThink = regex.process(afterThink);
+    }
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1431,13 +1439,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           index: index,
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut);
-  }
-
-  void _scrollToTop() {
-    _scrollController.scrollTo(
-        index: chat.messages.length - 1,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut);
   }
 
   PreferredSizeWidget? _buildAppBar() {

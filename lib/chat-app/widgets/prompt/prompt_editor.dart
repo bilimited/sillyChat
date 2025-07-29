@@ -47,26 +47,6 @@ class _PromptEditorState extends State<PromptEditor> {
     });
   }
 
-  Future<void> _replacePrompt(int index) async {
-    final int? selected = await customNavigate(
-        PromptManagerPage(isSelector: true),
-        context: context);
-    if (selected == null) return;
-
-    final selectedPrompt = _promptController.getPromptById(selected);
-    if (selectedPrompt != null) {
-      setState(() {
-        widget.prompts[index] = PromptModel(
-          id: DateTime.now().millisecondsSinceEpoch,
-          content: selectedPrompt.content,
-          role: selectedPrompt.role,
-          name: selectedPrompt.name,
-        );
-        _updatePrompts();
-      });
-    }
-  }
-
   Widget _buildChatHistoryCard(PromptModel prompt, int index) {
     final colors = Theme.of(context).colorScheme;
 
@@ -98,7 +78,6 @@ class _PromptEditorState extends State<PromptEditor> {
                     _updatePrompts();
                   });
                 },
-                activeColor: Theme.of(context).colorScheme.primary,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
@@ -189,7 +168,7 @@ class _PromptEditorState extends State<PromptEditor> {
                     _updatePrompts();
                   });
                 },
-                activeColor: Theme.of(context).colorScheme.primary,
+                // activeColor: Theme.of(context).colorScheme.primary,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),

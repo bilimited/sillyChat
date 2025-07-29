@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
-import 'package:get/get.dart';
 import 'package:flutter_json_view/flutter_json_view.dart'; // 引入JSON视图库
 
 class LogDetailPage extends StatelessWidget {

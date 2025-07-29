@@ -38,10 +38,6 @@ class _EditChatPageState extends State<EditChatPage>
     _tabController = TabController(length: 3, vsync: this);
   }
 
-  void _onOptionsDirty() {
-    setState(() {});
-  }
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -219,6 +215,7 @@ class _EditChatPageState extends State<EditChatPage>
                     ],
                   )),
             ),
+
             SizedBox(height: 16),
             Card(
               child: Column(

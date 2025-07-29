@@ -1,6 +1,7 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -62,6 +63,8 @@ class ChatModel {
         .toList();
   }
 
+  List<RegexModel> get regexs => chatOption.regex;
+
   CharacterModel get assistant {
     CharacterController controller = Get.find();
     return controller.getCharacterById(assistantId ?? -1);
@@ -119,13 +122,6 @@ class ChatModel {
   }
 
   factory ChatModel.fromJson(Map<String, dynamic> json) {
-    // 版本迁移
-    // final requestOptions = json['requestOptions'] != null
-    //     ? LLMRequestOptions.fromJson(json['requestOptions'])
-    //     : null;
-    // final prompts = (json['prompts'] as List?)
-    //     ?.map((e) => PromptModel.fromJson(e))
-    //     .toList();
     return ChatModel(
       id: json['id'] ?? -1,
       name: json['name'],

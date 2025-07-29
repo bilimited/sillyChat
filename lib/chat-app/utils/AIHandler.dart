@@ -417,10 +417,10 @@ class Aihandler {
       } else if (currentMergedMessage['role'] == role) {
         currentPartsTexts.add(partText);
       } else {
-        currentMergedMessage!['parts'] = [
+        currentMergedMessage['parts'] = [
           {'text': currentPartsTexts.join('\n')}
         ];
-        mergedMessages.add(currentMergedMessage!);
+        mergedMessages.add(currentMergedMessage);
 
         // 开始新的合并块
         currentMergedMessage = {

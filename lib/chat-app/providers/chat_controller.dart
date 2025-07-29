@@ -172,7 +172,7 @@ class ChatController extends GetxController {
 
       currentFileId.value = maxFileId - 1;
 
-      chats.sort((chat1,chat2){
+      chats.sort((chat1, chat2) {
         return chat1.sortIndex - chat2.sortIndex;
       });
 
@@ -232,7 +232,7 @@ class ChatController extends GetxController {
   }
 
   /// 保存聊天数据到本地
-  /// 
+  ///
   /// [fileId] 要保存聊天的文件Id。所有FileId相同的聊天会保存在同一个文件里。
   Future<void> saveChats([int? fileId]) async {
     try {
@@ -325,13 +325,26 @@ class ChatController extends GetxController {
     );
   }
 
-  // 在指定聊天中添加消息
+  /// 在指定聊天中添加消息
+  /// [LastMessage] :用于设置聊天"最近消息"的内容
+  /// [useRegex] :添加消息前是否先进行正则替换
   Future<void> addMessage(
       {required int chatId,
       required MessageModel message,
-      String? lastMessage = null}) async {
+      String? lastMessage = null,
+      bool useRegex = true}) async {
     var chat = getChatById(chatId);
     if (chat != defaultChat) {
+      if (useRegex) {
+        String rawText = message.content;
+        for (final regex in chat.regexs
+            .where((reg) => reg.onAddMessage)
+            .where((reg) => reg.isAvailable(chat, message,disableDepthCalc: true))) {
+              rawText = regex.process(rawText);
+            }
+        message.content = rawText;
+      }
+
       chat.messages.add(message);
       chat.lastMessage = lastMessage != null ? lastMessage : message.content;
       chat.time = message.time.toString();

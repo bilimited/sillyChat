@@ -19,12 +19,14 @@ class ImagePacker {
   }
 
   /// 加密数据
+  // ignore: unused_element
   static Uint8List _encryptData(List<int> data) {
     final encrypted = _encrypter.encryptBytes(data, iv: _iv);
     return encrypted.bytes;
   }
 
   /// 解密数据
+  // ignore: unused_element
   static Uint8List _decryptData(List<int> data) {
     final encrypted = encrypt.Encrypted(Uint8List.fromList(data));
     return Uint8List.fromList(_encrypter.decryptBytes(encrypted, iv: _iv));

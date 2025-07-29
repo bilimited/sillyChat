@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';

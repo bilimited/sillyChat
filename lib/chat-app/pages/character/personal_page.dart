@@ -203,27 +203,6 @@ class _PersonalPageState extends State<PersonalPage>
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.grey,
-          ),
-        ),
-      ],
-    );
-  }
-
-
   Widget _buildChatsList() {
     final chats = Get.find<ChatController>().getChatsByCharacterId(character.id);
     
