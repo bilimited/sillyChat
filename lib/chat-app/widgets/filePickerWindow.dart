@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
+import 'package:get/get.dart';
 
 /// 可配置的导入参数
 class ImportParam {
@@ -19,6 +20,9 @@ class ImportParam {
 typedef OnImport = void Function(
     String fileName, String fileContent, List<String> selectedParams);
 
+/// 导入多个文件全部完成时的回调函数
+typedef OnSuccess = void Function(int fileCount, List<String> selectedParams);
+
 class FileImporter {
   final String? title;
   final String? introduction;
@@ -26,24 +30,32 @@ class FileImporter {
   final List<ImportParam> paramList;
   final List<String> allowedExtensions;
   final OnImport onImport;
+  final OnSuccess? onAllSuccess;
 
-  const FileImporter({
-    Key? key,
-    this.title,
-    this.introduction,
-    required this.paramList,
-    required this.allowedExtensions,
-    required this.onImport,
-    this.warning,
-  });
+  final bool multiple;
+
+  // 多选模式时使用此变量
+  final List<String> fileNames = [];
+  final List<String> fileContents = [];
+
+  FileImporter(
+      {Key? key,
+      this.title,
+      this.introduction,
+      required this.paramList,
+      required this.allowedExtensions,
+      required this.onImport,
+      this.warning,
+      this.multiple = false,
+      this.onAllSuccess});
 
   Future<void> pickAndProcessFile(BuildContext context) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: allowedExtensions,
-    );
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+        allowMultiple: multiple);
 
-    if (result != null && result.files.single.path != null) {
+    if (!multiple && result != null && result.files.single.path != null) {
       final String filePath = result.files.single.path!;
       final String fileName = result.files.single.name;
       final File file = File(filePath);
@@ -52,17 +64,22 @@ class FileImporter {
         final String fileContent = await file.readAsString();
         _showImportDialog(context, fileName, fileContent);
       } catch (e) {
-        // 处理文件读取错误
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error reading file: $e')),
-        );
+        Get.snackbar('文件读取错误', '$e');
       }
-    } else {
-      // 用户取消了文件选择
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File selection cancelled.')),
-      );
-    }
+    } else if (multiple && result != null) {
+      result.files.forEach((f) async {
+        try {
+          fileNames.add(f.name);
+          final file = File(f.path!);
+          final content = await file.readAsString();
+          fileContents.add(content);
+          
+        } catch (e) {
+          Get.snackbar('文件读取错误', '$e');
+        }
+      });
+      _showImportDialog(context, '', '');
+    } else {}
   }
 
   void _showImportDialog(
@@ -84,6 +101,13 @@ class FileImporter {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (!multiple)
+                      Text('已选择文件:${fileName}')
+                    else
+                      Text('已选择的文件：${fileNames.join('\n')}'),
+                    SizedBox(
+                      height: 10,
+                    ),
                     if (introduction != null) Text(introduction!),
                     if (warning != null)
                       ModernAlertCard(
@@ -119,7 +143,19 @@ class FileImporter {
                         .where((param) => param.isSelected)
                         .map((param) => param.id)
                         .toList();
-                    onImport(fileName, fileContent, selectedParamIds);
+
+                    if (!multiple) {
+                      onImport(fileName, fileContent, selectedParamIds);
+                    } else {
+                      for (int index = 0; index < fileNames.length; index++) {
+                        final name = fileNames[index];
+                        onImport(name, fileContents[index], selectedParamIds);
+                      }
+                      if (onAllSuccess != null) {
+                        onAllSuccess!(fileName.length, selectedParamIds);
+                      }
+                    }
+
                     Navigator.of(dialogContext).pop();
                   },
                 ),

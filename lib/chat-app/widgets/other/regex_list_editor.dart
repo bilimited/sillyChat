@@ -200,21 +200,28 @@ class _RegexListEditorState extends State<RegexListEditor> {
             ),
             ElevatedButton.icon(
               onPressed: () {
+                int startId = DateTime.now().microsecondsSinceEpoch;
+                int id = 0;
                 FileImporter(
                   title: '导入正则',
-                  warning: '请注意:本应用仍在开发中，未实现SillyTavern的部分功能，导入后部分字段可能会丢失。因此，正则表达式行为可能与在 SillyTavern 中的表现有所不同。',
+                  warning:
+                      '请注意:本应用仍在开发中，未实现SillyTavern的部分功能，导入后部分字段可能会丢失。因此，正则表达式行为可能与在 SillyTavern 中的表现有所不同。',
                   paramList: [],
                   allowedExtensions: ['json'],
+                  multiple: true,
                   onImport: (fileName, fileContent, selectedParams) {
                     final regex = STRegexImporter.fromJson(
-                        json.decode(fileContent), fileName);
-                    if(regex != null){
+                        json.decode(fileContent), fileName, id: startId + id);
+                    id ++;
+                    if (regex != null) {
                       setState(() {
                         widget.regexList.add(regex);
                       });
-                      _onChanged();
-                      Get.snackbar('导入成功', '已导入正则：$fileName');
                     }
+                  },
+                  onAllSuccess: (fileCount, selectedParams) {
+                    _onChanged();
+                    Get.snackbar('导入成功', '已导入${fileCount}个正则');
                   },
                 ).pickAndProcessFile(context);
               },
