@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
-import '../../widgets/prompt/request_options_editor.dart';
+import '../../widgets/other/request_options_editor.dart';
 import '../../utils/entitys/RequestOptions.dart';
 
 class GenCharacterPromptPage extends StatefulWidget {

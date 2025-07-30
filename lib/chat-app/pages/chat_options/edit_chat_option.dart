@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
-import 'package:flutter_example/chat-app/widgets/prompt/prompt_editor.dart';
-import 'package:flutter_example/chat-app/widgets/prompt/regex_list_editor.dart';
+import 'package:flutter_example/chat-app/widgets/other/prompt_editor.dart';
+import 'package:flutter_example/chat-app/widgets/other/regex_list_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_option_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/chat_option_controller.dart';
 import '../../utils/entitys/RequestOptions.dart';
-import '../../widgets/prompt/request_options_editor.dart';
+import '../../widgets/other/request_options_editor.dart';
 
 class EditChatOptionPage extends StatefulWidget {
   final ChatOptionModel? option;

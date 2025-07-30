@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
@@ -63,7 +64,9 @@ class ChatModel {
         .toList();
   }
 
-  List<RegexModel> get regexs => chatOption.regex;
+  /// 包括聊天配置的正则和全局正则
+  List<RegexModel> get vaildRegexs =>
+      [...Get.find<VaultSettingController>().regexes, ...chatOption.regex];
 
   CharacterModel get assistant {
     CharacterController controller = Get.find();
@@ -103,8 +106,7 @@ class ChatModel {
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
     this.sortIndex = 0,
-  }) {
-  }
+  }) {}
 
   List<String> getAllAvatars(CharacterController controller) {
     return characterIds

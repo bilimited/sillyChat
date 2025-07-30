@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
+import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -239,7 +240,6 @@ class _SettingPageState extends State<SettingPage>
                   });
                   _settingController.toggleDarkMode();
                 },
-                activeColor: Theme.of(context).colorScheme.secondary,
               ),
             ),
           ),
@@ -247,30 +247,35 @@ class _SettingPageState extends State<SettingPage>
 
         // WebDAV Configuration
         Card(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: Icon(Icons.cloud_queue,
-                color: Theme.of(context).colorScheme.secondary),
-            title: Text(
-              'WebDAV 配置',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              '连接到你的WebDav网盘或服务器以同步数据。',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            onTap: _setupWebDav,
-            trailing: Icon(Icons.arrow_forward_ios,
-                size: 16, color: Colors.grey[400]),
-          ),
-        ),
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Icon(Icons.pattern,
+                      color: Theme.of(context).colorScheme.secondary),
+                  title: Text(
+                    '全局正则',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '编辑全局正则表达式',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  onTap: (){
+                    customNavigate(EditGlobalRegexPage(), context: context);
+                  },
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      size: 16, color: Colors.grey[400]),
+                ),
+              ],
+            )),
 
         // Cloud Data Management
         Card(
@@ -279,6 +284,27 @@ class _SettingPageState extends State<SettingPage>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.cloud_queue,
+                    color: Theme.of(context).colorScheme.secondary),
+                title: Text(
+                  'WebDAV 配置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '连接到你的WebDav网盘或服务器以同步数据。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: _setupWebDav,
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
               ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -324,7 +350,7 @@ class _SettingPageState extends State<SettingPage>
           ),
         ),
 
-                Card(
+        Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -344,7 +370,7 @@ class _SettingPageState extends State<SettingPage>
               '查看应用内运行日志（主要是API请求记录）',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            onTap: (){
+            onTap: () {
               customNavigate(LogPage(), context: context);
             },
             trailing: Icon(Icons.arrow_forward_ios,

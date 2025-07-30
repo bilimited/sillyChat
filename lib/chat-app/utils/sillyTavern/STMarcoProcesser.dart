@@ -16,8 +16,7 @@ class STMacroProcessor {
 
     // 2. 处理替换型宏
     // 可以循环处理，直到没有宏可以被替换，以处理宏嵌套的情况
-    int
-        loopLimit = 10; // 添加一个循环限制，防止因错误或复杂嵌套导致的无限循环
+    int loopLimit = 10; // 添加一个循环限制，防止因错误或复杂嵌套导致的无限循环
     while (loopLimit-- > 0) {
       String previousPrompt = currentPrompt;
       currentPrompt = _handleGetVar(currentPrompt, varibles);

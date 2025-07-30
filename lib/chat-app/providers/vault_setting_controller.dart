@@ -1,5 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -16,6 +17,7 @@ class VaultSettingController extends GetxController {
   final String vaultSettingFileName = 'settings.json';
 
   final RxList<ApiModel> apis = <ApiModel>[].obs;
+  final RxList<RegexModel> regexes = <RegexModel>[].obs;
   final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
   final RxInt myId = 0.obs;
   late Rx<ChatDisplaySettingModel> displaySettingModel =
@@ -73,12 +75,20 @@ class VaultSettingController extends GetxController {
         promptSettingModel.value = jsonMap['promptSettingModel'] != null
             ? PromptSettingModel.fromJson(jsonMap['promptSettingModel'])
             : PromptSettingModel();
+
+        regexes.value = jsonMap['regexes'] != null
+            ? (jsonMap['regexes'] as List<dynamic>)
+                .map((item) => RegexModel.fromJson(item))
+                .toList()
+                .cast<RegexModel>()
+            : <RegexModel>[];
       } else {
         displaySettingModel.value = ChatDisplaySettingModel();
       }
       if (displaySettingModel.value.CustomFontPath != null &&
           displaySettingModel.value.CustomFontPath!.isNotEmpty) {
-        await FontManager.initCustomFont(displaySettingModel.value.GlobalFont ?? "",
+        await FontManager.initCustomFont(
+            displaySettingModel.value.GlobalFont ?? "",
             displaySettingModel.value.CustomFontPath ?? "");
       }
 
@@ -101,6 +111,7 @@ class VaultSettingController extends GetxController {
         'vaultName': SettingController.currectValutName,
         'lastSyncTime': lastSyncTime.value?.toIso8601String(),
         'apis': apis.map((api) => api.toJson()).toList(),
+        'regexes': regexes.map((reg) => reg.toJson()).toList(),
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
         'promptSettingModel': promptSettingModel.toJson(),
@@ -122,12 +133,6 @@ class VaultSettingController extends GetxController {
         theme, fontName ?? displaySettingModel.value.GlobalFont);
     themeNight.value = SillyChatThemeBuilder.buildNight(
         theme, fontName ?? displaySettingModel.value.GlobalFont);
-    // ThemeData(
-    //   colorScheme: ColorScheme.fromSeed(
-    //       seedColor: color, brightness: Brightness.dark),
-    //   useMaterial3: true,
-    //   fontFamily: Platform.isWindows ? "思源黑体" : null,
-    // );
   }
 
   // API管理方法

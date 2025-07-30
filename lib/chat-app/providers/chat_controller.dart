@@ -337,7 +337,7 @@ class ChatController extends GetxController {
     if (chat != defaultChat) {
       if (useRegex) {
         String rawText = message.content;
-        for (final regex in chat.regexs
+        for (final regex in chat.vaildRegexs
             .where((reg) => reg.onAddMessage)
             .where((reg) => reg.isAvailable(chat, message,disableDepthCalc: true))) {
               rawText = regex.process(rawText);

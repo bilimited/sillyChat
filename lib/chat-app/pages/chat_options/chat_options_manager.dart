@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/utils/sillyTavern/SillyTavernImporter.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
 import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_option_controller.dart';
@@ -72,7 +72,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
                     paramList: [],
                     allowedExtensions: ['json'],
                     onImport: (fileName, content, params) {
-                      SillytavernConfigImporter.fromJson(
+                      STConfigImporter.fromJson(
                           json.decode(content), fileName);
                     }).pickAndProcessFile(context);
               },

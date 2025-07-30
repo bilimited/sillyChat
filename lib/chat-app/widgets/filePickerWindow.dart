@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 
 /// 可配置的导入参数
 class ImportParam {
@@ -15,11 +16,13 @@ class ImportParam {
 /// [fileName] 导入的文件名
 /// [fileContent] 导入的文件文本内容
 /// [selectedParams] 用户选择的导入参数ID列表
-typedef OnImport = void Function(String fileName, String fileContent, List<String> selectedParams);
+typedef OnImport = void Function(
+    String fileName, String fileContent, List<String> selectedParams);
 
-class FileImporter  {
+class FileImporter {
   final String? title;
-  final String introduction;
+  final String? introduction;
+  final String? warning;
   final List<ImportParam> paramList;
   final List<String> allowedExtensions;
   final OnImport onImport;
@@ -27,10 +30,11 @@ class FileImporter  {
   const FileImporter({
     Key? key,
     this.title,
-    required this.introduction,
+    this.introduction,
     required this.paramList,
     required this.allowedExtensions,
     required this.onImport,
+    this.warning,
   });
 
   Future<void> pickAndProcessFile(BuildContext context) async {
@@ -61,8 +65,12 @@ class FileImporter  {
     }
   }
 
-  void _showImportDialog(BuildContext context, String fileName, String fileContent) {
-    List<ImportParam> dialogParams = paramList.map((p) => ImportParam(id: p.id, name: p.name, isSelected: p.isSelected)).toList();
+  void _showImportDialog(
+      BuildContext context, String fileName, String fileContent) {
+    List<ImportParam> dialogParams = paramList
+        .map((p) =>
+            ImportParam(id: p.id, name: p.name, isSelected: p.isSelected))
+        .toList();
 
     showDialog(
       context: context,
@@ -76,7 +84,12 @@ class FileImporter  {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(introduction),
+                    if (introduction != null) Text(introduction!),
+                    if (warning != null)
+                      ModernAlertCard(
+                        child: Text(warning!),
+                        type: ModernAlertCardType.warning,
+                      ),
                     const SizedBox(height: 16),
                     ...dialogParams.map((param) {
                       return CheckboxListTile(
@@ -117,6 +130,4 @@ class FileImporter  {
       },
     );
   }
-
-
 }

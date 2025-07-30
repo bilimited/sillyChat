@@ -2,14 +2,15 @@
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
-abstract class SillytavernConfigImporter {
+abstract class STConfigImporter {
   /// 提示词机制：
   /// 相邻同role会合并成一条
   /// "聊天中"独立于其他提示词，按照Assistant,User,System的顺序排序。我草神经病吧
-  static void fromJson(Map<String, dynamic> json, String fileName) {
+  static void fromJson(dynamic json, String fileName) {
     String ErrMsg = '导入未开始';
     try {
       ErrMsg = '转换请求参数';
@@ -138,6 +139,7 @@ abstract class SillytavernConfigImporter {
       Get.snackbar('导入成功', '导入成功');
     } catch (e) {
       Get.snackbar('导入失败', '${ErrMsg};$e');
+      LogController.log('预设导入失败：${ErrMsg};$e;\n$json', LogLevel.error,title: '预设导入失败：${ErrMsg}');
       rethrow;
     }
   }

@@ -54,7 +54,7 @@ class Promptbuilder {
         String content = _propressMessage(msg.content, chat.requestOptions);
 
         // 处理正则
-        chat.regexs
+        chat.vaildRegexs
             .where((reg) => reg.onRequest && reg.isAvailable(chat, msg))
             .forEach((regex) {
           content = regex.process(content);

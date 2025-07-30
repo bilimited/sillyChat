@@ -665,7 +665,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         ? false
         : chat.user.id == message.sender;
     final isSelected = _selectedMessage == message;
-    final regexs = chat.regexs;
+    final regexs = chat.vaildRegexs;
 
     final isHideName =
         lastMessage != null && lastMessage.sender == message.sender;

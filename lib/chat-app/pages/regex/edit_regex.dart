@@ -19,6 +19,8 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
 
   String testText = '';
 
+  static const int MAX_DEPTH = 31; // TODO:有些预设的MaxDepth很大。方案：Segmented Control
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +39,7 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
           ? 0.0 // Default min for slider if -1 (infinite)
           : _currentRegexModel.depthMin.toDouble(),
       _currentRegexModel.depthMax.toDouble() == -1
-          ? 10.0 // Default max for slider if -1 (infinite), adjust as needed
+          ? (MAX_DEPTH as num).toDouble() // Default max for slider if -1 (infinite), adjust as needed
           : _currentRegexModel.depthMax.toDouble(),
     );
   }
@@ -46,7 +48,7 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
   Widget build(BuildContext context) {
     // Define a maximum value for your slider. Adjust this based on your needs.
     // For example, if depth can realistically go up to 10 or 20.
-    const double maxDepthSliderValue = 10.0; // Example max depth for slider
+    final double maxDepthSliderValue = (MAX_DEPTH as num).toDouble(); // Example max depth for slider
 
     return Scaffold(
       appBar: AppBar(
@@ -89,7 +91,7 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
                 initialValue: _currentRegexModel.pattern,
                 decoration: const InputDecoration(
                   labelText: '正则表达式',
-                  hintText: '输入正则表达式模式',
+                  hintText: '输入正则表达式（兼容js风格正则）',
                   alignLabelWithHint: true,
                   prefixIcon: Icon(Icons.pattern),
                 ),
@@ -341,36 +343,12 @@ class _RegexEditScreenState extends State<RegexEditScreen> {
 
       // Update _currentRegexModel with the values from the RangeSlider
       _currentRegexModel = _currentRegexModel.copyWith(
-        depthMin: _depthRangeValues.start.toInt() == 0 &&
-                widget.regexModel?.depthMin == -1
-            ? -1 // Preserve -1 if it was originally -1 and slider is at 0
-            : _depthRangeValues.start.toInt(),
-        depthMax: _depthRangeValues.end.toInt() == 10 &&
-                widget.regexModel?.depthMax == -1
+        depthMin: _depthRangeValues.start.toInt(),
+        depthMax: _depthRangeValues.end.toInt() == MAX_DEPTH
+        // && widget.regexModel?.depthMax == -1
             ? -1 // Preserve -1 if it was originally -1 and slider is at max
             : _depthRangeValues.end.toInt(),
       );
-
-      // Handle the "无限" (infinite) logic for -1 values
-      // If the slider is at its min (0) or max (10) and the original value was -1, keep it -1.
-      // Otherwise, use the slider's integer value.
-      // TODO:深度有点问题，不支持无限深度。
-      if (_depthRangeValues.start.toInt() == 0 &&
-          widget.regexModel?.depthMin == -1) {
-        _currentRegexModel = _currentRegexModel.copyWith(depthMin: -1);
-      } else {
-        _currentRegexModel = _currentRegexModel.copyWith(
-            depthMin: _depthRangeValues.start.toInt());
-      }
-
-      const double maxDepthSliderValue = 10.0;
-      if (_depthRangeValues.end.toInt() == maxDepthSliderValue.toInt() &&
-          widget.regexModel?.depthMax == -1) {
-        _currentRegexModel = _currentRegexModel.copyWith(depthMax: -1);
-      } else {
-        _currentRegexModel = _currentRegexModel.copyWith(
-            depthMax: _depthRangeValues.end.toInt());
-      }
 
       // Return the updated model
       Navigator.of(context).pop(_currentRegexModel);

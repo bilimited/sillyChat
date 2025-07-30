@@ -16,7 +16,7 @@ class RegexModel {
   bool scopeUser = false;
   bool scopeAssistant = false; // 作用域：应用于AI消息还是用户消息
 
-  int depthMin = -1;
+  int depthMin = 0;
   int depthMax = -1; // 作用范围，-1代表无限
 
   RegexModel({
@@ -46,20 +46,21 @@ class RegexModel {
         input = input.replaceAll(t, '');
       }
     });
-
-    final regex = RegExp(pattern);
-    return input.replaceAllMapped(regex, (match) {
-      String result = replacement;
-      for (int i = 1; i < match.groupCount + 1; i++) {
-        result = result.replaceAll('\$$i', match.group(i) ?? '');
-      }
-      return result;
-    });
+    return replaceJsRegex(pattern, input, replacement);
+    // final regex = RegExp(pattern);
+    // return input.replaceAllMapped(regex, (match) {
+    //   String result = replacement;
+    //   for (int i = 1; i < match.groupCount + 1; i++) {
+    //     result = result.replaceAll('\$$i', match.group(i) ?? '');
+    //   }
+    //   return result;
+    // });
   }
 
-
   /// [disableDepthCalc] :无视楼层，适用于新消息
-  bool isAvailable(ChatModel chat, MessageModel message, {
+  bool isAvailable(
+    ChatModel chat,
+    MessageModel message, {
     bool disableDepthCalc = false,
   }) {
     if (!enabled) {
@@ -76,15 +77,104 @@ class RegexModel {
       int index = chat.messages.indexOf(message);
       if (index < 0) {
         return false;
-      } else {
-        int position = chat.messages.length - index - 1;
-        if (position < depthMin || position > depthMax) {
-          return false;
-        }
+      }
+      int position = chat.messages.length - index - 1;
+      if (position < depthMin) {
+        return false;
+      } else if (depthMax != -1 && position > depthMax) {
+        return false;
       }
     }
 
     return true;
+  }
+
+  /// 将 JavaScript 风格的正则表达式应用于输入字符串进行替换。
+  ///
+  /// 该方法会解析 JS 正则表达式字符串中的修饰符 (flags)，
+  /// 并将其转换为 Dart 的 RegExp 识别的形式。
+  /// 然后，它使用解析后的正则表达式对 [input] 字符串进行查找和替换。
+  /// 替换字符串 [replacement] 可以包含 $1, $2 等捕获组引用。
+  ///
+  /// 参数:
+  /// - [jsRegexString]: JavaScript 风格的正则表达式字符串，例如 "/pattern/gi" 或 "pattern"。
+  /// - [input]: 要进行正则替换的原始字符串。
+  /// - [replacement]: 替换字符串，可以使用 $1, $2 等引用捕获组。
+  ///
+  /// 返回:
+  /// 替换后的字符串。
+  String replaceJsRegex(
+    String jsRegexString,
+    String input,
+    String replacement,
+  ) {
+    String pattern;
+    bool caseSensitive = true; // 默认 Dart RegExp 是区分大小写的
+    bool multiLine = false; // 默认 Dart RegExp 不支持多行模式
+    bool dotAll = false; // 默认 Dart RegExp 的 '.' 不匹配换行符
+    bool isGlobal = false; // 判断 JS 正则是否有 'g' flag
+
+    // 1. 解析 JavaScript 正则表达式字符串和 flags
+    if (jsRegexString.startsWith('/') && jsRegexString.lastIndexOf('/') > 0) {
+      int lastSlashIndex = jsRegexString.lastIndexOf('/');
+      String regexBody = jsRegexString.substring(1, lastSlashIndex);
+      String flags = jsRegexString.substring(lastSlashIndex + 1);
+
+      pattern = regexBody;
+
+      if (flags.contains('i')) {
+        caseSensitive = false;
+      }
+      if (flags.contains('m')) {
+        multiLine = true;
+      }
+      if (flags.contains('s')) {
+        dotAll = true;
+      }
+      if (flags.contains('g')) {
+        isGlobal = true; // 标记有 'g' flag，表示需要全局替换
+      }
+    } else {
+      // 如果不是 /pattern/flags 形式，则整个字符串就是 pattern，所有 flags 为默认值
+      pattern = jsRegexString;
+    }
+
+    // 2. 创建 Dart RegExp 对象
+    final RegExp regex = RegExp(
+      pattern,
+      caseSensitive: caseSensitive,
+      multiLine: multiLine,
+      dotAll: dotAll,
+    );
+
+    // 3. 执行替换逻辑
+    if (isGlobal) {
+      // 如果有 'g' flag，使用 replaceAllMapped 模拟全局替换并处理捕获组
+      return input.replaceAllMapped(regex, (match) {
+        String result = replacement;
+        // 遍历所有捕获组，替换 $1, $2 等
+        for (int i = 1; i <= match.groupCount; i++) {
+          // match.group(i) 可能为 null (如果捕获组没有匹配到)
+          result = result.replaceAll('\$$i', match.group(i) ?? '');
+        }
+        return result;
+      });
+    } else {
+      // 如果没有 'g' flag，只替换第一个匹配项
+      final match = regex.firstMatch(input);
+      if (match == null) {
+        return input; // 没有匹配项，返回原字符串
+      }
+
+      String result = replacement;
+      // 遍历所有捕获组，替换 $1, $2 等
+      for (int i = 1; i <= match.groupCount; i++) {
+        result = result.replaceAll('\$$i', match.group(i) ?? '');
+      }
+
+      // 找到第一个匹配项的起始和结束索引，然后构建新字符串
+      return input.replaceRange(match.start, match.end, result);
+    }
   }
 
   // JSON serialization
