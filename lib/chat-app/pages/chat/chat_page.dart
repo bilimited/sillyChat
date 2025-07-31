@@ -110,9 +110,7 @@ class _ChatPageState extends State<ChatPage> {
           // 4. 将排序完成的倒序列表再次反转，得到正确的底层存储顺序
           // 5. 中文注释: 使用 assignAll 方法来原子性地更新整个列表, 以确保 GetX 能够正确地响应状态变化。
           chatController.chats.assignAll(reversedList.reversed);
-          for(int i = 0;i<chatController.chats.length;i++){
-            chatController.chats[i].sortIndex = i;
-          }
+          chatController.regenerateChatSortIndex();
         });
       },
     );

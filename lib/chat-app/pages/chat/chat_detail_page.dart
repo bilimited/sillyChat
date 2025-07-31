@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
-import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
@@ -11,15 +10,13 @@ import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
+import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat.dart';
-import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/main.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../models/message_model.dart';
 import '../../models/chat_model.dart';
@@ -428,460 +425,28 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     _chatController.updateMessage(chat.id, message.time, message);
   }
 
-  void _showPhotoView(BuildContext context, String imagePath) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.all(0),
-        child: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: PhotoView(
-              imageProvider: FileImage(File(imagePath)),
-              backgroundDecoration: BoxDecoration(color: Colors.black),
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.covered * 2.0,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageImage(MessageModel message) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: message.resPath.length == 1
-          ? Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(message.resPath.first),
-                    fit: BoxFit.contain,
-                    height: 250, // 限制图片高度
-                  ),
-                ),
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: GestureDetector(
-                    onTap: () => _showPhotoView(context, message.resPath.first),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.zoom_in,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        message.resPath.removeAt(0);
-                        _updateChat();
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: message.resPath.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final path = entry.value;
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(path),
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: () => _showPhotoView(context, path),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: const Icon(
-                            Icons.zoom_in,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            message.resPath.removeAt(idx);
-                            _updateChat();
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
-    );
-  }
-
-  // 若character为空则不显示发言者名称
-  Widget _buildMessageUserName(
-      MessageModel message, CharacterModel? character, bool isMe,
-      {int index = 0}) {
-    bool isNarration = character == null;
-
-    bool shouldDisplayRoleName =
-        (displaySetting.displayAssistantName && !isMe) ||
-            (displaySetting.displayUserName && isMe);
-
-    final widgets = [
-      if (!isNarration && shouldDisplayRoleName) ...[
-        Text(
-          character.roleName,
-          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
-        ),
-        const SizedBox(width: 8)
-      ],
-      if (displaySetting.displayMessageIndex)
-        Text(
-          '#${chat.messages.length - index}',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
-          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
-        ),
-      if (displaySetting.displayMessageDate)
-        Text(
-          ' ${message.time.toIso8601String()} ',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
-          textScaler: TextScaler.linear(displaySetting.ContentFontScale),
-        ),
-      // BookMark icon (blue)
-      if (message.bookmark != null)
-        const Icon(Icons.bookmark, color: Colors.blue, size: 16),
-      // Pin icon (orange)
-      if (message.isPinned)
-        const Icon(Icons.push_pin, color: Colors.orange, size: 16),
-      if (message.isHidden)
-        const Icon(Icons.visibility_off, color: Colors.blueGrey, size: 16),
-    ];
-
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: isMe ? widgets.reversed.toList() : widgets,
-        ),
-        if (widgets.isNotEmpty)
-          SizedBox(
-            height: 4,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildMessageAvatar(CharacterModel character) {
-    switch (displaySetting.avatarStyle) {
-      case AvatarStyle.circle:
-        return CircleAvatar(
-          backgroundImage: Image.file(File(character.avatar)).image,
-          radius: avatarRadius,
-        );
-      case AvatarStyle.rounded:
-        return ClipRRect(
-          borderRadius:
-              BorderRadius.circular(displaySetting.AvatarBorderRadius),
-          child: Image.file(
-            File(character.avatar),
-            width: avatarRadius * 2,
-            height: avatarRadius * 2,
-            fit: BoxFit.cover,
-          ),
-        );
-      case AvatarStyle.hidden:
-        return SizedBox.shrink();
-      default:
-        return CircleAvatar(
-          backgroundImage: Image.file(File(character.avatar)).image,
-          radius: avatarRadius,
-        );
-    }
-  }
-
   // 消息气泡
   Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
-      {int index = 0}) {
-    final character = _characterController.getCharacterById(message.sender);
-    final isMe = displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
-        ? false
-        : chat.user.id == message.sender;
-    final isSelected = _selectedMessage == message;
-    final regexs = chat.vaildRegexs;
-
-    final isHideName =
-        lastMessage != null && lastMessage.sender == message.sender;
-
-    String thinkContent = '';
-    String afterThink = '';
-    bool isThinking = false;
-
-    // 内置正则：渲染<think>
-    if (message.content.contains('<think>')) {
-      int startIndex = message.content.indexOf('<think>') + 7;
-      int endIndex = message.content.indexOf('</think>');
-
-      if (endIndex == -1) {
-        // Only has opening <think>
-        thinkContent = message.content.substring(startIndex);
-        afterThink = '';
-        isThinking = true;
-      } else {
-        // Has both <think> and </think>
-        thinkContent = message.content.substring(startIndex, endIndex);
-        afterThink = message.content.substring(endIndex + 8);
-      }
-    } else {
-      afterThink = message.content;
-    }
-
-    // 优化显示
-    // afterThink = afterThink.replaceAll('~', '〜');
-    for (final regex in regexs
-        .where((reg) => reg.onRender)
-        .where((reg) => reg.isAvailable(chat, message))) {
-      afterThink = regex.process(afterThink);
-    }
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        setState(() {
-          if (_isMultiSelecting) {
-            _onMultiSelectMessage(message);
-            return;
-          }
-          _selectedMessage =
-              _selectedMessage?.time == message.time ? null : message;
-        });
-      },
-      onLongPress: () => _startMultiSelect(message),
-      // onLongPress: () => _showMessageOptions(message),
-      child: Padding(
-        padding: isHideName
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 3)
-            : const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 4),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment:
-                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isMe && !isHideName) ...[
-                  _buildMessageAvatar(character),
-                  const SizedBox(width: 10),
-                ],
-
-                // 用于让连续消息对齐
-                if (!isMe && isHideName)
-                  SizedBox(
-                    width: avatarRadius * 2 + 10,
-                  ),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: isMe
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      if (!isHideName)
-                        _buildMessageUserName(message, character, isMe,
-                            index: index),
-
-                      if (thinkContent.isNotEmpty)
-                        //思考过程块
-                        ThinkWidget(
-                            isThinking: isThinking, thinkContent: thinkContent),
-                      // 主消息气泡
-                      _buildMessageBubbleBody(message, afterThink, isMe),
-                      SizedBox(height: 8.0),
-                      _buildMessageButtonGroup(isSelected, message),
-                    ],
-                  ),
-                ),
-
-                if (isMe && !isHideName) ...[
-                  const SizedBox(width: 10),
-                  _buildMessageAvatar(character),
-                ],
-                if (isMe && isHideName)
-                  SizedBox(
-                    width: avatarRadius * 2 + 10,
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageBubbleBody(
-      MessageModel message, String content, bool isMe) {
-    final colors = Theme.of(context).colorScheme;
-
-    final textColor =
-        displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
-            ? (isMe ? colors.onPrimary : colors.onSurfaceVariant)
-            : colors.onSurfaceVariant;
-
-    final isLoading = message.id == -9999;
-
-    // 消息气泡里面的
-    final messageContent = content.isEmpty
-        // 消息为空显示转圈圈
-        ? Container(
-            constraints: const BoxConstraints(maxWidth: 200),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  chat.aiState.GenerateState,
-                  style: TextStyle(color: colors.outline),
-                )
-              ],
-            ),
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message.resPath.isNotEmpty) _buildMessageImage(message),
-              MarkdownBody(
-                data: content,
-                styleSheet: MarkdownStyleSheet(
-                  p: TextStyle(
-                    color: textColor,
-                  ),
-                  em: TextStyle(
-                    color: isMe ? textColor : colors.outline,
-                  ),
-                  horizontalRuleDecoration: BoxDecoration(
-                    border: Border.all(width: 1, color: colors.outlineVariant),
-                  ),
-                  textScaler:
-                      TextScaler.linear(displaySetting.ContentFontScale),
-                ),
-                softLineBreak: true,
-                shrinkWrap: true,
-                inlineSyntaxes: [],
-                // selectable: true,
-              ),
-            ],
-          );
-
-    // 气泡本身
-    final bubble =
-        displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
-            ? Container(
-                decoration: BoxDecoration(
-                  color: isMe
-                      ? colors.primary
-                      : isDesktop
-                          ? colors.surface
-                          : colors.surfaceContainer,
-                  borderRadius: BorderRadius.circular(
-                      displaySetting.MessageBubbleBorderRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(12),
-                child: messageContent)
-            : displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
-                ? Column(
-                    children: [
-                      messageContent,
-                      SizedBox(
-                        height: 16,
-                      )
-                    ],
-                  )
-                : messageContent;
-
-    // 气泡外的动画效果、加载条
-    return AnimatedSize(
-      alignment: Alignment.topLeft,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      child: Stack(
-        children: [
-          bubble,
-          if (isLoading)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0, // 假设一个ProgressIndicator的高度
-              child: const LinearProgressIndicator(
-                backgroundColor: Colors.transparent,
-              ),
-            ),
-        ],
-      ),
-    );
+      {int index = 0, bool isNarration = false}) {
+    return MessageBubble(
+        chat: chat,
+        message: message,
+        isSelected: _selectedMessage == message,
+        onTap: () {
+          setState(() {
+            if (_isMultiSelecting) {
+              _onMultiSelectMessage(message);
+              return;
+            }
+            _selectedMessage =
+                _selectedMessage?.time == message.time ? null : message;
+          });
+        },
+        isNarration: isNarration,
+        index: index,
+        onLongPress: () => _startMultiSelect(message),
+        buildBottomButtons: _buildMessageButtonGroup,
+        onUpdateChat: _updateChat);
   }
 
   // 消息操作按钮小组件
@@ -928,96 +493,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           );
   }
 
-  Widget _buildNarration(MessageModel message, {int index = 0}) {
-    final colors = Theme.of(context).colorScheme;
-    final isSelected = _selectedMessage?.time == message.time;
-    return GestureDetector(
-      onLongPress: () => _startMultiSelect(message),
-      onTap: () {
-        setState(() {
-          if (_isMultiSelecting) {
-            _onMultiSelectMessage(message);
-            return;
-          }
-          _selectedMessage =
-              _selectedMessage?.time == message.time ? null : message;
-        });
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 40),
-        child: Center(
-            child: Column(
-          children: [
-            SizedBox(
-              height: 16,
-            ),
-            if (message.resPath.isNotEmpty) _buildMessageImage(message),
-            _buildMessageUserName(message, null, false, index: index),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: MarkdownBody(
-                  data: message.content,
-                  softLineBreak: true,
-                  shrinkWrap: true,
-                  styleSheet: MarkdownStyleSheet(
-                    p: TextStyle(color: colors.outline),
-                    textScaler:
-                        TextScaler.linear(displaySetting.ContentFontScale),
-                    horizontalRuleDecoration: BoxDecoration(
-                      border:
-                          Border.all(width: 1, color: colors.outlineVariant),
-                    ),
-                    // selectable: true,
-                  )),
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            _buildMessageButtonGroup(isSelected, message)
-          ],
-        )),
-      ),
-    );
-  }
-
-  Widget _buildDivider(MessageModel message) {
-    final colors = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
-      child: GestureDetector(
-        onLongPress: () => _startMultiSelect(message),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 1,
-                color: colors.outline.withOpacity(0.3),
-              ),
-            ),
-            if (message.content.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  message.content,
-                  style: TextStyle(
-                    color: colors.outline,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-            Expanded(
-              child: Container(
-                height: 1,
-                color: colors.outline.withOpacity(0.3),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // 消息发送方法
   void _sendMessage(String text, List<String> selectedPath) async {
     if (text.isNotEmpty) {
@@ -1050,24 +525,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         _selectedMessages.add(message);
       }
     });
-  }
-
-  // 构建消息，包括三种已有的消息类型
-  Widget _buildMessge(
-      BuildContext context, int index, List<MessageModel> messages) {
-    // 普通Message
-    index = index - 1;
-
-    final message = messages[index];
-    if (message.type == MessageType.divider) {
-      return _buildDivider(message);
-    } else if (message.type == MessageType.narration) {
-      return _buildNarration(message, index: index);
-    }
-
-    return _buildMessageBubble(
-        message, index < messages.length - 1 ? messages[index + 1] : null,
-        index: index);
   }
 
   // 多选时的底部按钮组
@@ -1269,8 +726,19 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                         : SizedBox.shrink(),
                                   ),
                                   Expanded(
-                                    child:
-                                        _buildMessge(context, index, messages),
+                                    child: Builder(builder: (context) {
+                                      final i = index - 1;
+
+                                      final message = messages[i];
+                                      return _buildMessageBubble(
+                                          message,
+                                          i < messages.length - 1
+                                              ? messages[i + 1]
+                                              : null,
+                                          index: i,
+                                          isNarration: message.type ==
+                                              MessageType.narration);
+                                    }),
                                   )
                                 ],
                               );
@@ -1285,7 +753,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
               // 输入框
               Container(
-                color: isDesktop ? colors.surfaceContainerHigh : colors.surface,
+                color: Colors
+                    .transparent, //isDesktop ? colors.surfaceContainerHigh : colors.surface,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 // 底部输入框
                 child: Stack(
@@ -1561,6 +1030,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           );
   }
 
+  Widget _buildBackgroundImage() {
+    return Stack(
+      children: [
+        // 1. 完整的背景图片（不模糊）
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: FileImage(File(chat
+                    .backgroundOrCharBackground!)), // Replace with your image path
+                fit: BoxFit
+                    .cover, // This is key to avoid stretching and cover the screen
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMobile(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
@@ -1583,6 +1072,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         body: Container(
           child: Stack(
             children: [
+              if (chat.backgroundOrCharBackground != null)
+                _buildBackgroundImage(),
               _buildMainContent(),
               _buildCharacterWheelOverlay(),
               _buildFloatingButtonOverlay(),
@@ -1598,8 +1089,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     return Scaffold(
       // floatingActionButton: _buildFloatingButtonOverlay(),
       backgroundColor: colors.surfaceContainerHigh,
+
       body: Stack(
         children: [
+          if (chat.backgroundOrCharBackground != null) _buildBackgroundImage(),
           _buildMainContent(),
           _buildCharacterWheelOverlay(),
           _buildFloatingButtonOverlay()

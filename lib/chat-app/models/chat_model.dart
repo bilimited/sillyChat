@@ -40,6 +40,8 @@ class ChatModel {
   // 会被插入到提示词中
   String? description;
 
+  String? get backgroundOrCharBackground => backgroundImage ?? assistant.backgroundImage ?? null;
+
   ChatOptionModel get chatOption =>
       Get.find<ChatOptionController>().getChatOptionById(chatOptionId ?? -1) ??
       Get.find<ChatOptionController>().defaultOption;

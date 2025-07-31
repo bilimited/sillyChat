@@ -271,6 +271,12 @@ class ChatController extends GetxController {
     chats.refresh();
   }
 
+  void regenerateChatSortIndex() async {
+    for (int i = 0; i < chats.length; i++) {
+      chats[i].sortIndex = i;
+    }
+  }
+
   // 添加新聊天
   Future<void> addChat(ChatModel chat) async {
     // 检查当前文件是否已满
@@ -282,6 +288,7 @@ class ChatController extends GetxController {
 
     chat.fileId = currentFileId.value;
     chats.add(chat);
+    regenerateChatSortIndex();
     await saveChats(currentFileId.value);
   }
 
@@ -339,9 +346,10 @@ class ChatController extends GetxController {
         String rawText = message.content;
         for (final regex in chat.vaildRegexs
             .where((reg) => reg.onAddMessage)
-            .where((reg) => reg.isAvailable(chat, message,disableDepthCalc: true))) {
-              rawText = regex.process(rawText);
-            }
+            .where((reg) =>
+                reg.isAvailable(chat, message, disableDepthCalc: true))) {
+          rawText = regex.process(rawText);
+        }
         message.content = rawText;
       }
 

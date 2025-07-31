@@ -205,7 +205,7 @@ class _RegexListEditorState extends State<RegexListEditor> {
                 FileImporter(
                   title: '导入正则',
                   warning:
-                      '请注意:本应用仍在开发中，未实现SillyTavern的部分功能，导入后部分字段可能会丢失。因此，正则表达式行为可能与在 SillyTavern 中的表现有所不同。',
+                      '请注意:本应用仍在测试阶段，未兼容SillyTavern的部分功能，导入后部分字段可能会丢失。因此，正则表达式行为可能与在 SillyTavern 中的表现有所不同。',
                   paramList: [],
                   allowedExtensions: ['json'],
                   multiple: true,
