@@ -135,7 +135,7 @@ class ModernAlertCard extends StatelessWidget {
                       title!,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
+                        fontSize: 15.0,
                         color: effectiveForegroundColor,
                       ),
                     ),
@@ -143,7 +143,7 @@ class ModernAlertCard extends StatelessWidget {
                 // 自定义内容
                 DefaultTextStyle.merge( // 统一内容的默认文字样式
                   style: TextStyle(
-                    fontSize: 15.0,
+                    fontSize: 13.0,
                     color: effectiveForegroundColor,
                     height: 1.4, // 行高
                   ),

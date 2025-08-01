@@ -27,9 +27,10 @@ class QuotedTextSyntax extends md.InlineSyntax {
 
 class QuotedTextBuilder extends MarkdownElementBuilder {
   final BuildContext context;
+  final TextScaler textScaler;
 
   // 在构造函数中接收 context
-  QuotedTextBuilder(this.context);
+  QuotedTextBuilder(this.context,this.textScaler);
 
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
@@ -39,7 +40,7 @@ class QuotedTextBuilder extends MarkdownElementBuilder {
 
       return Text(
         '"${element.textContent}"',
-        style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),
+        style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),textScaler: textScaler,
       );
     }
     return null;
@@ -59,6 +60,8 @@ class MessageBubble extends StatefulWidget {
   final Widget Function(bool isSelected, MessageModel message)
       buildBottomButtons;
 
+  final bool avatarHero;
+
   const MessageBubble(
       {Key? key,
       required this.chat,
@@ -70,6 +73,7 @@ class MessageBubble extends StatefulWidget {
       required this.onUpdateChat,
       required this.isNarration,
       this.lastMessage,
+      this.avatarHero = false,
       this.index = 0})
       : super(key: key);
 
@@ -366,7 +370,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                       TextScaler.linear(displaySetting.ContentFontScale),
                 ),
                 builders: {
-                  'quotedText': QuotedTextBuilder(context),
+                  'quotedText': QuotedTextBuilder(context,TextScaler.linear(displaySetting.ContentFontScale)),
                 },
                 extensionSet: md.ExtensionSet(
                     [const md.FencedCodeBlockSyntax()], [QuotedTextSyntax()]),

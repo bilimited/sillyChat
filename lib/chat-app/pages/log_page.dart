@@ -28,56 +28,15 @@ class LogPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           '应用日志',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5, // 稍微有点阴影
         actions: [
           IconButton(
-            icon: const Icon(Icons.clear_all, color: Colors.grey),
+            icon: const Icon(Icons.clear_all),
             tooltip: '清空日志',
             onPressed: () {
               LogController.to.clearLogs();
             },
           ),
-          Obx(() => IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_none, color: Colors.grey),
-                if (LogController.to.unread > 0)
-                  Positioned(
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(1),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 12,
-                        minHeight: 12,
-                      ),
-                      child: Text(
-                        '${LogController.to.unread}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            tooltip: '未读日志',
-            onPressed: () {
-              // 点击未读图标时清除未读计数
-              LogController.to.clearUnread();
-            },
-          )),
         ],
       ),
       body: Obx(() {

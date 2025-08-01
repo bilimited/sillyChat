@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
+import 'package:flutter_example/chat-app/widgets/chat/example_chat.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
 import 'package:get/get.dart';
 
@@ -350,6 +351,8 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                     controller.updateTheme(themename: theme);
                   }),
               const SizedBox(height: 16),
+              Text('预览',style: TextStyle(fontSize: 17),),
+              ExampleChat(),
             ],
           ),
         );

@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
@@ -106,9 +107,15 @@ class _SettingPageState extends State<SettingPage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('上传将覆盖云端数据，是否继续？'),
-            const Text('应用数据将上传至WebDAV云服务。\n数据未加密，请确保您的WebDAV服务安全可靠。',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            // const Text(),
+            // SizedBox(height: 15,),
+            ModernAlertCard(
+              type: ModernAlertCardType.warning,
+              title: '上传将覆盖云端数据，是否继续？',
+              child: const Text(
+                '应用数据将上传至WebDAV云服务。\n数据未加密，请确保您的WebDAV服务安全可靠。',
+              ),
+            )
           ],
         ),
         actions: [
@@ -126,7 +133,6 @@ class _SettingPageState extends State<SettingPage>
     await webDav.init();
 
     if (result != true) {
-      Get.back();
       return;
     }
 
@@ -268,7 +274,7 @@ class _SettingPageState extends State<SettingPage>
                     '编辑全局正则表达式',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  onTap: (){
+                  onTap: () {
                     customNavigate(EditGlobalRegexPage(), context: context);
                   },
                   trailing: Icon(Icons.arrow_forward_ios,

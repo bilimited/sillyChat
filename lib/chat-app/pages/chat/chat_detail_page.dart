@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
@@ -925,6 +926,14 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ],
           )
         : AppBar(
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: Colors.transparent, // 必须是透明的
+                ),
+              ),
+            ),
             leading: _isMultiSelecting
                 ? IconButton(
                     onPressed: () {
@@ -1033,19 +1042,32 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Widget _buildBackgroundImage() {
     return Stack(
       children: [
-        // 1. 完整的背景图片（不模糊）
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: FileImage(File(chat
-                    .backgroundOrCharBackground!)), // Replace with your image path
-                fit: BoxFit
-                    .cover, // This is key to avoid stretching and cover the screen
-              ),
-            ),
+      // 1. 背景图片
+      Positioned.fill(
+        child: DecoratedBox(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+          image: FileImage(File(chat.backgroundOrCharBackground!)),
+          fit: BoxFit.cover,
           ),
         ),
+        ),
+      ),
+      // 2. 模糊层
+      Positioned.fill(
+        child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          color: Colors.transparent,
+        ),
+        ),
+      ),
+      // 3. 半透明遮罩层
+      Positioned.fill(
+        child: Container(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.75),
+        ),
+      ),
       ],
     );
   }
