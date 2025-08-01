@@ -9,9 +9,42 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
+
+class QuotedTextSyntax extends md.InlineSyntax {
+  QuotedTextSyntax() : super(r'"([^"]*)"');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final text = md.Element.text('quotedText', match.group(1)!);
+    parser.addNode(text);
+    return true;
+  }
+}
+
+class QuotedTextBuilder extends MarkdownElementBuilder {
+  final BuildContext context;
+
+  // 在构造函数中接收 context
+  QuotedTextBuilder(this.context);
+
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    if (element.tag == 'quotedText') {
+      // 在这里使用 context 来获取主题颜色
+      final colors = Theme.of(context).colorScheme;
+
+      return Text(
+        '"${element.textContent}"',
+        style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),
+      );
+    }
+    return null;
+  }
+}
 
 class MessageBubble extends StatefulWidget {
   final MessageModel message;
@@ -332,6 +365,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                   textScaler:
                       TextScaler.linear(displaySetting.ContentFontScale),
                 ),
+                builders: {
+                  'quotedText': QuotedTextBuilder(context),
+                },
+                extensionSet: md.ExtensionSet(
+                    [const md.FencedCodeBlockSyntax()], [QuotedTextSyntax()]),
                 softLineBreak: true,
                 shrinkWrap: true,
                 inlineSyntaxes: [],
