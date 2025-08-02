@@ -42,6 +42,7 @@ class CharacterModel {
   String archive = ""; // 替代原来的个人信息
 
   String? firstMessage;
+  List<String> moreFirstMessage = [];
 
   String category;
   Map<int, Relation> relations = {};
@@ -98,6 +99,7 @@ class CharacterModel {
           : null, // 添加isBackup字段
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
       'firstMessage': firstMessage, // 添加firstMessage字段
+      'moreFirstMessage': moreFirstMessage, // 添加moreFirstMessage字段
     };
   }
 
@@ -115,7 +117,12 @@ class CharacterModel {
               .toList() ??
           [],
       firstMessage: json['firstMessage'],
+      
     );
+
+    char.moreFirstMessage = (json['moreFirstMessage'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ?? [];
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
     // 版本迁移
@@ -147,31 +154,50 @@ class CharacterModel {
     return char;
   }
 
-  CharacterModel copy() {
+  CharacterModel copyWith({
+    int? id,
+    String? remark,
+    String? roleName,
+    String? avatar,
+    String? description,
+    String? backgroundImage,
+    String? brief,
+    String? archive,
+    String? firstMessage,
+    List<String>? moreFirstMessage,
+    String? category,
+    Map<int, Relation>? relations,
+    List<CharacterModel>? backups,
+    List<int>? lorebookIds,
+    MessageStyle? messageStyle,
+  }) {
     var newChar = CharacterModel(
-      id: DateTime.now().millisecondsSinceEpoch, // 使用时间戳作为新ID
-      remark: remark,
-      roleName: roleName,
-      avatar: avatar,
-      description: description,
-      category: category,
-      brief: brief,
-      messageStyle: messageStyle,
-      backups: backups?.map((e) => e.copy()).toList(),
-      lorebookIds: List<int>.from(lorebookIds), // 深拷贝lorebookIds
-      firstMessage: firstMessage,
+      id: id ?? DateTime.now().millisecondsSinceEpoch,
+      remark: remark ?? this.remark,
+      roleName: roleName ?? this.roleName,
+      avatar: avatar ?? this.avatar,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      brief: brief ?? this.brief,
+      messageStyle: messageStyle ?? this.messageStyle,
+      backups: backups ?? this.backups?.map((e) => e.copyWith()).toList(),
+      lorebookIds: lorebookIds != null ? List<int>.from(lorebookIds) : List<int>.from(this.lorebookIds),
+      firstMessage: firstMessage ?? this.firstMessage,
     );
 
-    newChar.archive = archive; // 添加archive字段的复制
-    newChar.backgroundImage = backgroundImage;
-    newChar.roleName = roleName;
-    newChar.messageStyle = messageStyle;
+    newChar.moreFirstMessage = moreFirstMessage != null
+        ? List<String>.from(moreFirstMessage)
+        : List<String>.from(this.moreFirstMessage);
+
+    newChar.archive = archive ?? this.archive;
+    newChar.backgroundImage = backgroundImage ?? this.backgroundImage;
+
     // 深拷贝关系
-    relations.forEach((key, value) {
-      newChar.relations[key] = Relation(targetId: value.targetId)
-        ..type = value.type
-        ..brief = value.brief;
-    });
+    if (relations != null) {
+      newChar.relations = relations.map((key, value) => MapEntry(key, value.copy()));
+    } else {
+      newChar.relations = this.relations.map((key, value) => MapEntry(key, value.copy()));
+    }
 
     return newChar;
   }

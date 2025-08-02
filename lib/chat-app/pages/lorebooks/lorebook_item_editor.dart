@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
+import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 
 class LoreBookItemEditorPage extends StatefulWidget {
   final LorebookItemModel? item;
@@ -111,7 +112,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            ExpandableTextField(
               controller: contentController,
               focusNode: _focusNodes[1],
               minLines: 4,

@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.da
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
+import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/character_model.dart';
@@ -169,7 +170,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Future<void> _copyCharacter() async {
     if (_character == null) return;
 
-    var char = _character!.copy();
+    var char = _character!.copyWith();
     _characterController.addCharacter(char);
     Get.back();
   }
@@ -238,7 +239,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ),
                 const SizedBox(height: 16), // 间隔
                 // 简略介绍
-                TextFormField(
+
+                ExpandableTextField(
                   controller: _briefController,
                   decoration: const InputDecoration(
                     labelText: '简略介绍',
@@ -248,25 +250,32 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ),
                 const SizedBox(height: 16), // 间隔
                 // 首句台词
-                TextFormField(
+                ExpandableTextField(
                   controller: _firstMessageController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '首句台词(可选)',
                   ),
-                  minLines: 2,
-                  maxLines: 4,
+                  // extraActions: [
+                  //   buildIconTextButton(
+                  //     context,
+                  //     text: '更多选项',
+                  //     icon: Icons.more_horiz,
+                  //     onPressed: () {},
+                  //   )
+                  // ],
                 ),
+
                 const SizedBox(height: 16), // 间隔
                 const Divider(), // 分隔线
                 const SizedBox(height: 16), // 分隔线后的间隔
                 // 角色介绍
-                TextFormField(
+                ExpandableTextField(
                   controller: _archiveController,
                   decoration: const InputDecoration(
                     labelText: '角色介绍',
                   ),
-                  maxLines: null, // 允许多行输入
-                  style: const TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 15),
+                  maxLines: 16,
                 ),
                 const SizedBox(height: 10), // 间隔
                 // 生成角色介绍按钮
@@ -335,7 +344,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -564,7 +572,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                           // 备份不能被备份
                           backup.backups = null;
                           _character?.backups ??= [];
-                          _character!.backups!.add(backup.copy());
+                          _character!.backups!.add(backup.copyWith());
                         }
                       });
                     },

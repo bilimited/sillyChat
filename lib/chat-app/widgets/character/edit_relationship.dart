@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
@@ -24,16 +25,47 @@ class EditRelationship extends StatefulWidget {
 
 class _EditRelationshipState extends State<EditRelationship> {
   final _characterController = Get.find<CharacterController>();
-  late Map<int, Relation> _relations;
 
-  // 新增：用于排序的关系列表
+  late Map<int, Relation> _relations;
   late List<MapEntry<int, Relation>> _relationList;
+
+  // 新增：用于管理每个关系描述输入框的控制器
+  // 使用角色的 ID 作为键，以便轻松查找。
+  late Map<int, TextEditingController> _briefControllers;
 
   @override
   void initState() {
     super.initState();
     _relations = Map.from(widget.relations);
     _relationList = _relations.entries.toList();
+
+    // 初始化控制器 Map
+    _briefControllers = {};
+    // 为每个已存在的关系创建一个 TextEditingController
+    for (var entry in _relationList) {
+      _createBriefController(entry.key, entry.value.brief);
+    }
+  }
+
+  // 新增：封装创建和监听 Controller 的逻辑
+  void _createBriefController(int characterId, String? initialText) {
+    final controller = TextEditingController(text: initialText ?? '');
+    controller.addListener(() {
+      // 当控制器的文本改变时，更新数据模型...
+      _relations[characterId]?.brief = controller.text;
+      // ...并触发外部的回调函数
+      widget.onChanged(_relations);
+    });
+    _briefControllers[characterId] = controller;
+  }
+
+  @override
+  void dispose() {
+    // 销毁所有控制器以防止内存泄漏
+    for (var controller in _briefControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   void _addRelation() async {
@@ -42,9 +74,7 @@ class _EditRelationshipState extends State<EditRelationship> {
         .toList();
 
     if (characters.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有可添加的角色')),
-      );
+      Get.snackbar('没有可添加的角色', '',messageText: SizedBox.shrink());
       return;
     }
 
@@ -57,8 +87,13 @@ class _EditRelationshipState extends State<EditRelationship> {
 
     if (result != null) {
       setState(() {
-        _relations[result.id] = Relation(targetId: result.id);
+        final newRelation = Relation(targetId: result.id);
+        _relations[result.id] = newRelation;
         _relationList = _relations.entries.toList();
+
+        // 为新的关系创建一个新的控制器
+        _createBriefController(result.id, newRelation.brief);
+
         widget.onChanged(_relations);
       });
     }
@@ -66,6 +101,10 @@ class _EditRelationshipState extends State<EditRelationship> {
 
   void _removeRelation(int id) {
     setState(() {
+      // 在移除关系之前，先销毁并移除对应的控制器
+      _briefControllers[id]?.dispose();
+      _briefControllers.remove(id);
+
       _relations.remove(id);
       _relationList = _relations.entries.toList();
       widget.onChanged(_relations);
@@ -77,10 +116,31 @@ class _EditRelationshipState extends State<EditRelationship> {
       if (newIndex > oldIndex) newIndex -= 1;
       final item = _relationList.removeAt(oldIndex);
       _relationList.insert(newIndex, item);
-      // 重新生成 _relations 保持顺序
       _relations = {for (var e in _relationList) e.key: e.value};
       widget.onChanged(_relations);
     });
+  }
+
+  void _syncRelation(int id) {
+    String? brief = _relations[id]?.brief;
+    String? type = _relations[id]?.type;
+    CharacterModel target =
+        Get.find<CharacterController>().getCharacterById(id);
+    if (brief != null &&
+        target != CharacterController.defaultCharacter &&
+        widget.character != null) {
+      int curId = widget.character!.id;
+      if (target.relations[curId] != null) {
+        target.relations[curId]!.brief = brief;
+      } else {
+        target.relations[curId] = Relation(targetId: curId)
+          ..brief = brief
+          ..type = type;
+      }
+
+      Get.find<CharacterController>().updateCharacter(target);
+      Get.snackbar('关系同步成功', '',messageText: SizedBox.shrink());
+    }
   }
 
   @override
@@ -88,30 +148,23 @@ class _EditRelationshipState extends State<EditRelationship> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 用 ReorderableListView 替换原来的 Column
         SizedBox(
-          height: 56.0 * _relationList.length + 80, // 估算高度，防止溢出
-
+          height: 56.0 * _relationList.length + 80,
           child: ShaderMask(
               shaderCallback: (Rect bounds) {
                 return LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: <Color>[
-                    Colors.transparent, // 顶部完全透明
-                    Colors.black, // 顶部渐变到不透明的过渡点 (这里用黑色代表不透明区域)
-                    Colors.black, // 底部渐变到不透明的过渡点
-                    Colors.transparent, // 底部完全透明
+                    Colors.transparent,
+                    Colors.black,
+                    Colors.black,
+                    Colors.transparent,
                   ],
-                  stops: const [
-                    0.0, // 从0%位置开始透明
-                    0.06, // 在10%位置变为不透明 (顶部渐隐区)
-                    0.94, // 在90%位置开始透明 (底部渐隐区)
-                    1.0, // 在100%位置完全透明
-                  ],
+                  stops: const [0.0, 0.06, 0.94, 1.0],
                 ).createShader(bounds);
               },
-              blendMode: BlendMode.dstIn, // 只显示Shader不透明的部分
+              blendMode: BlendMode.dstIn,
               child: ReorderableListView(
                 clipBehavior: Clip.antiAliasWithSaveLayer,
                 shrinkWrap: true,
@@ -121,7 +174,7 @@ class _EditRelationshipState extends State<EditRelationship> {
                   for (final entry in _relationList)
                     Padding(
                       key: ValueKey(entry.key),
-                      padding: const EdgeInsets.only(bottom: 16,top: 16),
+                      padding: const EdgeInsets.only(bottom: 16, top: 16),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -175,18 +228,20 @@ class _EditRelationshipState extends State<EditRelationship> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                TextFormField(
-                                  initialValue: entry.value.brief ?? '',
+                                ExpandableTextField(
+                                  controller: _briefControllers[entry.key]!,
                                   decoration: const InputDecoration(
                                     hintText: '关系描述（可选）',
                                   ),
                                   style: TextStyle(fontSize: 13),
                                   maxLines: null,
                                   minLines: 2,
-                                  onChanged: (value) {
-                                    entry.value.brief = value;
-                                    widget.onChanged(_relations);
-                                  },
+                                  extraActions: [
+                                    buildIconTextButton(context,
+                                        text: '同步关系',
+                                        icon: Icons.sync_rounded,
+                                        onPressed: ()=>_syncRelation(entry.key))
+                                  ],
                                 ),
                               ],
                             ),

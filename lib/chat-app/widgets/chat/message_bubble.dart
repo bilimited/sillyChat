@@ -369,7 +369,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                   textScaler:
                       TextScaler.linear(displaySetting.ContentFontScale),
                 ),
-                builders: {
+                builders: isMe ? {} : {
                   'quotedText': QuotedTextBuilder(context,TextScaler.linear(displaySetting.ContentFontScale)),
                 },
                 extensionSet: md.ExtensionSet(
