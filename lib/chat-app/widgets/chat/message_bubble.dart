@@ -357,6 +357,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               MarkdownBody(
                 data: content,
                 styleSheet: MarkdownStyleSheet(
+                  
                   p: TextStyle(
                     color: textColor,
                   ),
@@ -511,10 +512,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     }
 
     return Obx(() => GestureDetector(
-          behavior: HitTestBehavior.opaque,
+          //behavior: HitTestBehavior.translucent,
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
-          // onLongPress: () => _showMessageOptions(message),
           child: widget.isNarration
               ? _buildNarration()
               : Padding(

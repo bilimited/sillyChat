@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_mod
 import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
+import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -972,19 +973,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.search),
+                icon: const Icon(Icons.list),
                 onPressed: () {
-                  customNavigate(
-                      SearchPage(
-                        chats: [chat],
-                        onMessageTap: (message, chat) {
-                          Get.back();
-                          _scrollToMessage(message);
-                        },
-                      ),
+                  customNavigate(ManageMessagePage(chat: chat),
                       context: context);
                 },
               ),
+              //IconButton(
+              //   icon: const Icon(Icons.search),
+              //   onPressed: () {
+              //     customNavigate(
+              //         SearchPage(
+              //           chats: [chat],
+              //           onMessageTap: (message, chat) {
+              //             Get.back();
+              //             _scrollToMessage(message);
+              //           },
+              //         ),
+              //         context: context);
+              //   },
+              // ),
               IconButton(
                 icon: const Icon(Icons.more_horiz),
                 onPressed: () {
@@ -1042,32 +1050,32 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Widget _buildBackgroundImage() {
     return Stack(
       children: [
-      // 1. 背景图片
-      Positioned.fill(
-        child: DecoratedBox(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-          image: FileImage(File(chat.backgroundOrCharBackground!)),
-          fit: BoxFit.cover,
+        // 1. 背景图片
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: FileImage(File(chat.backgroundOrCharBackground!)),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
+        // 2. 模糊层
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
         ),
-      ),
-      // 2. 模糊层
-      Positioned.fill(
-        child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          color: Colors.transparent,
+        // 3. 半透明遮罩层
+        Positioned.fill(
+          child: Container(
+            color: Theme.of(context).colorScheme.surface.withOpacity(0.75),
+          ),
         ),
-        ),
-      ),
-      // 3. 半透明遮罩层
-      Positioned.fill(
-        child: Container(
-        color: Theme.of(context).colorScheme.surface.withOpacity(0.75),
-        ),
-      ),
       ],
     );
   }
