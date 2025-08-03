@@ -170,9 +170,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Future<void> _copyCharacter() async {
     if (_character == null) return;
 
-    var char = _character!.copyWith();
-    _characterController.addCharacter(char);
-    Get.back();
+    var char = _character!.copyWith(roleName: _character!.roleName + '的副本');
+    _characterController.characterCilpBoard = char;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('角色已复制到剪贴板')),
+    );
+
   }
 
   Widget _buildBasicInfoTab() {

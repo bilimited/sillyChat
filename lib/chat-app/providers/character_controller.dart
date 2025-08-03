@@ -11,6 +11,8 @@ class CharacterController extends GetxController {
   final RxList<CharacterModel> characters = <CharacterModel>[].obs;
   final String fileName = 'characters.json';
 
+  CharacterModel? characterCilpBoard = null;
+
   final VaultSettingController _vaultSettingController = Get.find();
 
   // 系统内建角色

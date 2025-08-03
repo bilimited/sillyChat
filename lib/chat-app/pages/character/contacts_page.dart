@@ -298,12 +298,58 @@ class _ContactsPageState extends State<ContactsPage> {
         // AppBar 操作区域放置按钮
         actions: [
           // 新增角色按钮
-          IconButton(
+          PopupMenuButton<int>(
             icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
-            onPressed: () {
-              customNavigate(const EditCharacterPage(), context: context);
-            },
             tooltip: '新增角色', // 添加提示
+            
+            onSelected: (value) {
+              if (value == 0) {
+                // 创建空角色
+                customNavigate(const EditCharacterPage(), context: context);
+              } else if (value == 1) {
+                // 导入角色
+                // TODO: 实现导入角色的逻辑
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('导入角色功能尚未实现')),
+                );
+              }else if(value == 2 && characterController.characterCilpBoard!=null){
+                characterController.addCharacter(characterController.characterCilpBoard!);
+                characterController.characterCilpBoard = null;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 0,
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_add, size: 20),
+                    const SizedBox(width: 8),
+                    const Text('创建空角色'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 1,
+                child: Row(
+                  children: [
+                    const Icon(Icons.file_upload, size: 20),
+                    const SizedBox(width: 8),
+                    const Text('从ST导入角色卡'),
+                  ],
+                ),
+              ),
+              if(characterController.characterCilpBoard != null)
+              PopupMenuItem(
+                value: 2,
+                child: Row(
+                  children: [
+                    const Icon(Icons.paste, size: 20),
+                    const SizedBox(width: 8),
+                    const Text('从剪切板粘贴角色'),
+                  ],
+                ),
+              ),
+            ],
           ),
           // 排序模式切换按钮
           IconButton(
