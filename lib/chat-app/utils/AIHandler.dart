@@ -394,7 +394,7 @@ class Aihandler {
     return token == '</think>';
   }
 
-  // gemini的提示词预处理。兼容酒馆用
+  // gemini的提示词预处理(合并相邻相同role消息)。兼容酒馆用
   List<Map<String, dynamic>> _geminiMergeAdjacentMessages(
       List<Map<String, dynamic>> messages) {
     if (messages.isEmpty) {

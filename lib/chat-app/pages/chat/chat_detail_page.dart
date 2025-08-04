@@ -685,56 +685,59 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           Opacity(
             opacity: !_isMultiSelecting ? 1.0 : 0.0,
             child: IgnorePointer(
-              ignoring: _isMultiSelecting,
-              child: BottomInputArea(
-                chatId: chatId,
-                onSendMessage: _sendMessage,
-                onRetryLastest: () {
-                  _chatController.retry(chat);
-                },
-                onToggleGroupWheel: () {
-                  setState(() => _showWheel = !_showWheel);
-                },
-                onUpdateChat: _updateChat,
-                // TOOL BAR
-                toolBar: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.settings,
-                      color: colors.outline,
-                    ),
-                    onPressed: () {
-                      customNavigate(EditChatPage(chat: chat),
-                          context: context);
+                ignoring: _isMultiSelecting,
+                child: Obx(() {
+                  final isGenerating = chat.aiState.isGenerating;
+
+                  return BottomInputArea(
+                    chatId: chatId,
+                    onSendMessage: _sendMessage,
+                    onRetryLastest: () {
+                      _chatController.retry(chat);
                     },
-                  ),
-                  if (isGroupMode && !chat.aiState.isGenerating)
-                    IconButton(
-                      icon: Icon(Icons.group, color: colors.outline),
-                      onPressed: () {
-                        setState(() => _showWheel = !_showWheel);
-                      },
-                    ),
-                  IconButton(
-                      onPressed: () {
-                        final global = Get.find<LoreBookController>()
-                            .globalActivitedLoreBooks;
-                        final chars = chat.characters
-                            .expand((char) => char.loreBooks)
-                            .toList();
-                        customNavigate(
-                            LoreBookActivator(chat: chat, lorebooks: [
-                              ...{...global, ...chars}
-                            ]),
-                            context: context);
-                      },
-                      icon: Icon(
-                        Icons.book,
-                        color: colors.outline,
-                      )),
-                ],
-              ),
-            ),
+                    onToggleGroupWheel: () {
+                      setState(() => _showWheel = !_showWheel);
+                    },
+                    onUpdateChat: _updateChat,
+                    // TOOL BAR
+                    toolBar: [
+                      if (isGroupMode && !isGenerating)
+                        IconButton(
+                          icon: Icon(Icons.group, color: colors.outline),
+                          onPressed: () {
+                            setState(() => _showWheel = !_showWheel);
+                          },
+                        ),
+                      IconButton(
+                          onPressed: () {
+                            final global = Get.find<LoreBookController>()
+                                .globalActivitedLoreBooks;
+                            final chars = chat.characters
+                                .expand((char) => char.loreBooks)
+                                .toList();
+                            customNavigate(
+                                LoreBookActivator(chat: chat, lorebooks: [
+                                  ...{...global, ...chars}
+                                ]),
+                                context: context);
+                          },
+                          icon: Icon(
+                            Icons.book,
+                            color: colors.outline,
+                          )),
+                      IconButton(
+                        icon: Icon(
+                          Icons.settings,
+                          color: colors.outline,
+                        ),
+                        onPressed: () {
+                          customNavigate(EditChatPage(chat: chat),
+                              context: context);
+                        },
+                      ),
+                    ],
+                  );
+                })),
           ),
           // 多选时显示底部按钮组
           if (_isMultiSelecting) _buildBottomButtonGroup(),

@@ -19,7 +19,7 @@ abstract class Promptformatter {
     prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
     prompt = prompt.replaceAll('<description>', chat.description ?? '');
     prompt = prompt.replaceAll(
-        RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>',
+        RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>|\{\{lastmessage\}\}',
             caseSensitive: false),
         userMessage); // 兼容酒馆
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
