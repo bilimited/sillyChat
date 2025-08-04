@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/character/personal_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
@@ -39,12 +42,73 @@ class _ContactsPageState extends State<ContactsPage> {
     super.dispose();
   }
 
+  Future<void> _importCharCard() async {
+    // 使用file_picker选择PNG文件
+    final result = await FilePicker.platform.pickFiles(
+      allowedExtensions: ['png'],
+      dialogTitle: '选择角色卡PNG文件',
+    );
+    if (result == null || result.files.single.path == null) return;
+
+    final file = File(result.files.single.path!);
+    final bytes = await file.readAsBytes();
+
+    // 查找PNG的chara字段（tEXt chunk）
+    // PNG文件格式: https://www.w3.org/TR/PNG/#5Chunk-layout
+    // tEXt chunk格式: [length][tEXt][type][keyword][\0][text][CRC]
+    // 这里只做简单查找，不做完整校验
+    int offset = 8; // 跳过PNG头
+    String? charaBase64;
+    while (offset < bytes.length) {
+      if (offset + 8 > bytes.length) break;
+      final length = bytes.buffer.asByteData().getUint32(offset);
+      final type = String.fromCharCodes(bytes.sublist(offset + 4, offset + 8));
+      if (type == 'tEXt') {
+        final chunkData = bytes.sublist(offset + 8, offset + 8 + length);
+        final nulIndex = chunkData.indexOf(0);
+        if (nulIndex != -1) {
+          final keyword = utf8.decode(chunkData.sublist(0, nulIndex));
+          if (keyword == 'chara') {
+            charaBase64 = utf8.decode(chunkData.sublist(nulIndex + 1));
+            break;
+          }
+        }
+      }
+      offset += 8 + length + 4; // 8: length+type, length: data, 4: CRC
+    }
+
+    if (charaBase64 == null) {
+      Get.snackbar('导入失败', '未找到chara字段');
+      return;
+    }
+
+    try {
+      final decoded = utf8.decode(base64.decode(charaBase64));
+
+      try {
+        final char = await STCharacterImporter.fromJson(
+            json.decode(decoded), file.path, file.path);
+        if (char != null) {
+          characterController.addCharacter(char);
+        }
+
+         Get.snackbar('导入成功', '角色卡已导入');
+      } catch (e) {
+        Get.snackbar('导入失败', '$e');
+      }
+
+     
+    } catch (e) {
+      Get.snackbar('解码失败', '$e');
+    }
+  }
+
   // 处理搜索过滤后的分组
   Map<String, List<CharacterModel>> get _filteredAndGroupedContacts {
     // 如果搜索框为空，返回所有分组
     if (_searchText.value.isEmpty) {
-      return characterController.characters.fold(
-          <String, List<CharacterModel>>{}, (map, contact) {
+      return characterController.characters
+          .fold(<String, List<CharacterModel>>{}, (map, contact) {
         if (!map.containsKey(contact.category)) {
           map[contact.category] = [];
         }
@@ -77,7 +141,6 @@ class _ContactsPageState extends State<ContactsPage> {
     }
   }
 
-
   // 分组模式的视图 (根据搜索结果调整)
   Iterable<Column> _groupedContactsWidget(BuildContext context) {
     final theme = Theme.of(context);
@@ -85,18 +148,19 @@ class _ContactsPageState extends State<ContactsPage> {
 
     // 如果搜索结果为空，显示提示
     if (groupedContacts.isEmpty && _searchText.value.isNotEmpty) {
-       return [
-         Column(
-           children: [
-             const SizedBox(height: 50),
-             Icon(Icons.search_off, size: 60, color: theme.colorScheme.outline),
-             const SizedBox(height: 16),
-             Text('未找到匹配的角色', style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.outline)),
-           ],
-         ),
-       ];
+      return [
+        Column(
+          children: [
+            const SizedBox(height: 50),
+            Icon(Icons.search_off, size: 60, color: theme.colorScheme.outline),
+            const SizedBox(height: 16),
+            Text('未找到匹配的角色',
+                style: theme.textTheme.bodyLarge
+                    ?.copyWith(color: theme.colorScheme.outline)),
+          ],
+        ),
+      ];
     }
-
 
     return groupedContacts.entries.map((entry) {
       // 确保每个组在 _expandedState 中有状态，默认展开
@@ -168,16 +232,21 @@ class _ContactsPageState extends State<ContactsPage> {
 
     // 如果搜索结果为空且处于排序模式
     if (itemsToDisplay.isEmpty && _searchText.value.isNotEmpty) {
-       return Center(
-         child: Column(
-           mainAxisSize: MainAxisSize.min,
-           children: [
-             Icon(Icons.search_off, size: 60, color: Theme.of(context).colorScheme.outline),
-             const SizedBox(height: 16),
-             Text('未找到匹配的角色', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.outline)),
-           ],
-         ),
-       );
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off,
+                size: 60, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 16),
+            Text('未找到匹配的角色',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(color: Theme.of(context).colorScheme.outline)),
+          ],
+        ),
+      );
     }
 
     return ReorderableListView.builder(
@@ -283,7 +352,8 @@ class _ContactsPageState extends State<ContactsPage> {
               // 可选：添加清除按钮
               suffixIcon: _searchText.value.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.clear, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                      icon: Icon(Icons.clear,
+                          size: 20, color: theme.colorScheme.onSurfaceVariant),
                       onPressed: () {
                         _searchController.clear();
                         _searchText.value = '';
@@ -301,19 +371,17 @@ class _ContactsPageState extends State<ContactsPage> {
           PopupMenuButton<int>(
             icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
             tooltip: '新增角色', // 添加提示
-            
+
             onSelected: (value) {
               if (value == 0) {
                 // 创建空角色
                 customNavigate(const EditCharacterPage(), context: context);
               } else if (value == 1) {
-                // 导入角色
-                // TODO: 实现导入角色的逻辑
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('导入角色功能尚未实现')),
-                );
-              }else if(value == 2 && characterController.characterCilpBoard!=null){
-                characterController.addCharacter(characterController.characterCilpBoard!);
+                _importCharCard();
+              } else if (value == 2 &&
+                  characterController.characterCilpBoard != null) {
+                characterController
+                    .addCharacter(characterController.characterCilpBoard!);
                 characterController.characterCilpBoard = null;
               }
             },
@@ -338,23 +406,22 @@ class _ContactsPageState extends State<ContactsPage> {
                   ],
                 ),
               ),
-              if(characterController.characterCilpBoard != null)
-              PopupMenuItem(
-                value: 2,
-                child: Row(
-                  children: [
-                    const Icon(Icons.paste, size: 20),
-                    const SizedBox(width: 8),
-                    const Text('从剪切板粘贴角色'),
-                  ],
+              if (characterController.characterCilpBoard != null)
+                PopupMenuItem(
+                  value: 2,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.paste, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('从剪切板粘贴角色'),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           // 排序模式切换按钮
           IconButton(
-            icon: Icon(
-                _isSortingMode ? Icons.check : Icons.sort,
+            icon: Icon(_isSortingMode ? Icons.check : Icons.sort,
                 color: theme.colorScheme.onSurface),
             onPressed: () {
               setState(() {

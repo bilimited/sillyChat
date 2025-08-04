@@ -71,7 +71,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
                     introduction: '导入SilltTavern预设。',
                     paramList: [],
                     allowedExtensions: ['json'],
-                    onImport: (fileName, content, params) {
+                    onImport: (fileName, content, params,path) {
                       STConfigImporter.fromJson(
                           json.decode(content), fileName);
                     }).pickAndProcessFile(context);

@@ -25,6 +25,7 @@ class ChatDisplaySettingModel {
   bool displayAssistantName = true;
   bool displayMessageDate = false;
   bool displayMessageIndex = false;
+  bool tryParseInlineHtml = true;
 
   bool get displayAvatar => avatarStyle != AvatarStyle.hidden;
 
@@ -38,6 +39,7 @@ class ChatDisplaySettingModel {
     this.displayAssistantName = true,
     this.displayMessageDate = false,
     this.displayMessageIndex = false,
+    this.tryParseInlineHtml = true,
     this.AvatarSize = 25,
     this.themeColor = Colors.blue,
     this.schemeName = "sakura",
@@ -63,6 +65,7 @@ class ChatDisplaySettingModel {
       'AvatarBorderRadius': AvatarBorderRadius,
       'MessageBubbleBorderRadius': MessageBubbleBorderRadius,
       'schemeName': schemeName,
+      'tryParseInlineHtml': tryParseInlineHtml, 
     };
   }
 
@@ -83,5 +86,6 @@ class ChatDisplaySettingModel {
     AvatarBorderRadius = (json['AvatarBorderRadius'] ?? 8).toDouble();
     MessageBubbleBorderRadius = (json['MessageBubbleBorderRadius'] ?? 16).toDouble();
     schemeName = json['schemeName'] ?? "sakura";
+    tryParseInlineHtml = json['tryParseInlineHtml'] ?? true;
   }
 }

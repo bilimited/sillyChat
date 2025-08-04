@@ -52,19 +52,19 @@ class _NewChatState extends State<NewChat> {
   }
 
   Widget _buildFirstMessage() {
-    return Column(
-      children: [
-        Expanded(
-            child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: 0.0,
-                  maxHeight: double.infinity,
-                ),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Column(
-                    children: [
-                      MessageBubble(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 0.0,
+                    maxHeight: double.infinity,
+                  ),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      children: [
+                        MessageBubble(
                           chat: chat,
                           message: MessageModel(
                               id: 0,
@@ -79,11 +79,13 @@ class _NewChatState extends State<NewChat> {
                           onLongPress: () {},
                           buildBottomButtons: (a, b0) => SizedBox.shrink(),
                           onUpdateChat: () {},
-                          avatarHero: true,)
-                    ],
-                  ),
-                ))),
-      ],
+                          avatarHero: true,
+                        )
+                      ],
+                    ),
+                  )),
+        ],
+      ),
     );
   }
 
@@ -146,22 +148,20 @@ class _NewChatState extends State<NewChat> {
                                       ),
                                     ],
                                   ),
-                                  child: 
-                                       CircleAvatar(
-                                        radius: 60,
-                                        backgroundImage: !isFirstCharSelected
-                                            ? null
-                                            : Image.file(File(
-                                                    assistantCharacter.avatar))
-                                                .image,
-                                        child: !isFirstCharSelected
-                                            ? Icon(Icons.account_circle,
-                                                size: 120,
-                                                color: colors.outline)
-                                            : null,
-                                        backgroundColor:
-                                            colors.surfaceContainerHigh,
-                                      )),
+                                  child: CircleAvatar(
+                                    radius: 60,
+                                    backgroundImage: !isFirstCharSelected
+                                        ? null
+                                        : Image.file(
+                                                File(assistantCharacter.avatar))
+                                            .image,
+                                    child: !isFirstCharSelected
+                                        ? Icon(Icons.account_circle,
+                                            size: 120, color: colors.outline)
+                                        : null,
+                                    backgroundColor:
+                                        colors.surfaceContainerHigh,
+                                  )),
                             ),
                           ],
                         ),

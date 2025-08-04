@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.dart';
+import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
@@ -175,7 +176,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('角色已复制到剪贴板')),
     );
-
   }
 
   Widget _buildBasicInfoTab() {
@@ -258,14 +258,19 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   decoration: InputDecoration(
                     labelText: '首句台词(可选)',
                   ),
-                  // extraActions: [
-                  //   buildIconTextButton(
-                  //     context,
-                  //     text: '更多选项',
-                  //     icon: Icons.more_horiz,
-                  //     onPressed: () {},
-                  //   )
-                  // ],
+                  extraActions: [
+                    if (_character != null)
+                      buildIconTextButton(
+                        context,
+                        text: '更多选项',
+                        icon: Icons.more_horiz,
+                        onPressed: () {
+                          customNavigate(
+                              MoreFirstMessagePage(character: _character!),
+                              context: context);
+                        },
+                      )
+                  ],
                 ),
 
                 const SizedBox(height: 16), // 间隔

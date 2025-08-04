@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
@@ -80,6 +81,8 @@ class ChatController extends GetxController {
   }
 
   // 会在每次进入新聊天界面时调用。
+
+  @Deprecated('弃用的聊天新建方式')
   void resetDefaultChat() {
     defaultChat = ChatModel(
             id: -1,
@@ -94,6 +97,7 @@ class ChatController extends GetxController {
         .obs;
   }
 
+  @Deprecated('弃用的聊天新建方式')
   void updateDefaultChat({int? assistantId}) {
     if (assistantId != null) {
       defaultChat.value.assistantId = assistantId;
@@ -102,6 +106,7 @@ class ChatController extends GetxController {
   }
 
   // 保存临时聊天，返回聊天id
+  @Deprecated('弃用的聊天新建方式')
   ChatModel saveDefaultChat() {
     final newChat = defaultChat.value;
     newChat.id = DateTime.now().microsecond;
@@ -275,6 +280,36 @@ class ChatController extends GetxController {
     for (int i = 0; i < chats.length; i++) {
       chats[i].sortIndex = i;
     }
+  }
+
+  Future<ChatModel> createChatFromCharacter(CharacterModel char) async {
+    ChatModel chatModel = ChatModel(
+      id: DateTime.now().microsecond,
+      name: '${char.roleName}',
+      avatar: char.avatar,
+      lastMessage: '聊天已创建',
+      time: DateTime.now().toString(),
+      assistantId: char.id,
+      messages: [],
+    )..characterIds = [char.id];
+
+    String formatMessage(String message) {
+      return Promptformatter.formatPrompt(message, chatModel);
+    }
+
+    if (char.firstMessage != null && !char.firstMessage!.isEmpty)
+      chatModel.messages.add(MessageModel(
+          id: DateTime.now().microsecondsSinceEpoch,
+          content: formatMessage(char.firstMessage!),
+          sender: char.id,
+          time: DateTime.now(),
+          alternativeContent: [
+            null,
+            ...char.moreFirstMessage.map((msg) => formatMessage(msg))
+          ]));
+    await addChat(chatModel);
+
+    return chatModel;
   }
 
   // 添加新聊天
@@ -554,20 +589,7 @@ class ChatController extends GetxController {
     }
 
     chat.setAIState(chat.aiState.copyWith(isGenerating: false));
-    yield _fixMessage(chat.aiState.LLMBuffer);
-  }
-
-  // 消除行首空格
-  String _fixMessage(String content) {
-    String result = "";
-    for (String line in content.split('\n')) {
-      if (line.startsWith('    ')) {
-        result += line.replaceFirst(RegExp(r'^    +'), '') + '\n';
-      } else {
-        result += line + '\n';
-      }
-    }
-    return result.trimRight();
+    yield chat.aiState.LLMBuffer;
   }
 
   void interrupt(ChatModel chat) {

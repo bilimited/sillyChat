@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -142,12 +144,20 @@ class _ChatPageState extends State<ChatPage> {
           PopupMenuButton<int>(
             icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
             tooltip: '新增聊天',
-            onSelected: (value) {
+            onSelected: (value) async {
               if (value == 0) {
-                if (widget.onSelectChat != null) {
-                  widget.onSelectChat!(chatController.defaultChat.value);
-                } else {
-                  customNavigate(ChatDetailPage(chatId: -1), context: context);
+                final char = await customNavigate<CharacterModel?>(
+                    CharacterSelector(),
+                    context: context);
+                
+                if (char != null) {
+                  final chat = await chatController.createChatFromCharacter(char);
+                  if (widget.onSelectChat != null) {
+                    widget.onSelectChat!(chat);
+                  } else {
+                    customNavigate(ChatDetailPage(chatId: chat.id),
+                        context: context);
+                  }
                 }
               } else if (value == 1) {
                 customNavigate(NewChatPage(), context: context);
@@ -193,8 +203,8 @@ class _ChatPageState extends State<ChatPage> {
           ),
           const SizedBox(width: 8),
         ],
-        backgroundColor: theme.appBarTheme.backgroundColor ??
-            theme.colorScheme.surface,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
         elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: Column(

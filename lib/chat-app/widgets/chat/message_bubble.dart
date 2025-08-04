@@ -14,6 +14,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 
+
 class QuotedTextSyntax extends md.InlineSyntax {
   QuotedTextSyntax() : super(r'"([^"]*)"');
 
@@ -26,21 +27,105 @@ class QuotedTextSyntax extends md.InlineSyntax {
 }
 
 class QuotedTextBuilder extends MarkdownElementBuilder {
-  final BuildContext context;
   final TextScaler textScaler;
 
   // 在构造函数中接收 context
-  QuotedTextBuilder(this.context,this.textScaler);
+  QuotedTextBuilder(this.textScaler);
 
   @override
-  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+  Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
+      TextStyle? preferredStyle, TextStyle? parentStyle) {
     if (element.tag == 'quotedText') {
       // 在这里使用 context 来获取主题颜色
       final colors = Theme.of(context).colorScheme;
+      return RichText(
+        textScaler: textScaler,
+        text: TextSpan(
+          text: '"${element.textContent}"',
+          style: TextStyle(
+            color: colors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+    return null;
+  }
+}
 
-      return Text(
-        '"${element.textContent}"',
-        style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),textScaler: textScaler,
+class HtmlTagSyntax extends md.InlineSyntax {
+  // 匹配 <tag attribute='value'>content</tag>
+  // 1. Tag name
+  // 2. Attributes
+  // 3. Content
+  HtmlTagSyntax() : super(r'<([a-zA-Z0-9]+)\s*([^>]*)>(.*?)<\/\1>');
+
+  // 正则表达式用于解析属性
+  final _attributeRegex = RegExp(r'([a-zA-Z0-9_-]+)\s*=\s*('
+      r'"([^"]*)"|' // 带双引号的属性值
+      r"'([^']*)'|" // 带单引号的属性值
+      r'([^>\s]+)' // 不带引号的属性值
+      r')');
+
+  /// 规范化颜色代码
+  /// 将 #rgb, #rrggbb, #rrggbbaa 格式统一转换为 #rrggbbaaff
+  String _normalizeColor(String color) {
+    if (color.startsWith('#')) {
+      String hex = color.substring(1);
+      if (hex.length == 3) {
+        // #rgb -> #rrggbb
+        hex = hex.split('').map((c) => c + c).join('');
+      }
+      if (hex.length == 6) {
+        // #rrggbb -> #rrggbbaa (默认alpha为ff)
+        hex = '${hex}ff';
+      }
+      if (hex.length == 8) {
+        return '${hex.toLowerCase()}';
+      }
+    }
+    return color;
+  }
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final tagName = match.group(1)!;
+    final attributesString = match.group(2) ?? '';
+    final content = match.group(3) ?? '';
+
+    final attributes = <String, String>{};
+    for (final attrMatch in _attributeRegex.allMatches(attributesString)) {
+      final key = attrMatch.group(1)!.toLowerCase();
+      // group(3), group(4), group(5) 分别对应双引号、单引号和无引号的值
+      String value =
+          attrMatch.group(3) ?? attrMatch.group(4) ?? attrMatch.group(5) ?? '';
+
+      if (key == 'color') {
+        value = _normalizeColor(value);
+      }
+      attributes[key] = value;
+    }
+
+    final element = md.Element(tagName, [md.Text(content)]);
+    element.attributes.addAll(attributes);
+    parser.addNode(element);
+
+    return true;
+  }
+}
+
+
+class FontColorBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
+      TextStyle? preferredStyle, TextStyle? parentStyle) {
+    if (element.tag == 'font') {
+      final color = element.attributes['color'];
+      return RichText(
+        text: TextSpan(
+          text: element.textContent,
+          style: parentStyle?.copyWith(color: Color(int.parse('0x$color'))),
+        ),
       );
     }
     return null;
@@ -357,7 +442,6 @@ class _MessageBubbleState extends State<MessageBubble> {
               MarkdownBody(
                 data: content,
                 styleSheet: MarkdownStyleSheet(
-                  
                   p: TextStyle(
                     color: textColor,
                   ),
@@ -370,11 +454,19 @@ class _MessageBubbleState extends State<MessageBubble> {
                   textScaler:
                       TextScaler.linear(displaySetting.ContentFontScale),
                 ),
-                builders: isMe ? {} : {
-                  'quotedText': QuotedTextBuilder(context,TextScaler.linear(displaySetting.ContentFontScale)),
-                },
-                extensionSet: md.ExtensionSet(
-                    [const md.FencedCodeBlockSyntax()], [QuotedTextSyntax()]),
+                builders: isMe
+                    ? {}
+                    : {
+                        'quotedText': QuotedTextBuilder(
+                            TextScaler.linear(displaySetting.ContentFontScale)),
+                        'font': FontColorBuilder(),
+                      },
+                extensionSet: md.ExtensionSet([
+                  const md.FencedCodeBlockSyntax()
+                ], [
+                  QuotedTextSyntax(),
+                  HtmlTagSyntax(),
+                ]),
                 softLineBreak: true,
                 shrinkWrap: true,
                 inlineSyntaxes: [],

@@ -1,3 +1,4 @@
+
 class LorebookItemModel {
   /// 唯一标识符，用于在数据库或列表中查找和管理条目
   final int id;
@@ -25,6 +26,12 @@ class LorebookItemModel {
   /// 优先级：当上下文窗口有限时，优先级高的条目优先注入
   final int priority;
 
+  /// 插入位置。可能的取值：
+  /// before_char、after_char
+  /// before_em、after_em
+  /// @Duser、@Dassistant、@Dsystem则插入到positionId层。 纯属为了兼容ST
+  final String position;
+
   /// 插入位置的ID：用于指定条目在上下文中的插入位置
   final int positionId;
 
@@ -48,6 +55,7 @@ class LorebookItemModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.positionId = 0, // 默认插入位置ID为0
+    this.position = 'before_char', // 默认插入位置
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
   // JSON 序列化和反序列化方法
@@ -63,6 +71,7 @@ class LorebookItemModel {
         'updatedAt': updatedAt.toIso8601String(),
         'isActive': isActive,
         'logic': logic.toString().split('.').last, // 枚举转字符串
+        'position': position.toString().split('.').last, // 枚举转字符串
         'positionId': positionId,
       };
 
@@ -82,6 +91,7 @@ class LorebookItemModel {
       logic: MatchingLogic.values.firstWhere(
           (e) => e.toString().split('.').last == json['logic'],
           orElse: () => MatchingLogic.or),
+      position: json['position'] ?? 'before_char',
       positionId: json['positionId'] ?? 0,
       isActive: json['isActive'] ?? true, // 默认激活状态为true
     );
@@ -100,6 +110,7 @@ class LorebookItemModel {
     int? positionId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? position,
   }) {
     return LorebookItemModel(
       id: id ?? this.id,
@@ -111,6 +122,7 @@ class LorebookItemModel {
       isActive: isActive ?? this.isActive,
       activationDepth: activationDepth ?? this.activationDepth,
       priority: priority ?? this.priority,
+      position: position ?? this.position,
       positionId: positionId ?? this.positionId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

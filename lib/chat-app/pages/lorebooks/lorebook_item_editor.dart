@@ -22,6 +22,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   late ActivationType activationType;
   late MatchingLogic logic;
   late bool isActive;
+  late String position;
   final _formKey = GlobalKey<FormState>();
   late List<FocusNode> _focusNodes;
 
@@ -41,6 +42,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
     activationType = item?.activationType ?? ActivationType.keywords;
     logic = item?.logic ?? MatchingLogic.or;
     isActive = item?.isActive ?? true;
+    position = item?.position ?? 'before_char';
     _focusNodes = List.generate(8, (_) => FocusNode());
     for (var node in _focusNodes) {
       node.addListener(() {
@@ -67,6 +69,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
       isActive: isActive,
       activationDepth: int.tryParse(activationDepthController.text) ?? 3,
       priority: int.tryParse(priorityController.text) ?? 0,
+      position: position,
       positionId: int.tryParse(positionIdController.text) ?? 0,
     );
     widget.onSave?.call(item);
@@ -194,7 +197,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                     focusNode: _focusNodes[6],
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: '优先级(仅超过token上限时有用)',
+                      labelText: '顺序',
                       prefixIcon: Icon(Icons.star),
                     ),
                   ),
@@ -202,31 +205,50 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               ],
             ),
             const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: position,
+              decoration: const InputDecoration(
+                labelText: '插入位置',
+                prefixIcon: Icon(Icons.location_on),
+              ),
+              items: [
+                DropdownMenuItem(value: 'before_char', child: Text('角色定义前')),
+                DropdownMenuItem(value: 'after_char', child: Text('角色定义后')),
+                DropdownMenuItem(value: 'before_em', child: Text('对话示例前')),
+                DropdownMenuItem(value: 'after_em', child: Text('对话示例后')),
+                DropdownMenuItem(value: '@Duser', child: Text('@D 👤')),
+                DropdownMenuItem(value: '@Dassistant', child: Text('@D 🤖')),
+                DropdownMenuItem(value: '@Dsystem', child: Text('@D ⚙')),
+              ],
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() => position = v);
+                  save();
+                }
+                ;
+              },
+            ),
+            const SizedBox(height: 16),
+            if (position.startsWith('@D'))
+              TextField(
+                controller: positionIdController,
+                focusNode: _focusNodes[7],
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '深度',
+                  prefixIcon: Icon(Icons.layers),
+                ),
+              ),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: positionIdController,
-                    focusNode: _focusNodes[7],
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '插入位置ID',
-                      prefixIcon: Icon(Icons.place),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Row(
-                  children: [
-                    const Text('启用'),
-                    Switch(
-                      value: isActive,
-                      onChanged: (v) {
-                        setState(() => isActive = v);
-                        save();
-                      },
-                    ),
-                  ],
+                const Text('启用'),
+                Switch(
+                  value: isActive,
+                  onChanged: (v) {
+                    setState(() => isActive = v);
+                    save();
+                  },
                 ),
               ],
             ),
@@ -237,7 +259,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   }
 }
 
- String _activationTypeLabel(ActivationType type) {
+String _activationTypeLabel(ActivationType type) {
   switch (type) {
     case ActivationType.always:
       return '总是激活';

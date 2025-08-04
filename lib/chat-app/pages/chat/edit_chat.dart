@@ -122,6 +122,7 @@ class _EditChatPageState extends State<EditChatPage>
 
   // 基本信息标签页
   Widget _buildBasicInfoTab() {
+    final colors = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Form(
@@ -158,35 +159,40 @@ class _EditChatPageState extends State<EditChatPage>
                       Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          Expanded(
+                            Expanded(
                               child: DropdownButtonFormField<int>(
-                            value: widget.chat.chatOptionId,
+                            value: Get.find<ChatOptionController>()
+                                .chatOptions
+                                .any((option) => option.id == widget.chat.chatOptionId)
+                              ? widget.chat.chatOptionId
+                              : null,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                horizontal: 12, vertical: 8),
                             ),
                             hint: const Text('选择聊天预设'),
                             items: Get.find<ChatOptionController>()
-                                .chatOptions
-                                .map((option) {
+                              .chatOptions
+                              .map((option) {
                               return DropdownMenuItem<int>(
-                                value: option.id,
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: 250),
-                                  child: Text(
-                                    '${option.name}',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                              value: option.id,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: 250),
+                                child: Text(
+                                '${option.name}',
+                                overflow: TextOverflow.ellipsis,
                                 ),
+                              ),
                               );
                             }).toList(),
                             onChanged: (int? value) {
                               if (value != null) {
-                                widget.chat.chatOptionId = value;
-                                _saveChanges(isBack: false);
+                              widget.chat.chatOptionId = value;
+                              if(widget.chat.isChatNotCreated)return;
+                              _saveChanges(isBack: false);
                               }
                             },
-                          )),
+                            )),
                           IconButton(
                               onPressed: () {
                                 customNavigate(
@@ -239,8 +245,6 @@ class _EditChatPageState extends State<EditChatPage>
                   // 一个视觉上的分隔
                   const Divider(height: 1),
                   const SizedBox(height: 8), // 增加一些垂直间距
-
-                  // 使用 TextButton 或 OutlinedButton 强调危险操作
                   TextButton.icon(
                     icon: Icon(Icons.delete_sweep),
                     label: Text('清空聊天记录'),

@@ -9,9 +9,6 @@ import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/icon_switch_button.dart';
-import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -34,13 +31,12 @@ class BottomInputArea extends StatefulWidget {
   // bool get canCreateNewChat => chat.assistantId != null && chat.userId != null;
   ApiModel? get api => settingController.getApiById(chat.requestOptions.apiId);
 
-  // TODO；给他删了
-  bool get isThinkModeToggable => false;
-
   final bool canSend;
   final bool showRetry;
   final bool showPlus; // 是否显示添加图片/附件
   final bool showToolBar;
+
+  final List<Widget> toolBar;
 
   BottomInputArea({
     Key? key,
@@ -49,6 +45,7 @@ class BottomInputArea extends StatefulWidget {
     required this.onRetryLastest,
     required this.onToggleGroupWheel,
     required this.onUpdateChat,
+    this.toolBar = const [],
     this.canSend = true,
     this.showPlus = true,
     this.showRetry = true,
@@ -158,93 +155,14 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               children: [
                 // Left side switches
                 if (widget.showToolBar)
+                  // ExpandableToolbar(
+                  //     toolBar: widget.toolBar,
+                  //     expandableToolBar: widget.expandableToolBar)
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (isGroupMode &&
-                          !widget.chat.aiState.isGenerating)
-                        Opacity(
-                          opacity: 0.6,
-                          child: IconButton(
-                            icon: const Icon(Icons.group),
-                            onPressed: widget.onToggleGroupWheel,
-                          ),
-                        ),
-                      IconButton(
-                          onPressed: () {
-                            Get.dialog(
-                              AlertDialog(
-                                title: const Text('切换对话预设'),
-                                content: SizedBox(
-                                  width: double.maxFinite,
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: widget.chatOptionController
-                                        .chatOptions.length,
-                                    itemBuilder: (context, index) {
-                                      final option = widget.chatOptionController
-                                          .chatOptions[index];
-                                      return ListTile(
-                                        title: Text(option.name),
-                                        onTap: () {
-                                          setState(() {
-                                            widget.chat.initOptions(option);
-                                            widget.onUpdateChat();
-                                            Get.back();
-                                          });
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.settings_applications,
-                            color: colors.outline,
-                          )),
-
-                      IconButton(
-                          onPressed: () {
-                            final global = widget
-                                .loreBookController.globalActivitedLoreBooks;
-                            final chars = widget.chat.characters
-                                .expand((char) => char.loreBooks)
-                                .toList();
-                            customNavigate(
-                                LoreBookActivator(chat: widget.chat,lorebooks: [
-                                  ...{...global, ...chars}
-                                ]),
-                                context: context);
-                            // Get.dialog(
-                            //   AlertDialog(
-                            //     title: const Text('手动激活世界书'),
-                            //     content: SizedBox(
-                            //       width: double.maxFinite,
-                            //         child:
-                            //     ),
-                            //   ),
-                            // );
-                          },
-                          icon: Icon(
-                            Icons.book,
-                            color: colors.outline,
-                          )),
-                      // Think mode toggle
-                      if (widget.isThinkModeToggable)
-                        IconSwitchButton(
-                            value: widget.chat.requestOptions.isThinkMode,
-                            label: '思考模式',
-                            icon: Icons.psychology,
-                            onChanged: (val) {
-                              setState(() {
-                                widget.chat.requestOptions = widget
-                                    .chat.requestOptions
-                                    .copyWith(isThinkMode: val);
-                                widget.onUpdateChat();
-                              });
-                            }),
+                    
+                      ...widget.toolBar,
                     ],
                   ),
               ],
@@ -296,8 +214,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             // Group mode button
 
                             // Non-generating state buttons
-                            if (!widget
-                                .chat.aiState.isGenerating) ...[
+                            if (!widget.chat.aiState.isGenerating) ...[
                               if (widget.showPlus)
                                 Opacity(
                                   opacity: 0.6,
@@ -355,7 +272,8 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                     size: 18,
                                   ),
                                   onPressed: () {
-                                    widget.chatController.interrupt(widget.chat);
+                                    widget.chatController
+                                        .interrupt(widget.chat);
                                   },
                                 ),
                               ),

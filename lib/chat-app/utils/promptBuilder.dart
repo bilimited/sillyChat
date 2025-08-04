@@ -1,5 +1,6 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -110,9 +111,10 @@ class Promptbuilder {
     final msglst = getMessageList(chat, sender: sender);
 
     /// 用户消息提取：一般是最后一条消息，如果最后一条消息为空则填充默认消息
+    /// 更改：现在默认不会删除用户消息，以和ST逻辑保持一致。
     late String userMessage;
     if (msglst.isNotEmpty && msglst.last.role == 'user') {
-      userMessage = msglst.removeLast().content;
+      userMessage = msglst.last.content;
     } else {
       if (sender == null) {
         userMessage = promptSetting.continuePrompt;
@@ -124,10 +126,10 @@ class Promptbuilder {
     }
 
     /// Prompt处理
-    /// 步骤：1.世界书激活 2.PM插入世界书 3.PM插入宏和用户消息 3.5:单独提取"聊天中"Prompt 4.将”聊天中“Prompt插入正文,PM->LLM 5.融并相邻同Role消息
+    /// 步骤：1. 2. 3. 3.5: 4.,PM->LLM 5.
     /// -----------------------------------------------------------
 
-    /// Step 1
+    /// Step 1 世界书激活
     final Stopwatch stopwatch = Stopwatch()..start();
     final loreBook = Lorebookutil(
         messages: msglst,
@@ -135,20 +137,20 @@ class Promptbuilder {
         sender: sender ??
             Get.find<CharacterController>()
                 .getCharacterById(chat.assistantId ?? 0));
-    final loreMap = loreBook.activateLorebooks();
+    final loreBooks = loreBook.activateLorebooks();
     stopwatch.stop();
     print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
 
     final activitedPrompts =
         chat.prompts.where((prompt) => prompt.isEnable).toList();
 
-    /// Step 2
+    /// Step 2 世界书插入PM
     final promptsAfterInsertLore =
-        Lorebookutil.insertIntoPrompt(activitedPrompts, loreMap);
+        Lorebookutil.insertIntoPrompt(activitedPrompts, loreBooks);
 
     final STVars = <String, String>{};
 
-    /// Step 3
+    /// Step 3 宏和用户消息插入PM
     final promptsAfterFormat = promptsAfterInsertLore
         .map((prompt) => prompt.copyWith(
             content: Promptformatter.formatPrompt(prompt.content, chat,
@@ -158,7 +160,7 @@ class Promptbuilder {
         .where((msg) => !(msg.content.isBlank ?? false))
         .toList();
 
-    /// Step 3.5
+    /// Step 3.5 单独提取"聊天中"Prompt
     final promptsInChat = <PromptModel>[];
     promptsNotEmpty.removeWhere((prompt) {
       if (prompt.isInChat) {
@@ -169,9 +171,11 @@ class Promptbuilder {
       }
     });
 
-    /// Step 4
-
+    /// Step 4 将”聊天中“Prompt、@D世界书插入正文
+    
+    _insertInChatLoreBook(msglst, loreBooks);
     _insertInChatPrompt(msglst, promptsInChat);
+    
 
     final llmMessages = promptsNotEmpty.expand<LLMMessage>((prompt) {
       if (prompt.isChatHistory) {
@@ -214,6 +218,30 @@ class Promptbuilder {
           llmMessages.length - depth, LLMMessage.fromPromptModel(prompt));
     }
 
+    return llmMessages;
+  }
+
+  List<LLMMessage> _insertInChatLoreBook(
+      List<LLMMessage> llmMessages, List<LorebookItemModel> lorebooks) {
+    final filteredItems =
+        lorebooks.where((item) => item.position.startsWith('@D'));
+
+    if (filteredItems.isEmpty) {
+      return llmMessages;
+    }
+
+
+    for (final item in filteredItems) {
+      int depth = item.positionId;
+      if (depth < 0) continue;
+
+      if (depth > llmMessages.length) depth = llmMessages.length;
+
+      llmMessages.insert(
+          llmMessages.length - depth,
+          LLMMessage(
+              content: item.content, role: item.position.replaceAll('@D', '')));
+    }
     return llmMessages;
   }
 

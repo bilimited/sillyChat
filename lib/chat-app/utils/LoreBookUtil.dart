@@ -51,7 +51,7 @@ class Lorebookutil {
   }
 
   /// 世界书激活主流程
-  Map<int, String> activateLorebooks() {
+  List<LorebookItemModel> activateLorebooks() {
     // Step 1: 对每个Lorebook单独处理
     List<LorebookItemModel> activatedItems = [];
     for (var lorebook in lorebooks) {
@@ -59,42 +59,47 @@ class Lorebookutil {
     }
     print("激活了 ${activatedItems.length} 个条目");
 
-    // Step 5: 按positionId分组，拼接内容
-    Map<int, List<LorebookItemModel>> grouped = {};
-    for (var item in activatedItems) {
-      grouped.putIfAbsent(item.positionId, () => []).add(item);
-    }
-    Map<int, String> positionLoreMap = {};
-    grouped.forEach((posId, items) {
-      // 按优先级排序（先不排了）
-      // items.sort((a, b) => b.priority.compareTo(a.priority));
-      positionLoreMap[posId] = items.map((e) => e.content).join('\n');
-    });
+    /// 按照 priority 从小到大排序，priority 越小越靠前。
+    activatedItems.sort((a,b)=>a.priority.compareTo(b.priority));
 
-    return positionLoreMap;
+
+    return activatedItems;
   }
 
   // Step 6: 替换Prompt Message中的<lore id=x>
   static List<PromptModel> insertIntoPrompt(
-      List<PromptModel> prompts, Map<int, String> positionLoreMap) {
+      List<PromptModel> prompts, List<LorebookItemModel> items) {
+    // 过滤掉position以@开头的item
+    final filteredItems = items.where((item) => !(item.position.startsWith('@'))).toList();
+
+    // 按position分组
+    final Map<String, List<LorebookItemModel>> grouped = {};
+    for (var item in filteredItems) {
+      final pos = item.position.toString();
+      grouped.putIfAbsent(pos, () => []).add(item);
+    }
+
+    // 拼接同组item的content
+    final Map<String, String> positionContentMap = {};
+    grouped.forEach((pos, items) {
+      positionContentMap[pos] = items.map((e) => e.content).join('\n');
+    });
+
+    // 替换prompts中的<lore position>
     return prompts.map((prompt) {
       String newContent = prompt.content.replaceAllMapped(
-        RegExp(r'<lore id=(\d+)(?:\s+default=(.*?))?>'), // 改进后的正则表达式
+        RegExp(r'<lore\s+([^\s>]+)(?:\s+default=(.*?))?>'),
         (match) {
-          int posId = int.tryParse(match.group(1) ?? '') ?? 0;
-          String? defaultValue = match.group(2); // 获取 default 后面的内容，可能为 null
+          String pos = match.group(1) ?? '';
+          String? defaultValue = match.group(2);
 
-          // 尝试从 positionLoreMap 中获取世界书内容
-          String? loreContent = positionLoreMap[posId];
+          String? loreContent = positionContentMap[pos];
 
-          // 如果世界书内容存在，则使用世界书内容
           if (loreContent != null && loreContent.isNotEmpty) {
             return loreContent;
           } else if (defaultValue != null) {
-            // 如果世界书内容不存在，但提供了默认值，则使用默认值
             return defaultValue;
           } else {
-            // 如果世界书内容不存在，且没有提供默认值，则替换为空字符串
             return '';
           }
         },

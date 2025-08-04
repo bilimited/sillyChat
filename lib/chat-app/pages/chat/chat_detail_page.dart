@@ -8,13 +8,14 @@ import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
-import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -671,6 +672,77 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
+  Widget _buildInputBar() {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      color: Colors
+          .transparent, //isDesktop ? colors.surfaceContainerHigh : colors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      // 底部输入框
+      child: Stack(
+        children: [
+          // BottomInputArea 只在未多选时显示，但始终保留在树中
+          Opacity(
+            opacity: !_isMultiSelecting ? 1.0 : 0.0,
+            child: IgnorePointer(
+              ignoring: _isMultiSelecting,
+              child: BottomInputArea(
+                chatId: chatId,
+                onSendMessage: _sendMessage,
+                onRetryLastest: () {
+                  _chatController.retry(chat);
+                },
+                onToggleGroupWheel: () {
+                  setState(() => _showWheel = !_showWheel);
+                },
+                onUpdateChat: _updateChat,
+                // TOOL BAR
+                toolBar: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.settings,
+                      color: colors.outline,
+                    ),
+                    onPressed: () {
+                      customNavigate(EditChatPage(chat: chat),
+                          context: context);
+                    },
+                  ),
+                  if (isGroupMode && !chat.aiState.isGenerating)
+                    IconButton(
+                      icon: Icon(Icons.group, color: colors.outline),
+                      onPressed: () {
+                        setState(() => _showWheel = !_showWheel);
+                      },
+                    ),
+                  IconButton(
+                      onPressed: () {
+                        final global = Get.find<LoreBookController>()
+                            .globalActivitedLoreBooks;
+                        final chars = chat.characters
+                            .expand((char) => char.loreBooks)
+                            .toList();
+                        customNavigate(
+                            LoreBookActivator(chat: chat, lorebooks: [
+                              ...{...global, ...chars}
+                            ]),
+                            context: context);
+                      },
+                      icon: Icon(
+                        Icons.book,
+                        color: colors.outline,
+                      )),
+                ],
+              ),
+            ),
+          ),
+          // 多选时显示底部按钮组
+          if (_isMultiSelecting) _buildBottomButtonGroup(),
+        ],
+      ),
+    );
+  }
+
   // 消息正文+输入框
   Widget _buildMainContent() {
     final colors = Theme.of(context).colorScheme;
@@ -754,36 +826,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               ),
 
               // 输入框
-              Container(
-                color: Colors
-                    .transparent, //isDesktop ? colors.surfaceContainerHigh : colors.surface,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                // 底部输入框
-                child: Stack(
-                  children: [
-                    // BottomInputArea 只在未多选时显示，但始终保留在树中
-                    Opacity(
-                      opacity: !_isMultiSelecting ? 1.0 : 0.0,
-                      child: IgnorePointer(
-                        ignoring: _isMultiSelecting,
-                        child: BottomInputArea(
-                          chatId: chatId,
-                          onSendMessage: _sendMessage,
-                          onRetryLastest: () {
-                            _chatController.retry(chat);
-                          },
-                          onToggleGroupWheel: () {
-                            setState(() => _showWheel = !_showWheel);
-                          },
-                          onUpdateChat: _updateChat,
-                        ),
-                      ),
-                    ),
-                    // 多选时显示底部按钮组
-                    if (_isMultiSelecting) _buildBottomButtonGroup(),
-                  ],
-                ),
-              )
+              _buildInputBar(),
             ],
           );
   }
@@ -973,26 +1016,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.list),
+                icon: const Icon(Icons.search),
                 onPressed: () {
                   customNavigate(ManageMessagePage(chat: chat),
                       context: context);
                 },
               ),
-              //IconButton(
-              //   icon: const Icon(Icons.search),
-              //   onPressed: () {
-              //     customNavigate(
-              //         SearchPage(
-              //           chats: [chat],
-              //           onMessageTap: (message, chat) {
-              //             Get.back();
-              //             _scrollToMessage(message);
-              //           },
-              //         ),
-              //         context: context);
-              //   },
-              // ),
               IconButton(
                 icon: const Icon(Icons.more_horiz),
                 onPressed: () {
@@ -1035,12 +1064,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     position: RelativeRect.fromLTRB(1000, 0, 0, 0),
                     items: menuItems,
                   );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  customNavigate(EditChatPage(chat: chat), context: context);
                 },
               ),
             ],

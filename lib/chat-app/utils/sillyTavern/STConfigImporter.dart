@@ -49,7 +49,7 @@ abstract class STConfigImporter {
           switch (prompt['identifier']) {
             case 'dialogueExamples':
               {
-                content = "<lore id=2>\n<dialogueExamples>\n<lore id=3>";
+                content = "<lore before_em>\n<dialogueExamples>\n<lore after_em>";
                 break;
               }
             case 'chatHistory':
@@ -59,12 +59,12 @@ abstract class STConfigImporter {
               }
             case 'worldInfoAfter':
               {
-                content = "<lore id=1>";
+                content = "<lore after_char>";
                 break;
               }
             case 'worldInfoBefore':
               {
-                content = "<lore id=0>";
+                content = "<lore before_char>";
                 break;
               }
             case 'charDescription':

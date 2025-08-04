@@ -209,7 +209,7 @@ class _RegexListEditorState extends State<RegexListEditor> {
                   paramList: [],
                   allowedExtensions: ['json'],
                   multiple: true,
-                  onImport: (fileName, fileContent, selectedParams) {
+                  onImport: (fileName, fileContent, selectedParams,path) {
                     final regex = STRegexImporter.fromJson(
                         json.decode(fileContent), fileName, id: startId + id);
                     id ++;
