@@ -45,6 +45,7 @@ class _ContactsPageState extends State<ContactsPage> {
   Future<void> _importCharCard() async {
     // 使用file_picker选择PNG文件
     final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
       allowedExtensions: ['png'],
       dialogTitle: '选择角色卡PNG文件',
     );
@@ -90,9 +91,10 @@ class _ContactsPageState extends State<ContactsPage> {
             json.decode(decoded), file.path, file.path);
         if (char != null) {
           characterController.addCharacter(char);
+          Get.snackbar('导入成功', '角色卡已导入');
         }
 
-         Get.snackbar('导入成功', '角色卡已导入');
+         
       } catch (e) {
         Get.snackbar('导入失败', '$e');
       }

@@ -154,7 +154,7 @@ class FileImporter {
                         onImport(name, fileContents[index], selectedParamIds,filePaths[index]);
                       }
                       if (onAllSuccess != null) {
-                        onAllSuccess!(fileName.length, selectedParamIds);
+                        onAllSuccess!(fileNames.length, selectedParamIds);
                       }
                     }
 

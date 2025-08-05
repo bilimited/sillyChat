@@ -29,7 +29,7 @@ abstract class STCharacterImporter {
           "${data['description']}\n${data['personality']}\n${data['scenario']}\n\n[Example Chat]\n${data['mes_example']}";
 
       if (data['extensions']?['regex_scripts'] != null) {
-        await Get.dialog(
+        bool? result = await Get.dialog(
           AlertDialog(
             title: Text('警告'),
             content: ModernAlertCard(
@@ -54,6 +54,10 @@ abstract class STCharacterImporter {
           ),
           barrierDismissible: false,
         );
+
+        if(result == false){
+          return null;
+        }
       }
 
       /// 未兼容的字段：

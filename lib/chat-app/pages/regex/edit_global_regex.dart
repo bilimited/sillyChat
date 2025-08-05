@@ -23,10 +23,10 @@ class _EditGlobalRegexPageState extends State<EditGlobalRegexPage> {
         title: Text('编辑全局正则'),
       ),
       body: Center(
-          child: SingleChildScrollView(
-              child: Column(
+          child: 
+              Column(
         children: [
-          Obx(() => RegexListEditor(
+          Obx(() => Expanded(child: RegexListEditor(
                 // 傻逼GetX
                 // ignore: invalid_use_of_protected_member
                 regexList: settingController.regexes.value,
@@ -35,9 +35,11 @@ class _EditGlobalRegexPageState extends State<EditGlobalRegexPage> {
                   settingController.saveSettings();
                 },
               )),
+          
+          ) ,
           SizedBox(height: 32,)
         ],
-      ))),
+      )),
     );
   }
 }

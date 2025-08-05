@@ -133,14 +133,13 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                   child: TabBarView(
                     children: [
                       // Content for "提示词列表"
-                      SingleChildScrollView(
-                        child: PromptEditor(
+                      PromptEditor(
                           prompts: _prompts,
                           onPromptsChanged: (prompts) {
                             _prompts = prompts;
                           },
                         ),
-                      ),
+                      
                       // Content for "请求参数"
                       SingleChildScrollView(
                         child: RequestOptionsEditor(
@@ -153,8 +152,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                         ),
                       ),
                       // Content for "正则表达式"
-                      SingleChildScrollView(
-                        child: RegexListEditor(
+                        RegexListEditor(
                           regexList: _regexs,
                           onChanged: (regex) {
                             setState(() {
@@ -162,7 +160,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                             });
                           },
                         ),
-                      ),
+                      
                     ],
                   ),
                 ),

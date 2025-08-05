@@ -114,11 +114,12 @@ class _RegexListEditorState extends State<RegexListEditor> {
                   ],
                 ),
               )
-            : ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: 10,
-                ),
+            : Expanded(
+                // constraints: BoxConstraints(
+                //   minHeight: 10,
+                // ),
                 child: ReorderableListView.builder(
+                  
                   shrinkWrap: true,
                   // padding: const EdgeInsets.all(10.0),
                   itemCount: widget.regexList.length,

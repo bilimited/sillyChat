@@ -186,10 +186,8 @@ class _PromptEditorState extends State<PromptEditor> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 10,
-          ),
+        Expanded(
+
           child: ReorderableListView.builder(
             shrinkWrap: true,
             padding: EdgeInsets.symmetric(vertical: 8),
