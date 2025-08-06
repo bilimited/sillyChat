@@ -8,7 +8,7 @@ enum ServiceProvider {
   String toJson() => name;
   static ServiceProvider fromJson(String json) => values.byName(json);
 
-  static const Map<ServiceProvider, Map<String, dynamic>> _providerData = {
+  static const Map<ServiceProvider, Map<String, dynamic>> providerData = {
     ServiceProvider.custom_openai_compatible: {
       "localString": "自定义",
       "defaultUrl": "",
@@ -71,14 +71,22 @@ enum ServiceProvider {
     },
   };
 
+  static findProviderByModelName(String modelName) {
+    return providerData.entries.firstWhere(
+      (entry) => entry.value["modelList"].contains(modelName),
+      orElse: () => MapEntry(ServiceProvider.custom_openai_compatible, {}),
+    ).key;
+  }
+
+
   String toLocalString() =>
-      _providerData[this]?["localString"] ?? name;
+      providerData[this]?["localString"] ?? name;
 
   String get defaultUrl =>
-      _providerData[this]?["defaultUrl"] ?? "";
+      providerData[this]?["defaultUrl"] ?? "";
 
   List<String> get modelList =>
-      List<String>.from(_providerData[this]?["modelList"] ?? []);
+      List<String>.from(providerData[this]?["modelList"] ?? []);
 
   bool get isOpenAICompatiable => [
         ServiceProvider.openai,

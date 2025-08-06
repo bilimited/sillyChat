@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
@@ -7,6 +10,41 @@ import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 import 'package:get/get.dart';
 
 abstract class STCharacterImporter {
+  static Future<String> readPNGExts(File file) async {
+    final bytes = await file.readAsBytes();
+
+    // 查找PNG的chara字段（tEXt chunk）
+    // PNG文件格式: https://www.w3.org/TR/PNG/#5Chunk-layout
+    // tEXt chunk格式: [length][tEXt][type][keyword][\0][text][CRC]
+    // 这里只做简单查找，不做完整校验
+    int offset = 8; // 跳过PNG头
+    String? charaBase64;
+    while (offset < bytes.length) {
+      if (offset + 8 > bytes.length) break;
+      final length = bytes.buffer.asByteData().getUint32(offset);
+      final type = String.fromCharCodes(bytes.sublist(offset + 4, offset + 8));
+      if (type == 'tEXt') {
+        final chunkData = bytes.sublist(offset + 8, offset + 8 + length);
+        final nulIndex = chunkData.indexOf(0);
+        if (nulIndex != -1) {
+          final keyword = utf8.decode(chunkData.sublist(0, nulIndex));
+          if (keyword == 'chara') {
+            charaBase64 = utf8.decode(chunkData.sublist(nulIndex + 1));
+            break;
+          }
+        }
+      }
+      offset += 8 + length + 4; // 8: length+type, length: data, 4: CRC
+    }
+
+    if (charaBase64 == null) {
+      throw Exception('未找到chara字段,请检查角色卡格式是否为PNG/文件是否损坏');
+    }
+
+    final decoded = utf8.decode(base64.decode(charaBase64));
+    return decoded;
+  }
+
   static Future<CharacterModel?> fromJson(
       Map<String, dynamic> json, String fileName, String filePath) async {
     try {
@@ -55,7 +93,7 @@ abstract class STCharacterImporter {
           barrierDismissible: false,
         );
 
-        if(result == false){
+        if (result == false) {
           return null;
         }
       }

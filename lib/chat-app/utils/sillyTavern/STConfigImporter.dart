@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
@@ -21,7 +22,8 @@ abstract class STConfigImporter {
         frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
         presencePenalty: (json['presence_penalty'] as num).toDouble(),
         topP: (json['top_p'] as num).toDouble(),
-        isStreaming: json['stream_openai']
+        isStreaming: json['stream_openai'],
+        apiId: VaultSettingController.of().apis.first.id
       );
       List<PromptModel> prompts = [];
 
@@ -132,7 +134,9 @@ abstract class STConfigImporter {
           name: fileName,
           requestOptions: llmRequestOptions,
           prompts: prompts,
-          regex: []);
+          regex: []
+          
+          );
 
       ChatOptionController controller = Get.find();
       controller.addChatOption(chatOptionModel);

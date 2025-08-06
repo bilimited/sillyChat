@@ -467,6 +467,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.26"
+  flutter_remix:
+    dependency: "direct main"
+    description:
+      name: flutter_remix
+      sha256: c098f0a0268b06bf4948080d66ca3410aee11441b40fc761522222a9523e3047
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   flutter_test:
     dependency: "direct dev"
     description: flutter

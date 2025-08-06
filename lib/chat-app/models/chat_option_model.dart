@@ -100,20 +100,19 @@ class ChatOptionModel {
         "在发送请求时，会自动去除空白的Prompt。";
     const String userDefine = "<lore before_char>\n"
         """
-<角色定义>
-  <名称><char></名称>
-  <role>你是<char>，将扮演以下介绍中的角色。</role>
-  <介绍>
-    <archive>
-  </介绍>
-  <人物关系>
-    <relations>
-  </人物关系>
-  <其他角色>
-    <recent-characters:5>
-  </其他角色>
-</角色定义>
+# 角色定义
+名称：<char>
+你是<char>，将扮演以下介绍中的角色。
+## 介绍
+<archive>
 
+## 人物关系
+<relations>
+
+## 其他角色
+<recent-characters:5>
+
+## 其他设定
 <lore after_char>
 
 <lore before_em>
@@ -122,8 +121,9 @@ class ChatOptionModel {
 
 <lore after_em>
 
-
+# 用户设定
 我是<user>。
+<userbrief>
 现在，我将开始与你聊天。
 """;
 //     const String userMessage = """<lore before_usermessage>

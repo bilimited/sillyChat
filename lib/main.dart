@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
+import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
@@ -50,7 +51,6 @@ class SillyChatApp extends StatelessWidget {
   final ChatOptionController chatOptions = Get.put(ChatOptionController());
   final LoreBookController loreBooks = Get.put(LoreBookController());
 
-
   // TODO:目前有问题 获取不到
   static late GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -75,10 +75,10 @@ class SillyChatApp extends StatelessWidget {
   }
 
   /// 用于显示单行提示消息。显示错误信息请使用Get.snackbar。
-  static void snackbar(BuildContext context ,String message) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+  static void snackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
@@ -98,7 +98,9 @@ class SillyChatApp extends StatelessWidget {
           darkTheme: vaultSettings.themeNight.value,
           themeMode:
               setting.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
-          home: const MainPage(),
+          home: vaultSettings.isShowOnBoardPage.value
+              ? OnBoardingPage()
+              : const MainPage(),
         ));
   }
 }

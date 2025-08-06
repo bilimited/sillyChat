@@ -52,56 +52,18 @@ class _ContactsPageState extends State<ContactsPage> {
     if (result == null || result.files.single.path == null) return;
 
     final file = File(result.files.single.path!);
-    final bytes = await file.readAsBytes();
-
-    // 查找PNG的chara字段（tEXt chunk）
-    // PNG文件格式: https://www.w3.org/TR/PNG/#5Chunk-layout
-    // tEXt chunk格式: [length][tEXt][type][keyword][\0][text][CRC]
-    // 这里只做简单查找，不做完整校验
-    int offset = 8; // 跳过PNG头
-    String? charaBase64;
-    while (offset < bytes.length) {
-      if (offset + 8 > bytes.length) break;
-      final length = bytes.buffer.asByteData().getUint32(offset);
-      final type = String.fromCharCodes(bytes.sublist(offset + 4, offset + 8));
-      if (type == 'tEXt') {
-        final chunkData = bytes.sublist(offset + 8, offset + 8 + length);
-        final nulIndex = chunkData.indexOf(0);
-        if (nulIndex != -1) {
-          final keyword = utf8.decode(chunkData.sublist(0, nulIndex));
-          if (keyword == 'chara') {
-            charaBase64 = utf8.decode(chunkData.sublist(nulIndex + 1));
-            break;
-          }
-        }
-      }
-      offset += 8 + length + 4; // 8: length+type, length: data, 4: CRC
-    }
-
-    if (charaBase64 == null) {
-      Get.snackbar('导入失败', '未找到chara字段');
-      return;
-    }
-
     try {
-      final decoded = utf8.decode(base64.decode(charaBase64));
-
-      try {
-        final char = await STCharacterImporter.fromJson(
-            json.decode(decoded), file.path, file.path);
-        if (char != null) {
-          characterController.addCharacter(char);
-          Get.snackbar('导入成功', '角色卡已导入');
-        }
-
-         
-      } catch (e) {
-        Get.snackbar('导入失败', '$e');
+      String decoded = await STCharacterImporter.readPNGExts(file);
+      final char = await STCharacterImporter.fromJson(
+          json.decode(decoded), file.path, file.path);
+      if (char != null) {
+        characterController.addCharacter(char);
+        Get.snackbar('导入成功', '角色卡已导入');
+      }else{
+        Get.snackbar('导入失败', '未知错误');
       }
-
-     
     } catch (e) {
-      Get.snackbar('解码失败', '$e');
+      Get.snackbar('导入失败', '$e');
     }
   }
 

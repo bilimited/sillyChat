@@ -19,12 +19,12 @@ class LLMRequestOptions {
 
   const LLMRequestOptions({
     required this.messages,
-    this.maxTokens = 4000,
-    this.temperature = 0.7,
+    this.maxTokens = 12000,
+    this.temperature = 0.95,
     this.topP = 1.0,
     this.presencePenalty = 0.0,
     this.frequencyPenalty = 0.0,
-    this.maxHistoryLength = 10,
+    this.maxHistoryLength = 64,
     this.apiId = 0,
     this.isThinkMode = false,
     this.isDeleteThinking = true,

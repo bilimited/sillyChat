@@ -23,6 +23,8 @@ class VaultSettingController extends GetxController {
   late Rx<ChatDisplaySettingModel> displaySettingModel =
       ChatDisplaySettingModel().obs;
 
+  final RxBool isShowOnBoardPage = false.obs;
+
   late Rx<PromptSettingModel> promptSettingModel = PromptSettingModel().obs;
 
   Rx<ThemeData> themeLight = ThemeData().obs;
@@ -83,8 +85,11 @@ class VaultSettingController extends GetxController {
                 .cast<RegexModel>()
             : <RegexModel>[];
       } else {
+        // 文件不存在：证明初次启动
+        isShowOnBoardPage.value = true;
         displaySettingModel.value = ChatDisplaySettingModel();
       }
+
       if (displaySettingModel.value.CustomFontPath != null &&
           displaySettingModel.value.CustomFontPath!.isNotEmpty) {
         await FontManager.initCustomFont(
@@ -161,5 +166,9 @@ class VaultSettingController extends GetxController {
 
   ApiModel? getApiById(int id) {
     return apis.firstWhereOrNull((a) => a.id == id);
+  }
+
+  static VaultSettingController of(){
+    return Get.find<VaultSettingController>();
   }
 }

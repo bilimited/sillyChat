@@ -725,16 +725,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                             Icons.book,
                             color: colors.outline,
                           )),
-                      IconButton(
-                        icon: Icon(
-                          Icons.settings,
-                          color: colors.outline,
-                        ),
-                        onPressed: () {
-                          customNavigate(EditChatPage(chat: chat),
-                              context: context);
-                        },
-                      ),
                     ],
                   );
                 })),
@@ -964,12 +954,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         ? AppBar(
             backgroundColor: isDesktop ? colors.surfaceContainerHigh : null,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  customNavigate(EditChatPage(chat: chat), context: context);
-                },
-              ),
+
             ],
           )
         : AppBar(
@@ -1067,6 +1052,14 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     position: RelativeRect.fromLTRB(1000, 0, 0, 0),
                     items: menuItems,
                   );
+                },
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.settings,
+                ),
+                onPressed: () {
+                  customNavigate(EditChatPage(chat: chat), context: context);
                 },
               ),
             ],

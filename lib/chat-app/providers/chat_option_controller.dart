@@ -93,4 +93,8 @@ class ChatOptionController extends GetxController {
     update();
     saveChatOptions();
   }
+
+  static ChatOptionController of(){
+    return Get.find<ChatOptionController>();
+  }
 }
