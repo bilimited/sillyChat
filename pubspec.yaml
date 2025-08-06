@@ -46,6 +46,7 @@ dependencies:
 
   path_provider: ^2.0.0
   dio: ^5.8.0+1
+  dio_http2_adapter: ^2.4.0 
   path: ^1.8.3
   image_picker: ^1.0.7
   flutter_colorpicker: ^1.1.0
@@ -69,6 +70,7 @@ dependencies:
   flutter_json_view: ^1.1.5
 
   flutter_markdown: ^0.7.7+1
+  introduction_screen: ^3.1.17
   # markdown_widget: ^2.3.2+8
 
 

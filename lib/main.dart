@@ -31,7 +31,8 @@ class SillyChatApp extends StatelessWidget {
   );
   final defaultThemeNight = ThemeData(
     colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color.fromARGB(255, 135, 191, 237), brightness: Brightness.dark),
+        seedColor: const Color.fromARGB(255, 135, 191, 237),
+        brightness: Brightness.dark),
     useMaterial3: true,
     fontFamily: Platform.isWindows ? "思源黑体" : null,
   );
@@ -48,6 +49,11 @@ class SillyChatApp extends StatelessWidget {
   final LogController logs = Get.put(LogController());
   final ChatOptionController chatOptions = Get.put(ChatOptionController());
   final LoreBookController loreBooks = Get.put(LoreBookController());
+
+
+  // TODO:目前有问题 获取不到
+  static late GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   static void restart() {
     Get.find<CharacterController>().characters.value = [];
@@ -68,9 +74,16 @@ class SillyChatApp extends StatelessWidget {
     return "v${packageInfo.version}";
   }
 
+  /// 用于显示单行提示消息。显示错误信息请使用Get.snackbar。
+  static void snackbar(BuildContext context ,String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+  }
+
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
-    if(kDebugMode){
+    if (kDebugMode) {
       return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
@@ -79,6 +92,7 @@ class SillyChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => GetMaterialApp(
+          scaffoldMessengerKey: scaffoldMessengerKey,
           title: 'Silly Chat',
           theme: vaultSettings.themeLight.value,
           darkTheme: vaultSettings.themeNight.value,

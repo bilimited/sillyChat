@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
@@ -284,14 +285,16 @@ class ChatController extends GetxController {
 
   Future<ChatModel> createChatFromCharacter(CharacterModel char) async {
     ChatModel chatModel = ChatModel(
-      id: DateTime.now().microsecond,
-      name: '${char.roleName}',
-      avatar: char.avatar,
-      lastMessage: '聊天已创建',
-      time: DateTime.now().toString(),
-      assistantId: char.id,
-      messages: [],
-    )..characterIds = [char.id];
+        id: DateTime.now().microsecond,
+        name: '${char.roleName}',
+        avatar: char.avatar,
+        lastMessage: '聊天已创建',
+        time: DateTime.now().toString(),
+        assistantId: char.id,
+        messages: [],
+        chatOptionId:
+            Get.find<ChatOptionController>().chatOptions.elementAtOrNull(0)?.id)
+      ..characterIds = [char.id];
 
     String formatMessage(String message) {
       return Promptformatter.formatPrompt(message, chatModel);

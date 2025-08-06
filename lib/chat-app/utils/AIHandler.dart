@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
+import 'package:dio/io.dart';
+import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
@@ -8,6 +11,7 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:get/get.dart';
 
+// TODO:未知原因截断，而且没说截断原因
 class Aihandler {
   // 默认API已禁用
   static const String API_URL = "";
@@ -20,14 +24,31 @@ class Aihandler {
   bool isInterrupt = false;
   bool isBusy = false;
   dio.Dio? dioInstance;
-  int token_used = 0;
+  //int token_used = 0;
+  dio.CancelToken cancelToken = dio.CancelToken(); // 用于中断请求
 
   void interrupt() {
     isInterrupt = true;
     isBusy = false;
-    if (dioInstance != null) {
-      dioInstance!.close(force: true);
+
+    cancelToken.cancel();
+    onGenerateStateChange('生成已停止');
+  }
+
+  void initDio() {
+    if (dioInstance == null) {
+      print("正在创建新的Dio实例");
+      //  一个连接最长保持4分钟，以加快Gemini响应速度
+      // 注意：如果空闲时间过长某个中间网关可能会静默丢弃这个连接，导致一次连接超时
+      dioInstance = dio.Dio()
+        ..httpClientAdapter = Http2Adapter(ConnectionManager(
+          idleTimeout: Duration(minutes: 4),
+          onClientCreate: (uri, p1) {
+            print('[${DateTime.now()}] 监控: 正在为 $uri 建立一个新的 HTTP/2 连接...');
+          },
+        ));
     }
+
   }
 
   Future<void> request(
@@ -66,6 +87,7 @@ class Aihandler {
   Stream<String> requestTokenStream(LLMRequestOptions options) async* {
     try {
       isInterrupt = false;
+      cancelToken = dio.CancelToken();
 
       if (isBusy) {
         return;
@@ -73,7 +95,6 @@ class Aihandler {
         isBusy = true;
       }
 
-      token_used = 0;
       final VaultSettingController settingController = Get.find();
       final ApiModel? api = settingController.getApiById(options.apiId);
       if (api == null) {
@@ -100,10 +121,6 @@ class Aihandler {
       LogController.log("发生错误:$e", LogLevel.error);
     }
     isBusy = false;
-    if (dioInstance != null) {
-      dioInstance!.close();
-      dioInstance = null;
-    }
   }
 
   Stream<String> requestOpenAI(LLMRequestOptions options, ApiModel api,
@@ -118,7 +135,7 @@ class Aihandler {
         onGenerateStateChange('正在等待回应...');
       }
 
-      dioInstance = dio.Dio();
+      initDio();
 
       LogController.log(
         json.encode(options.toOpenAIJson()),
@@ -139,6 +156,7 @@ class Aihandler {
           },
           contentType: 'application/json; charset=utf-8',
         ),
+        cancelToken: cancelToken,
         data: {
           'model': model,
           ...options.toOpenAIJson(),
@@ -160,8 +178,13 @@ class Aihandler {
             type: LogType.json, title: "OpenAI响应");
         yield responseData['choices'][0]['message']['content'] ?? '未发现可用消息';
       }
+    } on dio.DioException catch (e) {
+      if (dio.CancelToken.isCancel(e)) {
+      } else {
+        rethrow;
+      }
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -182,16 +205,10 @@ class Aihandler {
           //"thinkingConfig": {}, // 暂时只有两档,
         },
         "safetySettings": [
-          {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-          {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-          {
-            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            "threshold": "BLOCK_NONE"
-          },
-          {
-            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-            "threshold": "BLOCK_NONE"
-          },
+          {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF"},
+          {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF"},
+          {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF"},
+          {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF"},
         ],
       };
       LogController.log(json.encode(requestBody), LogLevel.info,
@@ -201,8 +218,9 @@ class Aihandler {
       } else {
         onGenerateStateChange('正在等待回应...');
       }
-      dioInstance = dio.Dio();
+      initDio();
       final response = await dioInstance!.post(
+        cancelToken: cancelToken,
         options.isStreaming ? streamingUrl : notStreamingUrl,
         options: dio.Options(
           responseType: options.isStreaming
@@ -271,8 +289,9 @@ class Aihandler {
           yield item['text'] ?? '';
         }
       }
-    } catch (e) {
-      if (e is dio.DioException && e.response?.data != null) {
+    } on dio.DioException catch (e) {
+      if (dio.CancelToken.isCancel(e)) {
+      } else if (e.response?.data != null) {
         final errorData = e.response!.data;
         // Attempt to decode error response for better logging
         try {
@@ -284,8 +303,9 @@ class Aihandler {
           throw 'Google API Error: ${e.message}';
         }
       }
+    } catch (e) {
       print("Error:$e");
-      throw e; // Re-throw to be caught by the main handler
+      rethrow;
     }
   }
 
@@ -330,8 +350,6 @@ class Aihandler {
           print("Non-data SSE line: $line");
         }
       }
-
-      if (isInterrupt) break;
     }
     if (buffer.isNotEmpty) {
       print("Remaining buffer after stream end: $buffer");
