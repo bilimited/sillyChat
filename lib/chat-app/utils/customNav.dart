@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/main.dart';
-import 'package:get/get.dart';
 
 /// 自定义跳转函数
 /// [page] 目标页面

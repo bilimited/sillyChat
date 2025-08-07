@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
-import 'package:dio/io.dart';
 import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
@@ -58,15 +56,13 @@ class Aihandler {
   }
 
   // 不好使
-  static Future<void> testConnectivity(String url,
+  static Future<List<String>> fetchModelList(String url, String token,
       void Function(bool isSuccess, String message) callback) async {
     final d = dio.Dio();
     try {
-      // 尝试发送一个HEAD请求，通常比GET请求更轻量，且不返回响应体
-      // 或者发送一个GET请求到API的健康检查端点（如果有的话）
-      final response = await d.head(url,
-          options: dio.Options(receiveTimeout: const Duration(seconds: 5)));
-      callback(response.statusCode == 200, 'URL可正常连接'); // 检查HTTP状态码
+      final rs = await d!.post(
+        url,
+      );
     } on dio.DioException catch (e) {
       if (e.type == dio.DioExceptionType.connectionTimeout ||
           e.type == dio.DioExceptionType.receiveTimeout ||
@@ -75,12 +71,14 @@ class Aihandler {
         print('网络连接超时或无网络: ${e.message}');
         callback(false, '网络连接超时或无网络: ${e.message}');
       }
-      print('API连通性测试失败: ${e.message}');
-      callback(false, 'API连通性测试失败: ${e.message}');
+      print('API连接失败: ${e.message}');
+      callback(false, 'API连接失败: ${e.message}');
     } catch (e) {
       print('发生未知错误: $e');
       callback(false, '发生未知错误: $e');
     }
+
+    return [];
   }
 
   Stream<String> requestTokenStream(LLMRequestOptions options) async* {
