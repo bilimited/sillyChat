@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 /// 一个用于动态加载和管理字体文件的工具类。
 class FontManager {
@@ -37,13 +36,13 @@ class FontManager {
     String? manualFontName,
   }) async {
     // 1. 请求存储权限 (仅限Android)
-    if (Theme.of(context).platform == TargetPlatform.android) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        _showSnackBar(context, '需要存储权限才能选择字体文件。');
-        return false;
-      }
-    }
+    // if (Theme.of(context).platform == TargetPlatform.android) {
+    //   final status = await Permission.storage.request();
+    //   if (!status.isGranted) {
+    //     _showSnackBar(context, '需要存储权限才能选择字体文件。');
+    //     return false;
+    //   }
+    // }
 
     // 2. 选择字体文件
     FilePickerResult? result = await FilePicker.platform.pickFiles(

@@ -1,3 +1,4 @@
+import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
@@ -102,11 +103,12 @@ class Promptbuilder {
 
   /// 史诗抽象超长代码
   /// sender!=null ,则为群聊模式
-  /// TODO:和酒馆有一个区别：最新消息（用户发的那条）会被移除并放到<lastUserMessage>宏里。需要加一个开关显式控制
-  /// 另一个 TODO:因为Gemini没有system，融合同role消息开关可能要与API绑定
+  /// TODO:重构，将所有与服务商有关的操作分离到ServiceProvider中
   List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
+    final options = chat.requestOptions;
+    final api = options.api;
 
     final msglst = getMessageList(chat, sender: sender);
 
@@ -172,10 +174,9 @@ class Promptbuilder {
     });
 
     /// Step 4 将”聊天中“Prompt、@D世界书插入正文
-    
+
     _insertInChatLoreBook(msglst, loreBooks);
     _insertInChatPrompt(msglst, promptsInChat);
-    
 
     final llmMessages = promptsNotEmpty.expand<LLMMessage>((prompt) {
       if (prompt.isChatHistory) {
@@ -189,7 +190,8 @@ class Promptbuilder {
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
 
-    return llmMessages;
+    return mergeLLMMessages(
+        llmMessages, api?.provider == ServiceProvider.google);
   }
 
   /// 排序并插入”聊天中“Prompt
@@ -221,6 +223,7 @@ class Promptbuilder {
     return llmMessages;
   }
 
+  /// 插入@D的世界书条目
   List<LLMMessage> _insertInChatLoreBook(
       List<LLMMessage> llmMessages, List<LorebookItemModel> lorebooks) {
     final filteredItems =
@@ -229,7 +232,6 @@ class Promptbuilder {
     if (filteredItems.isEmpty) {
       return llmMessages;
     }
-
 
     for (final item in filteredItems) {
       int depth = item.positionId;
@@ -243,6 +245,35 @@ class Promptbuilder {
               content: item.content, role: item.position.replaceAll('@D', '')));
     }
     return llmMessages;
+  }
+
+  // 合并相邻的，相同role的Message
+  // 若isConvertSystemToUser，则先将所有role为system的消息转为user
+  List<LLMMessage> mergeLLMMessages(
+      List<LLMMessage> messages, bool isConvertSystemToUser) {
+    if (messages.isEmpty) return [];
+    if (isConvertSystemToUser) {
+      messages = messages.map((msg) {
+        if (msg.role == 'system') {
+          return msg.copyWith(role: 'user');
+        }
+        return msg;
+      }).toList();
+    }
+    // messages.sort((a, b) => a.senderId.compareTo(b.senderId));
+
+    // 合并相邻的，相同role的Message
+    List<LLMMessage> mergedMessages = [];
+    for (final msg in messages) {
+      if (mergedMessages.isEmpty || mergedMessages.last.role != msg.role) {
+        mergedMessages.add(msg);
+      } else {
+        mergedMessages.last = mergedMessages.last.copyWith(
+            content: mergedMessages.last.content + '\n' + msg.content);
+        //mergedMessages.last.content += '\n' + msg.content;
+      }
+    }
+    return mergedMessages;
   }
 
   int _compareRole(String role1, String role2) {

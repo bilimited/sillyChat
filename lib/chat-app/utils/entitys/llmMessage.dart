@@ -44,7 +44,6 @@ class LLMMessage {
     return {
       "role": role,
       "content": content,
-      // if (fileDirs.isNotEmpty) "files": fileDirs,
     };
   }
 
@@ -111,5 +110,21 @@ class LLMMessage {
     return {
       "parts": mergedMessage.toGeminiParts()
     };
+  }
+
+  LLMMessage copyWith({
+    String? content,
+    String? role,
+    List<String>? fileDirs,
+    bool? isPrompt,
+    int? senderId,
+  }) {
+    return LLMMessage(
+      content: content ?? this.content,
+      role: role ?? this.role,
+      fileDirs: fileDirs ?? this.fileDirs,
+      isPrompt: isPrompt ?? this.isPrompt,
+      senderId: senderId ?? this.senderId,
+    );
   }
 }

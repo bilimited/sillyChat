@@ -48,7 +48,6 @@ class Aihandler {
           },
         ));
     }
-
   }
 
   Future<void> request(
@@ -196,8 +195,8 @@ class Aihandler {
           "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:generateContent?key=${api.apiKey}";
 
       final requestBody = {
-        "contents": _geminiMergeAdjacentMessages(
-            options.messages.map((msg) => msg.toGeminiRestJson()).toList()),
+        "contents":
+            options.messages.map((msg) => msg.toGeminiRestJson()).toList(),
         "generationConfig": {
           "temperature": options.temperature,
           "maxOutputTokens": options.maxTokens,

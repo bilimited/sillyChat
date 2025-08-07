@@ -17,6 +17,7 @@ enum ServiceProvider {
     ServiceProvider.openai: {
       "localString": "openai",
       "defaultUrl": "https://api.openai.com/v1/chat/completions",
+      "modelListUrl": 'https://api.openai.com/v1/models',
       "modelList": [
         "gpt-3.5-turbo",
         "gpt-4",
@@ -26,6 +27,7 @@ enum ServiceProvider {
     ServiceProvider.deepseek: {
       "localString": "deepseek",
       "defaultUrl": "https://api.deepseek.com/chat/completions",
+      "modelListUrl": "https://api.deepseek.com/models",
       "modelList": [
         'deepseek-chat',
         'deepseek-reasoner',
@@ -38,6 +40,7 @@ enum ServiceProvider {
     ServiceProvider.siliconflow: {
       "localString": "硅基流动",
       "defaultUrl": "https://api.siliconflow.cn/v1/chat/completions",
+      "modelListUrl": "https://api.siliconflow.cn/v1/models",
       "modelList": [
         'deepseek-ai/DeepSeek-V3',
         'deepseek-ai/DeepSeek-R1',
@@ -50,6 +53,7 @@ enum ServiceProvider {
     },
     ServiceProvider.google: {
       "localString": "google",
+      "modelListUrl": "https://api.siliconflow.cn/v1/models",
       "defaultUrl": "这个不需要填",
       "modelList": [
         "gemini-2.5-pro",

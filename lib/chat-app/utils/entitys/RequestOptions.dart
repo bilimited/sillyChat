@@ -1,3 +1,5 @@
+import 'package:flutter_example/chat-app/models/api_model.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 
 class LLMRequestOptions {
@@ -16,6 +18,8 @@ class LLMRequestOptions {
   final bool isStreaming; // 是否流式响应
 
   final bool isMergeMessageList;
+
+  ApiModel? get api => VaultSettingController.of().getApiById(apiId);
 
   const LLMRequestOptions({
     required this.messages,
