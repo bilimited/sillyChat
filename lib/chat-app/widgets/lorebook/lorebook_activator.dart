@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
@@ -61,7 +63,8 @@ class _LoreBookActivatorState extends State<LoreBookActivator> {
 
   @override
   Widget build(BuildContext context) {
-    final List<_LorebookItemEntry> entries = [];
+    final Map<LorebookModel, List<_LorebookItemEntry>> groupedEntries = {};
+
     for (final index in itemMap.entries) {
       int loreBookId = int.parse(index.key.split('@')[0]);
       int itemId = int.parse(index.key.split('@')[1]);
@@ -71,64 +74,90 @@ class _LoreBookActivatorState extends State<LoreBookActivator> {
         LorebookItemModel? itemModel =
             lorebookModel.items.firstWhereOrNull((item) => item.id == itemId);
         if (itemModel != null) {
-          entries.add(
-              _LorebookItemEntry(lorebook: lorebookModel, item: itemModel, isActive: index.value));
+          final entry = _LorebookItemEntry(
+              lorebook: lorebookModel, item: itemModel, isActive: index.value);
+          if (!groupedEntries.containsKey(lorebookModel)) {
+            groupedEntries[lorebookModel] = [];
+          }
+          groupedEntries[lorebookModel]!.add(entry);
         }
       }
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('手动激活世界书条目'),
+        title: const Text('手动激活世界书条目'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // SwitchListTile(
-          //   title: const Text('只显示手动激活的世界书条目'),
-          //   value: onlyManual,
-          //   onChanged: (v) => setState(() => onlyManual = v),
-          // ),
-          // const Divider(),
-          Expanded(
-            child: entries.isEmpty
-                ? const Center(child: Text('暂无条目'))
-                : ListView.separated(
-                    itemCount: entries.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      final item = entry.item;
-                      return ListTile(
-                        dense: true,
-                        title: Text(
-                          item.name,
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        subtitle: Text(
-                          item.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.outline,
-                              fontSize: 12),
-                        ),
-                        trailing: Transform.scale(
-                          scale: 0.7,
-                          child: Switch(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            value: entry.isActive,
-                            onChanged: (v) =>
-                                _toggleItemActive(entry.lorebook, item, v),
-                          ),
-                        ),
-                      );
-                    },
+      body: groupedEntries.isEmpty
+          ? const Center(child: Text('暂无条目'))
+          : ListView.builder(
+              itemCount: groupedEntries.length,
+              itemBuilder: (context, index) {
+                final lorebook = groupedEntries.keys.elementAt(index);
+                final entries = groupedEntries[lorebook]!;
+                // 使用 ExpansionTile 替代 Column 来实现可折叠效果
+                return ExpansionTile(
+                  // 分组标题
+                  title: Text(
+                    lorebook.name,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-          ),
-        ],
-      ),
+                  trailing: IconButton(
+                      onPressed: () {
+                        customNavigate(
+                            LoreBookEditorPage(
+                              lorebook: lorebook,
+                            ),
+                            context: context);
+                      },
+                      icon: Icon(Icons.more_horiz)),
+                  // 默认保持展开状态
+                  initiallyExpanded: true,
+                  // 可折叠的内容，即条目列表
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: entries.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, itemIndex) {
+                          final entry = entries[itemIndex];
+                          final item = entry.item;
+                          return ListTile(
+                            dense: true,
+                            title: Text(
+                              item.name,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              item.content,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.outline,
+                                fontSize: 12,
+                              ),
+                            ),
+                            trailing: Transform.scale(
+                              scale: 0.7,
+                              child: Switch(
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                value: entry.isActive,
+                                onChanged: (v) =>
+                                    _toggleItemActive(entry.lorebook, item, v),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
     );
   }
 }
@@ -137,5 +166,6 @@ class _LorebookItemEntry {
   final LorebookModel lorebook;
   final LorebookItemModel item;
   final bool isActive;
-  _LorebookItemEntry({required this.lorebook, required this.item, required this.isActive});
+  _LorebookItemEntry(
+      {required this.lorebook, required this.item, required this.isActive});
 }

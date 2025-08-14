@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import '../../../chat-app/models/character_model.dart';
 import '../../../chat-app/providers/character_controller.dart';
@@ -21,7 +23,7 @@ class MemberSelector extends StatelessWidget {
     return Obx(() {
       final allCharacters = characterController.characters;
       Map<String, List<CharacterModel>> groupedCharacters = {};
-      
+
       for (var character in allCharacters) {
         if (!groupedCharacters.containsKey(character.category)) {
           groupedCharacters[character.category] = [];
@@ -47,15 +49,31 @@ class MemberSelector extends StatelessWidget {
               ),
               ...characters.map((character) {
                 final isMember = selectedMembers.contains(character.id);
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: Image.file(File(character.avatar)).image,
-                  ),
-                  title: Text(character.roleName),
-                  trailing: isMember
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : null,
-                  onTap: () => onToggleMember(character.id),
+                return Row(
+                  children: [
+                    Expanded(
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage:
+                              Image.file(File(character.avatar)).image,
+                        ),
+                        title: Text(character.roleName),
+                        trailing: isMember
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : null,
+                        onTap: () => onToggleMember(character.id),
+                      ),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          customNavigate(
+                              EditCharacterPage(
+                                characterId: character.id,
+                              ),
+                              context: context);
+                        },
+                        icon: Icon(Icons.more_horiz)),
+                  ],
                 );
               }).toList(),
             ],

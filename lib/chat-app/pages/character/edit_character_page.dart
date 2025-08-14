@@ -130,7 +130,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     });
   }
 
-  Future<void> _saveAndBack() async {
+  Future<void> _save() async {
     final character = _saveCharacter();
     if (character == null) return;
     if (isEditMode) {
@@ -139,7 +139,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       await _characterController.addCharacter(character);
     }
 
-    Get.back();
+    //Get.back();
   }
 
   Future<void> _deleteCharacter() async {
@@ -761,55 +761,60 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditPlayer
-            ? '编辑用户角色'
-            : isEditMode
-                ? '编辑角色'
-                : '新建角色'),
-        bottom: isEditPlayer
-            ? null
-            : TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: '基本信息'),
-                  Tab(text: '其他设置'),
-                ],
-              ),
-        actions: isEditPlayer
-            ? []
-            : [
-                IconButton(
-                    onPressed: _copyCharacter, icon: const Icon(Icons.copy)),
-                if (isEditMode)
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: _deleteCharacter,
+    return PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          _save();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(isEditPlayer
+                ? '编辑用户角色'
+                : isEditMode
+                    ? '编辑角色'
+                    : '新建角色'),
+            bottom: isEditPlayer
+                ? null
+                : TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(text: '基本信息'),
+                      Tab(text: '其他设置'),
+                    ],
                   ),
-              ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: isEditPlayer
-            ? _buildPlayerSetting()
-            : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildBasicInfoTab(),
-                  _buildSettingsTab(),
-                ],
-              ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saveAndBack,
-        icon: Icon(isEditMode ? Icons.save : Icons.create),
-        label: Text(
-          isEditMode ? '保存修改' : '创建角色',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
-    );
+            actions: isEditPlayer
+                ? []
+                : [
+                    IconButton(
+                        onPressed: _copyCharacter,
+                        icon: const Icon(Icons.copy)),
+                    if (isEditMode)
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: _deleteCharacter,
+                      ),
+                  ],
+          ),
+          body: Form(
+            key: _formKey,
+            child: isEditPlayer
+                ? _buildPlayerSetting()
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildBasicInfoTab(),
+                      _buildSettingsTab(),
+                    ],
+                  ),
+          ),
+          // floatingActionButton: FloatingActionButton.extended(
+          //   onPressed: _save,
+          //   icon: Icon(isEditMode ? Icons.save : Icons.create),
+          //   label: Text(
+          //     isEditMode ? '保存修改' : '创建角色',
+          //     style: const TextStyle(fontSize: 16),
+          //   ),
+          // ),
+        ));
   }
 
   @override

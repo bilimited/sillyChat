@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
@@ -20,6 +22,7 @@ class ChatModel {
   }
 
   late final int fileId;
+  late final File file; // 加载时赋值
 
   int id = 1;
   int sortIndex = 0; // 排序用
@@ -40,7 +43,8 @@ class ChatModel {
   // 会被插入到提示词中
   String? description;
 
-  String? get backgroundOrCharBackground => backgroundImage ?? assistant.backgroundImage ?? null;
+  String? get backgroundOrCharBackground =>
+      backgroundImage ?? assistant.backgroundImage ?? null;
 
   ChatOptionModel get chatOption =>
       Get.find<ChatOptionController>().getChatOptionById(chatOptionId ?? -1) ??
