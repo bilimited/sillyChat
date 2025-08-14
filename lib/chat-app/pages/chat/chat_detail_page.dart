@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -42,6 +43,9 @@ class ChatDetailPage extends StatefulWidget {
 enum ChatMode { manual, auto, group }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
+  final ChatSessionController sessionController =
+      Get.put(ChatSessionController('chatPath'));
+
   final ItemScrollController _scrollController = ItemScrollController();
   final ChatController _chatController = Get.find<ChatController>();
   final CharacterController _characterController =
@@ -953,9 +957,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     return isNewChat
         ? AppBar(
             backgroundColor: isDesktop ? colors.surfaceContainerHigh : null,
-            actions: [
-
-            ],
+            actions: [],
           )
         : AppBar(
             flexibleSpace: ClipRect(

@@ -145,6 +145,20 @@ class ChatController extends GetxController {
     loadChats();
   }
 
+  Future<void> debug_moveAllChats() async {
+    final directory = await Get.find<SettingController>().getVaultPath();
+    final folder = File('${directory}/chats');
+    if (!await folder.exists()) {
+      chats.value.forEach((chat) async {
+        final f = File('${directory}/chats/chat_${chat.id}.json');
+        await f.create(recursive: true);
+        await f.writeAsString(json.encode(chat.toJson()));
+      });
+
+      Get.snackbar('迁移成功!', 'message');
+    }
+  }
+
   // 从本地加载聊天数据
   Future<void> loadChats() async {
     try {
@@ -187,6 +201,8 @@ class ChatController extends GetxController {
             'Loaded $totalChats chats from ${maxFileId - 1} files',
             duration: Duration(seconds: 2), icon: Icon(Icons.done));
       }
+
+      debug_moveAllChats();
     } catch (e) {
       print('加载聊天数据失败: $e');
       throw e;
@@ -465,6 +481,7 @@ class ChatController extends GetxController {
   }
 
   // 获取角色相关的群聊
+  @Deprecated('弃用')
   List<ChatModel> getChatsByCharacterId(int characterId) {
     return chats
         .where((chat) => chat.characterIds.contains(characterId))

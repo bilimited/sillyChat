@@ -14,9 +14,9 @@ class SettingController extends GetxController {
   var colorTheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple).obs;
   static final String globalSettingsFileName = 'global_settings.json';
 
-  static String webdav_url='';
-  static String webdav_password='';
-  static String webdav_username='';
+  static String webdav_url = '';
+  static String webdav_password = '';
+  static String webdav_username = '';
 
   @override
   void onInit() async {
@@ -112,7 +112,8 @@ class SettingController extends GetxController {
           await rootDir.create(recursive: true);
         }
         // 复制 assets/initData 下的所有文件到数据根目录
-        final assetManifest = await DefaultAssetBundle.of(Get.context!).loadString('AssetManifest.json');
+        final assetManifest = await DefaultAssetBundle.of(Get.context!)
+            .loadString('AssetManifest.json');
         final Map<String, dynamic> manifestMap = json.decode(assetManifest);
         final initDataFiles = manifestMap.keys
             .where((String key) => key.startsWith('assets/initData/'))
@@ -139,4 +140,6 @@ class SettingController extends GetxController {
     currectValutName = name;
     saveGlobalSettings();
   }
+
+  static SettingController get of => Get.find<SettingController>();
 }
