@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
-import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
@@ -10,10 +9,12 @@ import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 
 class LoreBookActivator extends StatefulWidget {
   final List<LorebookModel> lorebooks;
-  final ChatModel chat;
+  final ChatSessionController chatSessionController;
 
   const LoreBookActivator(
-      {super.key, required this.chat, required this.lorebooks});
+      {super.key,
+      required this.chatSessionController,
+      required this.lorebooks});
 
   @override
   State<LoreBookActivator> createState() => _LoreBookActivatorState();
@@ -36,29 +37,19 @@ class _LoreBookActivatorState extends State<LoreBookActivator> {
       }
     }
 
-    for (final entry in widget.chat.activitedLorebookItems.entries) {
+    for (final entry
+        in widget.chatSessionController.chat.activitedLorebookItems.entries) {
       itemMap[entry.key] = entry.value;
     }
   }
 
   Future<void> _toggleItemActive(
       LorebookModel lorebook, LorebookItemModel item, bool value) async {
-    //final controller = Get.find<LoreBookController>();
-    final chatController = Get.find<ChatController>();
-    // final idx = lorebook.items.indexWhere((e) => e.id == item.id);
-    // if (idx == -1) return;
-    // final updatedItems = List<LorebookItemModel>.from(lorebook.items);
-    // updatedItems[idx] = item.copyWith(isActive: value);
-    // final updatedLorebook = lorebook.copyWith(items: updatedItems);
-
     setState(() {
-      // widget.lorebooks[widget.lorebooks
-      //     .indexWhere((l) => l.id == lorebook.id)] = updatedLorebook;
       itemMap['${lorebook.id}@${item.id}'] = value;
     }); // 刷新界面
-    widget.chat.activitedLorebookItems = itemMap;
-    await chatController.saveChats(widget.chat.fileId);
-    //await controller.updateLorebook(updatedLorebook);
+    widget.chatSessionController.chat.activitedLorebookItems = itemMap;
+    await widget.chatSessionController.saveChat();
   }
 
   @override

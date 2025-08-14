@@ -7,13 +7,13 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
-
 
 class QuotedTextSyntax extends md.InlineSyntax {
   QuotedTextSyntax() : super(r'"([^"]*)"');
@@ -114,7 +114,6 @@ class HtmlTagSyntax extends md.InlineSyntax {
   }
 }
 
-
 class FontColorBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
@@ -147,6 +146,8 @@ class MessageBubble extends StatefulWidget {
 
   final bool avatarHero;
 
+  final ChatAIState? state;
+
   const MessageBubble(
       {Key? key,
       required this.chat,
@@ -159,7 +160,8 @@ class MessageBubble extends StatefulWidget {
       required this.isNarration,
       this.lastMessage,
       this.avatarHero = false,
-      this.index = 0})
+      this.index = 0,
+      this.state})
       : super(key: key);
 
   @override
@@ -429,7 +431,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.chat.aiState.GenerateState,
+                  widget.state?.GenerateState ?? '加载中',
                   style: TextStyle(color: colors.outline),
                 )
               ],

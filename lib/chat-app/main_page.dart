@@ -9,7 +9,6 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
-import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
@@ -17,6 +16,7 @@ import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
@@ -72,8 +72,8 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void desktop_switchChat(int chatId) {
-    _chatController.currentChat.value = chatId;
+  void desktop_switchChat(String path) {
+    _chatController.currentChat.value = ChatSessionController(path);
   }
 
   String getSizeString(int byteSize) {
@@ -90,23 +90,24 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _desktop_pages = [
-      ChatPage(onSelectChat: (chat) {
+      ChatPage(onSelectChat: (path) {
         setState(() {
           desktop_initialPosition = null;
-          desktop_switchChat(chat.id);
+          desktop_switchChat(path);
         });
       }),
       ContactsPage(),
       ChatOptionsManagerPage(),
       LoreBookManagerPage(),
-      Obx(() => SearchPage(
-          chats: _chatController.chats.value,
-          onMessageTap: (msg, chat) {
-            setState(() {
-              desktop_initialPosition = msg;
-              desktop_switchChat(chat.id);
-            });
-          })),
+      LoreBookManagerPage(),
+      // Obx(() => SearchPage(
+      //     chats: _chatController.chats.value,
+      //     onMessageTap: (msg, chat) {
+      //       setState(() {
+      //         desktop_initialPosition = msg;
+      //         desktop_switchChat(chat.id);
+      //       });
+      //     })),
     ];
     webDav.init();
   }
@@ -363,12 +364,11 @@ class _MainPageState extends State<MainPage> {
                                       borderRadius: BorderRadius.circular(16.0),
                                       child: Obx(() => ChatDetailPage(
                                             key: ValueKey(
-                                                '${_chatController.currentChat}_${desktop_initialPosition?.id ?? 0}'),
-                                            chatId:
-                                                _chatController.chats.isEmpty
-                                                    ? -1
-                                                    : _chatController
-                                                        .currentChat.value,
+                                                '${_chatController.currentChat.value?.chatPath ?? 'NULL'}_${desktop_initialPosition?.id ?? 0}'),
+                                            sessionController: _chatController
+                                                    .currentChat.value ??
+                                                ChatSessionController
+                                                    .uninitialized(),
                                             initialPosition:
                                                 desktop_initialPosition,
                                           )),
@@ -421,21 +421,22 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               actions: [
-                IconButton(
-                  icon: Icon(Icons.search),
-                  onPressed: () {
-                    Get.to(() => SearchPage(
-                          chats: Get.find<ChatController>().chats,
-                          onMessageTap: (message, chat) {
-                            Get.back();
-                            Get.to(() => ChatDetailPage(
-                                  chatId: chat.id,
-                                  initialPosition: message,
-                                ));
-                          },
-                        ));
-                  },
-                ),
+                // TODO:重构全局搜索
+                // IconButton(
+                //   icon: Icon(Icons.search),
+                //   onPressed: () {
+                //     Get.to(() => SearchPage(
+                //           chats: Get.find<ChatController>().chats,
+                //           onMessageTap: (message, chat) {
+                //             Get.back();
+                //             Get.to(() => ChatDetailPage(
+                //                   chatId: chat.id,
+                //                   initialPosition: message,
+                //                 ));
+                //           },
+                //         ));
+                //   },
+                // ),
                 IconButton(
                   icon: Icon(Icons.switch_camera),
                   onPressed: () {

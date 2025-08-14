@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -84,7 +85,9 @@ class _NewChatPageState extends State<NewChatPage> {
                 ],
               ),
             ),
-            SizedBox(height: 10,),
+            SizedBox(
+              height: 10,
+            ),
             Card(
               child: Padding(
                   padding: EdgeInsets.all(10),
@@ -237,7 +240,9 @@ class _NewChatPageState extends State<NewChatPage> {
       newChat.initOptions(_selectedOption!);
     }
 
-    await _chatController.addChat(newChat);
+    // TODO:更改新建聊天逻辑，在这里获取聊天路径
+    await _chatController.createChat(
+        newChat, await SettingController.of.getChatPath());
     Get.back();
     Get.snackbar('成功', '对话创建成功');
   }

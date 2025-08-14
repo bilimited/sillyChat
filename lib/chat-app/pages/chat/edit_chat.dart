@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -14,9 +15,11 @@ import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
 
 class EditChatPage extends StatefulWidget {
-  final ChatModel chat;
+  final ChatSessionController session;
 
-  const EditChatPage({Key? key, required this.chat}) : super(key: key);
+  ChatModel get chat => session.chat;
+
+  const EditChatPage({Key? key, required this.session}) : super(key: key);
 
   @override
   _EditChatPageState createState() => _EditChatPageState();
@@ -26,7 +29,6 @@ class _EditChatPageState extends State<EditChatPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  late ChatModel chat;
   final _formKey = GlobalKey<FormState>();
   final ChatController _chatController = Get.find();
   final CharacterController _characterController = Get.find();
@@ -34,7 +36,6 @@ class _EditChatPageState extends State<EditChatPage>
   @override
   void initState() {
     super.initState();
-    chat = widget.chat;
     _tabController = TabController(length: 3, vsync: this);
   }
 
@@ -60,18 +61,18 @@ class _EditChatPageState extends State<EditChatPage>
             ],
           ),
           actions: [
-            IconButton(
-              icon: Icon(Icons.content_copy),
-              onPressed: () async {
-                final newChat = _chatController.cloneChat(widget.chat);
-                newChat.name = '${widget.chat.name} - 副本';
-                await _chatController.addChat(newChat);
-                Get.back();
-                Get.back();
+            // IconButton(
+            //   icon: Icon(Icons.content_copy),
+            //   onPressed: () async {
+            //     final newChat = _chatController.cloneChat(widget.chat);
+            //     newChat.name = '${widget.chat.name} - 副本';
+            //     await _chatController.addChat(newChat);
+            //     Get.back();
+            //     Get.back();
 
-                Get.snackbar('成功', '群聊已复制');
-              },
-            ),
+            //     Get.snackbar('成功', '群聊已复制');
+            //   },
+            // ),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -159,40 +160,41 @@ class _EditChatPageState extends State<EditChatPage>
                       Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                            Expanded(
+                          Expanded(
                               child: DropdownButtonFormField<int>(
                             value: Get.find<ChatOptionController>()
-                                .chatOptions
-                                .any((option) => option.id == widget.chat.chatOptionId)
-                              ? widget.chat.chatOptionId
-                              : null,
+                                    .chatOptions
+                                    .any((option) =>
+                                        option.id == widget.chat.chatOptionId)
+                                ? widget.chat.chatOptionId
+                                : null,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                                  horizontal: 12, vertical: 8),
                             ),
                             hint: const Text('选择聊天预设'),
                             items: Get.find<ChatOptionController>()
-                              .chatOptions
-                              .map((option) {
+                                .chatOptions
+                                .map((option) {
                               return DropdownMenuItem<int>(
-                              value: option.id,
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: 250),
-                                child: Text(
-                                '${option.name}',
-                                overflow: TextOverflow.ellipsis,
+                                value: option.id,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: 250),
+                                  child: Text(
+                                    '${option.name}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
                               );
                             }).toList(),
                             onChanged: (int? value) {
                               if (value != null) {
-                              widget.chat.chatOptionId = value;
-                              if(widget.chat.isChatNotCreated)return;
-                              _saveChanges(isBack: false);
+                                widget.chat.chatOptionId = value;
+                                if (widget.chat.isChatNotCreated) return;
+                                _saveChanges(isBack: false);
                               }
                             },
-                            )),
+                          )),
                           IconButton(
                               onPressed: () {
                                 customNavigate(
@@ -221,7 +223,6 @@ class _EditChatPageState extends State<EditChatPage>
                     ],
                   )),
             ),
-
             SizedBox(height: 16),
             Card(
               child: Column(
@@ -419,8 +420,8 @@ class _EditChatPageState extends State<EditChatPage>
       return;
     }
     if (_formKey.currentState?.validate() ?? true) {
-      await _chatController.refleshAll();
-      await _chatController.saveChats(widget.chat.fileId);
+      //await  //_chatController.refleshAll();
+      await widget.session.saveChat();
       if (isBack) {
         Get.back();
       }
@@ -454,8 +455,7 @@ class _EditChatPageState extends State<EditChatPage>
             onPressed: () async {
               widget.chat.messages.clear();
               widget.chat.lastMessage = '无消息';
-              //await _chatController.updateChat(widget.chat.id, widget.chat);
-              await _chatController.saveChats(widget.chat.fileId);
+              await widget.session.saveChat();
               _chatController.chats.refresh();
               Get.back();
               Get.back();
@@ -468,32 +468,6 @@ class _EditChatPageState extends State<EditChatPage>
     );
   }
 
-  void _deleteChat() {
-    if (widget.chat.id == -1) {
-      return;
-    }
-    Get.dialog(
-      AlertDialog(
-        title: Text('确认删除'),
-        content: Text('确定要删除该群聊吗？该操作不可恢复。'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _chatController.deleteChat(widget.chat.id);
-              Get.back(); // 返回到Edit_Chat
-              Get.back(); // 返回到聊天界面
-              Get.back(); // 返回到主界面
-              Get.snackbar('成功', '群聊已删除');
-            },
-            child: Text('删除'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-          ),
-        ],
-      ),
-    );
-  }
+  @Deprecated('在文件界面中删除群聊。')
+  void _deleteChat() {}
 }

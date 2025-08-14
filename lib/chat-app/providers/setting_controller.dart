@@ -31,6 +31,10 @@ class SettingController extends GetxController {
     return '${(await getApplicationDocumentsDirectory()).path}/SillyChat/${currectValutName}';
   }
 
+  Future<String> getChatPath() async {
+    return '${getVaultPath()}/chats';
+  }
+
   String getRemoteVaultPath() {
     if (currectValutName.isEmpty) {
       return '/SillyChat';

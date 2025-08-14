@@ -2,19 +2,18 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
-import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/file_manager.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_controller.dart';
-import '../../widgets/chat/chat_list_item.dart';
 
 class ChatPage extends StatefulWidget {
-  final void Function(ChatModel chat)? onSelectChat;
+  final void Function(String chatPath)? onSelectChat;
 
   const ChatPage({Key? key, this.onSelectChat}) : super(key: key);
 
@@ -47,60 +46,30 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  Widget _buildNormalList(ThemeData theme) {
-    return Obx(() {
-      final filteredChats = chatController.chats
-          .where((chat) =>
-              chat.name.toLowerCase().contains(_searchText.value.toLowerCase()))
-          .toList();
-      return ListView.separated(
-        itemCount: filteredChats.length,
-        separatorBuilder: (context, index) => Divider(
-          height: 1,
-          color: theme.colorScheme.outlineVariant,
-        ),
-        itemBuilder: (context, index) => ChatListItem(
-          chatId: filteredChats.reversed.toList()[index].id,
-          onSelectChat: widget.onSelectChat,
-        ),
-      );
-    });
-  }
+  Future<void> onCreateChat() async {
+    final char = await customNavigate<CharacterModel?>(CharacterSelector(),
+        context: context);
 
-  Widget _buildReorderableList(ThemeData theme) {
-    return ReorderableListView.builder(
-      itemCount: chatController.chats.length,
-      itemBuilder: (context, index) {
-        final chat = chatController.chats.reversed.toList()[index];
-        return Material(
-          key: ValueKey(chat.id),
-          color: Colors.transparent,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: ChatListItem(
-              chatId: chat.id,
-              onSelectChat: (p0) {},
+    if (char != null) {
+      String path = await SettingController.of.getChatPath();
+      final chat = await chatController.createChatFromCharacter(char, path);
+      if (widget.onSelectChat != null) {
+        widget.onSelectChat!(chat.file.path);
+      } else {
+        customNavigate(
+            ChatDetailPage(
+              sessionController: ChatSessionController(chat.file.path),
             ),
-            onTap: null,
-          ),
-        );
-      },
-      onReorder: (int oldIndex, int newIndex) {
-        setState(() {
-          final reversedList = chatController.chats.reversed.toList();
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          final movedChat = reversedList.removeAt(oldIndex);
-          reversedList.insert(newIndex, movedChat);
-          chatController.chats.assignAll(reversedList.reversed);
-          chatController.regenerateChatSortIndex();
-        });
-      },
-    );
+            context: context);
+      }
+    }
   }
 
-  dynamic onTapFile(File file) {}
+  dynamic onTapFile(File file) {
+    if (widget.onSelectChat != null) {
+      widget.onSelectChat!(file.path);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,23 +118,11 @@ class _ChatPageState extends State<ChatPage> {
           actions: [
             PopupMenuButton<int>(
               icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
+              // TODO:重构新建聊天并添加到ChatController中
               tooltip: '新增聊天',
               onSelected: (value) async {
                 if (value == 0) {
-                  final char = await customNavigate<CharacterModel?>(
-                      CharacterSelector(),
-                      context: context);
-
-                  if (char != null) {
-                    final chat =
-                        await chatController.createChatFromCharacter(char);
-                    if (widget.onSelectChat != null) {
-                      widget.onSelectChat!(chat);
-                    } else {
-                      customNavigate(ChatDetailPage(chatId: chat.id),
-                          context: context);
-                    }
-                  }
+                  onCreateChat();
                 } else if (value == 1) {
                   customNavigate(NewChatPage(), context: context);
                 }
@@ -192,21 +149,6 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
               ],
-            ),
-            IconButton(
-              icon: Icon(
-                _isSortingMode ? Icons.check : Icons.sort,
-                color: theme.colorScheme.onSurface,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isSortingMode = !_isSortingMode;
-                  if (!_isSortingMode) {
-                    chatController.saveChats();
-                  }
-                });
-              },
-              tooltip: _isSortingMode ? '完成排序' : '进入排序',
             ),
             const SizedBox(width: 8),
           ],

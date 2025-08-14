@@ -15,10 +15,10 @@ import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 
 class ChatModel {
-  ChatAIState get aiState => Get.find<ChatController>().getAIState(id);
+  ChatAIState get aiState => Get.find<ChatController>().getAIState(file.path);
 
   void setAIState(ChatAIState newState) {
-    Get.find<ChatController>().setAIState(id, newState);
+    Get.find<ChatController>().setAIState(file.path, newState);
   }
 
   late final int fileId;

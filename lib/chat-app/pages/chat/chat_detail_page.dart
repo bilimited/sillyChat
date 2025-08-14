@@ -14,7 +14,6 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
-import 'package:flutter_example/chat-app/widgets/chat/new_chat.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
@@ -29,11 +28,12 @@ import '../../providers/character_controller.dart';
 import '../../widgets/chat/character_wheel.dart';
 
 class ChatDetailPage extends StatefulWidget {
-  final int chatId;
   // 从搜索界面跳转到聊天时，跳转的目标位置
+  final ChatSessionController sessionController;
   final MessageModel? initialPosition;
 
-  const ChatDetailPage({Key? key, required this.chatId, this.initialPosition})
+  const ChatDetailPage(
+      {Key? key, required this.sessionController, this.initialPosition})
       : super(key: key);
 
   @override
@@ -43,10 +43,11 @@ class ChatDetailPage extends StatefulWidget {
 enum ChatMode { manual, auto, group }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
-  final ChatSessionController sessionController =
-      Get.put(ChatSessionController('chatPath'));
+  late ChatSessionController sessionController;
 
   final ItemScrollController _scrollController = ItemScrollController();
+
+  // 目前仅用于剪贴板
   final ChatController _chatController = Get.find<ChatController>();
   final CharacterController _characterController =
       Get.find<CharacterController>();
@@ -60,8 +61,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   double get avatarRadius => displaySetting.AvatarSize;
 
-  int chatId = 0;
-  ChatModel get chat => _chatController.getChatById(chatId);
+  // int chatId = 0;
+  ChatModel get chat => sessionController.chat;
   ApiModel? get api => _settingController.getApiById(chat.requestOptions.apiId);
 
   bool _showWheel = false;
@@ -94,7 +95,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   @override
   void initState() {
     super.initState();
-    chatId = widget.chatId;
+    _registerController(widget.sessionController);
+    // chatId = widget.chatId;
     if (chat.mode != null) {
       mode = chat.mode!;
     }
@@ -106,22 +108,48 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     }
   }
 
+  @override
+  void didUpdateWidget(ChatDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 检查新旧 controller 实例是否是同一个，如果不是，则需要更新
+    if (widget.sessionController != oldWidget.sessionController) {
+      // 必须使用与注册时相同的 tag
+      final tag = oldWidget.sessionController.hashCode.toString();
+      if (Get.isRegistered<ChatSessionController>(tag: tag)) {
+        Get.delete<ChatSessionController>(tag: tag);
+      }
+      _registerController(widget.sessionController);
+    }
+  }
+
+  void _registerController(ChatSessionController controller) {
+    // 使用一个唯一的标识符 (tag) 来注册 controller
+    final tag = controller.hashCode.toString();
+
+    // 注册新的 controller 并立即获取它
+    // 使用 fenix: true 可以在 Get.delete 后再次创建
+    sessionController = Get.put(controller, tag: tag);
+  }
+
+  @override
+  void dispose() {
+    // 5. 销毁状态：当 State 对象被销毁时，清理掉它注册的 controller
+    final tag = sessionController.hashCode.toString();
+    if (Get.isRegistered<ChatSessionController>(tag: tag)) {
+      Get.delete<ChatSessionController>(tag: tag);
+    }
+    super.dispose();
+  }
+
   // 保存对当前对话所作更改
   Future<void> _updateChat() async {
-    if (isNewChat) {
-      final newChat = _chatController.saveDefaultChat();
-      setState(() {
-        chatId = newChat.id;
-      });
-      _chatController.currentChat.value = chatId;
-    } else {
-      await _chatController.saveChats(chat.fileId);
-    }
+    sessionController.saveChat();
   }
 
   // 显示编辑消息对话框
   void _showEditDialog(MessageModel message) {
-    customNavigate(EditMessagePage(chatId: chatId, message: message),
+    customNavigate(
+        EditMessagePage(sessionController: sessionController, message: message),
         context: context);
   }
 
@@ -138,7 +166,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           ),
           TextButton(
             onPressed: () {
-              _chatController.removeMessage(chatId, message.time);
+              sessionController.removeMessage(message.time);
               setState(() => _selectedMessage = null);
               Get.back();
             },
@@ -227,8 +255,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         TextButton(
                           onPressed: () {
                             if ((message.bookmark ?? '').isNotEmpty) {
-                              _chatController.updateMessage(
-                                  chatId, message.time, message);
+                              sessionController.updateMessage(
+                                  message.time, message);
                             }
                             Get.back();
                           },
@@ -237,8 +265,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         TextButton(
                           onPressed: () {
                             message.bookmark = null;
-                            _chatController.updateMessage(
-                                chatId, message.time, message);
+                            sessionController.updateMessage(
+                                message.time, message);
                             Get.back();
                           },
                           child: const Text('删除'),
@@ -288,7 +316,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   Get.back();
                   message.alternativeContent.clear();
                   message.alternativeContent.add(null);
-                  _chatController.updateMessage(chat.id, message.time, message);
+                  sessionController.updateMessage(message.time, message);
                 },
               ),
             ],
@@ -429,31 +457,33 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     message.alternativeContent[nullIndex] = oldContent;
     message.alternativeContent[targetIndex] = null;
 
-    _chatController.updateMessage(chat.id, message.time, message);
+    sessionController.updateMessage(message.time, message);
   }
 
   // 消息气泡
   Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
       {int index = 0, bool isNarration = false}) {
     return MessageBubble(
-        chat: chat,
-        message: message,
-        isSelected: _selectedMessage == message,
-        onTap: () {
-          setState(() {
-            if (_isMultiSelecting) {
-              _onMultiSelectMessage(message);
-              return;
-            }
-            _selectedMessage =
-                _selectedMessage?.time == message.time ? null : message;
-          });
-        },
-        isNarration: isNarration,
-        index: index,
-        onLongPress: () => _startMultiSelect(message),
-        buildBottomButtons: _buildMessageButtonGroup,
-        onUpdateChat: _updateChat);
+      chat: chat,
+      message: message,
+      isSelected: _selectedMessage == message,
+      onTap: () {
+        setState(() {
+          if (_isMultiSelecting) {
+            _onMultiSelectMessage(message);
+            return;
+          }
+          _selectedMessage =
+              _selectedMessage?.time == message.time ? null : message;
+        });
+      },
+      isNarration: isNarration,
+      index: index,
+      onLongPress: () => _startMultiSelect(message),
+      buildBottomButtons: _buildMessageButtonGroup,
+      onUpdateChat: _updateChat,
+      state: sessionController.aiState,
+    );
   }
 
   // 消息操作按钮小组件
@@ -510,7 +540,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         selectedPath = [];
       });
 
-      _chatController.sendMessageAndGetReply(chat, text, selectedPath);
+      sessionController.sendMessageAndGetReply(text, selectedPath);
     }
   }
 
@@ -573,8 +603,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           _chatController.messageClipboard.value = [
                             ..._selectedMessages
                           ];
-                          _chatController.removeMessages(
-                              chatId, _selectedMessages);
+                          sessionController.removeMessages(_selectedMessages);
                           setState(() {
                             _isMultiSelecting = false;
                             _selectedMessages.clear();
@@ -648,8 +677,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                       foregroundColor: colors.error,
                                     ),
                                     onPressed: () {
-                                      _chatController.removeMessages(
-                                          chatId, _selectedMessages);
+                                      sessionController
+                                          .removeMessages(_selectedMessages);
                                       setState(() {
                                         _isMultiSelecting = false;
                                         _selectedMessages.clear();
@@ -691,13 +720,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             child: IgnorePointer(
                 ignoring: _isMultiSelecting,
                 child: Obx(() {
-                  final isGenerating = chat.aiState.isGenerating;
+                  final isGenerating = sessionController.aiState.isGenerating;
 
                   return BottomInputArea(
-                    chatId: chatId,
+                    sessionController: sessionController,
                     onSendMessage: _sendMessage,
                     onRetryLastest: () {
-                      _chatController.retry(chat);
+                      sessionController.retry(chat);
                     },
                     onToggleGroupWheel: () {
                       setState(() => _showWheel = !_showWheel);
@@ -720,9 +749,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                 .expand((char) => char.loreBooks)
                                 .toList();
                             customNavigate(
-                                LoreBookActivator(chat: chat, lorebooks: [
-                                  ...{...global, ...chars}
-                                ]),
+                                LoreBookActivator(
+                                    chatSessionController: sessionController,
+                                    lorebooks: [
+                                      ...{...global, ...chars}
+                                    ]),
                                 context: context);
                           },
                           icon: Icon(
@@ -760,20 +791,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       // 聊天正文
                       return ScrollablePositionedList.builder(
                           reverse: true,
-                          itemScrollController: _scrollController,
+                          // TODO:页面原地刷新时  ScrollerController报错
+                          // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
+                          //itemScrollController: _scrollController,
                           itemCount: messages.length + 1,
                           shrinkWrap: true,
                           itemBuilder: (context, index) {
                             if (index == 0) {
                               //正在（新）生成的Message，永远位于底部
-                              return Obx(() => chat.aiState.isGenerating
+                              return Obx(() => sessionController
+                                      .aiState.isGenerating
                                   ? _buildMessageBubble(
                                       MessageModel(
-                                          id: -9999,
-                                          content: chat.aiState.LLMBuffer,
-                                          sender: chat.aiState.currentAssistant,
-                                          time: DateTime.now(),
-                                          alternativeContent: [null]),
+                                        id: -9999,
+                                        content:
+                                            sessionController.aiState.LLMBuffer,
+                                        sender: sessionController
+                                            .aiState.currentAssistant,
+                                        time: DateTime.now(),
+                                        alternativeContent: [null],
+                                      ),
                                       messages.length == 0 ? null : messages[0])
                                   : const SizedBox.shrink());
                             } else {
@@ -828,13 +865,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           );
   }
 
-  // chat为空时的正文内容
+  // TODO:chat为空时的正文内容
   Widget _buildNewChatScreen() {
-    return NewChat(
-      onSubmit: (_p1, _p2) {
-        _sendMessage(_p1, _p2);
-      },
-    );
+    return SizedBox.shrink();
   }
 
   Widget _buildFloatingButtonOverlay() {
@@ -933,7 +966,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       .toList(),
                   onCharacterSelected: (character) {
                     setState(() => _showWheel = false);
-                    _chatController.getGroupReply(chat, character);
+                    sessionController.getGroupReply(character);
                   },
                 ),
               ),
@@ -1008,7 +1041,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
-                  customNavigate(ManageMessagePage(chat: chat),
+                  customNavigate(
+                      ManageMessagePage(
+                        chat: chat,
+                        chatSessionController: sessionController,
+                      ),
                       context: context);
                 },
               ),
@@ -1061,7 +1098,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   Icons.settings,
                 ),
                 onPressed: () {
-                  customNavigate(EditChatPage(chat: chat), context: context);
+                  customNavigate(EditChatPage(session: sessionController),
+                      context: context);
                 },
               ),
             ],
@@ -1112,7 +1150,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       },
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity! < 0) {
-          Get.to(() => EditChatPage(chat: chat));
+          Get.to(() => EditChatPage(session: sessionController));
         }
       },
       child: Scaffold(
@@ -1153,6 +1191,19 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     );
   }
 
+  Widget _buildLoadScreen() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          CircularProgressIndicator(), // 圆形进度指示器 [1]
+          SizedBox(height: 20.0), // 用于在进度条和文本之间添加一些间距
+          Text('正在加载会话'), // 显示的文本 [3, 6]
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -1165,6 +1216,33 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             });
           }
         },
-        child: isDesktop ? _buildDesktop(context) : _buildMobile(context));
+        child: Obx(() => AnimatedSwitcher(
+              // 1. 设置动画的持续时间
+              duration: const Duration(milliseconds: 500),
+
+              // 2. 提供一个 transitionBuilder 来自定义动画效果 (可选，但推荐)
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                // 使用 FadeTransition 实现淡入淡出效果
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+
+              // 3. 这里的 child 会根据条件动态改变
+              child: sessionController.isChatUninitialized
+                  // 关键：为每个状态的根 Widget 提供一个唯一的 Key
+                  // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
+                  ? Container(
+                      key: const ValueKey('LoadScreen'),
+                      child: _buildLoadScreen(),
+                    )
+                  : Container(
+                      key: const ValueKey('ChatScreen'),
+                      child: isDesktop
+                          ? _buildDesktop(context)
+                          : _buildMobile(context),
+                    ),
+            )));
   }
 }

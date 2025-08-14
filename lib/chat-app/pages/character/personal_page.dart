@@ -77,8 +77,6 @@ class _PersonalPageState extends State<PersonalPage>
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
-
-
                 IconButton(
                     onPressed: () {
                       Get.to(() => EditCharacterPage(
@@ -204,21 +202,22 @@ class _PersonalPageState extends State<PersonalPage>
   }
 
   Widget _buildChatsList() {
-    final chats = Get.find<ChatController>().getChatsByCharacterId(character.id);
-    
-    return MediaQuery.removePadding(
-      context: context,
-      removeTop: true,
-      child: ListView.builder(
-        padding: const EdgeInsets.only(top: 8),
-        itemCount: chats.length,
-        itemBuilder: (context, index) {
-          return ChatListItem(
-            chatId: chats.reversed.toList()[index].id,
-          );
-        },
-      ),
-    );
+    return SizedBox.shrink();
+    // final chats = Get.find<ChatController>().getChatsByCharacterId(character.id);
+
+    // return MediaQuery.removePadding(
+    //   context: context,
+    //   removeTop: true,
+    //   child: ListView.builder(
+    //     padding: const EdgeInsets.only(top: 8),
+    //     itemCount: chats.length,
+    //     itemBuilder: (context, index) {
+    //       return ChatListItem(
+    //         chatId: chats.reversed.toList()[index].id,
+    //       );
+    //     },
+    //   ),
+    // );
   }
 
   Widget _buildRelationsList() {
@@ -234,8 +233,9 @@ class _PersonalPageState extends State<PersonalPage>
         itemCount: character.relations.length,
         itemBuilder: (context, index) {
           final relation = character.relations.values.elementAt(index);
-          final targetChar = characterController.getCharacterById(relation.targetId);
-          
+          final targetChar =
+              characterController.getCharacterById(relation.targetId);
+
           return Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
@@ -268,8 +268,6 @@ class _PersonalPageState extends State<PersonalPage>
       ),
     );
   }
-
-
 }
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {

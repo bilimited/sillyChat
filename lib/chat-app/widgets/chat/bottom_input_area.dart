@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 // import 'package:flutter_example/chat-app/pages/chat_detail_page.dart'; // For ChatMode enum
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/main.dart';
@@ -14,8 +15,11 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 class BottomInputArea extends StatefulWidget {
-  final int chatId;
+  //final int chatId;
   final ChatController chatController = Get.find();
+
+  final ChatSessionController sessionController;
+
   final ChatOptionController chatOptionController = Get.find();
   final VaultSettingController settingController = Get.find();
   final LoreBookController loreBookController = Get.find();
@@ -26,7 +30,7 @@ class BottomInputArea extends StatefulWidget {
   final VoidCallback onToggleGroupWheel;
   final VoidCallback onUpdateChat;
 
-  ChatModel get chat => chatController.getChatById(chatId);
+  ChatModel get chat => sessionController.chat;
   ChatMode get mode => chat.mode ?? ChatMode.auto;
   // bool get canCreateNewChat => chat.assistantId != null && chat.userId != null;
   ApiModel? get api => settingController.getApiById(chat.requestOptions.apiId);
@@ -40,7 +44,8 @@ class BottomInputArea extends StatefulWidget {
 
   BottomInputArea({
     Key? key,
-    required this.chatId,
+    //required this.chatId,
+    required this.sessionController,
     required this.onSendMessage,
     required this.onRetryLastest,
     required this.onToggleGroupWheel,
@@ -161,7 +166,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                    
                       ...widget.toolBar,
                     ],
                   ),
@@ -214,7 +218,8 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             // Group mode button
 
                             // Non-generating state buttons
-                            if (!widget.chat.aiState.isGenerating) ...[
+                            if (!widget
+                                .sessionController.aiState.isGenerating) ...[
                               if (widget.showPlus)
                                 Opacity(
                                   opacity: 0.6,
@@ -272,8 +277,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                     size: 18,
                                   ),
                                   onPressed: () {
-                                    widget.chatController
-                                        .interrupt(widget.chat);
+                                    widget.sessionController.interrupt();
                                   },
                                 ),
                               ),

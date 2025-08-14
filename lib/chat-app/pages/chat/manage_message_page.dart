@@ -5,12 +5,16 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:get/get.dart';
 
 class ManageMessagePage extends StatefulWidget {
   final ChatModel chat;
+  final ChatSessionController chatSessionController;
 
-  const ManageMessagePage({Key? key, required this.chat}) : super(key: key);
+  const ManageMessagePage(
+      {Key? key, required this.chat, required this.chatSessionController})
+      : super(key: key);
 
   @override
   State<ManageMessagePage> createState() => _ManageMessagePageState();
@@ -70,7 +74,7 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
   // --- Multi-select Logic ---
 
   Future<void> _updateChat() async {
-    await _chatController.saveChats(widget.chat.fileId);
+    await widget.chatSessionController.saveChat();
     _performSearch(); // Refresh the list to reflect changes
   }
 
@@ -313,7 +317,7 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
             tooltip: "剪切",
             onPressed: () {
               _chatController.messageClipboard.value = [..._selectedMessages];
-              _chatController.removeMessages(widget.chat.id, _selectedMessages);
+              widget.chatSessionController.removeMessages(_selectedMessages);
               Get.showSnackbar(GetSnackBar(
                   message: "剪切了${_selectedMessages.length}条消息",
                   duration: const Duration(seconds: 2)));
@@ -361,20 +365,18 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
               Get.dialog(
                 AlertDialog(
                   title: const Text('删除消息'),
-                  content: Text(
-                      '确定要删除这 ${_selectedMessages.length} 条消息吗？'),
+                  content: Text('确定要删除这 ${_selectedMessages.length} 条消息吗？'),
                   actions: [
                     TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text('取消')),
+                        onPressed: () => Get.back(), child: const Text('取消')),
                     TextButton(
                       child: const Text('确认'),
                       style:
                           TextButton.styleFrom(foregroundColor: colors.error),
                       onPressed: () {
                         Get.back(); // Dismiss dialog first
-                        _chatController.removeMessages(
-                            widget.chat.id, _selectedMessages);
+                        widget.chatSessionController
+                            .removeMessages(_selectedMessages);
                         _updateChat();
                         _cancelMultiSelect();
                       },
@@ -423,9 +425,7 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                 Expanded(
                   child: _filteredMessages.isEmpty
                       ? Center(
-                          child: Text(_query.isEmpty
-                              ? '没有聊天记录'
-                              : '没有找到结果'))
+                          child: Text(_query.isEmpty ? '没有聊天记录' : '没有找到结果'))
                       : ListView.separated(
                           itemCount: _filteredMessages.length,
                           separatorBuilder: (context, index) => Divider(

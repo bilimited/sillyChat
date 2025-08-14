@@ -61,7 +61,7 @@ class SillyChatApp extends StatelessWidget {
     Get.find<PromptController>().prompts.value = [];
     Get.find<PromptController>().loadPrompts();
     Get.find<ChatController>().chats.value = [];
-    Get.find<ChatController>().loadChats();
+    // Get.find<ChatController>().loadChats();
     Get.find<VaultSettingController>().apis.value = [];
     Get.find<VaultSettingController>().loadSettings();
     Get.find<ChatOptionController>().chatOptions.value = [];

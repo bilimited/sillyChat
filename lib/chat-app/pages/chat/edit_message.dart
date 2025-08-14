@@ -6,15 +6,17 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:get/get.dart';
 
 class EditMessagePage extends StatefulWidget {
-  final int chatId;
+  // final int chatId;
+  final ChatSessionController sessionController;
   final MessageModel message;
 
   const EditMessagePage({
     Key? key,
-    required this.chatId,
+    required this.sessionController,
     required this.message,
   }) : super(key: key);
 
@@ -25,6 +27,7 @@ class EditMessagePage extends StatefulWidget {
 class _EditMessagePageState extends State<EditMessagePage> {
   late TextEditingController _editController;
   final ChatController _chatController = Get.find<ChatController>();
+
   late int _senderId;
   late MessageType _messageType;
 
@@ -101,7 +104,8 @@ class _EditMessagePageState extends State<EditMessagePage> {
           // 消息内容编辑
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16 + 64),
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 16, bottom: 16 + 64),
               child: TextField(
                 textAlignVertical: TextAlignVertical.top,
                 controller: _editController,
@@ -144,15 +148,16 @@ class _EditMessagePageState extends State<EditMessagePage> {
         widget.message.sender = _senderId;
         widget.message.type = _messageType;
       });
-      _chatController.updateMessage(
-          widget.chatId, widget.message.time, widget.message);
+      widget.sessionController
+          .updateMessage(widget.message.time, widget.message);
       Get.back();
     }
   }
 
   void _appendSave() {
     if (_editController.text.isNotEmpty) {
-      int firstNull = widget.message.alternativeContent.indexOf(null); // 这个不会为空，否则一定是出了bug
+      int firstNull =
+          widget.message.alternativeContent.indexOf(null); // 这个不会为空，否则一定是出了bug
       if (firstNull != -1) {
         widget.message.alternativeContent[firstNull] = widget.message.content;
       } else {
@@ -165,8 +170,8 @@ class _EditMessagePageState extends State<EditMessagePage> {
         widget.message.sender = _senderId;
         widget.message.type = _messageType;
       });
-      _chatController.updateMessage(
-          widget.chatId, widget.message.time, widget.message);
+      widget.sessionController
+          .updateMessage(widget.message.time, widget.message);
       Get.back();
     }
   }

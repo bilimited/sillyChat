@@ -6,6 +6,8 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
@@ -13,22 +15,49 @@ import 'package:get/get.dart';
 
 class ChatSessionController extends GetxController {
   RxBool isLoading = false.obs;
-  late Rx<ChatModel> _chat;
+  final Rx<ChatModel> _chat = ChatModel(
+      id: -1,
+      name: '未加载的聊天',
+      avatar: '',
+      lastMessage: '',
+      time: '',
+      messages: []).obs;
+
+  ChatAIState get aiState => Get.find<ChatController>().getAIState(file.path);
+
+  void setAIState(ChatAIState newState) {
+    Get.find<ChatController>().setAIState(file.path, newState);
+  }
 
   ChatModel get chat => _chat.value;
   File get file => _chat.value.file;
+  bool get isChatUninitialized => chat.id == -1;
 
-  final String chatPath;
+  final String? chatPath;
 
   /**
    * [chatPath] : 聊天文件的完整路径
    */
   ChatSessionController(this.chatPath);
 
+  factory ChatSessionController.uninitialized() {
+    return ChatSessionController('');
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    // 异步加载，显示进度条
+    loadChat();
+  }
+
   Future<void> loadChat() async {
+    if (chatPath == null) {
+      return;
+    }
     isLoading.value = true;
 
-    final chatFile = File(chatPath);
+    final chatFile = File(chatPath!);
 
     if (await chatFile.exists()) {
       final String contents = await chatFile.readAsString();
@@ -81,7 +110,7 @@ class ChatSessionController extends GetxController {
   }
 
   // 在指定聊天中删除消息
-  Future<void> removeMessage(int chatId, DateTime messageTime) async {
+  Future<void> removeMessage(DateTime messageTime) async {
     chat.messages.removeWhere((msg) => msg.time == messageTime);
     if (chat.messages.isNotEmpty) {
       final lastMsg = chat.messages.last;
@@ -92,7 +121,7 @@ class ChatSessionController extends GetxController {
     await saveChat();
   }
 
-  Future<void> addMessages(int chatId, List<MessageModel> messages) async {
+  Future<void> addMessages(List<MessageModel> messages) async {
     chat.messages.addAll(messages);
     if (messages.isNotEmpty) {
       chat.lastMessage = messages.last.content;
@@ -103,7 +132,7 @@ class ChatSessionController extends GetxController {
     _chat.refresh();
   }
 
-  Future<void> removeMessages(int chatId, List<MessageModel> messages) async {
+  Future<void> removeMessages(List<MessageModel> messages) async {
     chat.messages.removeWhere((msg) => messages.contains(msg));
     if (chat.messages.isNotEmpty) {
       final lastMsg = chat.messages.last;
@@ -182,7 +211,7 @@ class ChatSessionController extends GetxController {
 
     // 判断是重新生成，还是直接回复
     if (message.isAssistant) {
-      removeMessage(chat.id, message.time);
+      removeMessage(message.time);
     } else {
       message = null;
     }
@@ -235,26 +264,25 @@ class ChatSessionController extends GetxController {
     messages = Promptbuilder().getLLMMessageList(chat, sender: sender);
     options = chat.requestOptions.copyWith(messages: messages);
 
-    chat.setAIState(chat.aiState.copyWith(
+    setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
         GenerateState: "正在激活世界书...",
         currentAssistant:
             sender == null ? (chat.assistantId ?? 0) : sender.id));
 
-    await for (String token
-        in chat.aiState.aihandler.requestTokenStream(options)) {
-      final oldState = chat.aiState;
-      chat.setAIState(oldState.copyWith(LLMBuffer: oldState.LLMBuffer + token));
+    await for (String token in aiState.aihandler.requestTokenStream(options)) {
+      final oldState = aiState;
+      setAIState(oldState.copyWith(LLMBuffer: oldState.LLMBuffer + token));
       //LLMMessageBuffer.refresh();
     }
 
-    chat.setAIState(chat.aiState.copyWith(isGenerating: false));
-    yield chat.aiState.LLMBuffer;
+    setAIState(aiState.copyWith(isGenerating: false));
+    yield aiState.LLMBuffer;
   }
 
-  void interrupt(ChatModel chat) {
-    chat.setAIState(chat.aiState.copyWith(isGenerating: false));
-    chat.aiState.aihandler.interrupt();
+  void interrupt() {
+    setAIState(aiState.copyWith(isGenerating: false));
+    aiState.aihandler.interrupt();
   }
 }
