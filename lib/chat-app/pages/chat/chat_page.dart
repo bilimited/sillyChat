@@ -1,13 +1,16 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
 import 'package:flutter_example/chat-app/widgets/chat/file_manager.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_controller.dart';
@@ -27,7 +30,6 @@ class _ChatPageState extends State<ChatPage> {
   final RxString _searchText = ''.obs;
 
   bool isQuerying = false;
-  bool _isSortingMode = false;
 
   @override
   void initState() {
@@ -167,9 +169,27 @@ class _ChatPageState extends State<ChatPage> {
               }
               if (snapshot.hasData) {
                 return FileManagerWidget(
-                    directory: snapshot.data!,
-                    fileExtensions: const ['.json'], // 只显示这几种类型的文件
-                    onFileTap: onTapFile);
+                  directory: snapshot.data!,
+                  fileExtensions: const ['.json'], // 只显示这几种类型的文件
+                  onFileTap: onTapFile,
+                  customFileTileBuilder: (context, entity) {
+                    ChatMetaModel? meta = chatController.chatIndex[entity.path];
+                    if (meta != null) {
+                      return ChatListItem(
+                        path: entity.path,
+                        chat: meta,
+                        onSelectChat: widget.onSelectChat,
+                      );
+                    } else {
+                      return ListTile(
+                        leading: entity is Directory
+                            ? const Icon(Icons.folder)
+                            : const Icon(Icons.description),
+                        title: Text(p.basename(entity.path)),
+                      );
+                    }
+                  },
+                );
               }
             }
             return const Center(child: CircularProgressIndicator());

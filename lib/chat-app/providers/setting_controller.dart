@@ -32,7 +32,7 @@ class SettingController extends GetxController {
   }
 
   Future<String> getChatPath() async {
-    return '${getVaultPath()}/chats';
+    return '${await getVaultPath()}/chats';
   }
 
   String getRemoteVaultPath() {

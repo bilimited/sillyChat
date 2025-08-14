@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
@@ -66,7 +67,7 @@ class ChatSessionController extends GetxController {
       chat.fileId = 0; // fileId字段已弃用
       chat.file = chatFile;
     } else {
-      Get.snackbar('聊天加载失败.', '聊天文件不存在');
+      //Get.snackbar('聊天加载失败.', '聊天文件不存在');
     }
 
     isLoading.value = false;
@@ -76,8 +77,11 @@ class ChatSessionController extends GetxController {
     if (await file.exists()) {
       final String contents = json.encode(chat.toJson());
       await file.writeAsString(contents);
+
+      await ChatController.of
+          .updateChatMeta(file.path, ChatMetaModel.fromChatModel(chat));
     } else {
-      Get.snackbar('聊天保存失败.', '聊天文件不存在');
+      Get.snackbar('聊天${file.path}保存失败.', '聊天文件不存在');
     }
   }
 

@@ -6,21 +6,13 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 
 class ChatModel {
-  ChatAIState get aiState => Get.find<ChatController>().getAIState(file.path);
-
-  void setAIState(ChatAIState newState) {
-    Get.find<ChatController>().setAIState(file.path, newState);
-  }
-
   late final int fileId;
   late final File file; // 加载时赋值
 
