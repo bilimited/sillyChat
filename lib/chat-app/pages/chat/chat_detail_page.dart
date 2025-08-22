@@ -153,6 +153,24 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         context: context);
   }
 
+  void _showLoreBookActiviator() {
+    final colors = Theme.of(context).colorScheme;
+    final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
+    final chars = chat.characters.expand((char) => char.loreBooks).toList();
+    Get.bottomSheet(Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+            child: LoreBookActivator(
+                chatSessionController: sessionController,
+                lorebooks: [
+              ...{...global, ...chars}
+            ]))));
+  }
+
   void _showDeleteConfirmation(MessageModel message) {
     final colors = Theme.of(context).colorScheme;
     Get.dialog(
@@ -742,20 +760,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           },
                         ),
                       IconButton(
-                          onPressed: () {
-                            final global = Get.find<LoreBookController>()
-                                .globalActivitedLoreBooks;
-                            final chars = chat.characters
-                                .expand((char) => char.loreBooks)
-                                .toList();
-                            customNavigate(
-                                LoreBookActivator(
-                                    chatSessionController: sessionController,
-                                    lorebooks: [
-                                      ...{...global, ...chars}
-                                    ]),
-                                context: context);
-                          },
+                          onPressed: _showLoreBookActiviator,
                           icon: Icon(
                             Icons.book,
                             color: colors.outline,

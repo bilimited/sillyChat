@@ -188,6 +188,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
             child: const Text('粘贴'),
             onTap: () => _pasteEntity(entity, context),
           ),
+        PopupMenuItem(
+          child: const Text('创建文件夹'),
+          onTap: () => _copyEntity(entity, context),
+        ),
       ],
     );
   }

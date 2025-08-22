@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
+import 'package:flutter_example/chat-app/utils/ChatFileSuffixManager.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
@@ -65,9 +67,27 @@ class ChatController extends GetxController {
   final String chatIndexFileName = 'chat_index.json';
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
+    await debug_moveAllChats();
     loadChatIndex();
+  }
+
+  Future<void> debug_moveAllChats() async {
+    final directory = await Get.find<SettingController>().getVaultPath();
+    final folder = File('${directory}/chats');
+    if (!await folder.exists()) {
+      chats.value.forEach((chat) async {
+        final fext =
+            Chatfilesuffixmanager.fromChatMode(chat.mode ?? ChatMode.auto);
+
+        final f = File('${directory}/chats/chat_${chat.id}.$fext');
+        await f.create(recursive: true);
+        await f.writeAsString(json.encode(chat.toJson()));
+      });
+
+      Get.snackbar('迁移成功!', 'message');
+    }
   }
 
   // 新增：重新生成聊天索引的方法
