@@ -60,20 +60,7 @@ class _EditChatPageState extends State<EditChatPage>
               Tab(text: '高级设置'),
             ],
           ),
-          actions: [
-            // IconButton(
-            //   icon: Icon(Icons.content_copy),
-            //   onPressed: () async {
-            //     final newChat = _chatController.cloneChat(widget.chat);
-            //     newChat.name = '${widget.chat.name} - 副本';
-            //     await _chatController.addChat(newChat);
-            //     Get.back();
-            //     Get.back();
-
-            //     Get.snackbar('成功', '群聊已复制');
-            //   },
-            // ),
-          ],
+          actions: [],
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _saveChanges,

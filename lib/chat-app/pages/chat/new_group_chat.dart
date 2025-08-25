@@ -6,7 +6,6 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
-import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
@@ -14,8 +13,12 @@ import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
 
 class NewChatPage extends StatefulWidget {
+  final String path;
+
   @override
   _NewChatPageState createState() => _NewChatPageState();
+
+  NewChatPage(this.path);
 }
 
 class _NewChatPageState extends State<NewChatPage> {
@@ -212,11 +215,6 @@ class _NewChatPageState extends State<NewChatPage> {
         _characterController.getCharacterById(_selectedAssistantId!);
     final user = _characterController.getCharacterById(_selectedUserId!);
 
-    // List<int> promptIds = [];
-    // if (!assistant.promptIds.isEmpty) {
-    //   promptIds = assistant.promptIds;
-    // }
-
     final defaultName = _selectedMode == ChatMode.group
         ? "新群聊"
         : user.id == 0
@@ -239,11 +237,8 @@ class _NewChatPageState extends State<NewChatPage> {
     if (_selectedOption != null) {
       newChat.initOptions(_selectedOption!);
     }
-
-    // TODO:更改新建聊天逻辑，在这里获取聊天路径
-    await _chatController.createChat(
-        newChat, await SettingController.of.getChatPath());
-    Get.back();
+    await _chatController.createChat(newChat, widget.path);
+    Get.back(result: newChat);
     Get.snackbar('成功', '对话创建成功');
   }
 

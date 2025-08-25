@@ -9,6 +9,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
@@ -24,7 +25,6 @@ import 'package:flutter_example/chat-app/utils/webdav_util.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
-import 'pages/chat/chat_page.dart';
 import 'pages/character/contacts_page.dart'; // 添加这一行
 
 class MainPage extends StatefulWidget {
@@ -47,6 +47,8 @@ class _MainPageState extends State<MainPage> {
 
   int desktop_destination_left = 0;
   int desktop_destination_right = 0;
+
+  @Deprecated('应该放在一个更合理的位置')
   MessageModel? desktop_initialPosition;
 
   late List<Widget> _desktop_pages;
@@ -90,12 +92,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _desktop_pages = [
-      ChatPage(onSelectChat: (path) {
-        setState(() {
-          desktop_initialPosition = null;
-          desktop_switchChat(path);
-        });
-      }),
+      ChatPage(),
       ContactsPage(),
       ChatOptionsManagerPage(),
       LoreBookManagerPage(),
