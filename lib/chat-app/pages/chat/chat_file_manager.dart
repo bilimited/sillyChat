@@ -11,7 +11,6 @@ import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
-import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -148,9 +147,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         await entity.delete(recursive: true);
       }
       node.parent!.remove(node);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${p.basename(entity.path)} 已被删除')),
-      );
       setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,9 +160,14 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     setState(() {
       _copiedEntity = entity;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${p.basename(entity.path)} 已复制')),
-    );
+  }
+
+  Future<void> _cutEntity(TreeNode<FileSystemEntity> node,
+      FileSystemEntity entity, BuildContext context) async {
+    setState(() {
+      _copiedEntity = entity;
+    });
+    _deleteEntity(node, context);
   }
 
   // 粘贴文件或文件夹
@@ -303,8 +304,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
 
       final newPath = entity is Directory
-          ? p.join(dir.path, trimmedNewName)
-          : p.join(dir.path, '$trimmedNewName$extension');
+          ? p.join(p.dirname(entity.path), trimmedNewName)
+          : p.join(p.dirname(entity.path), '$trimmedNewName$extension');
       if (await FileSystemEntity.isDirectory(newPath) ||
           await FileSystemEntity.isFile(newPath)) {
         Get.snackbar('重命名失败', '目标已存在同名文件或文件夹');
@@ -313,16 +314,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
 
       try {
-// 先获取规范化的路径
         final normalizedPath = p.normalize(entity.path);
         final normalizedNewPath = p.normalize(newPath);
-
-        // 使用规范化后的路径创建一个新的实体对象，然后执行重命名
         final normalizedEntity =
             entity is File ? File(normalizedPath) : Directory(normalizedPath);
 
-        // TODO: Win 命名失败 WTF??
-        // TODO: 试试Android失败不失败
         await normalizedEntity.rename(normalizedNewPath);
 
         setState(() {
@@ -372,13 +368,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   ),
                 ),
               ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('删除'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _deleteEntity(node, context);
-                },
+              Divider(
+                height: 8,
               ),
               ListTile(
                 leading: const Icon(Icons.content_copy),
@@ -386,6 +377,14 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                 onTap: () {
                   Navigator.of(context).pop();
                   _copyEntity(entity, context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.content_cut),
+                title: const Text('剪切'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _cutEntity(node, entity, context);
                 },
               ),
               if (entity is Directory && _copiedEntity != null)
@@ -404,6 +403,17 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   Navigator.of(context).pop();
                   _renameFile(node, entity, context);
                 },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: const Text('删除'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _deleteEntity(node, context);
+                },
+              ),
+              Divider(
+                height: 8,
               ),
               ListTile(
                 leading: const Icon(Icons.create_new_folder),
@@ -479,7 +489,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                 },
                 child: Builder(builder: (context) {
                   return GestureDetector(
-                    onLongPressStart: (details) {
+                    onLongPressEnd: (details) {
                       _showContextMenu(
                           context,
                           TapDownDetails(
