@@ -123,6 +123,14 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                 .onChanged(widget.options.copyWith(isMergeMessageList: value));
           },
         ),
+        _buildCheckbox(
+          label: '是否开启思考',
+          value: widget.options.isThinkMode,
+          onChanged: (value) {
+            widget
+                .onChanged(widget.options.copyWith(isThinkMode: value));
+          },
+        ),
         const SizedBox(height: 16),
         _buildApiSelector(),
       ],

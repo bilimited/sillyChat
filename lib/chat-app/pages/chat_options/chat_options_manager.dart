@@ -18,6 +18,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
   Widget _buildOptionCard(
       ChatOptionModel option, int index, BuildContext context) {
     return Card(
+      key: ValueKey('card-${option.id}'),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         onTap: () {
@@ -85,8 +86,9 @@ class ChatOptionsManagerPage extends StatelessWidget {
           itemCount: _controller.chatOptions.length,
           onReorder: _controller.reorderChatOptions,
           itemBuilder: (context, index) {
-            return KeyedSubtree(
-              key: ValueKey(_controller.chatOptions[index].id),
+            // 在ReorderableListView中，每个item需要有一个特殊的key
+            return SizedBox(
+              key: ValueKey(index),
               child: _buildOptionCard(
                   _controller.chatOptions[index], index, context),
             );
