@@ -222,7 +222,7 @@ class ChatSessionController extends GetxController {
     }
 
     if (chat.mode == ChatMode.auto) {
-      //
+      // TODO:有时会无法retry，似乎是因为mode不正常，重新设置mode即可
       await for (var content
           in _handleLLMMessage(think: chat.requestOptions.isThinkMode)) {
         _handleAIResult(chat, content, chat.assistantId ?? -1,

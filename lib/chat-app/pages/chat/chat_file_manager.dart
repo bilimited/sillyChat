@@ -134,9 +134,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       Get.snackbar('无法访问目录', '$e');
     }
 
-    setState(() {
-      _files = filteredEntities;
-    });
+    if (mounted) {
+      setState(() {
+        _files = filteredEntities;
+      });
+    }
   }
 
   /// 默认的文件列表项显示样式
@@ -355,6 +357,26 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 
   Widget _buildFileList() {
     if (_files.isEmpty) {
+      if (_currentDirectory == widget.directory) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('无数据'),
+              SizedBox(
+                height: 16,
+              ),
+              ElevatedButton(
+                  onPressed: () async {
+                    await ChatController.of.loadChats();
+                    await ChatController.of.debug_moveAllChats();
+                    _loadFiles();
+                  },
+                  child: Text('从旧版本迁移'))
+            ],
+          ),
+        );
+      }
       return const Center(child: Text('文件夹为空'));
     }
     return ListView.builder(

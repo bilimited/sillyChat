@@ -70,9 +70,9 @@ class ChatController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    await loadChats();
-    await debug_moveAllChats();
-    //loadChatIndex();
+    //await loadChats();
+
+    loadChatIndex();
   }
 
   /// ----迁移用
@@ -115,23 +115,25 @@ class ChatController extends GetxController {
       print('加载聊天数据失败: $e');
       throw e;
     }
+
+    // await debug_moveAllChats();
   }
 
   Future<void> debug_moveAllChats() async {
     final directory = await Get.find<SettingController>().getVaultPath();
-
-    final folder = Directory(p.normalize('${directory}/chats'));
-    final exists = await folder.exists();
-    if (!exists) {
-      for (final chat in chats) {
-        final f = await createUniqueFile(
-            originalPath: '${directory}/chats/${chat.name}.chat',
-            recursive: true);
-        await f.writeAsString(json.encode(chat.toJson()));
-      }
-
-      Get.snackbar('迁移成功!', 'message');
+    if (chats.isEmpty) {
+      Get.snackbar('迁移失败', '没有旧版本数据');
+      return;
     }
+
+    for (final chat in chats) {
+      final f = await createUniqueFile(
+          originalPath: '${directory}/chats/${chat.name}.chat',
+          recursive: true);
+      await f.writeAsString(json.encode(chat.toJson()));
+    }
+
+    Get.snackbar('迁移成功!', 'message');
   }
 
   // 加载聊天索引
@@ -198,7 +200,6 @@ class ChatController extends GetxController {
 
   /// [path] 要创建聊天的绝对路径。不包含文件名。
   Future<void> createChat(ChatModel chat, String path) async {
-    // TODO:修改默认文件名逻辑
     final fullPath = '$path/${chat.name}.chat';
     final file =
         await createUniqueFile(originalPath: fullPath, recursive: true);
