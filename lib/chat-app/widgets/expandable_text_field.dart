@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:path/path.dart';
 
 /// 一个带有焦点感知操作按钮的多行输入框组件。
 ///
@@ -203,7 +202,7 @@ class _ExpandableTextFieldState extends State<ExpandableTextField>
 
 // 内部封装一个样式统一且更美观紧凑的文本+图标按钮
 Widget buildIconTextButton(BuildContext context,
-    {required String text, required IconData icon , VoidCallback? onPressed}) {
+    {required String text, required IconData icon, VoidCallback? onPressed}) {
   return TextButton.icon(
     style: TextButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

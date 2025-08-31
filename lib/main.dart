@@ -51,10 +51,6 @@ class SillyChatApp extends StatelessWidget {
   final ChatOptionController chatOptions = Get.put(ChatOptionController());
   final LoreBookController loreBooks = Get.put(LoreBookController());
 
-  // TODO:目前有问题 获取不到
-  static late GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
-
   static void restart() {
     Get.find<CharacterController>().characters.value = [];
     Get.find<CharacterController>().loadCharacters();
@@ -84,7 +80,7 @@ class SillyChatApp extends StatelessWidget {
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
     if (kDebugMode) {
-      return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+      return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }
@@ -92,7 +88,6 @@ class SillyChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => GetMaterialApp(
-          scaffoldMessengerKey: scaffoldMessengerKey,
           title: 'Silly Chat',
           theme: vaultSettings.themeLight.value,
           darkTheme: vaultSettings.themeNight.value,

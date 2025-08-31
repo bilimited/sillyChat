@@ -192,6 +192,7 @@ class ChatSessionController extends GetxController {
     }
   }
 
+  /// 让AI直接发送一条消息，无需输入问题
   void getGroupReply(CharacterModel sender) async {
     await for (var content in _handleLLMMessage(
         sender: sender, think: chat.requestOptions.isThinkMode)) {

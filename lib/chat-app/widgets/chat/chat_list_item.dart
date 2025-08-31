@@ -2,21 +2,26 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
-import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
-import '../../pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:get/get.dart';
+
+import 'package:path/path.dart' as p;
 
 // ignore: must_be_immutable
 class ChatListItem extends StatelessWidget {
   String path;
 
-  final void Function(String path)? onSelectChat;
-
-  //ChatModel get chat => _chatController.getChatById(chatId);
-  ChatMetaModel chat;
+  bool isSelected;
+  VoidCallback onTap;
+  VoidCallback onLongPress;
 
   ChatListItem(
-      {Key? key, required this.path, required this.chat, this.onSelectChat})
+      {Key? key,
+      required this.path,
+      required this.isSelected,
+      required this.onTap,
+      required this.onLongPress})
       : super(key: key);
 
   String _formatTime(String time) {
@@ -35,110 +40,109 @@ class ChatListItem extends StatelessWidget {
     }
   }
 
+  ChatMetaModel? get chat => ChatController.of.chatIndex[path];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    if (chat == null) {
+      ChatController.of.buildIndex(path);
+    } else {
+      print('缓存命中');
+    }
+
     return InkWell(
-      onTap: () {
-        if (onSelectChat != null) {
-          onSelectChat!(path);
-        } else {
-          customNavigate(
-              ChatDetailPage(
-                sessionController: ChatSessionController(path),
-              ),
-              context: context);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage: FileImage(File(chat.avatar)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    chat.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // 如果有标签则显示标签，否则显示最近消息
-                  Text(
-                    chat.lastMessage
-                        .replaceAll(
-                            RegExp(r'<think>.*?</think>', dotAll: true), '')
-                        .replaceAll('\n', ''),
-                    style: TextStyle(
-                      color: theme.colorScheme.outline,
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Obx(() => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
               children: [
-                Text(
-                  _formatTime(chat.time),
-                  style: TextStyle(
-                    color: theme.colorScheme.outline,
-                    fontSize: 12,
+                if (chat != null && chat!.mode == ChatMode.auto)
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundImage: FileImage(File(chat!.avatar)),
+                  )
+                else
+                  CircleAvatar(
+                    radius: 24,
+                    child: Icon(
+                      Icons.group,
+                      size: 24,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${chat.messageCount}条',
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.basenameWithoutExtension(path),
                         style: TextStyle(
-                          color: theme.colorScheme.outline,
-                          fontSize: 10,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                    // const SizedBox(width: 4),
-                    // Container(
-                    //   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    //   decoration: BoxDecoration(
-                    //     color: theme.colorScheme.surfaceVariant,
-                    //     borderRadius: BorderRadius.circular(4),
-                    //   ),
-                    //   child: Text(
-                    //     _getModeText(chat.mode),
-                    //     style: TextStyle(
-                    //       color: theme.colorScheme.outline,
-                    //       fontSize: 10,
-                    //     ),
-                    //   ),
-                    // ),
-                  ],
+                      const SizedBox(height: 4),
+                      // 如果有标签则显示标签，否则显示最近消息
+                      if (chat != null)
+                        Text(
+                          chat!.lastMessage
+                              .replaceAll(
+                                  RegExp(r'<think>.*?</think>', dotAll: true),
+                                  '')
+                              .replaceAll('\n', ''),
+                          style: TextStyle(
+                            color: theme.colorScheme.outline,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
                 ),
+                if (isSelected)
+                  Icon(Icons.check_circle, color: theme.colorScheme.secondary)
+                else if (chat != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _formatTime(chat!.time),
+                        style: TextStyle(
+                          color: theme.colorScheme.outline,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${chat!.messageCount}条',
+                              style: TextStyle(
+                                color: theme.colorScheme.outline,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
               ],
             ),
-          ],
-        ),
-      ),
+          )),
     );
   }
 }
