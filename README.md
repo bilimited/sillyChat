@@ -12,6 +12,8 @@
 
 > ⚠️本项目仍在开发中，不保证稳定性
 
+> ⚠️本项目开发以移动端为主，PC端可以使用，但部分操作逻辑未适配
+
 <img src="images/desktop.gif" alt="桌面端预览" width="100%">
 <img src="images/android.jpg" alt="安卓端预览" width="300px">
 

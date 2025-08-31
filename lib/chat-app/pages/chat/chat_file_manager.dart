@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
@@ -14,22 +13,23 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as path;
 
-// 自定义文件和文件夹的UI构建器
-typedef FileTileBuilder = Widget Function(
-    BuildContext context, FileSystemEntity entity);
+/// 文件列表项的操作类型
+enum FileAction { copy, cut }
 
-// 文件管理器组件
+/// 自定义文件列表项的构建器
+typedef FileManagerItemBuilder = Widget Function(BuildContext context,
+    FileSystemEntity entity, bool isSelected, VoidCallback onTap);
+
 class FileManagerWidget extends StatefulWidget {
-  final Directory directory;
-  final List<String> fileExtensions = const ['.chat'];
-  // final Function(File) onFileTap;
+  final Directory directory; // 管理的文件夹根路径
+  final List<String> fileExtensions; // 显示的文件类型
 
   const FileManagerWidget({
     super.key,
     required this.directory,
-    // required this.onFileTap,
+    this.fileExtensions = const ['.chat'],
   });
 
   @override
@@ -37,301 +37,107 @@ class FileManagerWidget extends StatefulWidget {
 }
 
 class _FileManagerWidgetState extends State<FileManagerWidget> {
-  late final TreeNode<FileSystemEntity> _root;
-  late TreeNode<FileSystemEntity> _selectedNode;
-
-  FileSystemEntity? _copiedEntity;
-
-  late TreeViewController controller;
+  late Directory _currentDirectory;
+  List<FileSystemEntity> _files = [];
+  bool _isMultiSelectMode = false;
+  final List<FileSystemEntity> _selectedFiles = [];
+  final List<FileSystemEntity> _clipboard = [];
+  FileAction? _clipboardAction;
 
   @override
   void initState() {
     super.initState();
-    _root = _buildFileTree(widget.directory);
-    _selectedNode = _root;
+    _currentDirectory = widget.directory;
+    _loadFiles();
   }
 
-  // 递归构建文件树
-  TreeNode<FileSystemEntity> _buildFileTree(Directory dir) {
-    final parentNode = TreeNode<FileSystemEntity>(data: dir);
+  /// 加载当前目录下的文件和文件夹
+  Future<void> _loadFiles() async {
+    final List<FileSystemEntity> files = [];
     try {
-      final items = dir.listSync().toList();
-
-      items.sort((a, b) {
-        if (a is Directory && b is File) return -1;
-        if (a is File && b is Directory) return 1;
-        return p.basename(a.path).compareTo(p.basename(b.path));
+      final List<FileSystemEntity> allFiles =
+          await _currentDirectory.list().toList();
+      allFiles.sort((a, b) {
+        if (a is Directory && b is File) {
+          return -1;
+        }
+        if (a is File && b is Directory) {
+          return 1;
+        }
+        return a.path.toLowerCase().compareTo(b.path.toLowerCase());
       });
 
-      for (final entity in items) {
+      for (var entity in allFiles) {
         if (entity is Directory) {
-          parentNode.add(_buildFileTree(entity));
+          files.add(entity);
         } else if (entity is File) {
-          if (widget.fileExtensions == null ||
-              widget.fileExtensions!.isEmpty ||
-              widget.fileExtensions!
-                  .any((ext) => p.extension(entity.path) == ext)) {
-            parentNode.add(TreeNode<FileSystemEntity>(data: entity));
+          if (widget.fileExtensions
+              .any((ext) => entity.path.toLowerCase().endsWith(ext))) {
+            files.add(entity);
           }
         }
       }
     } catch (e) {
-      // Handle potential access errors
-      print("Error listing directory ${dir.path}: $e");
+      // 处理权限错误等
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('无法访问目录: $e')),
+      );
     }
-    return parentNode;
-  }
-
-  Widget _buildFileTile(BuildContext context, FileSystemEntity entity) {
-    final colors = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: entity == _selectedNode?.data
-                    ? colors.outlineVariant
-                    : Colors.transparent, // 边框颜色
-                width: 2.0, // 边框宽度
-              ),
-              borderRadius: BorderRadius.circular(10.0), // 圆角半径
-            ),
-            //color:  colors.surfaceContainer : null,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(p.basenameWithoutExtension(entity.path)),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // 刷新整个文件树
-  void _refreshTree() {
     setState(() {
-      _root.clear();
-      final newRoot = _buildFileTree(widget.directory);
-      for (var child in newRoot.children.values) {
-        _root.add(child);
-      }
-      _root.data = newRoot.data;
+      _files = files;
     });
   }
 
-  void _addNode(TreeNode<FileSystemEntity> node, FileSystemEntity data) {
-    setState(() {
-      if (node.data is File) {
-        if (node.parent != null) {
-          node.parent!.add(TreeNode<FileSystemEntity>(data: data));
-        } else {
-          print('parent is null.');
-        }
-      } else if (node.data is Directory) {
-        node.add(TreeNode<FileSystemEntity>(data: data));
-      } else {
-        print('unknown node.');
-      }
-    });
-  }
-
-  // 删除文件或文件夹
-  Future<void> _deleteEntity(
-      TreeNode<FileSystemEntity> node, BuildContext context) async {
-    final entity = node.data!;
+  /// 预留的创建文件方法
+  Future<void> _createFile(String fileName) async {
+    final filePath = path.join(_currentDirectory.path, fileName);
     try {
-      if (entity is File) {
-        await entity.delete();
-      } else if (entity is Directory) {
-        await entity.delete(recursive: true);
-      }
-      node.parent!.remove(node);
-      setState(() {});
+      final newFile = File(filePath);
+      await newFile.create();
+      _loadFiles();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('删除失败: $e')),
+        SnackBar(content: Text('创建文件失败: $e')),
       );
     }
   }
 
-  // 复制文件或文件夹
-  void _copyEntity(FileSystemEntity entity, BuildContext context) {
-    setState(() {
-      _copiedEntity = entity;
-    });
-  }
+  /// 默认的文件列表项显示样式
+  Widget _defaultItemBuilder(BuildContext context, FileSystemEntity entity,
+      bool isSelected, VoidCallback onTap) {
+    final isDirectory = entity is Directory;
+    final theme = Theme.of(context);
+    final iconColor = theme.colorScheme.primary;
+    final textColor = theme.colorScheme.onSurface;
 
-  Future<void> _cutEntity(TreeNode<FileSystemEntity> node,
-      FileSystemEntity entity, BuildContext context) async {
-    setState(() {
-      _copiedEntity = entity;
-    });
-    _deleteEntity(node, context);
-  }
-
-  // 粘贴文件或文件夹
-  Future<void> _pasteEntity(TreeNode<FileSystemEntity> node,
-      Directory destinationDir, BuildContext context) async {
-    if (_copiedEntity == null) return;
-
-    final newPath =
-        p.join(destinationDir.path, p.basename(_copiedEntity!.path));
-
-    try {
-      if (await FileSystemEntity.isDirectory(newPath) ||
-          await FileSystemEntity.isFile(newPath)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('目标已存在同名文件或文件夹')),
-        );
-        return;
-      }
-
-      if (_copiedEntity is File) {
-        await (_copiedEntity as File).copy(newPath);
-      } else if (_copiedEntity is Directory) {
-        final newDir = Directory(newPath);
-        await newDir.create();
-        for (final entity
-            in (_copiedEntity as Directory).listSync(recursive: true)) {
-          final relativePath =
-              p.relative(entity.path, from: _copiedEntity!.path);
-          final newEntityPath = p.join(newDir.path, relativePath);
-          if (entity is File) {
-            await File(newEntityPath).parent.create(recursive: true);
-            await entity.copy(newEntityPath);
-          } else if (entity is Directory) {
-            await Directory(newEntityPath).create(recursive: true);
-          }
+    return ListTile(
+      leading: Icon(
+        isDirectory ? Icons.folder : Icons.insert_drive_file,
+        color: iconColor,
+      ),
+      title: Text(
+        path.basename(entity.path),
+        style: TextStyle(color: textColor),
+      ),
+      onTap: onTap,
+      onLongPress: () {
+        if (!_isMultiSelectMode) {
+          setState(() {
+            _isMultiSelectMode = true;
+            _selectedFiles.add(entity);
+          });
         }
-      }
-      //_refreshTree(); // 刷新以显示粘贴的文件
-      _addNode(node, File(newPath));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('已粘贴到 ${p.basename(destinationDir.path)}')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('粘贴失败: $e')),
-      );
-    }
-  }
-
-  Future<void> _createFolder(TreeNode<FileSystemEntity> node,
-      FileSystemEntity entity, BuildContext context) {
-    final dir = (entity is Directory) ? entity : entity.parent;
-    final newFolderPath = p.join(dir.path, 'NewFolder');
-    int counter = 1;
-    String uniqueFolderPath = newFolderPath;
-
-    while (Directory(uniqueFolderPath).existsSync()) {
-      uniqueFolderPath = '$newFolderPath($counter)';
-      counter++;
-    }
-
-    return Directory(uniqueFolderPath).create().then((_) {
-      _addNode(node, Directory(uniqueFolderPath));
-    }).catchError((e) {
-      Get.snackbar('创建文件夹失败', '$e');
-    });
-  }
-
-  Future<void> _createChat(TreeNode<FileSystemEntity> node,
-      FileSystemEntity entity, BuildContext context) async {
-    final dir = (entity is Directory) ? entity : entity.parent;
-    final char = await customNavigate<CharacterModel?>(CharacterSelector(),
-        context: context);
-
-    if (char != null) {
-      final chat =
-          await ChatController.of.createChatFromCharacter(char, dir.path);
-      _openChat(chat.file.path);
-      _addNode(node, chat.file);
-    }
-  }
-
-  Future<void> _createGroupChat(TreeNode<FileSystemEntity> node,
-      FileSystemEntity entity, BuildContext context) async {
-    final dir = (entity is Directory) ? entity : entity.parent;
-    final chat = await customNavigate<ChatModel>(NewChatPage(dir.path),
-        context: context);
-    if (chat != null) {
-      _openChat(chat.file.path);
-      _addNode(node, chat.file);
-    }
-  }
-
-  Future<void> _renameFile(TreeNode<FileSystemEntity> node,
-      FileSystemEntity entity, BuildContext context) async {
-    final dir = (entity is Directory) ? entity : entity.parent;
-    final baseName = p.basenameWithoutExtension(entity.path);
-    final extension = p.extension(entity.path);
-
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        String tempName = baseName;
-        return AlertDialog(
-          title: const Text('重命名'),
-          content: TextField(
-            autofocus: true,
-            decoration: const InputDecoration(labelText: '新名称'),
-            controller: TextEditingController(text: baseName),
-            onChanged: (value) {
-              tempName = value;
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(tempName),
-              child: const Text('确定'),
-            ),
-          ],
-        );
       },
+      trailing: isSelected
+          ? Icon(Icons.check_circle, color: theme.colorScheme.secondary)
+          : null,
     );
+  }
 
-    if (newName != null && newName.isNotEmpty && newName != baseName) {
-      final trimmedNewName = newName.trim();
-      if (trimmedNewName.isEmpty) {
-        Get.snackbar('重命名失败', '名称不能为空');
-        return;
-      }
-
-      final newPath = entity is Directory
-          ? p.join(p.dirname(entity.path), trimmedNewName)
-          : p.join(p.dirname(entity.path), '$trimmedNewName$extension');
-      if (await FileSystemEntity.isDirectory(newPath) ||
-          await FileSystemEntity.isFile(newPath)) {
-        Get.snackbar('重命名失败', '目标已存在同名文件或文件夹');
-
-        return;
-      }
-
-      try {
-        final normalizedPath = p.normalize(entity.path);
-        final normalizedNewPath = p.normalize(newPath);
-        final normalizedEntity =
-            entity is File ? File(normalizedPath) : Directory(normalizedPath);
-
-        await normalizedEntity.rename(normalizedNewPath);
-
-        setState(() {
-          // 更新节点数据时也使用规范化后的路径
-          node.data = entity is File
-              ? File(normalizedNewPath)
-              : Directory(normalizedNewPath);
-        });
-      } catch (e, s) {
-        Get.snackbar('重命名失败', '$e');
-        print(s);
-        print(e);
-      }
+  /// 点击文件时触发的特定方法
+  void _onFileTapped(File file) {
+    if (file.path.endsWith('.chat')) {
+      _openChat(file.path);
     }
   }
 
@@ -347,80 +153,228 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     }
   }
 
-  // 显示操作菜单
-  void _showContextMenu(BuildContext context, TapDownDetails details,
-      TreeNode<FileSystemEntity> node) {
-    final entity = node.data!;
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_isMultiSelectMode) {
+          setState(() {
+            _isMultiSelectMode = false;
+            _selectedFiles.clear();
+          });
+          return false;
+        }
+        if (_currentDirectory.path != widget.directory.path) {
+          setState(() {
+            _currentDirectory = _currentDirectory.parent;
+            _loadFiles();
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _buildFileList(),
+        floatingActionButton:
+            _isMultiSelectMode ? null : _buildFloatingActionButton(),
+      ),
+    );
+  }
 
-    showModalBottomSheet(
+  AppBar _buildAppBar() {
+    final theme = Theme.of(context);
+    if (_isMultiSelectMode) {
+      return AppBar(
+        title: Text(
+          '${_selectedFiles.length} 已选择',
+          style: theme.textTheme.titleSmall,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            setState(() {
+              _isMultiSelectMode = false;
+              _selectedFiles.clear();
+            });
+          },
+        ),
+        actions: _buildAppBarActions(),
+      );
+    } else {
+      return AppBar(
+        leading: _currentDirectory.path != widget.directory.path
+            ? IconButton(
+                onPressed: () {
+                  setState(() {
+                    _currentDirectory = _currentDirectory.parent;
+                    _loadFiles();
+                  });
+                },
+                icon: Icon(Icons.arrow_back))
+            : null,
+        title: _buildPathTitle(),
+      );
+    }
+  }
+
+  Widget _buildPathTitle() {
+    final theme = Theme.of(context);
+    String displayPath;
+
+    // 如果当前目录就是根目录，直接显示根目录的名称
+    if (_currentDirectory.path == widget.directory.path) {
+      displayPath = path.basename(_currentDirectory.path);
+    } else {
+      // 计算相对于根目录的路径
+      final String relativePath =
+          path.relative(_currentDirectory.path, from: widget.directory.path);
+
+      // 路径截断逻辑
+      const int maxPathLength = 35; // 定义一个合理的路径最大显示长度
+      if (relativePath.length > maxPathLength) {
+        final List<String> parts = path.split(relativePath);
+        final List<String> displayParts = [];
+        int currentLength = 0;
+
+        // 从后往前添加路径部分，直到长度超出限制
+        for (int i = parts.length - 1; i >= 0; i--) {
+          final part = parts[i];
+          if (currentLength + part.length > maxPathLength && i > 0) {
+            displayParts.insert(0, '...');
+            break;
+          }
+          displayParts.insert(0, part);
+          currentLength += part.length + 1; // +1 是为了路径分隔符
+        }
+        displayPath = path.joinAll(displayParts);
+      } else {
+        displayPath = relativePath;
+      }
+    }
+
+    return Text(
+      displayPath,
+      style: theme.textTheme.titleSmall, // 使用较小的字体尺寸
+      overflow: TextOverflow.ellipsis, // 以防万一，再次处理溢出
+    );
+  }
+
+  List<Widget> _buildAppBarActions() {
+    List<Widget> actions = [];
+
+    if (_selectedFiles.isNotEmpty) {
+      actions.add(IconButton(
+        icon: const Icon(Icons.copy),
+        onPressed: _copyFiles,
+      ));
+      actions.add(IconButton(
+        icon: const Icon(Icons.cut),
+        onPressed: _cutFiles,
+      ));
+      actions.add(IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: _deleteFiles,
+      ));
+    }
+
+    if (_selectedFiles.length == 1) {
+      actions.add(IconButton(
+        icon: const Icon(Icons.drive_file_rename_outline),
+        onPressed: _renameFile,
+      ));
+    }
+
+    return actions;
+  }
+
+  Widget _buildFileList() {
+    if (_files.isEmpty) {
+      return const Center(child: Text('文件夹为空'));
+    }
+    return ListView.builder(
+      itemCount: _files.length,
+      itemBuilder: (context, index) {
+        final entity = _files[index];
+        final isSelected = _selectedFiles.contains(entity);
+        return _defaultItemBuilder(context, entity, isSelected, () {
+          if (_isMultiSelectMode) {
+            setState(() {
+              if (isSelected) {
+                _selectedFiles.remove(entity);
+                if (_selectedFiles.isEmpty) {
+                  _isMultiSelectMode = false;
+                }
+              } else {
+                _selectedFiles.add(entity);
+              }
+            });
+          } else {
+            if (entity is Directory) {
+              setState(() {
+                _currentDirectory = entity;
+                _loadFiles();
+              });
+            } else if (entity is File) {
+              _onFileTapped(entity);
+            }
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (_clipboard.isNotEmpty)
+          FloatingActionButton(
+            onPressed: _pasteFiles,
+            child: const Icon(Icons.paste),
+            heroTag: 'paste',
+          ),
+        const SizedBox(height: 16),
+        FloatingActionButton(
+          onPressed: () => _showCreateDialog(),
+          child: const Icon(Icons.add),
+          heroTag: 'add',
+        ),
+      ],
+    );
+  }
+
+  void _showCreateDialog() {
+    showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              SizedBox(
-                height: 48,
-                child: Center(
-                  child: Text(
-                    p.basename(entity.path),
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              Divider(
-                height: 8,
-              ),
-              ListTile(
-                leading: const Icon(Icons.content_copy),
-                title: const Text('复制'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _copyEntity(entity, context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.content_cut),
-                title: const Text('剪切'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _cutEntity(node, entity, context);
-                },
-              ),
-              if (entity is Directory && _copiedEntity != null)
-                ListTile(
-                  leading: const Icon(Icons.content_paste),
-                  title: const Text('粘贴'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _pasteEntity(node, entity, context);
-                  },
-                ),
-              ListTile(
-                leading: const Icon(Icons.text_fields),
-                title: const Text('重命名'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _renameFile(node, entity, context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('删除'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _deleteEntity(node, context);
-                },
-              ),
-              Divider(
-                height: 8,
-              ),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('创建'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
                 leading: const Icon(Icons.create_new_folder),
-                title: const Text('创建文件夹'),
+                title: const Text('新建文件夹'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  _createFolder(node, entity, context);
+                  _showCreateFolderDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.message),
+                title: const Text('新建聊天'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _createChat(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.group),
+                title: const Text('新建群聊'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _createGroupChat(context);
                 },
               ),
             ],
@@ -430,112 +384,252 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: TreeView.simple(
-            onTreeReady: (controller) {
-              this.controller = controller;
-            },
-            tree: _root,
-            showRootNode: false, // 不显示根节点
-            expansionIndicatorBuilder: (context, node) {
-              if (node.isLeaf || (node.data is File)) {
-                return NoExpansionIndicator(
-                    tree: _root); //const SizedBox.shrink();
-              }
-              return ChevronIndicator.rightDown(
-                alignment: Alignment.centerRight,
-                tree: node,
-                color: Colors.grey[700],
-              );
-            },
-            indentation: Indentation(
-              style: IndentStyle.scopingLine,
-              color: Theme.of(context).colorScheme.outline,
+  Future<void> _createChat(BuildContext context) async {
+    final char = await customNavigate<CharacterModel?>(CharacterSelector(),
+        context: context);
+
+    if (char != null) {
+      final chat = await ChatController.of
+          .createChatFromCharacter(char, _currentDirectory.path);
+      _openChat(chat.file.path);
+      _loadFiles();
+    }
+  }
+
+  Future<void> _createGroupChat(BuildContext context) async {
+    final chat = await customNavigate<ChatModel>(
+        NewChatPage(_currentDirectory.path),
+        context: context);
+    if (chat != null) {
+      _openChat(chat.file.path);
+      _loadFiles();
+    }
+  }
+
+  void _showCreateFolderDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('新建文件夹'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: '文件夹名称'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
             ),
-            builder: (context, node) {
-              final entity = node.data!;
-              final tile = _buildFileTile(context, entity);
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedNode = node;
-                  });
-
-                  if (entity is File) {
-                    _openChat(entity.path);
-                    // widget.onFileTap(entity);
-                  } else {
-                    if (node.isExpanded) {
-                      controller.collapseNode(node);
-                    } else {
-                      controller.expandNode(node);
-                    }
-
-                    //node.isExpanded = !node.isExpanded;
-                    // node.toggleExpansion();
+            TextButton(
+              onPressed: () async {
+                if (controller.text.isNotEmpty) {
+                  final newDirPath =
+                      path.join(_currentDirectory.path, controller.text);
+                  try {
+                    await Directory(newDirPath).create();
+                    _loadFiles();
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('创建文件夹失败: $e')),
+                    );
                   }
-                },
-                onLongPress: () {
-                  // 我们需要 TapDownDetails，所以使用 GestureDetector.onTapDown 配合 LongPress
-                },
-                onTapDown: (details) {
-                  // 这里可以触发长按菜单，但在 onTapDown 中直接 showMenu 体验不佳
-                  // 我们用一个透明的 onLongPressStart 触发
-                },
-                child: Builder(builder: (context) {
-                  return GestureDetector(
-                    onLongPressEnd: (details) {
-                      _showContextMenu(
-                          context,
-                          TapDownDetails(
-                              globalPosition: details.globalPosition),
-                          node);
-                    },
-                    child: tile,
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('创建'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCreateFileDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('新建文件'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+                hintText: '文件名（例如: myFile${widget.fileExtensions.first}）'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  _createFile(controller.text);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('创建'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _copyFiles() {
+    _clipboard.clear();
+    _clipboard.addAll(_selectedFiles);
+    _clipboardAction = FileAction.copy;
+    setState(() {
+      _isMultiSelectMode = false;
+      _selectedFiles.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已复制')),
+    );
+  }
+
+  void _cutFiles() {
+    _clipboard.clear();
+    _clipboard.addAll(_selectedFiles);
+    _clipboardAction = FileAction.cut;
+    setState(() {
+      _isMultiSelectMode = false;
+      _selectedFiles.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已剪切')),
+    );
+  }
+
+  Future<void> _pasteFiles() async {
+    if (_clipboard.isEmpty) return;
+
+    for (final entity in _clipboard) {
+      final newPath =
+          path.join(_currentDirectory.path, path.basename(entity.path));
+      try {
+        if (entity is File) {
+          if (_clipboardAction == FileAction.cut) {
+            await entity.rename(newPath);
+          } else {
+            await entity.copy(newPath);
+          }
+        } else if (entity is Directory) {
+          if (_clipboardAction == FileAction.cut) {
+            await entity.rename(newPath);
+          } else {
+            // 文件夹的复制需要递归进行
+            final newDir = Directory(newPath);
+            await newDir.create();
+            await for (final subEntity in entity.list(recursive: true)) {
+              final relativePath =
+                  path.relative(subEntity.path, from: entity.path);
+              final newSubPath = path.join(newDir.path, relativePath);
+              if (subEntity is File) {
+                await File(newSubPath).create(recursive: true);
+                await subEntity.copy(newSubPath);
+              } else if (subEntity is Directory) {
+                await Directory(newSubPath).create(recursive: true);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('粘贴失败: $e')),
+        );
+      }
+    }
+
+    setState(() {
+      if (_clipboardAction == FileAction.cut) {
+        _clipboard.clear();
+      }
+    });
+    _loadFiles();
+  }
+
+  void _deleteFiles() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除?'),
+        content: Text('您确定要删除这 ${_selectedFiles.length} 个项目吗?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              for (final entity in _selectedFiles) {
+                try {
+                  await entity.delete(recursive: true);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('删除失败: $e')),
                   );
-                }),
-              );
+                }
+              }
+              setState(() {
+                _isMultiSelectMode = false;
+                _selectedFiles.clear();
+              });
+              _loadFiles();
+              Navigator.of(context).pop();
             },
+            child: const Text('删除'),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _renameFile() {
+    if (_selectedFiles.length != 1) return;
+    final entity = _selectedFiles.first;
+    final controller = TextEditingController(text: path.basename(entity.path));
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('重命名'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: '新名称'),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                  onPressed: () {
-                    _createChat(_selectedNode,
-                        _selectedNode.data ?? widget.directory, context);
-                  },
-                  icon: Icon(Icons.chat)),
-              SizedBox(
-                width: 8,
-              ),
-              IconButton(
-                  onPressed: () {
-                    _createGroupChat(_selectedNode,
-                        _selectedNode.data ?? widget.directory, context);
-                  },
-                  icon: Icon(Icons.group)),
-              SizedBox(
-                width: 8,
-              ),
-              IconButton(
-                  onPressed: () {
-                    _createFolder(_selectedNode,
-                        _selectedNode.data ?? widget.directory, context);
-                  },
-                  icon: Icon(Icons.create_new_folder)),
-            ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
           ),
-        )
-      ],
+          TextButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                final newPath =
+                    path.join(_currentDirectory.path, controller.text);
+                try {
+                  await entity.rename(newPath);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('重命名失败: $e')),
+                  );
+                }
+                setState(() {
+                  _isMultiSelectMode = false;
+                  _selectedFiles.clear();
+                });
+                _loadFiles();
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('确认'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -555,40 +649,6 @@ class _ChatPageState extends State<ChatPage> {
     final theme = Theme.of(context);
     return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: SillyChatApp.isDesktop()
-            ? AppBar(
-                title: GestureDetector(
-                  onTap: () {
-                    customNavigate(VaultManagerPage(), context: context);
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder_outlined),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            SettingController.currectValutName,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '文件列表',
-                            style: TextStyle(
-                                fontSize: 12, color: theme.colorScheme.outline),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              )
-            : null,
         body: FutureBuilder<Directory>(
           future: SettingController.of
               .getVaultPath()

@@ -120,8 +120,9 @@ class ChatController extends GetxController {
   Future<void> debug_moveAllChats() async {
     final directory = await Get.find<SettingController>().getVaultPath();
 
-    final folder = File('${directory}/chats');
-    if (!await folder.exists()) {
+    final folder = Directory(p.normalize('${directory}/chats'));
+    final exists = await folder.exists();
+    if (!exists) {
       for (final chat in chats) {
         final f = await createUniqueFile(
             originalPath: '${directory}/chats/${chat.name}.chat',
