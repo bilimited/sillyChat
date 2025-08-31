@@ -26,8 +26,7 @@ class LLMMessage {
         content: msg.content,
         role: msg.role.toString().split('.').last,
         fileDirs: msg.resPath,
-        senderId: msg.sender
-        );
+        senderId: msg.senderId);
   }
 
   /// 从 PromptModel 创建
@@ -90,8 +89,7 @@ class LLMMessage {
     };
   }
 
-  static Map<String, dynamic> toGeminiSystemPrompt(
-      List<LLMMessage> messages) {
+  static Map<String, dynamic> toGeminiSystemPrompt(List<LLMMessage> messages) {
     if (messages.isEmpty) {
       return {};
     }
@@ -107,9 +105,7 @@ class LLMMessage {
       role: role,
       fileDirs: mergedFileDirs,
     );
-    return {
-      "parts": mergedMessage.toGeminiParts()
-    };
+    return {"parts": mergedMessage.toGeminiParts()};
   }
 
   LLMMessage copyWith({

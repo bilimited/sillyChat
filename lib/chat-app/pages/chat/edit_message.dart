@@ -35,7 +35,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
   void initState() {
     super.initState();
     _editController = TextEditingController(text: widget.message.content);
-    _senderId = widget.message.sender;
+    _senderId = widget.message.senderId;
     _messageType = widget.message.type;
   }
 
@@ -145,7 +145,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
     if (_editController.text.isNotEmpty) {
       setState(() {
         widget.message.content = _editController.text;
-        widget.message.sender = _senderId;
+        widget.message.senderId = _senderId;
         widget.message.type = _messageType;
       });
       widget.sessionController
@@ -167,7 +167,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
       widget.message.alternativeContent.add(null);
       setState(() {
         widget.message.content = _editController.text;
-        widget.message.sender = _senderId;
+        widget.message.senderId = _senderId;
         widget.message.type = _messageType;
       });
       widget.sessionController

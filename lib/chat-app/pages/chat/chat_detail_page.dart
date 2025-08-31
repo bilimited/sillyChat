@@ -165,10 +165,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         ),
         child: SafeArea(
             child: LoreBookActivator(
-                chatSessionController: sessionController,
-                lorebooks: [
-              ...{...global, ...chars}
-            ]))));
+          chatSessionController: sessionController,
+          lorebooks: [
+            ...{...global, ...chars}
+          ],
+          chat: chat,
+        ))));
   }
 
   void _showDeleteConfirmation(MessageModel message) {
@@ -807,7 +809,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                 MessageModel(
                                   id: -9999,
                                   content: sessionController.aiState.LLMBuffer,
-                                  sender: sessionController
+                                  senderId: sessionController
                                       .aiState.currentAssistant,
                                   time: DateTime.now(),
                                   alternativeContent: [null],

@@ -236,7 +236,7 @@ class ChatController extends GetxController {
       chatModel.messages.add(MessageModel(
           id: DateTime.now().microsecondsSinceEpoch,
           content: formatMessage(char.firstMessage!),
-          sender: char.id,
+          senderId: char.id,
           time: DateTime.now(),
           alternativeContent: [
             null,

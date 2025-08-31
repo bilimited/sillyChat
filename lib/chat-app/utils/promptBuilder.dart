@@ -1,6 +1,7 @@
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
@@ -13,6 +14,12 @@ import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 
 class Promptbuilder {
+  final ChatModel chat;
+  final ChatOptionModel? chatOption;
+
+  /// [chatOption] 若不为空则会覆盖聊天内预设
+  Promptbuilder(this.chat, this.chatOption);
+
   String _propressMessage(String content, LLMRequestOptions options) {
     // 处理消息内容，删除thinking标记
     if (options.isDeleteThinking) {
@@ -23,12 +30,14 @@ class Promptbuilder {
   }
 
   /// 获得全部消息的列表（不包括Prompt，不格式化）
-  List<LLMMessage> getMessageList(ChatModel chat, {CharacterModel? sender}) {
+  List<LLMMessage> getMessageList({CharacterModel? sender}) {
     final characterController = Get.find<CharacterController>();
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
 
-    int maxMsgs = chat.requestOptions.maxHistoryLength;
+    final requestOptions = chatOption?.requestOptions ?? chat.requestOptions;
+
+    int maxMsgs = requestOptions.maxHistoryLength;
     final int total = chat.messages.length;
     final int start = total > maxMsgs ? total - maxMsgs : 0;
     final pinnedIndexes = <int>{};
@@ -53,7 +62,7 @@ class Promptbuilder {
       //...sysPrompts,
       ...msgIndexes.map((i) {
         final msg = chat.messages[i];
-        String content = _propressMessage(msg.content, chat.requestOptions);
+        String content = _propressMessage(msg.content, requestOptions);
 
         // 处理正则
         chat.vaildRegexs
@@ -63,39 +72,42 @@ class Promptbuilder {
         });
 
         // 合并消息列表：在一切消息前添加名称
-        if (chat.requestOptions.isMergeMessageList) {
+        if (requestOptions.isMergeMessageList) {
           return LLMMessage(
               content: promptSetting.groupFormatter
-                  .replaceAll('<char>',
-                      characterController.getCharacterById(msg.sender).roleName)
+                  .replaceAll(
+                      '<char>',
+                      characterController
+                          .getCharacterById(msg.senderId)
+                          .roleName)
                   .replaceAll('<message>', content),
-              role: msg.sender == (sender?.id ?? chat.assistantId)
+              role: msg.senderId == (sender?.id ?? chat.assistantId)
                   ? "assistant"
                   : "user",
               fileDirs: msg.resPath,
-              senderId: msg.sender);
+              senderId: msg.senderId);
           // 不合并消息列表，聊天模式
         } else if (sender == null) {
           return LLMMessage(
               content: content,
               role: msg.isAssistant ? "assistant" : "user",
               fileDirs: msg.resPath,
-              senderId: msg.sender);
+              senderId: msg.senderId);
           // 不合并消息列表，群聊模式
         } else {
           return LLMMessage(
-              content: msg.sender == sender.id
+              content: msg.senderId == sender.id
                   ? content
                   : promptSetting.groupFormatter
                       .replaceAll(
                           '<char>',
                           characterController
-                              .getCharacterById(msg.sender)
+                              .getCharacterById(msg.senderId)
                               .roleName)
                       .replaceAll('<message>', content),
-              role: msg.sender == sender.id ? "assistant" : "user",
+              role: msg.senderId == sender.id ? "assistant" : "user",
               fileDirs: msg.resPath,
-              senderId: msg.sender);
+              senderId: msg.senderId);
         }
       })
     ];
@@ -104,13 +116,15 @@ class Promptbuilder {
   /// 史诗抽象超长代码
   /// sender!=null ,则为群聊模式
   /// TODO:重构，将所有与服务商有关的操作分离到ServiceProvider中
-  List<LLMMessage> getLLMMessageList(ChatModel chat, {CharacterModel? sender}) {
+  List<LLMMessage> getLLMMessageList({CharacterModel? sender}) {
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
-    final options = chat.requestOptions;
+    final options = chatOption?.requestOptions ?? chat.requestOptions;
+    final prompts = chatOption?.prompts ?? chat.prompts;
+
     final api = options.api;
 
-    final msglst = getMessageList(chat, sender: sender);
+    final msglst = getMessageList(sender: sender);
 
     /// 用户消息提取：一般是最后一条消息，如果最后一条消息为空则填充默认消息
     /// 更改：现在默认不会删除用户消息，以和ST逻辑保持一致。
@@ -144,7 +158,7 @@ class Promptbuilder {
     print("激活世界书耗时: ${stopwatch.elapsedMilliseconds} ms");
 
     final activitedPrompts =
-        chat.prompts.where((prompt) => prompt.isEnable).toList();
+        prompts.where((prompt) => prompt.isEnable).toList();
 
     /// Step 2 世界书插入PM
     final promptsAfterInsertLore =
@@ -180,7 +194,7 @@ class Promptbuilder {
 
     final llmMessages = promptsNotEmpty.expand<LLMMessage>((prompt) {
       if (prompt.isChatHistory) {
-        if (chat.requestOptions.isMergeMessageList) {
+        if (options.isMergeMessageList) {
           final merged = _mergeChatHistory(msglst);
           return merged.content.isEmpty ? [] : [_mergeChatHistory(msglst)];
         } else {

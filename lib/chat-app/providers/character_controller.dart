@@ -16,10 +16,18 @@ class CharacterController extends GetxController {
   final VaultSettingController _vaultSettingController = Get.find();
 
   // 系统内建角色
-  static final defaultCharacter = CharacterModel(id: -2, remark: "内置角色",roleName: '旁白', avatar: "", category: "",messageStyle: MessageStyle.narration);
-  
+  static final defaultCharacter = CharacterModel(
+      id: -2,
+      remark: "内置角色",
+      roleName: '旁白',
+      avatar: "",
+      category: "",
+      messageStyle: MessageStyle.narration);
+
   int? get myId => _vaultSettingController.myId.value;
-  set myId(val){_vaultSettingController.myId.value = val;}
+  set myId(val) {
+    _vaultSettingController.myId.value = val;
+  }
 
   @override
   void onInit() {
@@ -32,29 +40,27 @@ class CharacterController extends GetxController {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$fileName');
-      
+
       if (await file.exists()) {
         final String contents = await file.readAsString();
-        
+
         final List<dynamic> jsonList = json.decode(contents);
-        characters.value = jsonList
-            .map((json) => CharacterModel.fromJson(json))
-            .toList();
+        characters.value =
+            jsonList.map((json) => CharacterModel.fromJson(json)).toList();
 
         if (!characters.any((char) => char.id == 0)) {
-          characters.insert(0, CharacterModel(
-            id: 0,
-            roleName: '我',
-            avatar: '',
-            category: '',
-            remark: '默认角色',
-            messageStyle: MessageStyle.common,
-          ));
+          characters.insert(
+              0,
+              CharacterModel(
+                id: 0,
+                roleName: '我',
+                avatar: '',
+                category: '',
+                remark: '默认角色',
+                messageStyle: MessageStyle.common,
+              ));
         }
-
-        
       }
-
     } catch (e) {
       print('加载角色数据失败: $e');
       Get.snackbar("ERROT", "Load Char Failed");
@@ -68,7 +74,8 @@ class CharacterController extends GetxController {
       // 构建avatar路径和id的映射
       final Map<String, String> avatarMap = {};
       for (var character in characters) {
-        if (character.avatar.isNotEmpty && await File(character.avatar).exists()) {
+        if (character.avatar.isNotEmpty &&
+            await File(character.avatar).exists()) {
           avatarMap[character.id.toString()] = character.avatar;
         }
       }
@@ -92,7 +99,7 @@ class CharacterController extends GetxController {
       // 获取压缩包路径
       final directory = await Get.find<SettingController>().getVaultPath();
       final zipPath = path.join(directory, _avatarPackName);
-      
+
       if (!await File(zipPath).exists()) {
         print('头像压缩包不存在');
         return false;
@@ -133,7 +140,7 @@ class CharacterController extends GetxController {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$fileName');
-      
+
       final String jsonString = json.encode(
         characters.map((char) => char.toJson()).toList(),
       );
@@ -168,7 +175,8 @@ class CharacterController extends GetxController {
 
   // 根据ID获取角色
   CharacterModel getCharacterById(int id) {
-    return characters.firstWhereOrNull((char) => char.id == id)??defaultCharacter;
+    return characters.firstWhereOrNull((char) => char.id == id) ??
+        defaultCharacter;
   }
 
   // 根据类别筛选角色
@@ -176,12 +184,12 @@ class CharacterController extends GetxController {
     return characters.where((char) => char.category == category).toList();
   }
 
-  CharacterModel get me => getCharacterById(myId??0);
+  CharacterModel get me => getCharacterById(myId ?? 0);
 
   // 添加新方法
   Future<void> setRelation(int targetId, {String? type}) async {
     if (myId == null || myId == targetId) return;
-    
+
     var relation = me.relations[targetId] ?? Relation(targetId: targetId);
     relation.type = type;
     me.relations[targetId] = relation;
@@ -223,4 +231,6 @@ class CharacterController extends GetxController {
     }
     return relationList;
   }
+
+  static CharacterController get of => Get.find<CharacterController>();
 }

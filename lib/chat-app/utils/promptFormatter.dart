@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 
 abstract class Promptformatter {
   static String formatPrompt(String content, ChatModel chat,
-      {CharacterModel? sender = null, String userMessage = '', Map<String,String>? STVaribles}) {
+      {CharacterModel? sender = null,
+      String userMessage = '',
+      Map<String, String>? STVaribles}) {
     CharacterController characterController = Get.find();
     var assistant = sender == null ? chat.assistant : sender;
     var prompt = content;
@@ -25,7 +27,7 @@ abstract class Promptformatter {
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);
-    if(STVaribles != null){
+    if (STVaribles != null) {
       prompt = handleSTMacro(prompt, STVaribles);
     }
     // 清除注释
@@ -44,7 +46,6 @@ abstract class Promptformatter {
     return prompt;
   }
 
-
   static String injectCharacterLore(
       String prompt, ChatModel chat, CharacterModel sender) {
     if (prompt.contains(RegExp(r'<recent-characters:\d+>'))) {
@@ -56,8 +57,8 @@ abstract class Promptformatter {
         // Get characters who sent messages
         var recentChars = chat.messages
             .where((msg) =>
-                msg.sender != chat.userId && msg.sender != chat.assistantId)
-            .map((msg) => msg.sender)
+                msg.senderId != chat.userId && msg.senderId != chat.assistantId)
+            .map((msg) => msg.senderId)
             .toSet();
 
         // Get characters mentioned in recent messages
@@ -120,9 +121,9 @@ ${typeText} ${brief}
     return prompt;
   }
 
-    /// 兼容SillyTarvern宏
+  /// 兼容SillyTarvern宏
   /// 对传入Prompt进行正则匹配
-  static String handleSTMacro(String prompt,Map<String,String> varibles){
+  static String handleSTMacro(String prompt, Map<String, String> varibles) {
     return STMacroProcessor.handleSTMacro(prompt, varibles);
   }
 }

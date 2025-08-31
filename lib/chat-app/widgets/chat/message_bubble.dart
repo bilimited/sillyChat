@@ -5,8 +5,10 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
+import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
@@ -176,9 +178,9 @@ class _MessageBubbleState extends State<MessageBubble> {
   bool get isMe =>
       displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
           ? false
-          : widget.chat.user.id == message.sender;
+          : widget.chat.user.id == message.senderId;
   CharacterModel get character =>
-      _characterController.getCharacterById(message.sender);
+      _characterController.getCharacterById(message.senderId);
 
   ChatDisplaySettingModel get displaySetting =>
       Get.find<VaultSettingController>().displaySettingModel.value;
@@ -192,31 +194,44 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   Widget _buildMessageAvatar() {
-    switch (displaySetting.avatarStyle) {
-      case AvatarStyle.circle:
-        return CircleAvatar(
-          backgroundImage: Image.file(File(character.avatar)).image,
-          radius: avatarRadius,
-        );
-      case AvatarStyle.rounded:
-        return ClipRRect(
-          borderRadius:
-              BorderRadius.circular(displaySetting.AvatarBorderRadius),
-          child: Image.file(
-            File(character.avatar),
-            width: avatarRadius * 2,
-            height: avatarRadius * 2,
-            fit: BoxFit.cover,
-          ),
-        );
-      case AvatarStyle.hidden:
-        return SizedBox.shrink();
-      default:
-        return CircleAvatar(
-          backgroundImage: Image.file(File(character.avatar)).image,
-          radius: avatarRadius,
-        );
+    Widget _buildAvatar() {
+      switch (displaySetting.avatarStyle) {
+        case AvatarStyle.circle:
+          return CircleAvatar(
+            backgroundImage: Image.file(File(character.avatar)).image,
+            radius: avatarRadius,
+          );
+        case AvatarStyle.rounded:
+          return ClipRRect(
+            borderRadius:
+                BorderRadius.circular(displaySetting.AvatarBorderRadius),
+            child: Image.file(
+              File(character.avatar),
+              width: avatarRadius * 2,
+              height: avatarRadius * 2,
+              fit: BoxFit.cover,
+            ),
+          );
+        case AvatarStyle.hidden:
+          return SizedBox.shrink();
+        default:
+          return CircleAvatar(
+            backgroundImage: Image.file(File(character.avatar)).image,
+            radius: avatarRadius,
+          );
+      }
     }
+
+    return GestureDetector(
+      onTap: () {
+        customNavigate(
+            EditCharacterPage(
+              characterId: character.id,
+            ),
+            context: context);
+      },
+      child: _buildAvatar(),
+    );
   }
 
   Widget _buildMessageUserName() {
@@ -576,7 +591,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     bool isThinking = false;
 
     final isHideName = widget.lastMessage != null &&
-        widget.lastMessage!.sender == message.sender;
+        widget.lastMessage!.senderId == message.senderId;
 
     final regexs = widget.chat.vaildRegexs;
 

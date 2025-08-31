@@ -1,4 +1,5 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
 
 enum MessageType { text, image, narration, divider }
 
@@ -37,7 +38,6 @@ extension MessageRoleExtension on MessageRole {
 
 enum MessageVisbility { common, pinned, hidden }
 
-
 class MessageModel {
   final int id;
   String content;
@@ -46,7 +46,7 @@ class MessageModel {
 
   // 备选文本列表。该列表中一定会有一个Null，代表已选择文本在备选文本中的位置。
   final List<String?> alternativeContent;
-  int sender;
+  int senderId;
   final DateTime time;
   MessageType type;
   bool get isAssistant => role == MessageRole.assistant;
@@ -63,10 +63,13 @@ class MessageModel {
   bool get isHidden => visbility == MessageVisbility.hidden;
   String? bookmark;
 
+  CharacterModel get sender =>
+      CharacterController.of.getCharacterById(senderId);
+
   MessageModel({
     required this.id,
     required this.content,
-    required this.sender,
+    required this.senderId,
     required this.time,
     this.type = MessageType.text,
     this.role = MessageRole.user,
@@ -80,7 +83,7 @@ class MessageModel {
   MessageModel.fromJson(Map<String, dynamic> json)
       : content = json['content'],
         id = json['id'],
-        sender = json['sender'] ?? -1,
+        senderId = json['sender'] ?? -1,
         role = json['isRead'] != null
             ? ((json['isRead'] as bool) // 迁移旧版本数据
                 ? MessageRole.assistant
@@ -110,7 +113,7 @@ class MessageModel {
   Map<String, dynamic> toJson() => {
         'id': id,
         'content': content,
-        'sender': sender,
+        'sender': senderId,
         'time': time.toIso8601String(),
         'type': type.toJson(),
         'role': role.toString().split('.').last,
@@ -127,7 +130,7 @@ class MessageModel {
     return MessageModel(
       id: map['id'],
       content: map['content'],
-      sender: map['sender'] ?? -1,
+      senderId: map['sender'] ?? -1,
       time: DateTime.parse(map['time']),
       type: MessageTypeExtension.fromJson(map['type']),
       role: MessageRole.values.firstWhere(
@@ -166,7 +169,7 @@ class MessageModel {
     return MessageModel(
       id: id ?? this.id,
       content: content ?? this.content,
-      sender: sender ?? this.sender,
+      senderId: sender ?? this.senderId,
       time: time ?? this.time,
       type: type ?? this.type,
       role: role ?? this.role,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -14,7 +15,8 @@ class LoreBookActivator extends StatefulWidget {
   const LoreBookActivator(
       {super.key,
       required this.chatSessionController,
-      required this.lorebooks});
+      required this.lorebooks,
+      required ChatModel chat});
 
   @override
   State<LoreBookActivator> createState() => _LoreBookActivatorState();

@@ -220,8 +220,9 @@ class _EditChatPageState extends State<EditChatPage>
                     leading: Icon(Icons.preview),
                     trailing: Icon(Icons.chevron_right),
                     onTap: () {
-                      final messages =
-                          Promptbuilder().getLLMMessageList(widget.chat);
+                      final messages = Promptbuilder(
+                              widget.chat, widget.chat.assistant.bindOption)
+                          .getLLMMessageList();
                       customNavigate(
                           PromptPreviewPage(
                               messages: messages
