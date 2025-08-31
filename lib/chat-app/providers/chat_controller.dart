@@ -134,55 +134,8 @@ class ChatController extends GetxController {
     }
   }
 
-  // 新增：重新生成聊天索引的方法
-  Future<Map<String, ChatModel>> rebuildChatIndex() async {
-    final path = await SettingController.of.getChatPath();
-    final Map<String, ChatModel> newChatIndex = {};
-    final Directory directory = Directory(path);
-
-    if (!await directory.exists()) {
-      print('路径不存在: $path');
-      return {};
-    }
-
-    // 递归遍历目录下的所有文件
-    final List<FileSystemEntity> files = directory.listSync(recursive: true);
-
-    for (var entity in files) {
-      // 检查是否是文件
-      if (entity is File) {
-        // 筛选符合条件的文件
-        // TODO: 在这里添加文件筛选条件，例如：
-        // - 文件名以 'chat_' 开头
-        // - 文件名以 '.chat' 结尾
-        final rightPath = entity.path.replaceAll('/', '\\');
-        final String fileName = rightPath.split('\\').last;
-        if (fileName.startsWith('chat_') && fileName.endsWith('.chat')) {
-          try {
-            final String contents = await entity.readAsString();
-            final Map<String, dynamic> jsonMap = json.decode(contents);
-            final ChatModel chatModel = ChatModel.fromJson(jsonMap)
-              ..file = entity;
-            newChatIndex[entity.path] = chatModel;
-          } catch (e) {
-            print('解析文件失败: ${entity.path}, 错误: $e');
-          }
-        }
-      }
-    }
-
-    // 更新chatIndex
-    chatIndex.value =
-        newChatIndex.map((k, v) => MapEntry(k, ChatMetaModel.fromChatModel(v)));
-    await saveChatIndex();
-
-    return newChatIndex;
-  }
-
-  // 新增：加载聊天索引
+  // 加载聊天索引
   Future<void> loadChatIndex() async {
-    await rebuildChatIndex(); // 测试中 每次启动都重新构建
-
     try {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$chatIndexFileName');
@@ -198,7 +151,7 @@ class ChatController extends GetxController {
     }
   }
 
-  // 新增：保存聊天索引
+  // 保存聊天索引
   Future<void> saveChatIndex() async {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();
@@ -214,11 +167,27 @@ class ChatController extends GetxController {
     }
   }
 
-  // 新增：添加聊天元数据
+  // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
-    //chatIndex[path] = (chatMeta);
-    chatIndex.assign(path, chatMeta);
+    chatIndex[path] = (chatMeta);
+    //chatIndex.assign(path, chatMeta);
     await saveChatIndex();
+  }
+
+  // 构建一条聊天索引，用于在初次加载一个聊天时使用
+  Future<ChatMetaModel?> buildIndex(String path) async {
+    try {
+      final file = File(path);
+      final content = await file.readAsString();
+      final chat = ChatModel.fromJson(json.decode(content));
+
+      chatIndex[path] = ChatMetaModel.fromChatModel(chat);
+
+      saveChatIndex();
+      return chatIndex[path];
+    } catch (e) {
+      return null;
+    }
   }
 
   // 新增：删除聊天元数据

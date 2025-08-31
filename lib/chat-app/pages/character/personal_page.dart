@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_controller.dart';
-import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 

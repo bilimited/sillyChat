@@ -1,7 +1,5 @@
-import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
-import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:get/get.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 
 class ChatMetaModel {
   late final int id;
@@ -10,7 +8,8 @@ class ChatMetaModel {
   late final String lastMessage;
   late final String time;
   late final int messageCount;
-  late final List<int> characterIds;
+  //late final List<int> characterIds;
+  late final ChatMode mode;
 
   ChatMetaModel({
     required this.id,
@@ -19,31 +18,37 @@ class ChatMetaModel {
     required this.lastMessage,
     required this.time,
     required this.messageCount,
-    required this.characterIds,
+    //required this.characterIds,
+    required this.mode,
   });
 
   factory ChatMetaModel.fromChatModel(ChatModel chatModel) {
     return ChatMetaModel(
       id: chatModel.id,
       name: chatModel.name,
-      avatar: chatModel.avatar,
+      avatar: chatModel.assistant.avatar,
       lastMessage: chatModel.lastMessage,
       time: chatModel.time,
       messageCount: chatModel.messages.length,
-      characterIds: chatModel.characterIds,
+      //characterIds: chatModel.characterIds,
+      mode: chatModel.mode ?? ChatMode.auto,
     );
   }
 
   factory ChatMetaModel.fromJson(Map<String, dynamic> json) {
     return ChatMetaModel(
-      id: json['id'],
-      name: json['name'],
-      avatar: json['avatar'],
-      lastMessage: json['lastMessage'],
-      time: json['time'],
-      messageCount: json['messageCount'],
-      characterIds: (json['characterIds'] as List?)?.cast<int>() ?? [],
-    );
+        id: json['id'],
+        name: json['name'],
+        avatar: json['avatar'],
+        lastMessage: json['lastMessage'],
+        time: json['time'],
+        messageCount: json['messageCount'],
+        //characterIds: (json['characterIds'] as List?)?.cast<int>() ?? [],
+        mode: json['mode'] != null
+            ? ChatMode.values.firstWhere(
+                (e) => e.toString() == 'ChatMode.${json['mode']}',
+                orElse: () => ChatMode.auto)
+            : ChatMode.auto);
   }
 
   Map<String, dynamic> toJson() {
@@ -54,17 +59,18 @@ class ChatMetaModel {
       'lastMessage': lastMessage,
       'time': time,
       'messageCount': messageCount,
-      'characterIds': characterIds,
+      //'characterIds': characterIds,
+      'mode': mode.toString().split('.').last,
     };
   }
 
-  List<CharacterModel> get characters {
-    CharacterController controller = Get.find();
-    return characterIds
-        .map((id) => controller.getCharacterById(id))
-        .nonNulls
-        .toList();
-  }
+  // List<CharacterModel> get characters {
+  //   CharacterController controller = Get.find();
+  //   return characterIds
+  //       .map((id) => controller.getCharacterById(id))
+  //       .nonNulls
+  //       .toList();
+  // }
 
   ChatMetaModel copyWith({
     int? id,
@@ -74,7 +80,8 @@ class ChatMetaModel {
     String? lastMessage,
     String? time,
     int? messageCount,
-    List<int>? characterIds,
+    //List<int>? characterIds,
+    ChatMode? mode,
   }) {
     return ChatMetaModel(
       id: id ?? this.id,
@@ -83,7 +90,8 @@ class ChatMetaModel {
       lastMessage: lastMessage ?? this.lastMessage,
       time: time ?? this.time,
       messageCount: messageCount ?? this.messageCount,
-      characterIds: characterIds ?? this.characterIds,
+      //characterIds: characterIds ?? this.characterIds,
+      mode: mode ?? this.mode,
     );
   }
 }

@@ -6,17 +6,19 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
-import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
 
 /// 文件列表项的操作类型
 enum FileAction { copy, cut }
+
+enum ConflictAction { ask, replace, keepBoth, skip }
 
 /// 自定义文件列表项的构建器
 typedef FileManagerItemBuilder = Widget Function(BuildContext context,
@@ -51,55 +53,90 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     _loadFiles();
   }
 
-  /// 加载当前目录下的文件和文件夹
-  Future<void> _loadFiles() async {
-    final List<FileSystemEntity> files = [];
-    try {
-      final List<FileSystemEntity> allFiles =
-          await _currentDirectory.list().toList();
-      allFiles.sort((a, b) {
-        if (a is Directory && b is File) {
-          return -1;
-        }
-        if (a is File && b is Directory) {
-          return 1;
-        }
-        return a.path.toLowerCase().compareTo(b.path.toLowerCase());
-      });
+  String _formatTime(String time) {
+    final dateTime = DateTime.parse(time);
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
 
-      for (var entity in allFiles) {
+    if (difference.inDays > 0) {
+      return '${difference.inDays}天前';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}小时前';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}分钟前';
+    } else {
+      return '刚刚';
+    }
+  }
+
+  Future<void> _loadFiles() async {
+    final List<FileSystemEntity> filteredEntities = [];
+    try {
+      if (!_currentDirectory.existsSync()) {
+        _currentDirectory.createSync(recursive: true);
+      }
+
+      final List<FileSystemEntity> allEntities =
+          await _currentDirectory.list().toList();
+
+      // 创建一个列表来存储实体及其状态信息
+      final List<Map<String, dynamic>> entitiesWithStats = [];
+      for (final entity in allEntities) {
+        // 过滤文件类型
         if (entity is Directory) {
-          files.add(entity);
+          entitiesWithStats.add({'entity': entity, 'stat': null});
         } else if (entity is File) {
           if (widget.fileExtensions
               .any((ext) => entity.path.toLowerCase().endsWith(ext))) {
-            files.add(entity);
+            try {
+              final stat = await entity.stat();
+              entitiesWithStats.add({'entity': entity, 'stat': stat});
+            } catch (e) {
+              // 如果无法获取状态，则忽略该文件
+              print("无法获取文件状态: $e");
+            }
           }
         }
       }
+
+      // 排序逻辑
+      entitiesWithStats.sort((a, b) {
+        final entityA = a['entity'] as FileSystemEntity;
+        final entityB = b['entity'] as FileSystemEntity;
+
+        final isDirA = entityA is Directory;
+        final isDirB = entityB is Directory;
+
+        // 规则1: 文件夹始终置顶
+        if (isDirA && !isDirB) return -1;
+        if (!isDirA && isDirB) return 1;
+
+        // 规则 2: 如果都是文件夹，按名称排序
+        if (isDirA && isDirB) {
+          return path
+              .basename(entityA.path)
+              .toLowerCase()
+              .compareTo(path.basename(entityB.path).toLowerCase());
+        }
+
+        // 规则 3: 如果都是文件，按创建/修改日期降序排序 (最新的在前)
+        final statA = a['stat'] as FileStat;
+        final statB = b['stat'] as FileStat;
+        return statB.changed.compareTo(statA.changed);
+      });
+
+      // 从排序后的列表中提取实体
+      for (final item in entitiesWithStats) {
+        filteredEntities.add(item['entity']);
+      }
     } catch (e) {
       // 处理权限错误等
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('无法访问目录: $e')),
-      );
+      Get.snackbar('无法访问目录', '$e');
     }
-    setState(() {
-      _files = files;
-    });
-  }
 
-  /// 预留的创建文件方法
-  Future<void> _createFile(String fileName) async {
-    final filePath = path.join(_currentDirectory.path, fileName);
-    try {
-      final newFile = File(filePath);
-      await newFile.create();
-      _loadFiles();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('创建文件失败: $e')),
-      );
-    }
+    setState(() {
+      _files = filteredEntities;
+    });
   }
 
   /// 默认的文件列表项显示样式
@@ -111,14 +148,17 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     final textColor = theme.colorScheme.onSurface;
 
     return ListTile(
-      leading: Icon(
-        isDirectory ? Icons.folder : Icons.insert_drive_file,
-        color: iconColor,
-      ),
+      leading: isDirectory
+          ? Icon(
+              Icons.folder,
+              color: iconColor,
+            )
+          : null,
       title: Text(
-        path.basename(entity.path),
+        path.basename(entity.path).replaceAll('.chat', ''),
         style: TextStyle(color: textColor),
       ),
+      //subtitle:
       onTap: onTap,
       onLongPress: () {
         if (!_isMultiSelectMode) {
@@ -130,8 +170,33 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       },
       trailing: isSelected
           ? Icon(Icons.check_circle, color: theme.colorScheme.secondary)
-          : null,
+          : Text(
+              _formatTime(entity.statSync().changed.toString()),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline),
+            ),
     );
+  }
+
+  Widget _cachedItemBuilder(BuildContext context, FileSystemEntity entity,
+      bool isSelected, VoidCallback onTap) {
+    final isDirectory = entity is Directory;
+
+    return isDirectory
+        ? _defaultItemBuilder(context, entity, isSelected, onTap)
+        : ChatListItem(
+            path: entity.path,
+            isSelected: isSelected,
+            onTap: onTap,
+            onLongPress: () {
+              if (!_isMultiSelectMode) {
+                setState(() {
+                  _isMultiSelectMode = true;
+                  _selectedFiles.add(entity);
+                });
+              }
+            },
+          );
   }
 
   /// 点击文件时触发的特定方法
@@ -224,7 +289,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 
     // 如果当前目录就是根目录，直接显示根目录的名称
     if (_currentDirectory.path == widget.directory.path) {
-      displayPath = path.basename(_currentDirectory.path);
+      displayPath = '全部聊天';
     } else {
       // 计算相对于根目录的路径
       final String relativePath =
@@ -297,7 +362,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       itemBuilder: (context, index) {
         final entity = _files[index];
         final isSelected = _selectedFiles.contains(entity);
-        return _defaultItemBuilder(context, entity, isSelected, () {
+        return _cachedItemBuilder(context, entity, isSelected, () {
           if (_isMultiSelectMode) {
             setState(() {
               if (isSelected) {
@@ -446,38 +511,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     );
   }
 
-  void _showCreateFileDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('新建文件'),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-                hintText: '文件名（例如: myFile${widget.fileExtensions.first}）'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  _createFile(controller.text);
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('创建'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _copyFiles() {
     _clipboard.clear();
     _clipboard.addAll(_selectedFiles);
@@ -507,10 +540,60 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   Future<void> _pasteFiles() async {
     if (_clipboard.isEmpty) return;
 
+    ConflictAction allConflictAction = ConflictAction.ask;
+
     for (final entity in _clipboard) {
-      final newPath =
+      String newPath =
           path.join(_currentDirectory.path, path.basename(entity.path));
+      ConflictAction currentAction = allConflictAction;
+
+      // 1. 冲突检测
+      if (await File(newPath).exists() || await Directory(newPath).exists()) {
+        if (currentAction == ConflictAction.ask) {
+          final result = await _showConflictDialog(path.basename(entity.path));
+
+          // 如果用户取消对话框，则终止整个粘贴操作
+          if (result == null) break;
+
+          final userChoice = result.keys.first;
+          final applyToAll = result.values.first;
+
+          if (applyToAll) {
+            allConflictAction = userChoice;
+          }
+          currentAction = userChoice;
+        }
+      }
+
+      // 2. 根据决策执行操作
       try {
+        switch (currentAction) {
+          case ConflictAction.skip:
+            continue; // 跳过当前文件
+
+          case ConflictAction.keepBoth:
+            // 如果是冲突后选择保留，则获取唯一名称，否则使用原名
+            if (await FileSystemEntity.type(newPath) !=
+                FileSystemEntityType.notFound) {
+              newPath = await _getUniqueName(newPath);
+            }
+            break; // 继续执行默认的粘贴逻辑
+
+          case ConflictAction.replace:
+            // 如果目标存在，先删除
+            if (await File(newPath).exists()) {
+              await File(newPath).delete();
+            } else if (await Directory(newPath).exists()) {
+              await Directory(newPath).delete(recursive: true);
+            }
+            break; // 继续执行默认的粘贴逻辑
+
+          case ConflictAction.ask:
+            // 默认情况，没有冲突，直接粘贴
+            break;
+        }
+
+        // 3. 执行文件操作
         if (entity is File) {
           if (_clipboardAction == FileAction.cut) {
             await entity.rename(newPath);
@@ -521,7 +604,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           if (_clipboardAction == FileAction.cut) {
             await entity.rename(newPath);
           } else {
-            // 文件夹的复制需要递归进行
+            // 健壮的递归文件夹复制
             final newDir = Directory(newPath);
             await newDir.create();
             await for (final subEntity in entity.list(recursive: true)) {
@@ -529,7 +612,9 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   path.relative(subEntity.path, from: entity.path);
               final newSubPath = path.join(newDir.path, relativePath);
               if (subEntity is File) {
-                await File(newSubPath).create(recursive: true);
+                // 确保目标子目录存在
+                await Directory(path.dirname(newSubPath))
+                    .create(recursive: true);
                 await subEntity.copy(newSubPath);
               } else if (subEntity is Directory) {
                 await Directory(newSubPath).create(recursive: true);
@@ -539,16 +624,17 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('粘贴失败: $e')),
+          SnackBar(content: Text('粘贴失败: ${path.basename(entity.path)} - $e')),
         );
       }
     }
 
-    setState(() {
-      if (_clipboardAction == FileAction.cut) {
+    // 4. 操作完成后，根据类型清空剪贴板并刷新列表
+    if (_clipboardAction == FileAction.cut) {
+      setState(() {
         _clipboard.clear();
-      }
-    });
+      });
+    }
     _loadFiles();
   }
 
@@ -631,6 +717,95 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         ],
       ),
     );
+  }
+
+  /// 为给定的路径生成一个不冲突的唯一路径
+  /// 例如 "file.txt" -> "file (1).txt"
+  Future<String> _getUniqueName(String originalPath) async {
+    String newPath = originalPath;
+    int count = 1;
+    final type = await FileSystemEntity.type(originalPath);
+
+    // 如果文件不存在，直接返回原路径
+    if (type == FileSystemEntityType.notFound) {
+      return newPath;
+    }
+
+    final dir = path.dirname(originalPath);
+    final extension = path.extension(originalPath);
+    final basename = path.basenameWithoutExtension(originalPath);
+
+    while (true) {
+      if (extension.isNotEmpty) {
+        newPath = path.join(dir, '$basename ($count)$extension');
+      } else {
+        newPath = path.join(dir, '$basename ($count)');
+      }
+
+      if (!await File(newPath).exists() && !await Directory(newPath).exists()) {
+        break;
+      }
+      count++;
+    }
+    return newPath;
+  }
+
+  /// 显示一个对话框，让用户决定如何处理文件/文件夹名称冲突
+  Future<Map<ConflictAction, bool>?> _showConflictDialog(String name) async {
+    final applyToAll = ValueNotifier<bool>(false);
+    final result = await showDialog<ConflictAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('名称冲突'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('目标文件夹中已存在一个名为 "$name" 的项目。'),
+              const SizedBox(height: 20),
+              ValueListenableBuilder<bool>(
+                valueListenable: applyToAll,
+                builder: (context, value, child) {
+                  return CheckboxListTile(
+                    title: const Text('对全部冲突应用此操作'),
+                    value: value,
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        applyToAll.value = newValue;
+                      }
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('跳过'),
+              onPressed: () => Navigator.of(context).pop(ConflictAction.skip),
+            ),
+            TextButton(
+              child: const Text('保留两者'),
+              onPressed: () =>
+                  Navigator.of(context).pop(ConflictAction.keepBoth),
+            ),
+            TextButton(
+              child: const Text('替换'),
+              onPressed: () =>
+                  Navigator.of(context).pop(ConflictAction.replace),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) return null; // 用户可能通过其他方式关闭了对话框
+
+    return {result: applyToAll.value};
   }
 }
 

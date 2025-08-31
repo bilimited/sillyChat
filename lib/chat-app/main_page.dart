@@ -418,22 +418,6 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               actions: [
-                // TODO:重构全局搜索
-                // IconButton(
-                //   icon: Icon(Icons.search),
-                //   onPressed: () {
-                //     Get.to(() => SearchPage(
-                //           chats: Get.find<ChatController>().chats,
-                //           onMessageTap: (message, chat) {
-                //             Get.back();
-                //             Get.to(() => ChatDetailPage(
-                //                   chatId: chat.id,
-                //                   initialPosition: message,
-                //                 ));
-                //           },
-                //         ));
-                //   },
-                // ),
                 IconButton(
                   icon: Icon(Icons.switch_camera),
                   onPressed: () {
@@ -475,8 +459,8 @@ class _MainPageState extends State<MainPage> {
             label: '聊天预设',
           ),
           NavigationDestination(
-            icon: Icon(Icons.book),
-            selectedIcon: Icon(Icons.settings_applications),
+            icon: Icon(Icons.book_outlined),
+            selectedIcon: Icon(Icons.book),
             label: '世界书',
           ),
         ],

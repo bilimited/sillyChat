@@ -1202,8 +1202,17 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           CircularProgressIndicator(), // 圆形进度指示器 [1]
-          SizedBox(height: 20.0), // 用于在进度条和文本之间添加一些间距
-          Text('正在加载会话'), // 显示的文本 [3, 6]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyScreen() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text('未选择会话，请在左侧聊天窗口选择一个会话'), // 显示的文本 [3, 6]
         ],
       ),
     );
@@ -1240,7 +1249,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
                   ? Container(
                       key: const ValueKey('LoadScreen'),
-                      child: _buildLoadScreen(),
+                      child: sessionController.chatPath?.isEmpty != true
+                          ? _buildLoadScreen()
+                          : _buildEmptyScreen(),
                     )
                   : Container(
                       key: const ValueKey('ChatScreen'),
