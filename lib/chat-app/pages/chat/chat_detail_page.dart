@@ -73,7 +73,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   // 被选中的消息（多选）
   List<MessageModel> _selectedMessages = [];
 
-  ChatMode mode = ChatMode.auto;
+  ChatMode get mode => chat.mode ?? ChatMode.auto;
   bool get isAutoMode => mode == ChatMode.auto;
   bool get isGroupMode => mode == ChatMode.group;
 
@@ -96,10 +96,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   void initState() {
     super.initState();
     _registerController(widget.sessionController);
-    // chatId = widget.chatId;
-    if (chat.mode != null) {
-      mode = chat.mode!;
-    }
+    // if (chat.mode != null) {
+    //   mode = chat.mode!;
+    //   print('$mode');
+    // }
 
     if (widget.initialPosition != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1057,9 +1057,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         value: isAutoMode,
                         onChanged: (bool? value) {
                           setState(() {
-                            mode =
+                            final m =
                                 value == true ? ChatMode.auto : ChatMode.manual;
-                            chat.mode = mode;
+                            chat.mode = m;
                             _updateChat();
                           });
                           Get.back(); // 关闭菜单
@@ -1072,10 +1072,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         value: isGroupMode,
                         onChanged: (bool? value) {
                           setState(() {
-                            mode = value == true
+                            final m = value == true
                                 ? ChatMode.group
                                 : ChatMode.manual;
-                            chat.mode = mode;
+                            chat.mode = m;
                             _updateChat();
                           });
                           Get.back(); // 关闭菜单
