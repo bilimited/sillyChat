@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/models/character_model.dart';
@@ -15,7 +17,7 @@ import '../models/chat_model.dart';
 
 import 'package:path/path.dart' as p;
 
-// 聊天索引管理器
+// 聊天索引和聊天文件综合管理器
 class ChatController extends GetxController {
   final RxList<ChatModel> chats = <ChatModel>[].obs;
 
@@ -26,13 +28,11 @@ class ChatController extends GetxController {
 
   ChatAIState getAIState(String path) {
     if (!states.containsKey(path)) {
-      {
-        states[path] = ChatAIState(
-            aihandler: Aihandler()
-              ..onGenerateStateChange = (str) {
-                states[path] = states[path]!.copyWith(GenerateState: str);
-              });
-      }
+      states[path] = ChatAIState(
+          aihandler: Aihandler()
+            ..onGenerateStateChange = (str) {
+              states[path] = states[path]!.copyWith(GenerateState: str);
+            });
     }
     return states[path]!;
   }
@@ -115,8 +115,6 @@ class ChatController extends GetxController {
       print('加载聊天数据失败: $e');
       throw e;
     }
-
-    // await debug_moveAllChats();
   }
 
   Future<void> debug_moveAllChats() async {

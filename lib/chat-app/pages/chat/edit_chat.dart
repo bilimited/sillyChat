@@ -110,7 +110,6 @@ class _EditChatPageState extends State<EditChatPage>
 
   // 基本信息标签页
   Widget _buildBasicInfoTab() {
-    final colors = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Form(
@@ -123,16 +122,16 @@ class _EditChatPageState extends State<EditChatPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextFormField(
-                        initialValue: widget.chat.name,
-                        onChanged: (value) {
-                          widget.chat.name = value;
-                        },
-                        decoration: InputDecoration(
-                          labelText: '聊天标题（可选）',
-                        ),
-                      ),
-                      SizedBox(height: 16),
+                      // TextFormField(
+                      //   initialValue: widget.chat.name,
+                      //   onChanged: (value) {
+                      //     widget.chat.name = value;
+                      //   },
+                      //   decoration: InputDecoration(
+                      //     labelText: '聊天标题（可选）',
+                      //   ),
+                      // ),
+                      // SizedBox(height: 16),
                       TextFormField(
                         initialValue: widget.chat.description,
                         onChanged: (value) {
