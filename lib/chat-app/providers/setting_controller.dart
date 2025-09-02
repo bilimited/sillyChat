@@ -5,10 +5,10 @@ import 'package:path_provider/path_provider.dart';
 
 // 全局配置
 class SettingController extends GetxController {
-  static String currectValutPath = '';
+  static RxString currectValutPath = ''.obs;
   var isDarkMode = false.obs;
   //var colorTheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple).obs;
-  final List<String> vaultPaths = <String>[].obs;
+  final RxList<String> vaultPaths = <String>[].obs;
 
   static final String globalSettingsFileName = 'global_settings.json';
 
@@ -26,19 +26,11 @@ class SettingController extends GetxController {
     if (currectValutPath.isEmpty) {
       return '${(await getApplicationDocumentsDirectory()).path}/SillyChat';
     }
-    return currectValutPath;
+    return currectValutPath.value;
   }
 
   Future<String> getChatPath() async {
     return '${await getVaultPath()}/chats';
-  }
-
-  @Deprecated('远程仓库路径不对')
-  String getRemoteVaultPath() {
-    if (currectValutPath.isEmpty) {
-      return '/SillyChat';
-    }
-    return '/SillyChat/${currectValutPath}';
   }
 
   // Early loading
@@ -50,7 +42,7 @@ class SettingController extends GetxController {
       if (await file.exists()) {
         final String contents = await file.readAsString();
         final Map<String, dynamic> settings = json.decode(contents);
-        currectValutPath = settings['currectVaultPath'] ?? '';
+        currectValutPath.value = settings['currectVaultPath'] ?? '';
       }
     } catch (e) {
       print('加载全局设置失败: $e');
@@ -70,8 +62,11 @@ class SettingController extends GetxController {
         webdav_username = settings['webdav_username'] ?? '';
         webdav_password = settings['webdav_password'] ?? '';
         isDarkMode.value = settings['isDarkMode'] ?? false;
-        currectValutPath = settings['currectVaultPath'] ?? '';
-        vaultPaths.assignAll(settings['vaultPaths'] ?? []);
+        currectValutPath.value = settings['currectVaultPath'] ?? '';
+        vaultPaths.value = (settings['vaultPaths'] as List<dynamic>?)
+                ?.map((path) => path.toString())
+                .toList() ??
+            [];
       }
     } catch (e) {
       print('加载全局设置失败: $e');
@@ -86,7 +81,7 @@ class SettingController extends GetxController {
 
       final Map<String, dynamic> settings = {
         'isDarkMode': isDarkMode.value,
-        'currectVaultPath': currectValutPath,
+        'currectVaultPath': currectValutPath.value,
         'webdav_url': webdav_url,
         'webdav_username': webdav_username,
         'webdav_password': webdav_password,
@@ -123,7 +118,7 @@ class SettingController extends GetxController {
 
   // 添加设置当前保管库名称的方法
   void setCurrentVaultName(String name) {
-    currectValutPath = name;
+    currectValutPath.value = name;
     saveGlobalSettings();
   }
 

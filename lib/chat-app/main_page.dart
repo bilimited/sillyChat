@@ -15,7 +15,6 @@ import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/vault_manage_page.dart';
-import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -26,6 +25,7 @@ import 'package:flutter_example/chat-app/utils/webdav_util.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'pages/character/contacts_page.dart'; // 添加这一行
 
 import 'package:path/path.dart' as p;
@@ -39,7 +39,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   // ignore: unused_field
-  static const String AppVersion = 'v1.11.1-alpha';
+  static const String AppVersion = 'v1.14.0-alpha';
 
   int _currentIndex = 0;
   final VaultSettingController _vaultSettingController = Get.find();
@@ -88,6 +88,41 @@ class _MainPageState extends State<MainPage> {
       return '${(byteSize / 1024).toStringAsFixed(2)} KB';
     } else {
       return '${(byteSize / (1024 * 1024)).toStringAsFixed(2)} MB';
+    }
+  }
+
+  Future<bool> requestManageStoragePermission() async {
+    // 1. 检查权限状态
+    var status = await Permission.manageExternalStorage.status;
+
+    // 2. 如果权限已被授予，直接返回 true
+    if (status.isGranted) {
+      print("MANAGE_EXTERNAL_STORAGE 权限已被授予。");
+      return true;
+    }
+
+    // 3. 如果权限未被授予，请求权限
+    if (status.isDenied) {
+      print("MANAGE_EXTERNAL_STORAGE 权限未被授予，正在请求...");
+      status = await Permission.manageExternalStorage.request();
+    }
+
+    // 4. 返回最终的权限状态
+    if (status.isGranted) {
+      print("MANAGE_EXTERNAL_STORAGE 权限授予成功。");
+      return true;
+    } else {
+      print("MANAGE_EXTERNAL_STORAGE 权限授予失败。");
+      return false;
+    }
+  }
+
+  Future<void> gotoVaultManagePage() async {
+    bool status = await requestManageStoragePermission();
+    if (status) {
+      customNavigate(VaultManagementPage(), context: context);
+    } else {
+      Get.snackbar('权限请求已被拒绝', '需要同意权限才能改变存储路径');
     }
   }
 
@@ -248,7 +283,7 @@ class _MainPageState extends State<MainPage> {
                                           customNavigate(SettingPage(),
                                               context: context);
                                         } else if (value == 1) {
-                                          customNavigate(VaultManagerPage(),
+                                          customNavigate(VaultManagementPage(),
                                               context: context);
                                         } else if (value == 2) {
                                           showLicensePage(context: context);
@@ -408,7 +443,8 @@ class _MainPageState extends State<MainPage> {
                         Text(
                           SettingController.currectValutPath.isEmpty
                               ? "根目录"
-                              : p.basename(SettingController.currectValutPath),
+                              : p.basename(
+                                  SettingController.currectValutPath.value),
                           style: textTheme.titleLarge,
                         ),
                         Text(

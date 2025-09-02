@@ -1,12 +1,13 @@
 import 'dart:io';
-import 'package:archive/archive_io.dart';
 
+import 'package:archive/archive_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class VaultManagementPage extends StatelessWidget {
   VaultManagementPage({super.key});
@@ -16,38 +17,31 @@ class VaultManagementPage extends StatelessWidget {
   // 在新仓库中需要检查的文件列表
   final List<String> requiredFiles = ['settings.json'];
 
-  /// 将当前仓库打包为 ZIP 文件并导出。
   Future<void> _exportVaultAsZip(BuildContext context) async {
     try {
       // 1. 获取当前仓库的路径
       final sourceDir = Directory(await settingController.getVaultPath());
       final vaultName = p.basename(sourceDir.path);
 
-      // 2. 让用户选择保存压缩文件的位置和文件名
-      String? outputFile = await FilePicker.platform.saveFile(
-        dialogTitle: '请选择保存压缩文件的位置',
-        fileName: '$vaultName.zip', // 默认文件名
-        type: FileType.custom,
-        allowedExtensions: ['zip'],
-      );
+      // 2. 获取系统的下载文件夹路径
+      // getDownloadsDirectory() 在 Android, iOS, Linux, macOS, Windows 上都可用。
+      final Directory? downloadsDir = await getDownloadsDirectory();
 
-      if (outputFile == null) {
-        // 用户取消了文件选择
+      // 检查是否成功获取下载文件夹
+      if (downloadsDir == null) {
+        // 在某些极少数情况或特定平台配置下可能无法获取
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导出已取消')),
+          SnackBar(content: Text('无法找到下载文件夹。')),
         );
+        print('错误：无法获取下载文件夹。');
         return;
       }
 
-      // 确保文件名以 .zip 结尾
-      if (!outputFile.toLowerCase().endsWith('.zip')) {
-        outputFile += '.zip';
-      }
+      // 3. 构建最终的输出文件路径
+      final String outputFile = p.join(downloadsDir.path, '$vaultName.zip');
 
-      // 3. 创建一个 ZIP 编码器
+      // 4. 创建一个 ZIP 编码器并指定输出路径
       final encoder = ZipFileEncoder();
-
-      // 4. 指定要创建的 ZIP 文件路径
       encoder.create(outputFile);
 
       // 5. 递归地将源目录中的所有文件和文件夹添加到压缩包中
@@ -55,7 +49,7 @@ class VaultManagementPage extends StatelessWidget {
       final List<FileSystemEntity> files = sourceDir.listSync(recursive: true);
       for (var file in files) {
         if (file is File) {
-          // 获取文件相对于仓库根目录的路径
+          // 获取文件相对于仓库根目录的路径，以保持压缩包内的目录结构
           final relativePath = p.relative(file.path, from: sourceDir.path);
           await encoder.addFile(file, relativePath);
         }
@@ -65,7 +59,7 @@ class VaultManagementPage extends StatelessWidget {
       encoder.close();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('仓库已成功导出到: $outputFile')),
+        SnackBar(content: Text('仓库已成功导出到下载文件夹: $outputFile')),
       );
     } catch (e) {
       print('导出仓库失败: $e');
@@ -95,7 +89,7 @@ class VaultManagementPage extends StatelessWidget {
       // 检查文件夹是否为空
       if (await directory.list().isEmpty) {
         // 执行初始化函数
-        await _initializeNewVault(directory);
+        // await _initializeNewVault(directory);
         settingController.vaultPaths.add(selectedDirectory);
         settingController.saveGlobalSettings();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -227,7 +221,12 @@ class VaultManagementPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.archive_outlined),
-            onPressed: () => _exportVaultAsZip(context),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('导出中~')),
+              );
+              _exportVaultAsZip(context);
+            },
             tooltip: '导出当前仓库',
           ),
         ],
@@ -252,14 +251,14 @@ class VaultManagementPage extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       SettingController.currectValutPath.isNotEmpty
-                          ? p.basename(SettingController.currectValutPath)
+                          ? p.basename(SettingController.currectValutPath.value)
                           : '根目录',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     SizedBox(height: 4),
                     Text(
                       SettingController.currectValutPath.isNotEmpty
-                          ? SettingController.currectValutPath
+                          ? SettingController.currectValutPath.value
                           : '默认应用数据目录',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),

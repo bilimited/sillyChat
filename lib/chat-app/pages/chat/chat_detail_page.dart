@@ -27,6 +27,8 @@ import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
 import '../../widgets/chat/character_wheel.dart';
 
+import 'package:path/path.dart' as p;
+
 class ChatDetailPage extends StatefulWidget {
   // 从搜索界面跳转到聊天时，跳转的目标位置
   final ChatSessionController sessionController;
@@ -1021,7 +1023,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.5,
                         child: Text(
-                          chat.name,
+                          p.basenameWithoutExtension(chat.file.path),
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 19),
                         ),
@@ -1225,7 +1227,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         },
         child: Obx(() => AnimatedSwitcher(
               // 1. 设置动画的持续时间
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 100),
 
               // 2. 提供一个 transitionBuilder 来自定义动画效果 (可选，但推荐)
               transitionBuilder: (Widget child, Animation<double> animation) {

@@ -866,23 +866,23 @@ class _ChatPageState extends State<ChatPage> {
     final theme = Theme.of(context);
     return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: FutureBuilder<Directory>(
-          future: SettingController.of
-              .getVaultPath()
-              .then((path) => Directory('$path/chats')),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              if (snapshot.hasData) {
-                return FileManagerWidget(
-                  directory: snapshot.data!,
-                );
-              }
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ));
+        body: Obx(() => FutureBuilder<Directory>(
+              future: SettingController.of
+                  .getVaultPath()
+                  .then((path) => Directory('$path/chats')),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (snapshot.hasData) {
+                    return FileManagerWidget(
+                      directory: snapshot.data!,
+                    );
+                  }
+                }
+                return const Center(child: CircularProgressIndicator());
+              },
+            )));
   }
 }
