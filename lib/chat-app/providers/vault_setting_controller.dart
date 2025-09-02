@@ -113,7 +113,7 @@ class VaultSettingController extends GetxController {
       final file = File('${directory}/$vaultSettingFileName');
 
       final Map<String, dynamic> jsonMap = {
-        'vaultName': SettingController.currectValutName,
+        'vaultName': SettingController.currectValutPath,
         'lastSyncTime': lastSyncTime.value?.toIso8601String(),
         'apis': apis.map((api) => api.toJson()).toList(),
         'regexes': regexes.map((reg) => reg.toJson()).toList(),
@@ -168,7 +168,7 @@ class VaultSettingController extends GetxController {
     return apis.firstWhereOrNull((a) => a.id == id);
   }
 
-  static VaultSettingController of(){
+  static VaultSettingController of() {
     return Get.find<VaultSettingController>();
   }
 }

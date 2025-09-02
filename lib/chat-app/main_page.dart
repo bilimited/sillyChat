@@ -14,6 +14,7 @@ import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/vault_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -26,6 +27,8 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'pages/character/contacts_page.dart'; // 添加这一行
+
+import 'package:path/path.dart' as p;
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -403,9 +406,9 @@ class _MainPageState extends State<MainPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          SettingController.currectValutName.isEmpty
+                          SettingController.currectValutPath.isEmpty
                               ? "根目录"
-                              : SettingController.currectValutName,
+                              : p.basename(SettingController.currectValutPath),
                           style: textTheme.titleLarge,
                         ),
                         Text(
@@ -421,7 +424,7 @@ class _MainPageState extends State<MainPage> {
                 IconButton(
                   icon: Icon(Icons.switch_camera),
                   onPressed: () {
-                    Get.to(() => VaultManagerPage());
+                    Get.to(() => VaultManagementPage());
                   },
                 ),
                 IconButton(

@@ -1,17 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 
 // 全局配置
 class SettingController extends GetxController {
-  static String currectValutName = '';
+  static String currectValutPath = '';
   var isDarkMode = false.obs;
-  var colorTheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple).obs;
+  //var colorTheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple).obs;
+  final List<String> vaultPaths = <String>[].obs;
+
   static final String globalSettingsFileName = 'global_settings.json';
 
   static String webdav_url = '';
@@ -25,21 +23,22 @@ class SettingController extends GetxController {
   }
 
   Future<String> getVaultPath() async {
-    if (currectValutName.isEmpty) {
+    if (currectValutPath.isEmpty) {
       return '${(await getApplicationDocumentsDirectory()).path}/SillyChat';
     }
-    return '${(await getApplicationDocumentsDirectory()).path}/SillyChat/${currectValutName}';
+    return currectValutPath;
   }
 
   Future<String> getChatPath() async {
     return '${await getVaultPath()}/chats';
   }
 
+  @Deprecated('远程仓库路径不对')
   String getRemoteVaultPath() {
-    if (currectValutName.isEmpty) {
+    if (currectValutPath.isEmpty) {
       return '/SillyChat';
     }
-    return '/SillyChat/${currectValutName}';
+    return '/SillyChat/${currectValutPath}';
   }
 
   // Early loading
@@ -51,7 +50,7 @@ class SettingController extends GetxController {
       if (await file.exists()) {
         final String contents = await file.readAsString();
         final Map<String, dynamic> settings = json.decode(contents);
-        currectValutName = settings['currectVaultName'] ?? '';
+        currectValutPath = settings['currectVaultPath'] ?? '';
       }
     } catch (e) {
       print('加载全局设置失败: $e');
@@ -71,7 +70,8 @@ class SettingController extends GetxController {
         webdav_username = settings['webdav_username'] ?? '';
         webdav_password = settings['webdav_password'] ?? '';
         isDarkMode.value = settings['isDarkMode'] ?? false;
-        currectValutName = settings['currectVaultName'] ?? '';
+        currectValutPath = settings['currectVaultPath'] ?? '';
+        vaultPaths.assignAll(settings['vaultPaths'] ?? []);
       }
     } catch (e) {
       print('加载全局设置失败: $e');
@@ -86,10 +86,11 @@ class SettingController extends GetxController {
 
       final Map<String, dynamic> settings = {
         'isDarkMode': isDarkMode.value,
-        'currectVaultName': currectValutName,
+        'currectVaultPath': currectValutPath,
         'webdav_url': webdav_url,
         'webdav_username': webdav_username,
         'webdav_password': webdav_password,
+        'vaultPaths': vaultPaths,
       };
 
       final String jsonString = json.encode(settings);
@@ -110,29 +111,10 @@ class SettingController extends GetxController {
     getApplicationDocumentsDirectory().then((directory) async {
       final rootDir = Directory('${directory.path}/SillyChat');
       if (!(await rootDir.exists()) || (await rootDir.list().isEmpty)) {
-        print("init data...");
         // 创建 {directory.path}/SillyChat 文件夹（如果不存在的话）
         if (!(await rootDir.exists())) {
           await rootDir.create(recursive: true);
         }
-        // 复制 assets/initData 下的所有文件到数据根目录
-        final assetManifest = await DefaultAssetBundle.of(Get.context!)
-            .loadString('AssetManifest.json');
-        final Map<String, dynamic> manifestMap = json.decode(assetManifest);
-        final initDataFiles = manifestMap.keys
-            .where((String key) => key.startsWith('assets/initData/'))
-            .toList();
-
-        for (final assetPath in initDataFiles) {
-          final data = await rootBundle.load(assetPath);
-          final List<int> bytes = data.buffer.asUint8List();
-          final fileName = assetPath.split('/').last;
-          final file = File('${rootDir.path}/$fileName');
-          await file.writeAsBytes(bytes, flush: true);
-        }
-        print('初始数据已复制到数据根目录');
-        SillyChatApp.restart();
-        await Get.find<CharacterController>().unpackAvatarFiles();
       } else {
         print('数据根目录已存在且不为空');
       }
@@ -141,7 +123,7 @@ class SettingController extends GetxController {
 
   // 添加设置当前保管库名称的方法
   void setCurrentVaultName(String name) {
-    currectValutName = name;
+    currectValutPath = name;
     saveGlobalSettings();
   }
 
