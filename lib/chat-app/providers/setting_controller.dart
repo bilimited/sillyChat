@@ -24,9 +24,22 @@ class SettingController extends GetxController {
     await loadGlobalSettings();
   }
 
+  Future<bool> isExternalStorageDirectoryExists() async {
+    return (await getExternalStorageDirectory()) != null;
+  }
+
   Future<String> getVaultPath() async {
     final root = await getExternalStorageDirectory() ??
         await getApplicationDocumentsDirectory();
+
+    if (currectValutName.isEmpty) {
+      return '${root.path}/SillyChat';
+    }
+    return '${root.path}/SillyChat/${currectValutName}';
+  }
+
+  Future<String> getOldVaultPath() async {
+    final root = await getApplicationDocumentsDirectory();
 
     if (currectValutName.isEmpty) {
       return '${root.path}/SillyChat';
