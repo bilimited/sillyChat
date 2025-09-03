@@ -26,7 +26,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     final directory = await getApplicationDocumentsDirectory();
     final baseDir = '${directory.path}/SillyChat';
     final dir = Directory(baseDir);
-
+    
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -87,15 +87,14 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     await newVaultDir.create();
 
     if (copyCurrentVault) {
-      final currentVaultPath = '$baseDir/${SettingController.currectValutPath}';
+      final currentVaultPath = '$baseDir/${SettingController.currectValutName}';
       final currentVaultDir = Directory(currentVaultPath);
-
+      
       if (await currentVaultDir.exists()) {
         await for (var entity in currentVaultDir.list()) {
           if (entity is File) {
             final fileName = entity.path.split('\\').last.split('/').last;
-            if (fileName.startsWith('chat_options') ||
-                !fileName.startsWith('chat')) {
+            if (fileName.startsWith('chat_options') || !fileName.startsWith('chat')) {
               final newPath = '${newVaultDir.path}/$fileName';
               // 这里发生了错误
               await entity.copy(newPath);
@@ -108,6 +107,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     await _loadVaultFolders();
     Get.snackbar('成功', '仓库创建成功');
   }
+
 
   void _showCreateVaultDialog() {
     showDialog(
@@ -178,7 +178,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     final directory = await getApplicationDocumentsDirectory();
     final vaultPath = '${directory.path}/SillyChat/$vaultName';
     final vaultDir = Directory(vaultPath);
-
+    
     if (await vaultDir.exists()) {
       await vaultDir.delete(recursive: true);
       await _loadVaultFolders();
@@ -191,14 +191,14 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     final baseDir = '${directory.path}/SillyChat';
     final oldPath = '$baseDir/$oldName';
     final newPath = '$baseDir/$newName';
-
+    
     if (await Directory(newPath).exists()) {
       Get.snackbar('错误', '目标名称已存在');
       return;
     }
-
+    
     await Directory(oldPath).rename(newPath);
-    if (SettingController.currectValutPath == oldName) {
+    if (SettingController.currectValutName == oldName) {
       settingController.setCurrentVaultName(newName);
     }
     await _loadVaultFolders();
@@ -267,7 +267,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('仓库管理(当前:${SettingController.currectValutPath})'),
+        title: Text('仓库管理(当前:${SettingController.currectValutName})'),
       ),
       body: ListView.builder(
         itemCount: vaultFolders.length + 1,

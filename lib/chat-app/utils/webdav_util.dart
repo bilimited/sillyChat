@@ -9,11 +9,11 @@ class WebDavUtil {
   final SettingController _settingController = Get.find();
 
   String get backupFolder {
-    if (SettingController.currectValutPath == '') {
+    if (SettingController.currectValutName == '') {
       return '/SillyChat';
     }
 
-    return '/SillyChat/${SettingController.currectValutPath}';
+    return '/SillyChat/${SettingController.currectValutName}';
   }
 
   // 初始化WebDAV客户端
