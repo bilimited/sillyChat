@@ -82,7 +82,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       }
 
       await _loadVaultFolders();
-      SettingController.of.setCurrentVaultName('');
+      // SettingController.of.setCurrentVaultName('');
       SillyChatApp.restart();
 
       SillyChatApp.snackbar(context, '迁移已完成!');
