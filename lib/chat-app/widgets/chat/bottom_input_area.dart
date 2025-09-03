@@ -4,15 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
-// import 'package:flutter_example/chat-app/pages/chat_detail_page.dart'; // For ChatMode enum
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
 class BottomInputArea extends StatefulWidget {
   //final int chatId;
@@ -63,22 +62,20 @@ class BottomInputArea extends StatefulWidget {
 
 class _BottomInputAreaState extends State<BottomInputArea> {
   final TextEditingController messageController = TextEditingController();
-  final _imagePicker = ImagePicker();
   bool get isGroupMode => widget.mode == ChatMode.group;
   bool get isAutoMode => widget.mode == ChatMode.auto;
 
   bool isThinkMode = false;
   List<String> selectedPath = [];
 
-  void _pickImage() {
-    _imagePicker.pickImage(source: ImageSource.gallery).then((pickedFile) {
-      if (pickedFile != null) {
-        final newPaths = [...selectedPath, pickedFile.path];
-        setState(() {
-          selectedPath = newPaths;
-        });
-      }
-    });
+  void _pickImage() async {
+    final path = await ImageUtils.selectAndCropImage(context, isCrop: false);
+    if (path != null) {
+      final newPaths = [...selectedPath, path];
+      setState(() {
+        selectedPath = newPaths;
+      });
+    }
   }
 
   void _removeImage(int index) {

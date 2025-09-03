@@ -12,6 +12,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -52,7 +53,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   final CharacterController _characterController =
       Get.find<CharacterController>();
   final VaultSettingController _settingController = Get.find();
-  final _imagePicker = ImagePicker();
 
   final bool isDesktop = SillyChatApp.isDesktop();
 
@@ -300,18 +300,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               ListTile(
                 leading: const Icon(Icons.image),
                 title: const Text('添加图片'),
-                onTap: () {
+                onTap: () async {
                   Get.back();
-                  _imagePicker
-                      .pickImage(source: ImageSource.gallery)
-                      .then((pickedFile) {
-                    if (pickedFile != null) {
-                      setState(() {
-                        message.resPath.add(pickedFile.path);
-                        _updateChat();
-                      });
-                    }
-                  });
+                  final path = await ImageUtils.selectAndCropImage(context,
+                      isCrop: false);
+                  if (path != null) {
+                    setState(() {
+                      message.resPath.add(path);
+                      _updateChat();
+                    });
+                  }
+                  // _imagePicker
+                  //     .pickImage(source: ImageSource.gallery)
+                  //     .then((pickedFile) {
+                  //   if (pickedFile != null) {
+                  //     setState(() {
+                  //       message.resPath.add(pickedFile.path);
+                  //       _updateChat();
+                  //     });
+                  //   }
+                  // });
                 },
               ),
               ListTile(
@@ -556,9 +564,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       if (isNewChat) {
         await _updateChat();
       }
-      setState(() {
-        selectedPath = [];
-      });
 
       sessionController.sendMessageAndGetReply(text, selectedPath);
     }

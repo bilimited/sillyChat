@@ -6,10 +6,10 @@ import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
 
@@ -27,7 +27,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   final _formKey = GlobalKey<FormState>();
   final _characterController = Get.find<CharacterController>();
   final _lorebookController = Get.find<LoreBookController>();
-  final _imagePicker = ImagePicker();
 
   late TabController _tabController;
   late TextEditingController _nameController;
@@ -75,14 +74,16 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   }
 
   Future<void> _pickImage(bool isAvatar) async {
-    final XFile? image =
-        await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    // final XFile? image =
+    //     await _imagePicker.pickImage(source: ImageSource.gallery);
+    final path = await ImageUtils.selectAndCropImage(context,
+        fileName: 'avatar_${widget.characterId}');
+    if (path != null) {
       setState(() {
         if (isAvatar) {
-          _avatarPath = image.path;
+          _avatarPath = path;
         } else {
-          _backgroundPath = image.path;
+          _backgroundPath = path;
         }
       });
     }

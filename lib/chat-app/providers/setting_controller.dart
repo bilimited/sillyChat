@@ -56,6 +56,10 @@ class SettingController extends GetxController {
     return '${await getVaultPath()}/chats';
   }
 
+  Future<String> getImagePath() async {
+    return '${await getVaultPath()}/.imgs';
+  }
+
   String getRemoteVaultPath() {
     if (currectValutName.isEmpty) {
       return '/SillyChat';
@@ -153,7 +157,6 @@ class SettingController extends GetxController {
         }
         print('初始数据已复制到数据根目录');
         SillyChatApp.restart();
-        await Get.find<CharacterController>().unpackAvatarFiles();
       } else {
         print('数据根目录已存在且不为空');
       }

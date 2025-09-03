@@ -138,7 +138,6 @@ class _SettingPageState extends State<SettingPage>
 
     // 关闭下拉框
     Get.back();
-    _characterController.packageAvatarFiles();
     _vaultSettingController.lastSyncTime.value = DateTime.now();
     await _vaultSettingController.saveSettings();
 
