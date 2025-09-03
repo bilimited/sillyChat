@@ -57,6 +57,7 @@ dependencies:
   encrypt: ^5.0.3
 
   # waterfall_flow: ^3.0.2
+  file_picker: ^5.3.1
 
   webdav_client: ^1.2.0
 
@@ -70,8 +71,6 @@ dependencies:
   flutter_markdown: ^0.7.7+1
   introduction_screen: ^3.1.17
   animated_tree_view: ^2.3.0
-  intl: ^0.20.2
-  file_picker: ^8.0.7
   # markdown_widget: ^2.3.2+8
 
 

@@ -138,7 +138,7 @@ class _SettingPageState extends State<SettingPage>
 
     // 关闭下拉框
     Get.back();
-    // _characterController.packageAvatarFiles();
+    _characterController.packageAvatarFiles();
     _vaultSettingController.lastSyncTime.value = DateTime.now();
     await _vaultSettingController.saveSettings();
 
@@ -163,9 +163,45 @@ class _SettingPageState extends State<SettingPage>
 
   Future<void> _downloadAll() async {
     await webDav.init();
-    await webDav.downloadAllData(context);
-    SillyChatApp.restart();
-    //Get.snackbar('导入完成', '数据已导入');
+    final data = await webDav.downloadAllProps();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('云端数据'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              final file = data[index];
+              return ListTile(
+                title: Text(file.name ?? "unknown"),
+                subtitle: Text(
+                    '${getSizeString(file.size ?? 0)} - 修改时间: ${file.mTime}'),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await webDav.downloadAllData(context);
+
+              SillyChatApp.restart();
+              await Get.find<CharacterController>().unpackAvatarFiles();
+              Get.snackbar('导入完成', '数据已导入');
+            },
+            child: const Text('导入'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildGeneralTab() {

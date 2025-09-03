@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:get/get.dart';
 
@@ -25,6 +26,7 @@ class EditMessagePage extends StatefulWidget {
 
 class _EditMessagePageState extends State<EditMessagePage> {
   late TextEditingController _editController;
+  final ChatController _chatController = Get.find<ChatController>();
 
   late int _senderId;
   late MessageType _messageType;

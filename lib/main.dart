@@ -14,7 +14,6 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,7 +80,7 @@ class SillyChatApp extends StatelessWidget {
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
     if (kDebugMode) {
-      return false; //(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+      return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }
