@@ -46,8 +46,7 @@ class _SearchPageState extends State<SearchPage> {
         if (query.isEmpty) {
           if (msg.bookmark != null) {
             results.add(_SearchResult(chat, msg));
-          }
-          else if (widget.chats.length == 1 && msg.isPinned) {
+          } else if (widget.chats.length == 1 && msg.isPinned) {
             results.add(_SearchResult(chat, msg));
           }
         } else {
@@ -115,7 +114,7 @@ class _SearchPageState extends State<SearchPage> {
                         final msg = result.message;
                         final chat = result.chat;
                         final character =
-                            _characterController.getCharacterById(msg.sender);
+                            _characterController.getCharacterById(msg.senderId);
 
                         final query = _query.toLowerCase();
                         final content = msg.content.replaceAll('\n', ' ');

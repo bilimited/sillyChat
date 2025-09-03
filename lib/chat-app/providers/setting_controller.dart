@@ -24,15 +24,40 @@ class SettingController extends GetxController {
     await loadGlobalSettings();
   }
 
+  Future<bool> isExternalStorageDirectoryExists() async {
+    return !SillyChatApp.isDesktop();
+  }
+
   Future<String> getVaultPath() async {
-    if (currectValutName.isEmpty) {
-      return '${(await getApplicationDocumentsDirectory()).path}/SillyChat';
+    late Directory root;
+    if (SillyChatApp.isDesktop()) {
+      root = await getApplicationDocumentsDirectory();
+    } else {
+      root = await getExternalStorageDirectory() ??
+          await getApplicationDocumentsDirectory();
     }
-    return '${(await getApplicationDocumentsDirectory()).path}/SillyChat/${currectValutName}';
+
+    if (currectValutName.isEmpty) {
+      return '${root.path}/SillyChat';
+    }
+    return '${root.path}/SillyChat/${currectValutName}';
+  }
+
+  Future<String> getOldVaultPath() async {
+    final root = await getApplicationDocumentsDirectory();
+
+    if (currectValutName.isEmpty) {
+      return '${root.path}/SillyChat';
+    }
+    return '${root.path}/SillyChat/${currectValutName}';
   }
 
   Future<String> getChatPath() async {
     return '${await getVaultPath()}/chats';
+  }
+
+  Future<String> getImagePath() async {
+    return '${await getVaultPath()}/.imgs';
   }
 
   String getRemoteVaultPath() {
@@ -132,7 +157,6 @@ class SettingController extends GetxController {
         }
         print('初始数据已复制到数据根目录');
         SillyChatApp.restart();
-        await Get.find<CharacterController>().unpackAvatarFiles();
       } else {
         print('数据根目录已存在且不为空');
       }

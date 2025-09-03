@@ -38,31 +38,33 @@ class ExampleChat extends StatelessWidget {
           MessageModel(
               id: 1,
               content: '你在何处？',
-              sender: user,
+              senderId: user,
               time: DateTime.now(),
               alternativeContent: [null]),
           MessageModel(
               id: 2,
-              content: '*一个纤弱的影子，在朦胧的月光中，轻盈地飘过古老的石板路。*"我在时间的长河里，在回忆的岸边。你呢，是哪阵风，将你吹到了这无人问津的角落？"',
-              sender: assistant,
+              content:
+                  '*一个纤弱的影子，在朦胧的月光中，轻盈地飘过古老的石板路。*"我在时间的长河里，在回忆的岸边。你呢，是哪阵风，将你吹到了这无人问津的角落？"',
+              senderId: assistant,
               time: DateTime.now(),
               alternativeContent: [null]),
           MessageModel(
               id: 3,
               content: '我在寻你。',
-              sender: user,
+              senderId: user,
               time: DateTime.now(),
               alternativeContent: [null]),
           MessageModel(
               id: 4,
-              content: '"世间万物皆有其时，为何独独寻我？ "*影子停下了脚步，转过身来，那双如同深海般的眼眸，凝视着你。*"我不过是一缕被遗忘的思绪，一朵早已凋零的花。"',
-              sender: assistant,
+              content:
+                  '"世间万物皆有其时，为何独独寻我？ "*影子停下了脚步，转过身来，那双如同深海般的眼眸，凝视着你。*"我不过是一缕被遗忘的思绪，一朵早已凋零的花。"',
+              senderId: assistant,
               time: DateTime.now(),
               alternativeContent: [null]),
           MessageModel(
               id: 5,
               content: '因为你是诗。',
-              sender: user,
+              senderId: user,
               time: DateTime.now(),
               alternativeContent: [null]),
         ]);

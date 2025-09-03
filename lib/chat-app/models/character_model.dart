@@ -1,6 +1,9 @@
+import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
+import 'package:flutter_example/chat-app/utils/PackageValue.dart';
 import 'package:get/get.dart';
 
 class Relation {
@@ -18,7 +21,7 @@ class Relation {
       ..brief = brief;
   }
 
-  CharacterModel get target{
+  CharacterModel get target {
     CharacterController controller = Get.find();
     return controller.getCharacterById(targetId);
   }
@@ -58,19 +61,24 @@ class CharacterModel {
         .toList();
   }
 
-  CharacterModel({
-    required this.id,
-    required this.remark,
-    required this.roleName,
-    required this.avatar,
-    this.description,
-    required this.category,
-    this.messageStyle = MessageStyle.common,
-    this.brief,
-    this.backups,
-    lorebookIds,
-    this.firstMessage
-  }) {
+  int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
+
+  ChatOptionModel? get bindOption => bindOptionId == null
+      ? null
+      : ChatOptionController.of().getChatOptionById(bindOptionId!);
+
+  CharacterModel(
+      {required this.id,
+      required this.remark,
+      required this.roleName,
+      required this.avatar,
+      this.description,
+      required this.category,
+      this.messageStyle = MessageStyle.common,
+      this.brief,
+      this.backups,
+      lorebookIds,
+      this.firstMessage}) {
     if (lorebookIds != null) {
       this.lorebookIds = lorebookIds;
     }
@@ -100,6 +108,7 @@ class CharacterModel {
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
       'firstMessage': firstMessage, // 添加firstMessage字段
       'moreFirstMessage': moreFirstMessage, // 添加moreFirstMessage字段
+      'bindOption': bindOptionId, // 添加bindOption字段
     };
   }
 
@@ -117,12 +126,12 @@ class CharacterModel {
               .toList() ??
           [],
       firstMessage: json['firstMessage'],
-      
     );
 
     char.moreFirstMessage = (json['moreFirstMessage'] as List<dynamic>?)
-        ?.map((e) => e as String)
-        .toList() ?? [];
+            ?.map((e) => e as String)
+            .toList() ??
+        [];
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
     // 版本迁移
@@ -151,6 +160,8 @@ class CharacterModel {
         ?.map((e) => CharacterModel.fromJson(e as Map<String, dynamic>))
         .toList();
 
+    char.bindOptionId = json['bindOption'];
+
     return char;
   }
 
@@ -170,6 +181,7 @@ class CharacterModel {
     List<CharacterModel>? backups,
     List<int>? lorebookIds,
     MessageStyle? messageStyle,
+    PackageValue<int?>? bindOption,
   }) {
     var newChar = CharacterModel(
       id: id ?? DateTime.now().millisecondsSinceEpoch,
@@ -181,7 +193,9 @@ class CharacterModel {
       brief: brief ?? this.brief,
       messageStyle: messageStyle ?? this.messageStyle,
       backups: backups ?? this.backups?.map((e) => e.copyWith()).toList(),
-      lorebookIds: lorebookIds != null ? List<int>.from(lorebookIds) : List<int>.from(this.lorebookIds),
+      lorebookIds: lorebookIds != null
+          ? List<int>.from(lorebookIds)
+          : List<int>.from(this.lorebookIds),
       firstMessage: firstMessage ?? this.firstMessage,
     );
 
@@ -194,9 +208,17 @@ class CharacterModel {
 
     // 深拷贝关系
     if (relations != null) {
-      newChar.relations = relations.map((key, value) => MapEntry(key, value.copy()));
+      newChar.relations =
+          relations.map((key, value) => MapEntry(key, value.copy()));
     } else {
-      newChar.relations = this.relations.map((key, value) => MapEntry(key, value.copy()));
+      newChar.relations =
+          this.relations.map((key, value) => MapEntry(key, value.copy()));
+    }
+
+    if (bindOption != null) {
+      newChar.bindOptionId = bindOption.value;
+    } else {
+      newChar.bindOptionId = this.bindOptionId;
     }
 
     return newChar;

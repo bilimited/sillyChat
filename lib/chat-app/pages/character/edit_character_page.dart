@@ -2,12 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
+import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
 
@@ -25,7 +27,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   final _formKey = GlobalKey<FormState>();
   final _characterController = Get.find<CharacterController>();
   final _lorebookController = Get.find<LoreBookController>();
-  final _imagePicker = ImagePicker();
 
   late TabController _tabController;
   late TextEditingController _nameController;
@@ -35,6 +36,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _categoryController;
   late TextEditingController _briefController;
   late TextEditingController _firstMessageController;
+
+  late int? _bindOption = widget.characterId != null
+      ? _characterController.getCharacterById(widget.characterId!).bindOptionId
+      : null;
 
   String? _avatarPath;
   String? _backgroundPath;
@@ -69,14 +74,16 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   }
 
   Future<void> _pickImage(bool isAvatar) async {
-    final XFile? image =
-        await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    // final XFile? image =
+    //     await _imagePicker.pickImage(source: ImageSource.gallery);
+    final path = await ImageUtils.selectAndCropImage(context,
+        fileName: 'avatar_${widget.characterId}');
+    if (path != null) {
       setState(() {
         if (isAvatar) {
-          _avatarPath = image.path;
+          _avatarPath = path;
         } else {
-          _backgroundPath = image.path;
+          _backgroundPath = path;
         }
       });
     }
@@ -102,7 +109,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..relations = _character?.relations ?? {}
       ..archive = _archiveController.text
       ..messageStyle = _character?.messageStyle ?? MessageStyle.common
-      ..backups = _character?.backups ?? [];
+      ..backups = _character?.backups ?? []
+      ..bindOptionId = _bindOption;
   }
 
   void _applyBackup(CharacterModel backup) {
@@ -382,6 +390,62 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                       }
                     });
                   },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Expanded(
+                        child: DropdownButtonFormField<int?>(
+                      // <-- 1. 确保泛型是 int?
+                      value: _bindOption,
+                      decoration: const InputDecoration(
+                        label: Text('绑定预设'),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      hint: const Text('选择聊天预设'),
+                      items: [
+                        // <-- 2. 手动添加一个“空白”选项
+                        DropdownMenuItem<int?>(
+                          value: null, // 这个 item 的值是 null
+                          child: Text(
+                            '无(使用默认预设)',
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.outline),
+                          ), // 显示给用户的文本
+                        ),
+                        // 3. 使用展开操作符(...)将原来的列表合并进来
+                        ...Get.find<ChatOptionController>()
+                            .chatOptions
+                            .map((option) {
+                          return DropdownMenuItem<int>(
+                            // 这里的泛型保持 int 也可以，会自动转换
+                            value: option.id,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 250),
+                              child: Text(
+                                option.name, // 建议模板字符串里不要加大括号，除非必要
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (int? value) {
+                        setState(() {
+                          // <-- 4. 记得调用 setState 来更新UI
+                          _bindOption = value;
+                        });
+                      },
+                    )),
+                    IconButton(
+                        onPressed: () {
+                          customNavigate(ChatOptionsManagerPage(),
+                              context: context);
+                        },
+                        icon: Icon(Icons.list)),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const Text(

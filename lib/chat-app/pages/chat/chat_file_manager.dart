@@ -134,9 +134,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       Get.snackbar('无法访问目录', '$e');
     }
 
-    setState(() {
-      _files = filteredEntities;
-    });
+    if (mounted) {
+      setState(() {
+        _files = filteredEntities;
+      });
+    }
   }
 
   /// 默认的文件列表项显示样式
@@ -355,6 +357,26 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 
   Widget _buildFileList() {
     if (_files.isEmpty) {
+      if (_currentDirectory == widget.directory) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('无数据'),
+              SizedBox(
+                height: 16,
+              ),
+              ElevatedButton(
+                  onPressed: () async {
+                    await ChatController.of.loadChats();
+                    await ChatController.of.debug_moveAllChats();
+                    _loadFiles();
+                  },
+                  child: Text('从旧版本迁移'))
+            ],
+          ),
+        );
+      }
       return const Center(child: Text('文件夹为空'));
     }
     return ListView.builder(
@@ -629,12 +651,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
     }
 
-    // 4. 操作完成后，根据类型清空剪贴板并刷新列表
-    if (_clipboardAction == FileAction.cut) {
-      setState(() {
-        _clipboard.clear();
-      });
-    }
+    // 4. 操作完成后，根据类型清空剪贴板并刷新列表s
+    setState(() {
+      _clipboard.clear();
+    });
+
     _loadFiles();
   }
 
@@ -677,7 +698,9 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   void _renameFile() {
     if (_selectedFiles.length != 1) return;
     final entity = _selectedFiles.first;
-    final controller = TextEditingController(text: path.basename(entity.path));
+    final controller =
+        TextEditingController(text: path.basenameWithoutExtension(entity.path));
+    final ext = path.extension(entity.path);
 
     showDialog(
       context: context,
@@ -694,23 +717,42 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           ),
           TextButton(
             onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                final newPath =
-                    path.join(_currentDirectory.path, controller.text);
-                try {
-                  await entity.rename(newPath);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('重命名失败: $e')),
-                  );
-                }
-                setState(() {
-                  _isMultiSelectMode = false;
-                  _selectedFiles.clear();
-                });
-                _loadFiles();
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+
+              final newPath = path.join(_currentDirectory.path, '$newName$ext');
+
+              // 1. 如果新路径和原路径相同，直接关闭对话框即可（无变化）
+              if (newPath == entity.path) {
                 Navigator.of(context).pop();
+                return;
               }
+              // 2. 检测冲突：目标文件/目录是否已存在
+              final targetExists = await File(newPath).exists() ||
+                  await Directory(newPath).exists();
+              if (targetExists) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('名称已存在!')),
+                );
+                return; // 终止重命名
+              }
+              try {
+                await entity.rename(newPath);
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('重命名失败: $e')),
+                );
+              }
+
+              setState(() {
+                _isMultiSelectMode = false;
+                _selectedFiles.clear();
+              });
+              _loadFiles();
+              if (!mounted) return;
+              Navigator.of(context).pop();
             },
             child: const Text('确认'),
           ),

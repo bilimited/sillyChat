@@ -5,7 +5,6 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:get/get.dart';
 
@@ -26,7 +25,6 @@ class EditMessagePage extends StatefulWidget {
 
 class _EditMessagePageState extends State<EditMessagePage> {
   late TextEditingController _editController;
-  final ChatController _chatController = Get.find<ChatController>();
 
   late int _senderId;
   late MessageType _messageType;
@@ -35,7 +33,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
   void initState() {
     super.initState();
     _editController = TextEditingController(text: widget.message.content);
-    _senderId = widget.message.sender;
+    _senderId = widget.message.senderId;
     _messageType = widget.message.type;
   }
 
@@ -145,7 +143,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
     if (_editController.text.isNotEmpty) {
       setState(() {
         widget.message.content = _editController.text;
-        widget.message.sender = _senderId;
+        widget.message.senderId = _senderId;
         widget.message.type = _messageType;
       });
       widget.sessionController
@@ -167,7 +165,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
       widget.message.alternativeContent.add(null);
       setState(() {
         widget.message.content = _editController.text;
-        widget.message.sender = _senderId;
+        widget.message.senderId = _senderId;
         widget.message.type = _messageType;
       });
       widget.sessionController

@@ -23,7 +23,7 @@ class LLMRequestOptions {
 
   const LLMRequestOptions({
     required this.messages,
-    this.maxTokens = 12000,
+    this.maxTokens = 8000,
     this.temperature = 0.95,
     this.topP = 1.0,
     this.presencePenalty = 0.0,
@@ -55,7 +55,7 @@ class LLMRequestOptions {
     );
   }
 
-  Map<String, dynamic> toJson(){
+  Map<String, dynamic> toJson() {
     return {
       'max_tokens': maxTokens,
       'temperature': temperature,
@@ -85,10 +85,8 @@ class LLMRequestOptions {
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
       'seed': seed,
-      
     };
   }
-
 
   LLMRequestOptions copyWith({
     List<LLMMessage>? messages,

@@ -439,7 +439,7 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                             final isExpanded =
                                 _expandedMessages[messageKey] ?? false;
                             final character = _characterController
-                                .getCharacterById(message.sender);
+                                .getCharacterById(message.senderId);
                             final isSelected =
                                 _selectedMessages.contains(message);
                             final bool isLongText =

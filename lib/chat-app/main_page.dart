@@ -96,15 +96,6 @@ class _MainPageState extends State<MainPage> {
       ContactsPage(),
       ChatOptionsManagerPage(),
       LoreBookManagerPage(),
-      LoreBookManagerPage(),
-      // Obx(() => SearchPage(
-      //     chats: _chatController.chats.value,
-      //     onMessageTap: (msg, chat) {
-      //       setState(() {
-      //         desktop_initialPosition = msg;
-      //         desktop_switchChat(chat.id);
-      //       });
-      //     })),
     ];
     webDav.init();
   }
@@ -173,10 +164,6 @@ class _MainPageState extends State<MainPage> {
                                       NavigationRailDestination(
                                           icon: const Icon(Icons.book),
                                           label: const Text('世界书')),
-                                      NavigationRailDestination(
-                                        icon: const Icon(Icons.search),
-                                        label: const Text('搜索'),
-                                      ),
                                     ],
                                     onDestinationSelected: (index) {
                                       setState(() {

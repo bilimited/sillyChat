@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -170,7 +171,7 @@ class ChatSessionController extends GetxController {
       final message = MessageModel(
           id: DateTime.now().microsecondsSinceEpoch,
           content: text,
-          sender: chat.user.id,
+          senderId: chat.user.id,
           time: DateTime.now(),
           type: MessageTypeExtension.fromMessageStyle(chat.user.messageStyle),
           role: MessageRole.user,
@@ -182,8 +183,9 @@ class ChatSessionController extends GetxController {
       if (chat.mode == ChatMode.group) {
         return;
       } else if (chat.mode == ChatMode.auto) {
-        await for (var content
-            in _handleLLMMessage(think: chat.requestOptions.isThinkMode)) {
+        await for (var content in _handleLLMMessage(
+          chat.assistant.bindOption,
+        )) {
           _handleAIResult(chat, content, chat.assistantId ?? -1);
         }
       } else {
@@ -195,7 +197,9 @@ class ChatSessionController extends GetxController {
   /// 让AI直接发送一条消息，无需输入问题
   void getGroupReply(CharacterModel sender) async {
     await for (var content in _handleLLMMessage(
-        sender: sender, think: chat.requestOptions.isThinkMode)) {
+      sender.bindOption,
+      sender: sender,
+    )) {
       _handleAIResult(chat, content, sender.id);
     }
   }
@@ -222,18 +226,21 @@ class ChatSessionController extends GetxController {
     }
 
     if (chat.mode == ChatMode.auto) {
-      //
-      await for (var content
-          in _handleLLMMessage(think: chat.requestOptions.isThinkMode)) {
+      // TODO:有时会无法retry，似乎是因为mode不正常，重新设置mode即可
+      await for (var content in _handleLLMMessage(
+        chat.assistant.bindOption,
+      )) {
         _handleAIResult(chat, content, chat.assistantId ?? -1,
             existedMessage: message);
       }
     } else if (chat.mode == ChatMode.group && message != null) {
       final CharacterController controller = Get.find();
       await for (var content in _handleLLMMessage(
-          sender: controller.getCharacterById(message.sender),
-          think: chat.requestOptions.isThinkMode)) {
-        _handleAIResult(chat, content, message.sender, existedMessage: message);
+        message.sender.bindOption,
+        sender: controller.getCharacterById(message.senderId),
+      )) {
+        _handleAIResult(chat, content, message.senderId,
+            existedMessage: message);
       }
     }
   }
@@ -251,7 +258,7 @@ class ChatSessionController extends GetxController {
     final AIMessage = MessageModel(
       id: DateTime.now().microsecondsSinceEpoch,
       content: content,
-      sender: senderID,
+      senderId: senderID,
       time: DateTime.now(),
       role: MessageRole.assistant,
       alternativeContent: existedContent,
@@ -261,13 +268,14 @@ class ChatSessionController extends GetxController {
 
   // 按行分割功能:已弃用
   // 处理消息功能，默认为单聊
-  Stream<String> _handleLLMMessage(
-      {bool think = false, CharacterModel? sender = null}) async* {
-    late LLMRequestOptions options;
+  Stream<String> _handleLLMMessage(ChatOptionModel? option,
+      {CharacterModel? sender = null}) async* {
     late List<LLMMessage> messages;
 
-    messages = Promptbuilder().getLLMMessageList(chat, sender: sender);
-    options = chat.requestOptions.copyWith(messages: messages);
+    messages = Promptbuilder(chat, option).getLLMMessageList(sender: sender);
+
+    final reqOptions = option?.requestOptions ?? chat.requestOptions;
+    LLMRequestOptions options = reqOptions.copyWith(messages: messages);
 
     setAIState(aiState.copyWith(
         LLMBuffer: "",
