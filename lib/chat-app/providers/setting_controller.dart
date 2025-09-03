@@ -25,10 +25,13 @@ class SettingController extends GetxController {
   }
 
   Future<String> getVaultPath() async {
+    final root = await getExternalStorageDirectory() ??
+        await getApplicationDocumentsDirectory();
+
     if (currectValutName.isEmpty) {
-      return '${(await getApplicationDocumentsDirectory()).path}/SillyChat';
+      return '${root.path}/SillyChat';
     }
-    return '${(await getApplicationDocumentsDirectory()).path}/SillyChat/${currectValutName}';
+    return '${root.path}/SillyChat/${currectValutName}';
   }
 
   Future<String> getChatPath() async {
