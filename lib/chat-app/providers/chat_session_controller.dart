@@ -9,6 +9,7 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -16,7 +17,15 @@ import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:get/get.dart';
 
 class ChatSessionController extends GetxController {
+  String get sessionId => this.chatPath;
+
   RxBool isLoading = false.obs;
+
+  // 当前会话是否处于前台
+  bool isViewActive = true;
+
+  bool get isGenerating => aiState.isGenerating;
+
   final Rx<ChatModel> _chat = ChatModel(
       id: -1,
       name: '未加载的聊天',
@@ -25,17 +34,21 @@ class ChatSessionController extends GetxController {
       time: '',
       messages: []).obs;
 
-  ChatAIState get aiState => Get.find<ChatController>().getAIState(file.path);
+  late Rx<ChatAIState> _aiState;
+
+  ChatAIState get aiState =>
+      _aiState.value; //=> Get.find<ChatController>().getAIState(file.path);
 
   void setAIState(ChatAIState newState) {
-    Get.find<ChatController>().setAIState(file.path, newState);
+    _aiState.value = newState;
+    //Get.find<ChatController>().setAIState(file.path, newState);
   }
 
   ChatModel get chat => _chat.value;
   File get file => _chat.value.file;
   bool get isChatUninitialized => chat.id == -1;
 
-  final String? chatPath;
+  final String chatPath;
 
   /**
    * [chatPath] : 聊天文件的完整路径
@@ -49,17 +62,23 @@ class ChatSessionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _aiState = ChatAIState(
+            aihandler: Aihandler()
+              ..onGenerateStateChange = (str) {
+                _aiState.value = aiState.copyWith(GenerateState: str);
+              })
+        .obs;
     // 异步加载，显示进度条
     loadChat();
   }
 
   Future<void> loadChat() async {
-    if (chatPath == null) {
+    if (chatPath.isEmpty) {
       return;
     }
     isLoading.value = true;
 
-    final chatFile = File(chatPath!);
+    final chatFile = File(chatPath);
 
     if (await chatFile.exists()) {
       final String contents = await chatFile.readAsString();
@@ -195,7 +214,7 @@ class ChatSessionController extends GetxController {
   }
 
   /// 让AI直接发送一条消息，无需输入问题
-  void getGroupReply(CharacterModel sender) async {
+  Future<void> getGroupReply(CharacterModel sender) async {
     await for (var content in _handleLLMMessage(
       sender.bindOption,
       sender: sender,
@@ -264,6 +283,11 @@ class ChatSessionController extends GetxController {
       alternativeContent: existedContent,
     );
     await addMessage(chatId: chat.id, message: AIMessage);
+
+    // 答复生成完成后需要判断是否销毁Controller
+    if (!isViewActive) {
+      Get.delete<ChatSessionController>(tag: sessionId);
+    }
   }
 
   // 按行分割功能:已弃用

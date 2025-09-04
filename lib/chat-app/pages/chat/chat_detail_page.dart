@@ -20,7 +20,6 @@ import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dar
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../models/message_model.dart';
 import '../../models/chat_model.dart';
@@ -108,35 +107,48 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     }
   }
 
-  @override
-  void didUpdateWidget(ChatDetailPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 检查新旧 controller 实例是否是同一个，如果不是，则需要更新
-    if (widget.sessionController != oldWidget.sessionController) {
-      // 必须使用与注册时相同的 tag
-      final tag = oldWidget.sessionController.hashCode.toString();
-      if (Get.isRegistered<ChatSessionController>(tag: tag)) {
-        Get.delete<ChatSessionController>(tag: tag);
-      }
-      _registerController(widget.sessionController);
-    }
-  }
+  // 这个函数本来是用来处理传入的SessionController更换时热插拔的。去掉似乎也没事。
+  // @override
+  // void didUpdateWidget(ChatDetailPage oldWidget) {
+  //   super.didUpdateWidget(oldWidget);
+  //   // 检查新旧 controller 实例是否是同一个，如果不是，则需要更新
+  //   if (widget.sessionController != oldWidget.sessionController) {
+  //     // 必须使用与注册时相同的 tag
+  //     final tag = oldWidget.sessionController.hashCode.toString();
+  //     if (Get.isRegistered<ChatSessionController>(tag: tag)) {
+  //       Get.delete<ChatSessionController>(tag: tag);
+  //     }
+  //     _registerController(widget.sessionController);
+  //   }
+  // }
 
   void _registerController(ChatSessionController controller) {
     // 使用一个唯一的标识符 (tag) 来注册 controller
-    final tag = controller.hashCode.toString();
+    final tag = controller.sessionId;
 
-    // 注册新的 controller 并立即获取它
-    // 使用 fenix: true 可以在 Get.delete 后再次创建
-    sessionController = Get.put(controller, tag: tag);
+    // 如果Controller存在则复用
+    if (Get.isRegistered<ChatSessionController>(tag: tag)) {
+      sessionController = Get.find<ChatSessionController>(tag: tag);
+      print('CONTROLLER$tag,复用!');
+    } else {
+      sessionController = Get.put(controller, tag: tag);
+      print('CONTROLLER$tag,创建!');
+    }
+
+    sessionController.isViewActive = true;
   }
 
   @override
   void dispose() {
+    sessionController.isViewActive = false;
     // 5. 销毁状态：当 State 对象被销毁时，清理掉它注册的 controller
-    final tag = sessionController.hashCode.toString();
-    if (Get.isRegistered<ChatSessionController>(tag: tag)) {
+    final tag = sessionController.sessionId;
+    if (Get.isRegistered<ChatSessionController>(tag: tag) &&
+        !sessionController.isGenerating) {
       Get.delete<ChatSessionController>(tag: tag);
+      print('CONTROLLER$tag,销毁!');
+    } else {
+      print('CONTROLLER$tag,没有销毁!');
     }
     super.dispose();
   }
@@ -1247,7 +1259,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
                   ? Container(
                       key: const ValueKey('LoadScreen'),
-                      child: sessionController.chatPath?.isEmpty != true
+                      child: sessionController.chatPath.isEmpty != true
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )

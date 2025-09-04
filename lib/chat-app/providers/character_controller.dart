@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/image_packer.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart' as path;
 import '../models/character_model.dart';
 
 class CharacterController extends GetxController {

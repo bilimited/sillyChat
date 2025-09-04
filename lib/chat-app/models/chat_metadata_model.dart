@@ -11,6 +11,9 @@ class ChatMetaModel {
   //late final List<int> characterIds;
   late final ChatMode mode;
 
+  // JSON Ignore
+  late final String path;
+
   ChatMetaModel({
     required this.id,
     required this.name,

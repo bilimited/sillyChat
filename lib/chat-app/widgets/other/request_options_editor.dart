@@ -104,8 +104,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           label: '启用流式响应',
           value: widget.options.isStreaming,
           onChanged: (value) {
-            widget
-                .onChanged(widget.options.copyWith(isStreaming: value));
+            widget.onChanged(widget.options.copyWith(isStreaming: value));
           },
         ),
         _buildCheckbox(
@@ -149,7 +148,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                   value: value,
                   min: min,
                   max: max,
-                  divisions: ((max - min) / 0.1).round(),
+                  divisions: ((max - min) / 0.05).round(),
                   onChanged: onChanged,
                 ),
               ),

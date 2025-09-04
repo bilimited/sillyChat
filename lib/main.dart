@@ -22,6 +22,12 @@ void main() async {
   SillyChatApp.packageInfo = await PackageInfo.fromPlatform();
   runApp(SillyChatApp());
   SettingController.loadInitialData();
+
+  PlatformDispatcher.instance.onError = (err, stack) {
+    LogController.log("Dart错误:$err ", LogLevel.error);
+    Get.snackbar('Dart错误', '$err');
+    return true;
+  };
 }
 
 class SillyChatApp extends StatelessWidget {

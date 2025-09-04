@@ -4,10 +4,8 @@ import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
-import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
-import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
 import '../../providers/vault_setting_controller.dart';
@@ -23,7 +21,6 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final CharacterController _characterController = Get.find();
   final SettingController _settingController = Get.find();
   final VaultSettingController _vaultSettingController = Get.find();
   final webDav = WebDavUtil();

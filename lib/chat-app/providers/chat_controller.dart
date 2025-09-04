@@ -9,8 +9,6 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
@@ -18,28 +16,11 @@ import '../models/chat_model.dart';
 import 'package:path/path.dart' as p;
 
 // 聊天索引和聊天文件综合管理器
+// TODO:把关于聊天的文件操作都塞到这里。
 class ChatController extends GetxController {
   final RxList<ChatModel> chats = <ChatModel>[].obs;
 
   final String fileName = 'chats.json';
-
-  // 聊天路径到聊天状态的映射表
-  final RxMap<String, ChatAIState> states = <String, ChatAIState>{}.obs;
-
-  ChatAIState getAIState(String path) {
-    if (!states.containsKey(path)) {
-      states[path] = ChatAIState(
-          aihandler: Aihandler()
-            ..onGenerateStateChange = (str) {
-              states[path] = states[path]!.copyWith(GenerateState: str);
-            });
-    }
-    return states[path]!;
-  }
-
-  void setAIState(String path, ChatAIState state) {
-    states[path] = state;
-  }
 
   // 当前打开的聊天
   // TODO: 当前打开聊天被删除时，清除当前聊天
