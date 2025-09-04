@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
@@ -90,15 +91,23 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   }
 
   void copyItem(int index) {
+    LoreBookController.of.lorebookItemClipboard.value = items[index];
+    SillyChatApp.snackbar(context, '条目"${items[index].name}"已复制到剪贴板');
+  }
+
+  void pasteItem() {
+    final item = LoreBookController.of.lorebookItemClipboard.value;
+    if (item == null) {
+      return;
+    }
     setState(() {
-      final item = items[index];
-      items.insert(
-          index + 1,
-          item.copyWith(
-            id: DateTime.now().millisecondsSinceEpoch,
-            name: '${item.name}_副本',
-          ));
+      items.add(item.copyWith(
+        id: DateTime.now().millisecondsSinceEpoch,
+        name: item.name,
+      ));
     });
+
+    LoreBookController.of.lorebookItemClipboard.value = null;
   }
 
   void deleteItem(int index) {
@@ -347,8 +356,23 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
                   );
                 },
               ),
-              const SizedBox(height: 10,),
-              ElevatedButton.icon(onPressed: addItem,icon:  Icon(Icons.add), label: Text('新条目')),
+              const SizedBox(
+                height: 10,
+              ),
+              ElevatedButton.icon(
+                  onPressed: addItem,
+                  icon: Icon(Icons.add),
+                  label: Text('新条目')),
+              const SizedBox(
+                height: 10,
+              ),
+              Obx(() =>
+                  LoreBookController.of.lorebookItemClipboard.value != null
+                      ? ElevatedButton.icon(
+                          onPressed: pasteItem,
+                          icon: Icon(Icons.paste),
+                          label: Text('粘贴条目'))
+                      : SizedBox.shrink()),
               const SizedBox(height: 80),
             ],
           ),

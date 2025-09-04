@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:get/get.dart';
 
 class LoreBookController extends GetxController {
   final RxList<LorebookModel> lorebooks = <LorebookModel>[].obs;
+
+  final Rx<LorebookItemModel?> lorebookItemClipboard =
+      Rx<LorebookItemModel?>(null);
 
   // 全局激活的世界书
   final RxList<int> globalActivitedLoreBookIds = <int>[].obs;
@@ -90,4 +94,6 @@ class LoreBookController extends GetxController {
     update();
     saveLorebooks();
   }
+
+  static LoreBookController get of => Get.find<LoreBookController>();
 }

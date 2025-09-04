@@ -81,10 +81,13 @@ class LoreBookManagerPage extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        // 激活世界书按钮
                         IconButton(
                           icon: Icon(
                             isGlobal ? Icons.star : Icons.star_border,
-                            color: isGlobal ? Colors.amber : Theme.of(context).colorScheme.outline,
+                            color: isGlobal
+                                ? Colors.amber
+                                : Theme.of(context).colorScheme.outline,
                           ),
                           onPressed: () {
                             if (isGlobal) {

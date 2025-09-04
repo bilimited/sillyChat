@@ -44,7 +44,30 @@ class ChatOptionsManagerPage extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.delete),
                 onPressed: () {
-                  _controller.deleteChatOption(index);
+                  showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('删除确认'), // 对话框标题
+                        content: const Text('你确定要删除这个聊天预设吗？'), // 对话框内容
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('取消'), // 取消按钮
+                            onPressed: () {
+                              Get.back();
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('删除'), // 删除按钮
+                            onPressed: () {
+                              Get.back();
+                              _controller.deleteChatOption(index);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
             ],
@@ -68,12 +91,11 @@ class ChatOptionsManagerPage extends StatelessWidget {
           IconButton(
               onPressed: () {
                 FileImporter(
-                    introduction: '导入SilltTavern预设。',
+                    introduction: '导入SillyTavern预设。',
                     paramList: [],
                     allowedExtensions: ['json'],
-                    onImport: (fileName, content, params,path) {
-                      STConfigImporter.fromJson(
-                          json.decode(content), fileName);
+                    onImport: (fileName, content, params, path) {
+                      STConfigImporter.fromJson(json.decode(content), fileName);
                     }).pickAndProcessFile(context);
               },
               icon: Icon(Icons.download))

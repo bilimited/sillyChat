@@ -26,7 +26,7 @@ void main() async {
   PlatformDispatcher.instance.onError = (err, stack) {
     LogController.log("Dart错误:$err ", LogLevel.error);
     Get.snackbar('Dart错误', '$err');
-    return true;
+    return false;
   };
 }
 
