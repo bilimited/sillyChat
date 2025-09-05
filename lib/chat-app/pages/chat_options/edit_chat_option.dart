@@ -35,7 +35,8 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
     final defaultOption = ChatOptionModel.empty();
 
     _nameController.text = widget.option?.name ?? '';
-    _requestOptions = widget.option?.requestOptions ?? defaultOption.requestOptions;
+    _requestOptions =
+        widget.option?.requestOptions ?? defaultOption.requestOptions;
     _prompts = widget.option?.prompts ?? defaultOption.prompts;
     _regexs = widget.option?.regex ?? [];
   }
@@ -52,7 +53,8 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
     final chatOption = ChatOptionModel(
       id: isEditing
           ? widget.option!.id
-          : DateTime.now().millisecondsSinceEpoch, // Use a unique ID for new options
+          : DateTime.now()
+              .millisecondsSinceEpoch, // Use a unique ID for new options
       name: _nameController.text,
       requestOptions: _requestOptions,
       prompts: _prompts,
@@ -71,7 +73,8 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
 
   void _handleCopy() {
     final chatOption = ChatOptionModel(
-      id: DateTime.now().millisecondsSinceEpoch, // Use a unique ID for new options
+      id: DateTime.now()
+          .millisecondsSinceEpoch, // Use a unique ID for new options
       name: "${_nameController.text}的副本",
       requestOptions: _requestOptions.copyWith(),
       prompts: _prompts.map((ele) => ele.copy()).toList(),
@@ -83,92 +86,100 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3, // Number of tabs
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(isEditing ? '编辑预设' : '新建预设'),
-          actions: [
-            IconButton(onPressed: _handleCopy, icon: const Icon(Icons.copy)),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _handleSave,
-          icon: const Icon(Icons.save),
-          label: const Text("保存更改"),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: '预设名称',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '请输入预设名称';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                // TabBar for switching between modules
-                const TabBar(
-                  tabs: [
-                    Tab(text: '提示词',),
-                    Tab(text: '请求参数'),
-                    Tab(text: '正则'),
-                  ],
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
 
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicatorWeight: 3,
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      // Content for "提示词列表"
-                      PromptEditor(
-                          prompts: _prompts,
-                          onPromptsChanged: (prompts) {
-                            _prompts = prompts;
-                          },
-                        ),
-                      
-                      // Content for "请求参数"
-                      SingleChildScrollView(
-                        child: RequestOptionsEditor(
-                          options: _requestOptions,
-                          onChanged: (options) {
-                            setState(() {
-                              _requestOptions = options;
-                            });
-                          },
-                        ),
-                      ),
-                      // Content for "正则表达式"
-                        RegexListEditor(
-                          regexList: _regexs,
-                          onChanged: (regex) {
-                            setState(() {
-                              _regexs = regex;
-                            });
-                          },
-                        ),
-                      
-                    ],
-                  ),
-                ),
+          _handleSave();
+        },
+        child: DefaultTabController(
+          length: 3, // Number of tabs
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(isEditing ? '编辑预设' : '新建预设'),
+              actions: [
+                IconButton(
+                    onPressed: _handleCopy, icon: const Icon(Icons.copy)),
               ],
             ),
+            // floatingActionButton: FloatingActionButton.extended(
+            //   onPressed: _handleSave,
+            //   icon: const Icon(Icons.save),
+            //   label: const Text("保存更改"),
+            // ),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: '预设名称',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '请输入预设名称';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // TabBar for switching between modules
+                    const TabBar(
+                      tabs: [
+                        Tab(
+                          text: '提示词',
+                        ),
+                        Tab(text: '请求参数'),
+                        Tab(text: '正则'),
+                      ],
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorWeight: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          // Content for "提示词列表"
+                          PromptEditor(
+                            prompts: _prompts,
+                            onPromptsChanged: (prompts) {
+                              _prompts = prompts;
+                            },
+                          ),
+
+                          // Content for "请求参数"
+                          SingleChildScrollView(
+                            child: RequestOptionsEditor(
+                              options: _requestOptions,
+                              onChanged: (options) {
+                                setState(() {
+                                  _requestOptions = options;
+                                });
+                              },
+                            ),
+                          ),
+                          // Content for "正则表达式"
+                          RegexListEditor(
+                            regexList: _regexs,
+                            onChanged: (regex) {
+                              setState(() {
+                                _regexs = regex;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }

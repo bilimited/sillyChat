@@ -79,7 +79,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     //     await _imagePicker.pickImage(source: ImageSource.gallery);
     final t = DateTime.now().hashCode;
     final path = await ImageUtils.selectAndCropImage(context,
-        fileName: 'avatar_${widget.characterId}_${t}');
+        isCrop: isAvatar, fileName: 'avatar_${widget.characterId}_${t}');
 
     if (path != null) {
       setState(() {
@@ -460,6 +460,11 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () => _pickImage(false),
+                  onLongPress: () {
+                    setState(() {
+                      _backgroundPath = null;
+                    });
+                  },
                   child: Container(
                     height: 160,
                     width: double.infinity,

@@ -58,7 +58,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
         priority: _priority);
 
     if (widget.editTempPrompt) {
-      Get.back(result: prompt);
+      Navigator.pop(context, prompt);
       return;
     }
 
@@ -95,149 +95,151 @@ class _EditPromptPageState extends State<EditPromptPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.prompt == null ? '新建提示词' : '编辑提示词'),
-        actions: [
-          if (widget.prompt != null)
-            IconButton(
-              icon: Icon(Icons.copy),
-              onPressed: _duplicate,
-              tooltip: '复制提示词',
-            ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _save,
-        child: Icon(Icons.save),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                initialValue: _name,
-                decoration: InputDecoration(
-                  labelText: '名称',
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          _save();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(widget.prompt == null ? '新建提示词' : '编辑提示词'),
+            actions: [
+              if (widget.prompt != null)
+                IconButton(
+                  icon: Icon(Icons.copy),
+                  onPressed: _duplicate,
+                  tooltip: '复制提示词',
                 ),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return '请输入名称';
-                  return null;
-                },
-                onSaved: (value) => _name = value!,
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _role,
-                decoration: InputDecoration(
-                  labelText: '角色',
-                ),
-                items: [
-                  'user',
-                  'assistant',
-                  'system',
-                ]
-                    .map((role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(role),
-                        ))
-                    .toList(),
-                onChanged: (value) => setState(() => _role = value!),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Switch(
-                    value: _isInChat,
-                    onChanged: (value) {
-                      setState(() {
-                        _isInChat = value;
-                      });
-                    },
-                  ),
-                  Text('插入到聊天记录中'),
-                ],
-              ),
-              SizedBox(height: 16),
-              if (_isInChat)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        initialValue: _depth.toString(),
-                        decoration: InputDecoration(
-                          labelText: '深度(0代表最后一条消息之后，1代表最后一条消息之前)',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return '请输入深度';
-                          }
-                          final n = int.tryParse(value);
-                          if (n == null) return '请输入有效的数字';
-
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _depth = int.tryParse(value ?? '4') ?? 4;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            _depth = int.tryParse(value) ?? 4;
-                          });
-                        },
-                      ),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      TextFormField(
-                        initialValue: _priority.toString(),
-                        decoration: InputDecoration(
-                          labelText: '优先级',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return '请输入优先级';
-                          }
-                          final n = int.tryParse(value);
-                          if (n == null) return '请输入有效的数字';
-
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _priority = int.tryParse(value ?? '4') ?? 4;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            _priority = int.tryParse(value) ?? 4;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              SizedBox(height: 16),
-              TextFormField(
-                initialValue: _content,
-                decoration: InputDecoration(
-                  labelText: '内容',
-                ),
-                maxLines: 18,
-                style: TextStyle(fontSize: 14),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return '请输入内容';
-                  return null;
-                },
-                onSaved: (value) => _content = value!,
-              ),
             ],
           ),
-        ),
-      ),
-    );
+          body: SingleChildScrollView(
+            padding: EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    initialValue: _name,
+                    decoration: InputDecoration(
+                      labelText: '名称',
+                    ),
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) return '请输入名称';
+                      return null;
+                    },
+                    onSaved: (value) => _name = value!,
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _role,
+                    decoration: InputDecoration(
+                      labelText: '角色',
+                    ),
+                    items: [
+                      'user',
+                      'assistant',
+                      'system',
+                    ]
+                        .map((role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            ))
+                        .toList(),
+                    onChanged: (value) => setState(() => _role = value!),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Switch(
+                        value: _isInChat,
+                        onChanged: (value) {
+                          setState(() {
+                            _isInChat = value;
+                          });
+                        },
+                      ),
+                      Text('插入到聊天记录中'),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  if (_isInChat)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            initialValue: _depth.toString(),
+                            decoration: InputDecoration(
+                              labelText: '深度(0代表最后一条消息之后，1代表最后一条消息之前)',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '请输入深度';
+                              }
+                              final n = int.tryParse(value);
+                              if (n == null) return '请输入有效的数字';
+
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _depth = int.tryParse(value ?? '4') ?? 4;
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _depth = int.tryParse(value) ?? 4;
+                              });
+                            },
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
+                          TextFormField(
+                            initialValue: _priority.toString(),
+                            decoration: InputDecoration(
+                              labelText: '优先级',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return '请输入优先级';
+                              }
+                              final n = int.tryParse(value);
+                              if (n == null) return '请输入有效的数字';
+
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _priority = int.tryParse(value ?? '4') ?? 4;
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _priority = int.tryParse(value) ?? 4;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    initialValue: _content,
+                    decoration: InputDecoration(
+                      labelText: '内容',
+                    ),
+                    maxLines: 18,
+                    style: TextStyle(fontSize: 14),
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) return '请输入内容';
+                      return null;
+                    },
+                    onSaved: (value) => _content = value!,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 }
