@@ -18,6 +18,8 @@ class SettingController extends GetxController {
   static String webdav_password = '';
   static String webdav_username = '';
 
+  static String vaultPath = '';
+
   @override
   void onInit() async {
     super.onInit();
@@ -60,6 +62,10 @@ class SettingController extends GetxController {
     return '${await getVaultPath()}/.imgs';
   }
 
+  String getImagePathSync() {
+    return '${vaultPath}/.imgs';
+  }
+
   String getRemoteVaultPath() {
     if (currectValutName.isEmpty) {
       return '/SillyChat';
@@ -97,6 +103,8 @@ class SettingController extends GetxController {
         webdav_password = settings['webdav_password'] ?? '';
         isDarkMode.value = settings['isDarkMode'] ?? false;
         currectValutName = settings['currectVaultName'] ?? '';
+
+        vaultPath = await getVaultPath();
       }
     } catch (e) {
       print('加载全局设置失败: $e');

@@ -1,8 +1,8 @@
 import 'dart:math';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import '../../models/character_model.dart';
 
 class CharacterWheel extends StatelessWidget {
@@ -28,10 +28,7 @@ class CharacterWheel extends StatelessWidget {
     } else if (character.messageStyle == MessageType.narration) {
       return Icon(Icons.chat);
     } else {
-      return Image.file(
-        File(character.avatar),
-        fit: BoxFit.cover,
-      );
+      return AvatarImage(fileName: character.avatar);
     }
   }
 
@@ -83,9 +80,7 @@ class CharacterWheel extends StatelessWidget {
                           width: 2,
                         ),
                       ),
-                      child: ClipOval(
-                        child: _buildAvatar(characters[index])
-                      ),
+                      child: ClipOval(child: _buildAvatar(characters[index])),
                     ),
                     const SizedBox(height: 4),
                     Text(

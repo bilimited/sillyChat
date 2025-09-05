@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
@@ -129,7 +130,7 @@ class _PersonalPageState extends State<PersonalPage>
                               CircleAvatar(
                                 radius: 40,
                                 backgroundImage:
-                                    Image.file(File(character.avatar)).image,
+                                    ImageUtils.getProvider(character.avatar),
                               ),
                               const SizedBox(height: 12),
                               Text(

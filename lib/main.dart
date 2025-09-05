@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
+import 'package:flutter_example/chat-app/pages/loading_page.dart';
 import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -57,19 +58,25 @@ class SillyChatApp extends StatelessWidget {
   final ChatOptionController chatOptions = Get.put(ChatOptionController());
   final LoreBookController loreBooks = Get.put(LoreBookController());
 
-  static void restart() {
+  static Future<void> restart() async {
+    Get.to(LoadingPage());
+
+    SettingController.vaultPath = await SettingController.of.getVaultPath();
+
     Get.find<CharacterController>().characters.value = [];
-    Get.find<CharacterController>().loadCharacters();
+    await Get.find<CharacterController>().loadCharacters();
     Get.find<PromptController>().prompts.value = [];
-    Get.find<PromptController>().loadPrompts();
+    await Get.find<PromptController>().loadPrompts();
     Get.find<ChatController>().chats.value = [];
     // Get.find<ChatController>().loadChats();
     Get.find<VaultSettingController>().apis.value = [];
-    Get.find<VaultSettingController>().loadSettings();
+    await Get.find<VaultSettingController>().loadSettings();
     Get.find<ChatOptionController>().chatOptions.value = [];
-    Get.find<ChatOptionController>().loadChatOptions();
+    await Get.find<ChatOptionController>().loadChatOptions();
     Get.find<LoreBookController>().lorebooks.value = [];
-    Get.find<LoreBookController>().loadLorebooks();
+    await Get.find<LoreBookController>().loadLorebooks();
+
+    Get.back();
   }
 
   static String getVersion() {

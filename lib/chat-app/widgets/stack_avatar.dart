@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 
 class StackAvatar extends StatelessWidget {
   final List<String> avatarUrls;
@@ -18,8 +19,8 @@ class StackAvatar extends StatelessWidget {
 
   double _calculateSpacing() {
     int len = avatarUrls.length;
-    if(len==2){
-      return spacing*2;
+    if (len == 2) {
+      return spacing * 2;
     }
     return spacing;
   }
@@ -33,8 +34,8 @@ class StackAvatar extends StatelessWidget {
     final dynamicSpacing = _calculateSpacing();
 
     return SizedBox(
-      width: avatarSize + ((spacing+10) * (maxDisplayCount - 1)),
-      height: avatarSize+4,
+      width: avatarSize + ((spacing + 10) * (maxDisplayCount - 1)),
+      height: avatarSize + 4,
       child: Stack(
         children: [
           ...List.generate(displayCount, (index) {
@@ -50,7 +51,7 @@ class StackAvatar extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: avatarSize / 2,
-                  backgroundImage: Image.file(File(avatarUrls[index])).image,
+                  backgroundImage: ImageUtils.getProvider(avatarUrls[index]),
                 ),
               ),
             );
@@ -62,7 +63,7 @@ class StackAvatar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color:  Theme.of(context).colorScheme.primary, //Colors.green,
+                  color: Theme.of(context).colorScheme.primary, //Colors.green,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

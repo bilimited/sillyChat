@@ -7,19 +7,24 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
 
 /// 图片工具类
 class ImageUtils {
-  ///
+  static ImageProvider getProvider(String pathOrFilename) {
+    final filename = _convertPath(pathOrFilename);
+    return Image.file(
+            File('${SettingController.of.getImagePathSync()}/$filename'))
+        .image;
+  }
+
   /// 选择图片并进行裁剪
   ///
   /// [context] 上下文
   /// [isCrop] 是否需要裁剪，默认为 true
   /// [aspectRatio] 裁剪比例，默认为 1.0
   /// [isCircleUi] 是否为圆形裁剪，默认为 false
-  ///
   /// 返回处理后的图片路径，如果用户取消选择则返回 null
-  ///
   static Future<String?> selectAndCropImage(
     BuildContext context, {
     bool isCrop = true,
@@ -59,13 +64,7 @@ class ImageUtils {
     return await _saveImage(resultImageData, fileName);
   }
 
-  ///
   /// 将图片数据保存到应用文档目录
-  ///
-  /// [imageData] 图片的 Uint8List 数据
-  ///
-  /// 返回保存后的文件路径
-  ///
   static Future<String> _saveImage(Uint8List imageData, String? name) async {
     // 1. 获取应用文档目录
     final imageParentDir = Directory(await SettingController.of.getImagePath());
@@ -86,6 +85,18 @@ class ImageUtils {
 
     debugPrint('图片已保存至: $filePath');
     return filePath;
+  }
+
+  static String _convertPath(String pathOrName) {
+    return p.basename(pathOrName);
+  }
+
+  static Future<void> deleteImage(String filename) async {
+    filename = _convertPath(filename);
+    final file = File('${await SettingController.of.getImagePath()}/$filename');
+    if (file.existsSync()) {
+      file.delete();
+    }
   }
 }
 

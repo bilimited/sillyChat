@@ -166,8 +166,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     }
   }
 
-
-  void _onSkip(){
+  void _onSkip() {
     VaultSettingController.of().isShowOnBoardPage.value = false;
   }
   // --- UI 构建方法 ---
@@ -249,7 +248,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    Widget modelButton(String name,String value) {
+    Widget modelButton(String name, String value) {
       final isSelected = _selectedModel == value;
       return InkWell(
         onTap: () => setState(() {
@@ -315,13 +314,13 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
         children: [
           Text("选择一个模型", style: textTheme.labelLarge),
           const SizedBox(height: 8),
-          modelButton('Gemini 2.5-Pro','gemini-2.5-pro'),
+          modelButton('Gemini 2.5-Pro', 'gemini-2.5-pro'),
           const SizedBox(height: 8),
-          modelButton('Gemini 2.5-Flash','gemini-2.5-flash'),
+          modelButton('Gemini 2.5-Flash', 'gemini-2.5-flash'),
           const SizedBox(height: 8),
-          modelButton('DeepSeek-Chat(官方)','deepseek-chat'),
+          modelButton('DeepSeek-Chat(官方)', 'deepseek-chat'),
           const SizedBox(height: 8),
-          modelButton('DeepSeek-V3(硅基流动)','deepseek-ai/DeepSeek-V3'),
+          modelButton('DeepSeek-V3(硅基流动)', 'deepseek-ai/DeepSeek-V3'),
           const SizedBox(height: 8),
           moreButton(),
           const SizedBox(height: 12),

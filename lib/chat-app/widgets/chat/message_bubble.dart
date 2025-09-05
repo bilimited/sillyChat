@@ -10,6 +10,8 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -198,20 +200,18 @@ class _MessageBubbleState extends State<MessageBubble> {
       switch (displaySetting.avatarStyle) {
         case AvatarStyle.circle:
           return CircleAvatar(
-            backgroundImage: Image.file(File(character.avatar)).image,
+            backgroundImage: ImageUtils.getProvider(character.avatar),
             radius: avatarRadius,
           );
         case AvatarStyle.rounded:
           return ClipRRect(
-            borderRadius:
-                BorderRadius.circular(displaySetting.AvatarBorderRadius),
-            child: Image.file(
-              File(character.avatar),
-              width: avatarRadius * 2,
-              height: avatarRadius * 2,
-              fit: BoxFit.cover,
-            ),
-          );
+              borderRadius:
+                  BorderRadius.circular(displaySetting.AvatarBorderRadius),
+              child: AvatarImage(
+                fileName: character.avatar,
+                width: avatarRadius * 2,
+                height: avatarRadius * 2,
+              ));
         case AvatarStyle.hidden:
           return SizedBox.shrink();
         default:

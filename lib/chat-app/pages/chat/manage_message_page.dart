@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:get/get.dart';
 
 class ManageMessagePage extends StatefulWidget {
@@ -482,9 +483,8 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                                           ),
                                         ),
                                       CircleAvatar(
-                                        backgroundImage:
-                                            Image.file(File(character.avatar))
-                                                .image,
+                                        backgroundImage: ImageUtils.getProvider(
+                                            character.avatar),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(

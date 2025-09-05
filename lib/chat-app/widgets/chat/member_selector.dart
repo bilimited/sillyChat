@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:get/get.dart';
 import '../../../chat-app/models/character_model.dart';
 import '../../../chat-app/providers/character_controller.dart';
@@ -55,7 +56,7 @@ class MemberSelector extends StatelessWidget {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundImage:
-                              Image.file(File(character.avatar)).image,
+                              ImageUtils.getProvider(character.avatar),
                         ),
                         title: Text(character.roleName),
                         trailing: isMember

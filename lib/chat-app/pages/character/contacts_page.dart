@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/character/edit_character_page.dar
 import 'package:flutter_example/chat-app/pages/character/personal_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -59,7 +60,7 @@ class _ContactsPageState extends State<ContactsPage> {
       if (char != null) {
         characterController.addCharacter(char);
         Get.snackbar('导入成功', '角色卡已导入');
-      }else{
+      } else {
         Get.snackbar('导入失败', '未知错误');
       }
     } catch (e) {
@@ -250,7 +251,7 @@ class _ContactsPageState extends State<ContactsPage> {
       leading: Stack(
         children: [
           CircleAvatar(
-            backgroundImage: Image.file(File(contact.avatar)).image,
+            backgroundImage: ImageUtils.getProvider(contact.avatar),
             radius: 29,
           ),
         ],

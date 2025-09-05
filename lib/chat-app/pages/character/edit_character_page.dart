@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:get/get.dart';
@@ -76,11 +77,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Future<void> _pickImage(bool isAvatar) async {
     // final XFile? image =
     //     await _imagePicker.pickImage(source: ImageSource.gallery);
+    final t = DateTime.now().hashCode;
     final path = await ImageUtils.selectAndCropImage(context,
-        fileName: 'avatar_${widget.characterId}');
+        fileName: 'avatar_${widget.characterId}_${t}');
+
     if (path != null) {
       setState(() {
         if (isAvatar) {
+          if (_avatarPath != null) {}
+
           _avatarPath = path;
         } else {
           _backgroundPath = path;
@@ -204,10 +209,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(60),
                 child: _avatarPath != null
-                    ? Image.file(
-                        File(_avatarPath!),
-                        fit: BoxFit.cover,
-                      )
+                    ? AvatarImage(fileName: _avatarPath!)
                     : Icon(
                         Icons.add_photo_alternate,
                         size: 40,
@@ -755,10 +757,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(60),
                 child: _avatarPath != null
-                    ? Image.file(
-                        File(_avatarPath!),
-                        fit: BoxFit.cover,
-                      )
+                    ? AvatarImage(fileName: _avatarPath!)
                     : Icon(
                         Icons.add_photo_alternate,
                         size: 40,

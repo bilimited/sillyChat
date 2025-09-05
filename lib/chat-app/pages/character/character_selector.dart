@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -114,11 +114,8 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                               child: Stack(
                                 children: [
                                   Positioned.fill(
-                                    child: Image.file(
-                                      File(char.avatar),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                                      child:
+                                          AvatarImage(fileName: char.avatar)),
                                   Positioned(
                                     left: 0,
                                     right: 0,

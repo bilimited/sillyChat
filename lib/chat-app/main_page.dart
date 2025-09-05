@@ -1,7 +1,5 @@
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/action_and_intents.dart';
@@ -21,6 +19,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/webdav_util.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
@@ -141,8 +140,8 @@ class _MainPageState extends State<MainPage> {
                                           onTap: _showCharacterSelectDialog,
                                           child: Obx(() => CircleAvatar(
                                                 backgroundImage:
-                                                    Image.file(File(me.avatar))
-                                                        .image,
+                                                    ImageUtils.getProvider(
+                                                        me.avatar),
                                                 radius: 24,
                                               )),
                                         )),
@@ -378,13 +377,11 @@ class _MainPageState extends State<MainPage> {
                 () => Row(
                   children: [
                     GestureDetector(
-                      onTap: _showCharacterSelectDialog,
-                      child: CircleAvatar(
-                          radius: 20,
-                          backgroundImage:
-                              Image.file(File(_characterController.me.avatar))
-                                  .image),
-                    ),
+                        onTap: _showCharacterSelectDialog,
+                        child: CircleAvatar(
+                            radius: 20,
+                            backgroundImage:
+                                ImageUtils.getProvider(me.avatar))),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

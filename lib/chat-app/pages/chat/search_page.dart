@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:get/get.dart';
 
 class SearchPage extends StatefulWidget {
@@ -134,7 +135,7 @@ class _SearchPageState extends State<SearchPage> {
                           leading: CircleAvatar(
                             // 头像占位
                             backgroundImage:
-                                Image.file(File(character.avatar)).image,
+                                ImageUtils.getProvider(character.avatar),
                           ),
                           title: query.isNotEmpty && matchIndex != -1
                               ? RichText(
