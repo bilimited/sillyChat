@@ -179,7 +179,7 @@ class ChatController extends GetxController {
 
   /// [path] 要创建聊天的绝对路径。不包含文件名。
   Future<void> createChat(ChatModel chat, String path) async {
-    final fullPath = '$path/${chat.name}.chat';
+    final fullPath = '$path/${chat.name}-${DateTime.now().hashCode}.chat';
     final file =
         await createUniqueFile(originalPath: fullPath, recursive: true);
     //file.create(recursive: true);

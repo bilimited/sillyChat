@@ -19,7 +19,6 @@ class ChatModel {
   int id = 1;
   int sortIndex = 0; // 排序用
 
-  @Deprecated('改为使用文件名')
   String name;
   String avatar;
   String? backgroundImage;

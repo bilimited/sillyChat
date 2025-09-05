@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:get/get.dart';
 
 import 'package:path/path.dart' as p;
@@ -59,26 +59,21 @@ class ChatListItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                if (chat != null && chat!.mode == ChatMode.auto)
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundImage: FileImage(File(chat!.avatar)),
-                  )
-                else
-                  CircleAvatar(
-                    radius: 24,
-                    child: Icon(
-                      Icons.group,
-                      size: 24,
-                    ),
-                  ),
+                if (chat != null)
+                  chat!.mode == ChatMode.group
+                      ? StackAvatar(avatarUrls: chat!.getAllAvatars())
+                      : CircleAvatar(
+                          radius: 24,
+                          backgroundImage:
+                              ImageUtils.getProvider(chat!.assistant.avatar),
+                        ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        p.basenameWithoutExtension(path),
+                        chat?.name ?? p.basenameWithoutExtension(path),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

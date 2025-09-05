@@ -72,6 +72,10 @@ class ChatSessionController extends GetxController {
     loadChat();
   }
 
+  void reflesh() {
+    _chat.refresh();
+  }
+
   Future<void> loadChat() async {
     if (chatPath.isEmpty) {
       return;

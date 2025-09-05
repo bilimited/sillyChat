@@ -145,6 +145,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   Widget _defaultItemBuilder(BuildContext context, FileSystemEntity entity,
       bool isSelected, VoidCallback onTap) {
     final isDirectory = entity is Directory;
+    int fileCount = -1;
+    if (isDirectory) {
+      fileCount = entity.listSync().length;
+    }
     final theme = Theme.of(context);
     final iconColor = theme.colorScheme.primary;
     final textColor = theme.colorScheme.onSurface;
@@ -160,7 +164,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         path.basename(entity.path).replaceAll('.chat', ''),
         style: TextStyle(color: textColor),
       ),
-      //subtitle:
+      subtitle: Text(
+        '$fileCount 个文件',
+        style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
+      ),
       onTap: onTap,
       onLongPress: () {
         if (!_isMultiSelectMode) {
@@ -345,12 +352,13 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       ));
     }
 
-    if (_selectedFiles.length == 1) {
-      actions.add(IconButton(
-        icon: const Icon(Icons.drive_file_rename_outline),
-        onPressed: _renameFile,
-      ));
-    }
+    // 暂时取消直接重命名文件的方法
+    // if (_selectedFiles.length == 1) {
+    //   actions.add(IconButton(
+    //     icon: const Icon(Icons.drive_file_rename_outline),
+    //     onPressed: _renameFile,
+    //   ));
+    // }
 
     return actions;
   }

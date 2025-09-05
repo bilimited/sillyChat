@@ -14,6 +14,8 @@ import '../../models/chat_model.dart';
 import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
 
+import 'package:path/path.dart' as p;
+
 class EditChatPage extends StatefulWidget {
   final ChatSessionController session;
 
@@ -49,63 +51,67 @@ class _EditChatPageState extends State<EditChatPage>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Scaffold(
-        appBar: AppBar(
-          title: Text('编辑聊天'),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: '聊天信息'),
-              Tab(text: '成员管理'),
-              Tab(text: '高级设置'),
-            ],
-          ),
-          actions: [],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _saveChanges,
-          label: Text('保存修改'),
-          icon: Icon(Icons.save),
-        ),
-        body: GestureDetector(
-            onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! > 0) {
-                {
-                  Get.back();
-                }
-              }
-            },
-            child: Column(
-              children: [
-                // 群聊ID显示
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(8),
-                  color: colors.surfaceContainerHighest,
-                  child: Text(
-                    widget.chat.id == -1
-                        ? '聊天未创建'
-                        : '聊天ID：${widget.chat.id}; File ID:${widget.chat.fileId}',
-                    style: TextStyle(
-                      color: widget.chat.id == -1
-                          ? colors.outline
-                          : colors.outline,
-                      fontSize: 12,
+    return PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          _saveChanges(isBack: false);
+        },
+        child: Scaffold(
+            appBar: AppBar(
+              title: Text('编辑聊天'),
+              bottom: TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(text: '聊天信息'),
+                  Tab(text: '成员管理'),
+                  Tab(text: '高级设置'),
+                ],
+              ),
+              actions: [],
+            ),
+            // floatingActionButton: FloatingActionButton.extended(
+            //   onPressed: _saveChanges,
+            //   label: Text('保存修改'),
+            //   icon: Icon(Icons.save),
+            // ),
+            body: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity! > 0) {
+                    {
+                      Get.back();
+                    }
+                  }
+                },
+                child: Column(
+                  children: [
+                    // 群聊ID显示
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(8),
+                      color: colors.surfaceContainerHighest,
+                      child: Text(
+                        widget.chat.id == -1
+                            ? '聊天未创建'
+                            : '聊天ID：${widget.chat.id}; 文件名:${p.basename(widget.chat.file.path)}',
+                        style: TextStyle(
+                          color: widget.chat.id == -1
+                              ? colors.outline
+                              : colors.outline,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildBasicInfoTab(),
-                      _buildMembersTab(),
-                      _buildAdvanceTab()
-                    ],
-                  ),
-                ),
-              ],
-            )));
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildBasicInfoTab(),
+                          _buildMembersTab(),
+                          _buildAdvanceTab()
+                        ],
+                      ),
+                    ),
+                  ],
+                ))));
   }
 
   // 基本信息标签页
@@ -122,16 +128,16 @@ class _EditChatPageState extends State<EditChatPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TextFormField(
-                      //   initialValue: widget.chat.name,
-                      //   onChanged: (value) {
-                      //     widget.chat.name = value;
-                      //   },
-                      //   decoration: InputDecoration(
-                      //     labelText: '聊天标题（可选）',
-                      //   ),
-                      // ),
-                      // SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: widget.chat.name,
+                        onChanged: (value) {
+                          widget.chat.name = value;
+                        },
+                        decoration: InputDecoration(
+                          labelText: '聊天标题（可选）',
+                        ),
+                      ),
+                      SizedBox(height: 16),
                       TextFormField(
                         initialValue: widget.chat.description,
                         onChanged: (value) {
@@ -241,14 +247,6 @@ class _EditChatPageState extends State<EditChatPage>
                           Colors.orange, // foregroundColor 控制图标和文字颜色
                     ),
                     onPressed: _clearMessages,
-                  ),
-                  TextButton.icon(
-                    icon: Icon(Icons.delete_forever),
-                    label: Text('删除群聊'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    onPressed: _deleteChat,
                   ),
                   const SizedBox(height: 16), // 底部留白
                 ],
@@ -409,11 +407,10 @@ class _EditChatPageState extends State<EditChatPage>
     if (_formKey.currentState?.validate() ?? true) {
       //await  //_chatController.refleshAll();
       await widget.session.saveChat();
+      widget.session.reflesh();
       if (isBack) {
         Get.back();
       }
-
-      // Get.snackbar('成功', '群聊信息已更新');
     } else {}
   }
 
@@ -454,7 +451,4 @@ class _EditChatPageState extends State<EditChatPage>
       ),
     );
   }
-
-  @Deprecated('在文件界面中删除群聊。')
-  void _deleteChat() {}
 }

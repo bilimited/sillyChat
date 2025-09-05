@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
-import 'package:flutter_example/chat-app/pages/loading_page.dart';
 import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -59,24 +58,24 @@ class SillyChatApp extends StatelessWidget {
   final LoreBookController loreBooks = Get.put(LoreBookController());
 
   static Future<void> restart() async {
-    Get.to(LoadingPage());
-
     SettingController.vaultPath = await SettingController.of.getVaultPath();
 
     Get.find<CharacterController>().characters.value = [];
     await Get.find<CharacterController>().loadCharacters();
     Get.find<PromptController>().prompts.value = [];
     await Get.find<PromptController>().loadPrompts();
+
+    // ChatIndex在切换仓库时不会被加载。它会重新生成以自动清理
+    // TODO:改为只有同步时重新生成
     Get.find<ChatController>().chats.value = [];
-    // Get.find<ChatController>().loadChats();
+    ChatController.of.chatIndex.clear();
+
     Get.find<VaultSettingController>().apis.value = [];
     await Get.find<VaultSettingController>().loadSettings();
     Get.find<ChatOptionController>().chatOptions.value = [];
     await Get.find<ChatOptionController>().loadChatOptions();
     Get.find<LoreBookController>().lorebooks.value = [];
     await Get.find<LoreBookController>().loadLorebooks();
-
-    Get.back();
   }
 
   static String getVersion() {
