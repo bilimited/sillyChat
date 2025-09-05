@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum AvatarStyle { circle, rounded, hidden }
+
 enum MessageBubbleStyle { bubble, compact }
 
 class ChatDisplaySettingModel {
@@ -15,10 +16,13 @@ class ChatDisplaySettingModel {
   double AvatarBorderRadius = 8;
   double MessageBubbleBorderRadius = 16;
 
+  double BackgroundImageOpacity = 1.0;
+  double BackgroundImageBlur = 1.0;
+
   String? GlobalFont = "";
 
-  /// 若不为空则说明使用了1自定义字体
-  String? CustomFontPath = ""; // TODO:自定义字体的路径；启动时自动加载字体+
+  /// 若不为空则说明使用了自定义字体
+  String? CustomFontPath = "";
   String? ContentFont = "";
 
   bool displayUserName = true;
@@ -45,6 +49,8 @@ class ChatDisplaySettingModel {
     this.schemeName = "sakura",
     this.AvatarBorderRadius = 8,
     this.MessageBubbleBorderRadius = 16,
+    this.BackgroundImageBlur = 1.0,
+    this.BackgroundImageOpacity = 1.0,
   });
 
   // JSON序列化
@@ -65,14 +71,17 @@ class ChatDisplaySettingModel {
       'AvatarBorderRadius': AvatarBorderRadius,
       'MessageBubbleBorderRadius': MessageBubbleBorderRadius,
       'schemeName': schemeName,
-      'tryParseInlineHtml': tryParseInlineHtml, 
+      'tryParseInlineHtml': tryParseInlineHtml,
+      'BackgroundImageOpacity': BackgroundImageOpacity,
+      'BackgroundImageBlur': BackgroundImageBlur,
     };
   }
 
   // JSON反序列化
   ChatDisplaySettingModel.fromJson(Map<String, dynamic> json) {
     avatarStyle = AvatarStyle.values[json['avatarStyle'] ?? 0];
-    messageBubbleStyle = MessageBubbleStyle.values[json['messageBubbleStyle'] ?? 0];
+    messageBubbleStyle =
+        MessageBubbleStyle.values[json['messageBubbleStyle'] ?? 0];
     ContentFontScale = (json['ContentFontSize'] ?? 1).toDouble();
     GlobalFont = json['GlobalFont'];
     CustomFontPath = json['CustomFontPath'] ?? "";
@@ -84,8 +93,11 @@ class ChatDisplaySettingModel {
     AvatarSize = (json['AvatarSize'] ?? 25).toDouble();
     themeColor = Color(json['themeColor'] ?? Colors.blue.value);
     AvatarBorderRadius = (json['AvatarBorderRadius'] ?? 8).toDouble();
-    MessageBubbleBorderRadius = (json['MessageBubbleBorderRadius'] ?? 16).toDouble();
+    MessageBubbleBorderRadius =
+        (json['MessageBubbleBorderRadius'] ?? 16).toDouble();
     schemeName = json['schemeName'] ?? "sakura";
     tryParseInlineHtml = json['tryParseInlineHtml'] ?? true;
+    BackgroundImageOpacity = (json['BackgroundImageOpacity'] ?? 1.0).toDouble();
+    BackgroundImageBlur = (json['BackgroundImageBlur'] ?? 1.0).toDouble();
   }
 }

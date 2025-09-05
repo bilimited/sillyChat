@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
@@ -188,7 +187,9 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                             },
                             label: Text('加载字体'),
                           ),
-                          SizedBox(width: 10,),
+                          SizedBox(
+                            width: 10,
+                          ),
                           ElevatedButton.icon(
                             onPressed: () {
                               _globalFontController.text = '';
@@ -342,6 +343,59 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
               const SizedBox(
                 height: 16,
               ),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '背景图片不透明度: ${setting.BackgroundImageOpacity.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Slider(
+                    value: setting.BackgroundImageOpacity,
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
+                    label: setting.BackgroundImageOpacity.toStringAsFixed(2),
+                    onChanged: (double value) {
+                      setting.BackgroundImageOpacity = value;
+                      controller.displaySettingModel.refresh();
+                    },
+                    onChangeEnd: (double value) {
+                      controller.saveSettings();
+                    },
+                  ),
+                ],
+              ),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '背景图片模糊: ${setting.BackgroundImageBlur.toStringAsFixed(1)}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Slider(
+                    value: setting.BackgroundImageBlur,
+                    min: 0,
+                    max: 20,
+                    divisions: 40,
+                    label: setting.BackgroundImageBlur.toStringAsFixed(1),
+                    onChanged: (double value) {
+                      setting.BackgroundImageBlur = value;
+                      controller.displaySettingModel.refresh();
+                    },
+                    onChangeEnd: (double value) {
+                      controller.saveSettings();
+                    },
+                  ),
+                ],
+              ),
+
+              const Divider(),
+              const SizedBox(
+                height: 16,
+              ),
               ThemeSelector(
                   initialValue: controller.displaySettingModel.value.schemeName,
                   onThemeSelected: (theme) {
@@ -351,7 +405,10 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                     controller.updateTheme(themename: theme);
                   }),
               const SizedBox(height: 16),
-              Text('预览',style: TextStyle(fontSize: 17),),
+              Text(
+                '预览',
+                style: TextStyle(fontSize: 17),
+              ),
               ExampleChat(),
             ],
           ),

@@ -1144,7 +1144,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         // 2. 模糊层
         Positioned.fill(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            filter: ImageFilter.blur(
+                sigmaX: displaySetting.BackgroundImageBlur,
+                sigmaY: displaySetting.BackgroundImageBlur),
             child: Container(
               color: Colors.transparent,
             ),
@@ -1153,7 +1155,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         // 3. 半透明遮罩层
         Positioned.fill(
           child: Container(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.75),
+            color: Theme.of(context)
+                .colorScheme
+                .surface
+                .withOpacity(1 - displaySetting.BackgroundImageOpacity),
           ),
         ),
       ],
