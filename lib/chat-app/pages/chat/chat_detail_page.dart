@@ -808,73 +808,79 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ),
             child: Align(
               alignment: Alignment.topCenter,
-              child: Obx(() {
-                final messages = chat.messages.reversed.toList();
-                // 聊天正文
-                return ScrollablePositionedList.builder(
-                    reverse: true,
-                    // TODO:页面原地刷新时  ScrollerController报错
-                    // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
-                    //itemScrollController: _scrollController,
-                    itemCount: messages.length + 1,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        //正在（新）生成的Message，永远位于底部
-                        return Obx(() => sessionController.aiState.isGenerating
-                            ? _buildMessageBubble(
-                                MessageModel(
-                                  id: -9999,
-                                  content: sessionController.aiState.LLMBuffer,
-                                  senderId: sessionController
-                                      .aiState.currentAssistant,
-                                  time: DateTime.now(),
-                                  alternativeContent: [null],
+              child: Stack(
+                children: [
+                  Obx(() {
+                    final messages = chat.messages.reversed.toList();
+                    // 聊天正文
+                    return ScrollablePositionedList.builder(
+                        reverse: true,
+                        // TODO:页面原地刷新时  ScrollerController报错
+                        // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
+                        //itemScrollController: _scrollController,
+                        itemCount: messages.length + 1,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            //正在（新）生成的Message，永远位于底部
+                            return Obx(() => sessionController
+                                    .aiState.isGenerating
+                                ? _buildMessageBubble(
+                                    MessageModel(
+                                      id: -9999,
+                                      content:
+                                          sessionController.aiState.LLMBuffer,
+                                      senderId: sessionController
+                                          .aiState.currentAssistant,
+                                      time: DateTime.now(),
+                                      alternativeContent: [null],
+                                    ),
+                                    messages.length == 0 ? null : messages[0])
+                                : const SizedBox.shrink());
+                          } else {
+                            return Row(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOutCubic,
+                                  width: _isMultiSelecting ? 36 : 0,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: _isMultiSelecting
+                                      ? Icon(
+                                          color: colors.secondary,
+                                          _selectedMessages
+                                                  .contains(messages[index - 1])
+                                              ? Icons.check_circle
+                                              : Icons.radio_button_unchecked,
+                                          size: 20,
+                                        )
+                                      : SizedBox.shrink(),
                                 ),
-                                messages.length == 0 ? null : messages[0])
-                            : const SizedBox.shrink());
-                      } else {
-                        return Row(
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOutCubic,
-                              width: _isMultiSelecting ? 36 : 0,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: _isMultiSelecting
-                                  ? Icon(
-                                      color: colors.secondary,
-                                      _selectedMessages
-                                              .contains(messages[index - 1])
-                                          ? Icons.check_circle
-                                          : Icons.radio_button_unchecked,
-                                      size: 20,
-                                    )
-                                  : SizedBox.shrink(),
-                            ),
-                            Expanded(
-                              child: Builder(builder: (context) {
-                                final i = index - 1;
+                                Expanded(
+                                  child: Builder(builder: (context) {
+                                    final i = index - 1;
 
-                                final message = messages[i];
-                                return _buildMessageBubble(
-                                    message,
-                                    i < messages.length - 1
-                                        ? messages[i + 1]
-                                        : null,
-                                    index: i,
-                                    isNarration:
-                                        message.type == MessageType.narration);
-                              }),
-                            )
-                          ],
+                                    final message = messages[i];
+                                    return _buildMessageBubble(
+                                        message,
+                                        i < messages.length - 1
+                                            ? messages[i + 1]
+                                            : null,
+                                        index: i,
+                                        isNarration: message.type ==
+                                            MessageType.narration);
+                                  }),
+                                )
+                              ],
+                            );
+                          }
+                        }
+                        //},
                         );
-                      }
-                    }
-                    //},
-                    );
-              }),
+                  }),
+                ],
+              ),
             ),
           ),
         ),
