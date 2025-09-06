@@ -59,6 +59,14 @@ class ChatSessionController extends GetxController {
     return ChatSessionController('');
   }
 
+  static ChatSessionController? tryGetSession(String path) {
+    if (Get.isRegistered<ChatSessionController>(tag: path)) {
+      return Get.find<ChatSessionController>(tag: path);
+    } else {
+      return null;
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();

@@ -39,6 +39,7 @@ class FileManagerWidget extends StatefulWidget {
 }
 
 class _FileManagerWidgetState extends State<FileManagerWidget> {
+  // TODO:切换页面时不销毁当前目录状态
   late Directory _currentDirectory;
   List<FileSystemEntity> _files = [];
   bool _isMultiSelectMode = false;
@@ -49,6 +50,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   @override
   void initState() {
     super.initState();
+
     _currentDirectory = widget.directory;
     _loadFiles();
   }

@@ -55,7 +55,8 @@ class _EditPromptPageState extends State<EditPromptPage> {
         updateDate: DateTime.now(),
         isInChat: _isInChat,
         depth: _depth,
-        priority: _priority);
+        priority: _priority)
+      ..isEnable = widget.prompt?.isEnable ?? true;
 
     if (widget.editTempPrompt) {
       Navigator.pop(context, prompt);
@@ -77,13 +78,14 @@ class _EditPromptPageState extends State<EditPromptPage> {
     _formKey.currentState!.save();
 
     final prompt = PromptModel(
-        id: DateTime.now().millisecondsSinceEpoch,
-        name: _name,
-        content: _content,
-        role: _role,
-        isInChat: _isInChat,
-        depth: _depth,
-        priority: _priority);
+      id: DateTime.now().millisecondsSinceEpoch,
+      name: _name,
+      content: _content,
+      role: _role,
+      isInChat: _isInChat,
+      depth: _depth,
+      priority: _priority,
+    );
 
     await _promptController.addPrompt(prompt);
     if (widget.editTempPrompt) {

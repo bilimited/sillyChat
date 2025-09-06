@@ -4,7 +4,8 @@ import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 int? parseMotherFuckerToInt(dynamic motherFucker) {
   if (motherFucker == null) return null;
   if (motherFucker is int) return motherFucker;
-  if (motherFucker is double || motherFucker is num) return motherFucker.toInt();
+  if (motherFucker is double || motherFucker is num)
+    return motherFucker.toInt();
   if (motherFucker is String) {
     return int.tryParse(motherFucker) ?? double.tryParse(motherFucker)?.toInt();
   }
@@ -22,7 +23,6 @@ abstract class STLorebookImporter {
     }
   }
 
-  // TODO:兼容复杂绿灯逻辑（翻译成正则？）
   static LorebookModel? fromJson(Map<String, dynamic> json) {
     try {
       LorebookModel lorebook = LorebookModel(
@@ -72,16 +72,6 @@ abstract class STLorebookImporter {
           }
         }
 
-        /// TODO:未实现的字段：
-        /// probability, useProbability
-        /// use_regex
-        /// sticky cooldown delay
-        /// 递归相关
-        /// secondary keywords, selectiveLogic
-        /// group相关
-        /// 
-        /// TODO:建議實現的字段：
-        /// 組，組權重
         LorebookItemModel item = LorebookItemModel(
           id: index,
           name: entry['comment'],
@@ -90,7 +80,9 @@ abstract class STLorebookImporter {
           isActive: entry['enabled'],
           activationDepth: parseMotherFuckerToInt(entry['scanDepth']) ?? 0,
           position: lorePosition,
-          positionId: (position == 3 || position == 2) ? 4 : (parseMotherFuckerToInt(extensions?['depth']) ?? 1),
+          positionId: (position == 3 || position == 2)
+              ? 4
+              : (parseMotherFuckerToInt(extensions?['depth']) ?? 1),
           keywords: (entry['keys'] as List<dynamic>).join(','),
           activationType: type,
         );

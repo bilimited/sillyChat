@@ -51,7 +51,6 @@ class ChatController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    //await loadChats();
 
     loadChatIndex();
   }
