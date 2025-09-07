@@ -26,6 +26,9 @@ class ChatController extends GetxController {
   // TODO: 当前打开聊天被删除时，清除当前聊天
   final Rx<ChatSessionController?> currentChat = Rx(null);
 
+  // 当前打开的聊天数据路径，若为空则视为聊天根目录
+  final RxString currentPath = ''.obs;
+
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
   List<MessageModel> get messageToPaste {

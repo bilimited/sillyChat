@@ -69,6 +69,7 @@ class SillyChatApp extends StatelessWidget {
     // TODO:改为只有同步时重新生成
     Get.find<ChatController>().chats.value = [];
     ChatController.of.chatIndex.clear();
+    ChatController.of.currentPath.value = '';
 
     Get.find<VaultSettingController>().apis.value = [];
     await Get.find<VaultSettingController>().loadSettings();

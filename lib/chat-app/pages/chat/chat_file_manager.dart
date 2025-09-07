@@ -51,7 +51,19 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   void initState() {
     super.initState();
 
-    _currentDirectory = widget.directory;
+    // 读取目录记忆
+    if (ChatController.of.currentPath.value.isNotEmpty) {
+      final directory = Directory(ChatController.of.currentPath.value);
+      if (directory.existsSync()) {
+        _currentDirectory = directory;
+      } else {
+        ChatController.of.currentPath.value = '';
+        _currentDirectory = widget.directory;
+      }
+    } else {
+      _currentDirectory = widget.directory;
+    }
+
     _loadFiles();
   }
 
@@ -410,6 +422,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
             if (entity is Directory) {
               setState(() {
                 _currentDirectory = entity;
+                ChatController.of.currentPath.value = entity.path;
                 _loadFiles();
               });
             } else if (entity is File) {
