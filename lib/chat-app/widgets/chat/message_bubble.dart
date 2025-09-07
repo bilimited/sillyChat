@@ -479,7 +479,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                         'font': FontColorBuilder(),
                       },
                 extensionSet: md.ExtensionSet([
-                  const md.FencedCodeBlockSyntax()
+                  const md.FencedCodeBlockSyntax(),
+                  const md.TableSyntax(),
+                  const md.UnorderedListWithCheckboxSyntax(),
+                  const md.OrderedListWithCheckboxSyntax(),
+                  const md.FootnoteDefSyntax(),
                 ], [
                   QuotedTextSyntax(),
                   HtmlTagSyntax(),
