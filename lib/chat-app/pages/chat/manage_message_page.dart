@@ -306,7 +306,8 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
           IconButton(
             tooltip: "复制",
             onPressed: () {
-              _chatController.messageClipboard.value = [..._selectedMessages];
+              _chatController.putMessageToClipboard(
+                  widget.chat.messages, _selectedMessages);
               Get.showSnackbar(GetSnackBar(
                   message: "复制了${_selectedMessages.length}条消息",
                   duration: const Duration(seconds: 2)));
@@ -317,7 +318,8 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
           IconButton(
             tooltip: "剪切",
             onPressed: () {
-              _chatController.messageClipboard.value = [..._selectedMessages];
+              _chatController.putMessageToClipboard(
+                  widget.chat.messages, _selectedMessages);
               widget.chatSessionController.removeMessages(_selectedMessages);
               Get.showSnackbar(GetSnackBar(
                   message: "剪切了${_selectedMessages.length}条消息",

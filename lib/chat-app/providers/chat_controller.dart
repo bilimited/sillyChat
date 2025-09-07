@@ -275,4 +275,16 @@ class ChatController extends GetxController {
     // 创建并返回找到的唯一文件
     return newFile.create(recursive: recursive);
   }
+
+  void putMessageToClipboard(
+      List<MessageModel> originalMessages, List<MessageModel> messageToCopy) {
+    final messageMap = {for (var msg in messageToCopy) msg.id: msg};
+
+    final orderedMessagesToCopy = originalMessages
+        .where((msgToCopy) => messageMap.containsKey(msgToCopy.id))
+        .toList() // Convert the iterable to a list
+        .cast<MessageModel>(); // Explicitly cast to MessageModel
+
+    messageClipboard.assignAll(orderedMessagesToCopy.reversed);
+  }
 }

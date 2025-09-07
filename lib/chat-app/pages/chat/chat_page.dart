@@ -621,9 +621,11 @@ class _ChatPageState extends State<ChatPage> {
                       // COPY MSG
                       IconButton(
                         onPressed: () {
-                          _chatController.messageClipboard.value = [
-                            ..._selectedMessages
-                          ];
+                          // _selectedMessages内消息的顺序与实际顺序不同。
+                          // 因此需要先调整顺序
+                          _chatController.putMessageToClipboard(
+                              chat.messages, _selectedMessages);
+
                           setState(() {
                             _isMultiSelecting = false;
                             _selectedMessages.clear();
@@ -637,9 +639,8 @@ class _ChatPageState extends State<ChatPage> {
                       // CUT MSG
                       IconButton(
                         onPressed: () {
-                          _chatController.messageClipboard.value = [
-                            ..._selectedMessages
-                          ];
+                          _chatController.putMessageToClipboard(
+                              chat.messages, _selectedMessages);
                           sessionController.removeMessages(_selectedMessages);
                           setState(() {
                             _isMultiSelecting = false;
