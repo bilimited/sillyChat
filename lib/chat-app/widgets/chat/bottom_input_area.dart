@@ -68,11 +68,37 @@ class BottomInputArea extends StatefulWidget {
 
 class _BottomInputAreaState extends State<BottomInputArea> {
   final TextEditingController messageController = TextEditingController();
+  final FocusNode _focusNode = FocusNode(); // 1. 创建 FocusNode
+  bool _isFocused = false; // 跟踪焦点状态
+
   bool get isGroupMode => widget.mode == ChatMode.group;
   bool get isAutoMode => widget.mode == ChatMode.auto;
 
   bool isThinkMode = false;
   List<String> selectedPath = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // 2. 监听焦点变化
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    // 3. 移除监听并释放资源
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    // 4. 当焦点变化时更新状态
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
 
   void _pickImage() async {
     final path = await ImageUtils.selectAndCropImage(context, isCrop: false);
@@ -105,25 +131,50 @@ class _BottomInputAreaState extends State<BottomInputArea> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
+    // 定义外发光效果
+    final glowColor = colors.primary;
+    final boxShadow = _isFocused
+        // 外发光
+        ? <BoxShadow>[
+            // BoxShadow(
+            //   color: glowColor.withOpacity(0.5),
+            //   blurRadius: 4,
+            //   spreadRadius: 2,
+            //   offset: const Offset(0, 2),
+            // ),
+            BoxShadow(
+              color: glowColor.withOpacity(0.5),
+              blurRadius: 4,
+              spreadRadius: 2,
+              // offset: const Offset(0, 4),
+            ),
+          ]
+        // 阴影，或者什么也没有
+        : (widget.isDesktop
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : <BoxShadow>[]);
+
     // Define the core UI for the input card.
-    Widget inputCard = Obx(() => Container(
+    Widget inputCard = Obx(() => AnimatedContainer(
+          // 5. 使用 AnimatedContainer
+          duration: const Duration(milliseconds: 200), // 过渡动画时长
+          curve: Curves.easeInOut, // 动画曲线
           decoration: BoxDecoration(
             color: widget.isDesktop ? colors.surface : colors.surfaceContainer,
-            boxShadow: widget.isDesktop
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [],
+            boxShadow: boxShadow, // 应用动态的阴影
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             children: [
               // Input field
               TextField(
+                focusNode: _focusNode, // 6. 将 FocusNode 附加到 TextField
                 controller: messageController,
                 decoration: InputDecoration(
                   hintText: "Ask me anything..",

@@ -201,10 +201,16 @@ class Aihandler {
           //"thinkingConfig": {}, // 暂时只有两档,
         },
         "safetySettings": [
-          {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF"},
-          {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF"},
-          {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF"},
-          {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF"},
+          {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+          {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+          {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE"
+          },
+          {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE"
+          },
         ],
       };
       LogController.log(json.encode(requestBody), LogLevel.info,
@@ -238,12 +244,12 @@ class Aihandler {
         await for (final chunk in parseSseStream(response, (json) {
           // 处理 Google Gemini SSE 响应，支持 <think> 标签
           final candidates = json['candidates'] as List?;
-          if (candidates == null || candidates.isEmpty) return '';
+          if (candidates == null || candidates.isEmpty) return '【空回复】';
 
           final finish_reason = candidates[0]?['finishReason'] ?? null;
           if (finish_reason != null && finish_reason != 'STOP') {
             // TODO；重做错误处理机制
-            return '【回答被掐断：${finish_reason}】';
+            return '【回答终止，原因：${finish_reason}】';
           }
           final content = candidates[0]?['content'];
           final parts = content?['parts'] as List?;
