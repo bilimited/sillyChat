@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:get/get.dart';

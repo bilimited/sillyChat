@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -234,7 +234,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       ChatController.of.currentChat.value = ChatSessionController(path);
     } else {
       customNavigate(
-          ChatDetailPage(
+          ChatPage(
             sessionController: ChatSessionController(path),
           ),
           context: context);
@@ -874,14 +874,14 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   }
 }
 
-class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key}) : super(key: key);
+class ChatManagePage extends StatefulWidget {
+  const ChatManagePage({Key? key}) : super(key: key);
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<ChatManagePage> createState() => _ChatManagePageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatManagePageState extends State<ChatManagePage> {
   final ChatController chatController = Get.find<ChatController>();
 
   @override

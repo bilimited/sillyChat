@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
@@ -233,6 +234,15 @@ class _EditChatPageState extends State<EditChatPage>
                               messages: messages
                                   .map((ele) => ele.toOpenAIJson())
                                   .toList()),
+                          context: context);
+                    },
+                  ),
+                  ListTile(
+                    title: Text('查看详细信息'),
+                    leading: Icon(Icons.info),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () {
+                      customNavigate(ChatDetailPage(chatModel: widget.chat),
                           context: context);
                     },
                   ),

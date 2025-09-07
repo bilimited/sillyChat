@@ -6,7 +6,7 @@ import 'package:flutter_example/chat-app/action_and_intents.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_detail_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
@@ -91,7 +91,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _desktop_pages = [
-      ChatPage(),
+      ChatManagePage(),
       ContactsPage(),
       ChatOptionsManagerPage(),
       LoreBookManagerPage(),
@@ -100,7 +100,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   final List<Widget> _pages = [
-    ChatPage(),
+    ChatManagePage(),
     const ContactsPage(),
     ChatOptionsManagerPage(),
     LoreBookManagerPage(),
@@ -345,7 +345,7 @@ class _MainPageState extends State<MainPage> {
                                     padding: const EdgeInsets.all(8.0),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      child: Obx(() => ChatDetailPage(
+                                      child: Obx(() => ChatPage(
                                             key: ValueKey(
                                                 '${_chatController.currentChat.value?.chatPath ?? 'NULL'}_${desktop_initialPosition?.id ?? 0}'),
                                             sessionController: _chatController
