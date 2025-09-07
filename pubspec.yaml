@@ -75,6 +75,8 @@ dependencies:
   intl: ^0.20.2
   crop_your_image: ^2.0.0
 
+  url_launcher: ^6.3.0
+ 
 
 
 dev_dependencies:

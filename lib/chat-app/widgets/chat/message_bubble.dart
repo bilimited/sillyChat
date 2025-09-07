@@ -18,6 +18,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class QuotedTextSyntax extends md.InlineSyntax {
   QuotedTextSyntax() : super(r'"([^"]*)"');
@@ -433,6 +434,17 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 
+  void _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      // Handle the case where the URL cannot be launched
+      // For example, show a Snackbar or an AlertDialog
+      print('Could not launch $url');
+    }
+  }
+
   Widget _buildMessageContent(String content) {
     final textColor =
         displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
@@ -458,6 +470,9 @@ class _MessageBubbleState extends State<MessageBubble> {
               if (message.resPath.isNotEmpty) _buildMessageImage(),
               MarkdownBody(
                 data: content,
+                onTapLink: (text, href, title) {
+                  _launchURL(href ?? '');
+                },
                 styleSheet: MarkdownStyleSheet(
                   p: TextStyle(
                     color: textColor,
