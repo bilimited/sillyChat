@@ -16,15 +16,16 @@ abstract class STConfigImporter {
     try {
       ErrMsg = '转换请求参数';
       LLMRequestOptions llmRequestOptions = LLMRequestOptions(
-        messages: [],
-        maxTokens: json['openai_max_tokens'] as int,
-        temperature: (json['temperature'] as num).toDouble(),
-        frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
-        presencePenalty: (json['presence_penalty'] as num).toDouble(),
-        topP: (json['top_p'] as num).toDouble(),
-        isStreaming: json['stream_openai'],
-        apiId: VaultSettingController.of().apis.first.id
-      );
+          messages: [],
+          maxTokens: json['openai_max_tokens'] as int,
+          temperature: (json['temperature'] as num).toDouble(),
+          frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
+          presencePenalty: (json['presence_penalty'] as num).toDouble(),
+          topP: (json['top_p'] as num).toDouble(),
+          isStreaming: json['stream_openai'],
+          apiId: VaultSettingController.of().apis.isNotEmpty
+              ? VaultSettingController.of().apis.first.id
+              : 0);
       List<PromptModel> prompts = [];
 
       ErrMsg = '导入Prompt';
@@ -51,7 +52,8 @@ abstract class STConfigImporter {
           switch (prompt['identifier']) {
             case 'dialogueExamples':
               {
-                content = "<lore before_em>\n<dialogueExamples>\n<lore after_em>";
+                content =
+                    "<lore before_em>\n<dialogueExamples>\n<lore after_em>";
                 break;
               }
             case 'chatHistory':
@@ -87,13 +89,17 @@ abstract class STConfigImporter {
               }
             case 'scenario':
               {
-                content = ((json['scenario_format']??'<description>') as String).replaceAll('{{scenario}}', '<description>');
+                content =
+                    ((json['scenario_format'] ?? '<description>') as String)
+                        .replaceAll('{{scenario}}', '<description>');
                 break;
               }
             case 'personaDescription': // 用户角色描述
               {
-                content = ((json['personality_format']??'<user>:<userbrief>') as String).replaceAll('{{char}}', '<user>')
-                .replaceAll('{{personality}}', '<userbrief>');
+                content = ((json['personality_format'] ?? '<user>:<userbrief>')
+                        as String)
+                    .replaceAll('{{char}}', '<user>')
+                    .replaceAll('{{personality}}', '<userbrief>');
                 break;
               }
           }
@@ -134,16 +140,15 @@ abstract class STConfigImporter {
           name: fileName,
           requestOptions: llmRequestOptions,
           prompts: prompts,
-          regex: []
-          
-          );
+          regex: []);
 
       ChatOptionController controller = Get.find();
       controller.addChatOption(chatOptionModel);
       Get.snackbar('导入成功', '导入成功');
     } catch (e) {
       Get.snackbar('导入失败', '${ErrMsg};$e');
-      LogController.log('预设导入失败：${ErrMsg};$e;\n$json', LogLevel.error,title: '预设导入失败：${ErrMsg}');
+      LogController.log('预设导入失败：${ErrMsg};$e;\n$json', LogLevel.error,
+          title: '预设导入失败：${ErrMsg}');
       rethrow;
     }
   }

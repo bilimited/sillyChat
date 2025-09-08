@@ -108,72 +108,77 @@ class RegexModel {
     String input,
     String replacement,
   ) {
-    String pattern;
-    bool caseSensitive = true; // 默认 Dart RegExp 是区分大小写的
-    bool multiLine = false; // 默认 Dart RegExp 不支持多行模式
-    bool dotAll = false; // 默认 Dart RegExp 的 '.' 不匹配换行符
-    bool isGlobal = false; // 判断 JS 正则是否有 'g' flag
+    try {
+      String pattern;
+      bool caseSensitive = true; // 默认 Dart RegExp 是区分大小写的
+      bool multiLine = false; // 默认 Dart RegExp 不支持多行模式
+      bool dotAll = false; // 默认 Dart RegExp 的 '.' 不匹配换行符
+      bool isGlobal = false; // 判断 JS 正则是否有 'g' flag
 
-    // 1. 解析 JavaScript 正则表达式字符串和 flags
-    if (jsRegexString.startsWith('/') && jsRegexString.lastIndexOf('/') > 0) {
-      int lastSlashIndex = jsRegexString.lastIndexOf('/');
-      String regexBody = jsRegexString.substring(1, lastSlashIndex);
-      String flags = jsRegexString.substring(lastSlashIndex + 1);
+      // 1. 解析 JavaScript 正则表达式字符串和 flags
+      if (jsRegexString.startsWith('/') && jsRegexString.lastIndexOf('/') > 0) {
+        int lastSlashIndex = jsRegexString.lastIndexOf('/');
+        String regexBody = jsRegexString.substring(1, lastSlashIndex);
+        String flags = jsRegexString.substring(lastSlashIndex + 1);
 
-      pattern = regexBody;
+        pattern = regexBody;
 
-      if (flags.contains('i')) {
-        caseSensitive = false;
+        if (flags.contains('i')) {
+          caseSensitive = false;
+        }
+        if (flags.contains('m')) {
+          multiLine = true;
+        }
+        if (flags.contains('s')) {
+          dotAll = true;
+        }
+        if (flags.contains('g')) {
+          isGlobal = true; // 标记有 'g' flag，表示需要全局替换
+        }
+      } else {
+        // 如果不是 /pattern/flags 形式，则整个字符串就是 pattern，所有 flags 为默认值
+        pattern = jsRegexString;
       }
-      if (flags.contains('m')) {
-        multiLine = true;
-      }
-      if (flags.contains('s')) {
-        dotAll = true;
-      }
-      if (flags.contains('g')) {
-        isGlobal = true; // 标记有 'g' flag，表示需要全局替换
-      }
-    } else {
-      // 如果不是 /pattern/flags 形式，则整个字符串就是 pattern，所有 flags 为默认值
-      pattern = jsRegexString;
-    }
 
-    // 2. 创建 Dart RegExp 对象
-    final RegExp regex = RegExp(
-      pattern,
-      caseSensitive: caseSensitive,
-      multiLine: multiLine,
-      dotAll: dotAll,
-    );
+      // 2. 创建 Dart RegExp 对象
+      final RegExp regex = RegExp(
+        pattern,
+        caseSensitive: caseSensitive,
+        multiLine: multiLine,
+        dotAll: dotAll,
+      );
 
-    // 3. 执行替换逻辑
-    if (isGlobal) {
-      // 如果有 'g' flag，使用 replaceAllMapped 模拟全局替换并处理捕获组
-      return input.replaceAllMapped(regex, (match) {
+      // 3. 执行替换逻辑
+      if (isGlobal) {
+        // 如果有 'g' flag，使用 replaceAllMapped 模拟全局替换并处理捕获组
+        return input.replaceAllMapped(regex, (match) {
+          String result = replacement;
+          // 遍历所有捕获组，替换 $1, $2 等
+          for (int i = 1; i <= match.groupCount; i++) {
+            // match.group(i) 可能为 null (如果捕获组没有匹配到)
+            result = result.replaceAll('\$$i', match.group(i) ?? '');
+          }
+          return result;
+        });
+      } else {
+        // 如果没有 'g' flag，只替换第一个匹配项
+        final match = regex.firstMatch(input);
+        if (match == null) {
+          return input; // 没有匹配项，返回原字符串
+        }
+
         String result = replacement;
         // 遍历所有捕获组，替换 $1, $2 等
         for (int i = 1; i <= match.groupCount; i++) {
-          // match.group(i) 可能为 null (如果捕获组没有匹配到)
           result = result.replaceAll('\$$i', match.group(i) ?? '');
         }
-        return result;
-      });
-    } else {
-      // 如果没有 'g' flag，只替换第一个匹配项
-      final match = regex.firstMatch(input);
-      if (match == null) {
-        return input; // 没有匹配项，返回原字符串
-      }
 
-      String result = replacement;
-      // 遍历所有捕获组，替换 $1, $2 等
-      for (int i = 1; i <= match.groupCount; i++) {
-        result = result.replaceAll('\$$i', match.group(i) ?? '');
+        // 找到第一个匹配项的起始和结束索引，然后构建新字符串
+        return input.replaceRange(match.start, match.end, result);
       }
-
-      // 找到第一个匹配项的起始和结束索引，然后构建新字符串
-      return input.replaceRange(match.start, match.end, result);
+    } catch (e) {
+      // 如果正则出问题则直接返回原始字符串
+      return input;
     }
   }
 

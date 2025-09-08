@@ -67,7 +67,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           label: '话题新鲜度惩罚 (Presence Penalty)',
           value: widget.options.presencePenalty,
           min: -1.0,
-          max: 1.5,
+          max: 2.0,
           onChanged: (value) =>
               widget.onChanged(widget.options.copyWith(presencePenalty: value)),
         ),
@@ -75,7 +75,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           label: '词频惩罚 (Frequency Penalty)',
           value: widget.options.frequencyPenalty,
           min: -1.0,
-          max: 1.5,
+          max: 2.0,
           onChanged: (value) => widget
               .onChanged(widget.options.copyWith(frequencyPenalty: value)),
         ),
