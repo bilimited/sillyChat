@@ -13,6 +13,7 @@ class STMacroProcessor {
 
     // 1. 处理 setvar 宏，它们会修改变量并从字符串中移除
     currentPrompt = _handleSetVar(currentPrompt, varibles);
+    currentPrompt = _handleAddVar(currentPrompt, varibles);
 
     // 2. 处理替换型宏
     // 可以循环处理，直到没有宏可以被替换，以处理宏嵌套的情况
@@ -51,6 +52,34 @@ class STMacroProcessor {
         if (key != null && value != null && fullMatch != null) {
           // 设置变量
           varibles[key] = value;
+          // 从 prompt 中删除该宏字符串
+          currentPrompt = currentPrompt.replaceFirst(fullMatch, '');
+        }
+      }
+    }
+    return currentPrompt;
+  }
+
+  /// 处理 {{addvar::key::value}}
+  /// 如果变量不存在，则添加；如果已存在，则忽略。
+  /// 这个函数会持续查找并处理所有 addvar 宏，直到找不全为止
+  static String _handleAddVar(String prompt, Map<String, String> vars) {
+    // 正则表达式匹配 {{addvar::key::value}}
+    final regex = RegExp(r'\{\{addvar::(.*?)::(.*?)\}\}');
+    String currentPrompt = prompt;
+
+    while (regex.hasMatch(currentPrompt)) {
+      final match = regex.firstMatch(currentPrompt);
+      if (match != null) {
+        final key = match.group(1);
+        final value = match.group(2);
+        final fullMatch = match.group(0);
+
+        if (key != null && value != null && fullMatch != null) {
+          // 检查变量是否已存在，如果不存在则添加
+          if (!vars.containsKey(key)) {
+            vars[key] = value;
+          }
           // 从 prompt 中删除该宏字符串
           currentPrompt = currentPrompt.replaceFirst(fullMatch, '');
         }

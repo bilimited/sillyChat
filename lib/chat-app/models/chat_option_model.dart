@@ -11,7 +11,6 @@ class ChatOptionModel {
   LLMRequestOptions requestOptions;
   List<PromptModel> prompts = []; // 新增：存储实际的PromptModel对象
   List<RegexModel> regex = [];
-  // List<int> promptId = [];
 
   static List<PromptModel> getPromptsbyId(List<int> promptId) {
     final PromptController controller = Get.find();

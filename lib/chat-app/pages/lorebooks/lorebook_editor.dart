@@ -88,6 +88,8 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
         content: '',
       ));
     });
+
+    saveLorebook();
   }
 
   void copyItem(int index) {
@@ -106,6 +108,8 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
         name: item.name,
       ));
     });
+
+    saveLorebook();
 
     LoreBookController.of.lorebookItemClipboard.value = null;
   }

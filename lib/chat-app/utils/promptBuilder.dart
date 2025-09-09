@@ -164,7 +164,7 @@ class Promptbuilder {
     final promptsAfterInsertLore =
         Lorebookutil.insertIntoPrompt(activitedPrompts, loreBooks);
 
-    final STVars = <String, String>{};
+    final STVars = chat.chatVars; //<String, String>{};
 
     /// Step 3 宏和用户消息插入PM
     final promptsAfterFormat = promptsAfterInsertLore
@@ -172,6 +172,8 @@ class Promptbuilder {
             content: Promptformatter.formatPrompt(prompt.content, chat,
                 sender: sender, userMessage: userMessage, STVaribles: STVars)))
         .toList();
+
+    print(STVars.toString());
     final promptsNotEmpty = promptsAfterFormat
         .where((msg) => !(msg.content.isBlank ?? false))
         .toList();

@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/kv_editor.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
 import '../../providers/chat_controller.dart';
@@ -64,7 +65,7 @@ class _EditChatPageState extends State<EditChatPage>
                 tabs: [
                   Tab(text: '聊天信息'),
                   Tab(text: '成员管理'),
-                  Tab(text: '高级设置'),
+                  Tab(text: '变量设置'),
                 ],
               ),
               actions: [],
@@ -399,11 +400,15 @@ class _EditChatPageState extends State<EditChatPage>
   }
 
   Widget _buildAdvanceTab() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        children: [],
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: KeyValueEditor(
+          initialMap: widget.chat.chatVars,
+          onChanged: (newMap) {
+            setState(() {
+              widget.chat.chatVars = newMap;
+            });
+          }),
     );
   }
 

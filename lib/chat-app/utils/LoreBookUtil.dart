@@ -60,8 +60,7 @@ class Lorebookutil {
     print("激活了 ${activatedItems.length} 个条目");
 
     /// 按照 priority 从小到大排序，priority 越小越靠前。
-    activatedItems.sort((a,b)=>a.priority.compareTo(b.priority));
-
+    activatedItems.sort((a, b) => a.priority.compareTo(b.priority));
 
     return activatedItems;
   }
@@ -70,7 +69,8 @@ class Lorebookutil {
   static List<PromptModel> insertIntoPrompt(
       List<PromptModel> prompts, List<LorebookItemModel> items) {
     // 过滤掉position以@开头的item
-    final filteredItems = items.where((item) => !(item.position.startsWith('@'))).toList();
+    final filteredItems =
+        items.where((item) => !(item.position.startsWith('@'))).toList();
 
     // 按position分组
     final Map<String, List<LorebookItemModel>> grouped = {};
@@ -114,11 +114,10 @@ class Lorebookutil {
     List<LorebookItemModel> activatedItems = [];
 
     for (var item in allItems) {
-
       // 手动模式特殊对待
-      if(item.activationType == ActivationType.manual) {
+      if (item.activationType == ActivationType.manual) {
         final stat = chat.getLorebookItemStat(loreBook.id, item.id);
-        if((stat == null && item.isActive) || stat == true){
+        if ((stat == null && item.isActive) || stat == true) {
           activatedItems.add(item);
         }
         continue;
@@ -130,8 +129,6 @@ class Lorebookutil {
         activatedItems.add(item);
         continue;
       }
-
-
 
       // 获取激活深度,取非Prompt消息,截取最后n条
       int depth =
@@ -156,7 +153,6 @@ class Lorebookutil {
     }
     print("共找到${activatedItems.length}个匹配的Item");
 
-    // 计算所有Item的Content字数总和，若未超过loreBook.maxToken则跳过
     int totalLength =
         activatedItems.fold(0, (sum, item) => sum + item.content.length);
     if (totalLength > loreBook.maxToken) {
