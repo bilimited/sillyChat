@@ -113,6 +113,7 @@ class ApiModel {
   final String url;
   final String? remarks;
   final ServiceProvider provider;
+  final String? requestBody;
 
   ApiModel({
     required this.id,
@@ -122,6 +123,7 @@ class ApiModel {
     required this.url,
     required this.provider,
     this.remarks,
+    this.requestBody,
   });
 
   factory ApiModel.fromJson(Map<String, dynamic> json) {
@@ -134,6 +136,7 @@ class ApiModel {
       provider:
           ServiceProvider.fromJson(json['provider'] ?? 'openai'),
       remarks: json['remarks'] as String?,
+      requestBody: json['requestBody'] as String?,
     );
   }
 
@@ -146,6 +149,7 @@ class ApiModel {
       'url': url,
       'provider': provider.toJson(),
       'remarks': remarks,
+      'requestBody': requestBody,
     };
   }
 
@@ -158,6 +162,7 @@ class ApiModel {
     String? remarks,
     String? modelName_think,
     String? displayName, // displayName is not nullable, so we keep it as is
+    String? requestBody,
   }) {
     return ApiModel(
       id: id ?? this.id,
@@ -167,6 +172,7 @@ class ApiModel {
       provider: provider ?? this.provider,
       remarks: remarks ?? this.remarks,
       displayName: displayName ?? this.displayName,
+      requestBody: requestBody ?? this.requestBody,
     );
   }
 

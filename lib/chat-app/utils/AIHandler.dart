@@ -139,6 +139,29 @@ class Aihandler {
         title: 'OpenAI请求',
         type: LogType.json,
       );
+
+      // 构建请求数据
+      Map<String, dynamic> requestData = {
+        'model': model,
+        ...options.toOpenAIJson(),
+        'stream': options.isStreaming,
+      };
+
+      // 如果API配置了requestBody，尝试解析并合并到请求数据中
+      if (api.requestBody != null && api.requestBody!.isNotEmpty) {
+        try {
+          final additionalData = _parseRequestBody(api.requestBody!);
+          if (additionalData is Map<String, dynamic>) {
+            requestData.addAll(additionalData);
+          }
+        } catch (e) {
+          LogController.log(
+            '解析requestBody失败: ${e.toString()}',
+            LogLevel.warning,
+            title: 'requestBody解析错误',
+          );
+        }
+      }
       final rs = await dioInstance!.post(
         url,
         options: dio.Options(
@@ -153,26 +176,57 @@ class Aihandler {
           contentType: 'application/json; charset=utf-8',
         ),
         cancelToken: cancelToken,
-        data: {
-          'model': model,
-          ...options.toOpenAIJson(),
-          'stream': options.isStreaming,
-        },
+        data: requestData,
       );
 
+      bool cot = false;
       onGenerateStateChange('正在生成...');
       if (options.isStreaming) {
-        await for (var chunk in parseSseStream(
-            rs,
-            (json) =>
-                json['choices'][0]['delta']['content'] as String? ?? '')) {
+        await for (var chunk in parseSseStream(rs, (json) {
+          final delta = json['choices'][0]['delta'] as Map<String, dynamic>?;
+          if (delta == null) return '';
+
+          // 优先返回 reasoning_content（思维链），如果没有则返回 content
+          final reasoningContent = delta['reasoning_content'] as String? ?? '';
+          final content = delta['content'] as String? ?? '';
+
+          String result = '';
+          if (reasoningContent != '' && !cot) {
+            result += '<think>';
+            cot = true;
+          }
+          if (reasoningContent != '') {
+            result += reasoningContent;
+          }
+          if (reasoningContent == '' && cot) {
+            result += r'</think>';
+            cot = false;
+          }
+          if (reasoningContent == '' && !cot) {
+            result += content;
+          }
+
+          return result;
+        })) {
           yield chunk;
         }
       } else {
         Map<String, dynamic> responseData = rs.data as Map<String, dynamic>;
         LogController.log(json.encode(responseData), LogLevel.info,
             type: LogType.json, title: "OpenAI响应");
-        yield responseData['choices'][0]['message']['content'] ?? '未发现可用消息';
+
+        final message =
+            responseData['choices'][0]['message'] as Map<String, dynamic>?;
+        if (message == null) {
+          yield '未发现可用消息';
+          return;
+        }
+
+        // 优先返回 reasoning_content（思维链），如果没有则返回 content
+        final reasoningContent = message['reasoning_content'] as String?;
+        final content = message['content'] as String?;
+
+        yield reasoningContent ?? content ?? '未发现可用消息';
       }
     } on dio.DioException catch (e) {
       if (dio.CancelToken.isCancel(e)) {
@@ -459,5 +513,90 @@ class Aihandler {
     }
 
     return mergedMessages;
+  }
+
+  // 解析requestBody，支持Python风格语法转换为JSON
+  dynamic _parseRequestBody(String requestBody) {
+    try {
+      // 首先尝试直接解析为JSON
+      return json.decode(requestBody);
+    } catch (jsonError) {
+      try {
+        // 如果JSON解析失败，尝试转换Python风格语法
+        final convertedJson = _convertPythonToJson(requestBody);
+        return json.decode(convertedJson);
+      } catch (pythonError) {
+        throw Exception(
+            '无法解析requestBody。JSON解析错误: $jsonError，Python语法转换错误: $pythonError');
+      }
+    }
+  }
+
+  // 将Python风格语法转换为JSON格式
+  String _convertPythonToJson(String pythonStyle) {
+    String converted = pythonStyle;
+
+    // 替换 Python风格的 True/False/None
+    converted = converted.replaceAll(RegExp(r'\bTrue\b'), 'true');
+    converted = converted.replaceAll(RegExp(r'\bFalse\b'), 'false');
+    converted = converted.replaceAll(RegExp(r'\bNone\b'), 'null');
+
+    // 处理单引号字符串（Python允许，JSON不允许）
+    converted = _convertSingleQuotesToJson(converted);
+
+    return converted;
+  }
+
+  // 将单引号字符串转换为双引号字符串
+  String _convertSingleQuotesToJson(String input) {
+    final buffer = StringBuffer();
+    bool inString = false;
+    bool inSingleQuote = false;
+    bool inDoubleQuote = false;
+    bool escapeNext = false;
+
+    for (int i = 0; i < input.length; i++) {
+      final char = input[i];
+
+      if (escapeNext) {
+        buffer.write(char);
+        escapeNext = false;
+        continue;
+      }
+
+      if (char == '\\') {
+        buffer.write(char);
+        escapeNext = true;
+        continue;
+      }
+
+      if (!inString) {
+        if (char == '"') {
+          inString = true;
+          inDoubleQuote = true;
+          buffer.write(char);
+        } else if (char == "'") {
+          inString = true;
+          inSingleQuote = true;
+          buffer.write('"'); // 将单引号转换为双引号
+        } else {
+          buffer.write(char);
+        }
+      } else {
+        if (inDoubleQuote && char == '"') {
+          inString = false;
+          inDoubleQuote = false;
+          buffer.write(char);
+        } else if (inSingleQuote && char == "'") {
+          inString = false;
+          inSingleQuote = false;
+          buffer.write('"'); // 将结束单引号转换为双引号
+        } else {
+          buffer.write(char);
+        }
+      }
+    }
+
+    return buffer.toString();
   }
 }
