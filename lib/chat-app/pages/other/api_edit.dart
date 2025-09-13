@@ -24,6 +24,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
   late TextEditingController _urlController;
   late TextEditingController _remarksController;
   late TextEditingController _displayNameController;
+  late TextEditingController _requestBodyController;
   late ServiceProvider _selectedProvider;
 
   @override
@@ -35,6 +36,8 @@ class _ApiEditPageState extends State<ApiEditPage> {
     _remarksController = TextEditingController(text: widget.api?.remarks ?? '');
     _displayNameController =
         TextEditingController(text: widget.api?.displayName ?? '');
+    _requestBodyController =
+        TextEditingController(text: widget.api?.requestBody ?? '');
 
     _selectedProvider = widget.api?.provider ?? ServiceProvider.openai;
   }
@@ -46,6 +49,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
     _urlController.dispose();
     _remarksController.dispose();
     _displayNameController.dispose();
+    _requestBodyController.dispose();
     super.dispose();
   }
 
@@ -61,6 +65,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
             : _selectedProvider.defaultUrl,
         provider: _selectedProvider,
         remarks: _remarksController.text,
+        requestBody: _requestBodyController.text.isNotEmpty ? _requestBodyController.text : null,
       );
 
       if (widget.api == null) {
@@ -175,6 +180,18 @@ class _ApiEditPageState extends State<ApiEditPage> {
               maxLines: 3,
             ),
             Divider(),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _requestBodyController,
+              decoration: const InputDecoration(
+                labelText: '请求附加内容(选填)',
+                hintText: '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
+                helperText: '支持Python风格的True/False/None，会自动转换为JSON格式',
+              ),
+              maxLines: 5,
+              keyboardType: TextInputType.multiline,
+            ),
+            Divider(),
             // ElevatedButton.icon(
             //     onPressed: () {
             //       Aihandler.testConnectivity(
@@ -240,6 +257,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
           : _selectedProvider.defaultUrl,
       provider: _selectedProvider,
       remarks: _remarksController.text,
+      requestBody: _requestBodyController.text.isNotEmpty ? _requestBodyController.text : null,
     );
 
     await controller.addApi(newApi);
