@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_advanced_switch/flutter_advanced_switch.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Defines an intent to send a message.
 class SendIntent extends Intent {
@@ -67,7 +69,8 @@ class BottomInputArea extends StatefulWidget {
 }
 
 class _BottomInputAreaState extends State<BottomInputArea> {
-  final TextEditingController messageController = TextEditingController();
+  TextEditingController get messageController =>
+      widget.sessionController.inputController; //TextEditingController();
   final FocusNode _focusNode = FocusNode(); // 1. 创建 FocusNode
   bool _isFocused = false; // 跟踪焦点状态
 
@@ -89,7 +92,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
     // 3. 移除监听并释放资源
     _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
-    messageController.dispose();
+    //messageController.dispose();
     super.dispose();
   }
 
@@ -101,8 +104,13 @@ class _BottomInputAreaState extends State<BottomInputArea> {
   }
 
   void _pickImage() async {
-    final path = await ImageUtils.selectAndCropImage(context, isCrop: false);
-    if (path != null) {
+    // 消息中发送的图片不会复制到应用路径
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    // await ImageUtils.selectAndCropImage(context, isCrop: false);
+
+    if (pickedFile != null) {
+      final path = pickedFile.path;
       final newPaths = [...selectedPath, path];
       setState(() {
         selectedPath = newPaths;

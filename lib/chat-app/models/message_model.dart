@@ -54,8 +54,9 @@ class MessageModel {
   final int? token;
 
   // 若type为image或其他文件格式，则为文件路径
+  // 目前里面只能装图片。而且默认为图片
+  // TODO:通过前缀区分文件类型。如 图片： image://xxx.jpg
   final List<String> resPath;
-  // 是否常驻（不会被移出消息列表）
 
   MessageVisbility visbility;
 

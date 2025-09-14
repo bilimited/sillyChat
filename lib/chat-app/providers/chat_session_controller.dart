@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
@@ -18,6 +19,7 @@ import 'package:get/get.dart';
 
 class ChatSessionController extends GetxController {
   String get sessionId => this.chatPath;
+  late TextEditingController inputController;
 
   RxBool isLoading = false.obs;
 
@@ -53,7 +55,9 @@ class ChatSessionController extends GetxController {
   /**
    * [chatPath] : 聊天文件的完整路径
    */
-  ChatSessionController(this.chatPath);
+  ChatSessionController(this.chatPath) {
+    this.inputController = TextEditingController();
+  }
 
   factory ChatSessionController.uninitialized() {
     return ChatSessionController('');
@@ -80,8 +84,19 @@ class ChatSessionController extends GetxController {
     loadChat();
   }
 
+  @override
+  void onClose() {
+    super.onClose();
+    inputController.dispose();
+  }
+
   void reflesh() {
     _chat.refresh();
+  }
+
+  /// 只有该值为True时，退出聊天时SessionController会被销毁
+  bool get canDestory {
+    return !_aiState.value.isGenerating && inputController.text.isEmpty;
   }
 
   Future<void> loadChat() async {

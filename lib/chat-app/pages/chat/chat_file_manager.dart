@@ -296,6 +296,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                 onPressed: () {
                   setState(() {
                     _currentDirectory = _currentDirectory.parent;
+                    ChatController.of.currentPath.value =
+                        _currentDirectory.path;
                     _loadFiles();
                   });
                 },

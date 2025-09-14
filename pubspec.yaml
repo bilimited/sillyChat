@@ -70,13 +70,15 @@ dependencies:
 
   flutter_markdown: ^0.7.7+1
   introduction_screen: ^3.1.17
-  animated_tree_view: ^2.3.0
+  # animated_tree_view: ^2.3.0
   # markdown_widget: ^2.3.2+8
   intl: ^0.20.2
   crop_your_image: ^2.0.0
 
   url_launcher: ^6.3.0
   code_text_field: ^1.1.0
+  uuid: ^4.5.1
+  flutter_advanced_switch: ^3.1.0
  
 
 

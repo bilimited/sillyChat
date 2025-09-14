@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_advanced_switch/flutter_advanced_switch.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dar
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../models/message_model.dart';
 import '../../models/chat_model.dart';
@@ -144,7 +146,7 @@ class _ChatPageState extends State<ChatPage> {
     // 5. 销毁状态：当 State 对象被销毁时，清理掉它注册的 controller
     final tag = sessionController.sessionId;
     if (Get.isRegistered<ChatSessionController>(tag: tag) &&
-        !sessionController.isGenerating) {
+        sessionController.canDestory) {
       Get.delete<ChatSessionController>(tag: tag);
       print('CONTROLLER$tag,销毁!');
     } else {
@@ -314,24 +316,16 @@ class _ChatPageState extends State<ChatPage> {
                 title: const Text('添加图片'),
                 onTap: () async {
                   Get.back();
-                  final path = await ImageUtils.selectAndCropImage(context,
-                      isCrop: false);
-                  if (path != null) {
+                  final pickedFile = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  // final path =  await ImageUtils.selectAndCropImage(context,
+                  //     isCrop: false);
+                  if (pickedFile != null) {
                     setState(() {
-                      message.resPath.add(path);
+                      message.resPath.add(pickedFile.path);
                       _updateChat();
                     });
                   }
-                  // _imagePicker
-                  //     .pickImage(source: ImageSource.gallery)
-                  //     .then((pickedFile) {
-                  //   if (pickedFile != null) {
-                  //     setState(() {
-                  //       message.resPath.add(pickedFile.path);
-                  //       _updateChat();
-                  //     });
-                  //   }
-                  // });
                 },
               ),
               ListTile(
@@ -772,6 +766,25 @@ class _ChatPageState extends State<ChatPage> {
                     onUpdateChat: _updateChat,
                     // TOOL BAR
                     toolBar: [
+                      AdvancedSwitch(
+                        width: 64,
+                        initialValue: chat.mode == ChatMode.group, // Group为True
+                        activeColor: colors.primary,
+                        inactiveColor: colors.secondary,
+                        onChanged: (value) {
+                          setState(() {
+                            if (chat.mode == ChatMode.group) {
+                              chat.mode = ChatMode.auto;
+                            } else {
+                              chat.mode = ChatMode.group;
+                            }
+                          });
+
+                          _updateChat();
+                        },
+                        activeChild: Text('群聊'),
+                        inactiveChild: Text('自动'),
+                      ),
                       if (isGroupMode && !isGenerating)
                         IconButton(
                           icon: Icon(Icons.group, color: colors.outline),
