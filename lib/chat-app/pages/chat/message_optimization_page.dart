@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
@@ -12,6 +13,8 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
+import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 
 enum ContextSendMode {
@@ -21,6 +24,7 @@ enum ContextSendMode {
 }
 
 enum OptimizationType {
+  blank,
   plot, // 剧情优化
   text, // 正文优化
 }
@@ -145,10 +149,11 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     return contextMessages;
   }
 
-  // 处理消息内容（根据正则设置）
-  String _processMessageContent(MessageModel message) {
+  // 获取当前选中的消息内容，应用正则处理
+  String _getCurrentMessageContent() {
     final chat = widget.sessionController.chat;
-    String content = message.content;
+    String content = widget.message.content;
+    print('Debug: original message content = $content');
 
     // 根据"仅发送渲染内容"设置选择不同的正则处理方式
     final regexList = onlyRenderContent
@@ -156,8 +161,11 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
         : chat.vaildRegexs.where((reg) => reg.onRequest);
 
     for (final regex in regexList) {
-      if (regex.isAvailable(chat, message)) {
+      if (regex.isAvailable(chat, widget.message)) {
+        final originalContent = content;
         content = regex.process(content);
+        print(
+            'Debug: regex ${regex.name} processed content from "$originalContent" to "$content"');
       }
     }
 
@@ -171,28 +179,49 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     final contextMessages = _getContextMessages();
     final chat = widget.sessionController.chat;
 
-    // 创建临时聊天模型，包含前文和目标消息
-    final tempChat = chat.shallowCopyWith();
-
-    // 构建包含前文和目标消息的消息列表
-    final allMessages = <MessageModel>[
-      ...contextMessages,
-      widget.message,
-    ];
-
-    // 创建一个临时的chat用于构建prompt
-    tempChat.messages.clear();
-    tempChat.messages.addAll(allMessages);
-
-    // 使用标准的 Promptbuilder 构建消息列表
-    final promptBuilder = Promptbuilder(tempChat, selectedOption!);
-    final llmMessages =
-        promptBuilder.getLLMMessageList(sender: selectedCharacter);
+    // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
+    // 使用深拷贝确保不会修改原始聊天对象
+    final tempChat = chat.shallowCopyWith(messages: List.from(contextMessages));
 
     // 添加优化指令
-    final optimizationPrompt = optimizationType == OptimizationType.plot
-        ? '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。'
-        : '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
+    String optimizationPrompt = '';
+    switch (optimizationType) {
+      case OptimizationType.plot:
+        optimizationPrompt =
+            '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。';
+        break;
+      case OptimizationType.text:
+        optimizationPrompt = '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
+        break;
+      default:
+        optimizationPrompt = '';
+        break;
+    }
+    // 按照 Promptbuilder 的标准流程构建 prompt
+    // 获取当前选中的待优化消息内容，不包含前文
+    final targetContent = '\n<待优化文段>' +
+        _getCurrentMessageContent() +
+        '</待优化文段>\n\n' +
+        optimizationPrompt;
+    print('Debug: targetContent = $targetContent');
+    print('Debug: widget.message.content = ${widget.message.content}');
+    final promptBuilder = Promptbuilder(
+        tempChat,
+        ChatOptionModel.empty().copyWith(true,
+            prompts: selectedOption!.prompts
+                .map((prompt) => prompt.copyWith(
+                    content: prompt.content.replaceAll(
+                        RegExp(
+                            r'\{\{lastuserMessage\}\}|\{\{lastUserMessage\}\}|\{\{lastmessage\}\}',
+                            caseSensitive: false),
+                        targetContent)))
+                .toList()));
+
+    // 使用 PromptBuilder 的标准 getLLMMessageList 流程，但需要特殊处理 userMessage
+    // 因为我们需要将要优化的消息作为 userMessage 传递给宏系统
+
+    // 首先调用标准的 getLLMMessageList 方法，这会处理所有的 prompt 构建流程
+    final llmMessages = promptBuilder.getLLMMessageList();
 
     final result = <Map<String, String>>[];
 
@@ -203,12 +232,6 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
         'content': msg.content,
       });
     }
-
-    // 添加优化指令
-    result.add({
-      'role': 'user',
-      'content': optimizationPrompt,
-    });
 
     return result;
   }
@@ -235,33 +258,47 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       final contextMessages = _getContextMessages();
       final chat = widget.sessionController.chat;
 
-      // 创建临时聊天模型，包含前文和目标消息
-      final tempChat = chat.shallowCopyWith();
-
-      // 构建包含前文和目标消息的消息列表
-      final allMessages = <MessageModel>[
-        ...contextMessages,
-        widget.message,
-      ];
-
-      // 创建一个临时的chat用于构建prompt
-      tempChat.messages.clear();
-      tempChat.messages.addAll(allMessages);
-
-      // 使用标准的 Promptbuilder 构建消息列表
-      final promptBuilder = Promptbuilder(tempChat, selectedOption!);
-      final llmMessages =
-          promptBuilder.getLLMMessageList(sender: selectedCharacter);
+      // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
+      // 使用深拷贝确保不会修改原始聊天对象
+      final tempChat =
+          chat.shallowCopyWith(messages: List.from(contextMessages));
 
       // 添加优化指令
-      final optimizationPrompt = optimizationType == OptimizationType.plot
-          ? '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。'
-          : '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
+      String optimizationPrompt = '';
+      switch (optimizationType) {
+        case OptimizationType.plot:
+          optimizationPrompt =
+              '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。';
+          break;
+        case OptimizationType.text:
+          optimizationPrompt = '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
+          break;
+        default:
+          optimizationPrompt = '';
+          break;
+      }
+      // 按照 Promptbuilder 的标准流程构建 prompt
+      // 获取当前选中的待优化消息内容，不包含前文
+      final targetContent = '\n<待优化文段>' +
+          _getCurrentMessageContent() +
+          '</待优化文段>\n\n' +
+          optimizationPrompt;
+      print('Debug: targetContent = $targetContent');
+      print('Debug: widget.message.content = ${widget.message.content}');
+      final promptBuilder = Promptbuilder(
+          tempChat,
+          ChatOptionModel.empty().copyWith(true,
+              prompts: selectedOption!.prompts
+                  .map((prompt) => prompt.copyWith(
+                      content: prompt.content.replaceAll(
+                          RegExp(
+                              r'\{\{lastuserMessage\}\}|\{\{lastUserMessage\}\}|\{\{lastmessage\}\}',
+                              caseSensitive: false),
+                          targetContent)))
+                  .toList()));
 
-      llmMessages.add(LLMMessage(
-        content: optimizationPrompt,
-        role: 'user',
-      ));
+      // 直接使用 getLLMMessageList，它会处理所有的 prompt 构建，包括宏替换
+      final llmMessages = promptBuilder.getLLMMessageList();
 
       // 先回到聊天页面
       Get.back();
@@ -361,6 +398,19 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    String type_info = '';
+    switch (optimizationType) {
+      case OptimizationType.plot:
+        type_info = '主要关注故事的逻辑一致性、情节发展以及角色设定';
+        break;
+      case OptimizationType.text:
+        type_info = '主要关注文字的美感、表达力以及修辞手法的运用';
+        break;
+      default:
+        type_info = '请自行在所用预设{{lastusermessage}}之后插入需要的优化描述';
+        break;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -558,6 +608,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                           value: OptimizationType.text,
                           child: Text('正文优化 (65.5K tokens)'),
                         ),
+                        DropdownMenuItem(
+                          value: OptimizationType.blank,
+                          child: Text('不使用默认优化词'),
+                        ),
                       ],
                       onChanged: (OptimizationType? value) {
                         setState(() {
@@ -567,9 +621,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      optimizationType == OptimizationType.plot
-                          ? '主要关注故事的逻辑一致性、情节发展以及角色设定'
-                          : '主要关注文字的美感、表达力以及修辞手法的运用',
+                      type_info,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: colors.outline,
                           ),
@@ -607,9 +659,9 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                     const SizedBox(height: 8),
                     Slider(
                       value: contextDepth.toDouble(),
-                      min: 1,
-                      max: 20,
-                      divisions: 19,
+                      min: 0,
+                      max: 64,
+                      divisions: 64,
                       label: contextDepth.toString(),
                       onChanged: (double value) {
                         setState(() {
