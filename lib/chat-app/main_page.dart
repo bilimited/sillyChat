@@ -368,6 +368,7 @@ class _MainPageState extends State<MainPage> {
                 ))));
   }
 
+  @Deprecated('use MobileMainPage instead.')
   Widget _buildMobile(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(

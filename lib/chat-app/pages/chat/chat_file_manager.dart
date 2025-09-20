@@ -230,36 +230,50 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   }
 
   void _openChat(String path) {
-    if (SillyChatApp.isDesktop()) {
-      ChatController.of.currentChat.value = ChatSessionController(path);
-    } else {
-      customNavigate(
-          ChatPage(
-            sessionController: ChatSessionController(path),
-          ),
-          context: context);
-    }
+    ChatController.of.currentChat.value = ChatSessionController(path);
+    ChatController.of.pageController.animateToPage(1,
+        duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+    // if (SillyChatApp.isDesktop()) {
+
+    // } else {
+    //   customNavigate(
+    //       ChatPage(
+    //         sessionController: ChatSessionController(path),
+    //       ),
+    //       context: context);
+    // }
   }
+
+  // 另一个并列的canPop在chat_page。非常抽象。。
+  // bool get canPop =>
+  //     !_isMultiSelectMode &&
+  //     ChatController.of.pageController.page == 0 &&
+  //     _currentDirectory.path == widget.directory.path;
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: !_isMultiSelectMode &&
+          _currentDirectory.path == widget.directory.path,
+      onPopInvokedWithResult: (didPop, result) {
+        //print("canPop:$canPop");
+        if (ChatController.of.pageController.page != 0) {
+          return;
+        }
         if (_isMultiSelectMode) {
           setState(() {
             _isMultiSelectMode = false;
             _selectedFiles.clear();
           });
-          return false;
+          return;
         }
         if (_currentDirectory.path != widget.directory.path) {
           setState(() {
             _currentDirectory = _currentDirectory.parent;
+            ChatController.of.currentPath.value = _currentDirectory.path;
             _loadFiles();
           });
-          return false;
         }
-        return true;
       },
       child: Scaffold(
         appBar: _buildAppBar(),

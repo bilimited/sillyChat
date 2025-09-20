@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
@@ -25,6 +26,7 @@ class ChatController extends GetxController {
   // 当前打开的聊天
   // TODO: 当前打开聊天被删除时，清除当前聊天
   final Rx<ChatSessionController?> currentChat = Rx(null);
+  final PageController pageController = PageController(initialPage: 0);
 
   // 当前打开的聊天数据路径，若为空则视为聊天根目录
   final RxString currentPath = ''.obs;
@@ -50,6 +52,9 @@ class ChatController extends GetxController {
   // 新增：聊天元数据索引
   final RxMap<String, ChatMetaModel> chatIndex = <String, ChatMetaModel>{}.obs;
   final String chatIndexFileName = 'chat_index.json';
+
+  bool get atFirstPage => pageController.page == 0;
+  bool get atSecondPage => pageController.page == 1;
 
   @override
   void onInit() async {

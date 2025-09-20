@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
+import 'package:flutter_example/chat-app/mobile_main_page.dart';
 import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
@@ -70,6 +72,9 @@ class SillyChatApp extends StatelessWidget {
     Get.find<ChatController>().chats.value = [];
     ChatController.of.chatIndex.clear();
     ChatController.of.currentPath.value = '';
+    ChatController.of.currentChat.value = ChatSessionController.uninitialized();
+    ChatController.of.pageController
+        .animateToPage(0, duration: Durations.medium1, curve: Curves.easeInOut);
 
     Get.find<VaultSettingController>().apis.value = [];
     await Get.find<VaultSettingController>().loadSettings();
@@ -108,7 +113,9 @@ class SillyChatApp extends StatelessWidget {
               setting.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
           home: vaultSettings.isShowOnBoardPage.value
               ? OnBoardingPage()
-              : const MainPage(),
+              : isDesktop()
+                  ? const MainPage()
+                  : const MainPageMobile(),
         ));
   }
 }

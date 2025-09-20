@@ -68,7 +68,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       _controller.addChatOption(chatOption);
     }
 
-    Get.back();
+    Navigator.of(context).pop();
   }
 
   void _handleCopy() {

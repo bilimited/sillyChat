@@ -12,6 +12,29 @@ class AvatarImage extends StatelessWidget {
   final double? width;
   final double? height;
 
+  static Widget avatar(String? fileName, int radius,
+      {double borderRadius = 2}) {
+    return Container(
+      height: radius * 2,
+      width: radius * 2,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade300, width: borderRadius),
+        color: Colors.grey.shade100,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius.toDouble()),
+        child: fileName != null
+            ? AvatarImage(fileName: fileName!)
+            : Icon(
+                Icons.add_photo_alternate,
+                size: radius - 20,
+                color: Colors.grey.shade600,
+              ),
+      ),
+    );
+  }
+
   const AvatarImage({
     Key? key,
     required this.fileName,

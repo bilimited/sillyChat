@@ -15,12 +15,12 @@ class CharacterController extends GetxController {
 
   // 系统内建角色
   static final defaultCharacter = CharacterModel(
-      id: -2,
+      id: -1,
       remark: "内置角色",
-      roleName: '旁白',
+      roleName: 'AI助手',
       avatar: "",
       category: "",
-      messageStyle: MessageStyle.narration);
+      messageStyle: MessageStyle.common);
 
   int? get myId => _vaultSettingController.myId.value;
   set myId(val) {

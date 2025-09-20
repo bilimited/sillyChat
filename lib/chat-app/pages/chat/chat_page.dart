@@ -13,7 +13,6 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
-import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -1188,11 +1187,11 @@ class _ChatPageState extends State<ChatPage> {
           setState(() => _selectedMessage = null);
         }
       },
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity! < 0) {
-          Get.to(() => EditChatPage(session: sessionController));
-        }
-      },
+      // onHorizontalDragEnd: (details) {
+      //   if (details.primaryVelocity! < 0) {
+      //     Get.to(() => EditChatPage(session: sessionController));
+      //   }
+      // },
       child: Scaffold(
         backgroundColor: colors.surface,
 
@@ -1263,7 +1262,10 @@ class _ChatPageState extends State<ChatPage> {
               _isMultiSelecting = false;
               _selectedMessages = [];
             });
+            return;
           }
+          // ChatController.of.pageController.animateToPage(0,
+          //     duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
         },
         child: Obx(() => AnimatedSwitcher(
               // 1. 设置动画的持续时间

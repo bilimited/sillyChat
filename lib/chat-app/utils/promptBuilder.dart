@@ -285,7 +285,8 @@ class Promptbuilder {
         mergedMessages.add(msg);
       } else {
         mergedMessages.last = mergedMessages.last.copyWith(
-            content: mergedMessages.last.content + '\n' + msg.content);
+            content: mergedMessages.last.content + '\n' + msg.content,
+            fileDirs: [...mergedMessages.last.fileDirs, ...msg.fileDirs]);
         //mergedMessages.last.content += '\n' + msg.content;
       }
     }
@@ -308,7 +309,7 @@ class Promptbuilder {
       return LLMMessage(
           content: res.content + '\n' + msg.content,
           role: 'user',
-          fileDirs: res.fileDirs);
+          fileDirs: [...res.fileDirs, ...msg.fileDirs]);
     });
   }
 }
