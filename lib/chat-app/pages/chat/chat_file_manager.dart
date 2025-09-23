@@ -233,22 +233,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     ChatController.of.currentChat.value = ChatSessionController(path);
     ChatController.of.pageController.animateToPage(1,
         duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
-    // if (SillyChatApp.isDesktop()) {
-
-    // } else {
-    //   customNavigate(
-    //       ChatPage(
-    //         sessionController: ChatSessionController(path),
-    //       ),
-    //       context: context);
-    // }
   }
-
-  // 另一个并列的canPop在chat_page。非常抽象。。
-  // bool get canPop =>
-  //     !_isMultiSelectMode &&
-  //     ChatController.of.pageController.page == 0 &&
-  //     _currentDirectory.path == widget.directory.path;
 
   @override
   Widget build(BuildContext context) {
@@ -714,6 +699,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
               for (final entity in _selectedFiles) {
                 try {
                   await entity.delete(recursive: true);
+                  ChatController.of.fireDeleteEvent(entity.path);
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('删除失败: $e')),

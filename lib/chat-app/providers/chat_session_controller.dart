@@ -15,6 +15,7 @@ import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
 class ChatSessionController extends GetxController {
@@ -48,7 +49,8 @@ class ChatSessionController extends GetxController {
 
   ChatModel get chat => _chat.value;
   File get file => _chat.value.file;
-  bool get isChatUninitialized => chat.id == -1;
+  bool get isChatLoading => chat.id == -1;
+  bool isChatUninitialized = false;
 
   final String chatPath;
 
@@ -60,7 +62,7 @@ class ChatSessionController extends GetxController {
   }
 
   factory ChatSessionController.uninitialized() {
-    return ChatSessionController('');
+    return ChatSessionController('')..isChatUninitialized = true;
   }
 
   static ChatSessionController? tryGetSession(String path) {
@@ -74,6 +76,16 @@ class ChatSessionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    ever(ChatController.of.fileDeleteEvent, (fe) {
+      if (fe == null) {
+        return;
+      }
+      if (p.equals(fe.filePath, chatPath) ||
+          p.isWithin(fe.filePath, chatPath)) {
+        // Quit
+        close();
+      }
+    });
     _aiState = ChatAIState(
             aihandler: Aihandler()
               ..onGenerateStateChange = (str) {
@@ -99,6 +111,19 @@ class ChatSessionController extends GetxController {
     return !_aiState.value.isGenerating && inputController.text.isEmpty;
   }
 
+  // 手动关闭此聊天，使其不能再打开。
+  void close() {
+    _chat.value = ChatModel(
+        id: -1,
+        name: '未加载的聊天',
+        avatar: '',
+        lastMessage: '',
+        time: '',
+        messages: []);
+    isChatUninitialized = true;
+    inputController.text = '';
+  }
+
   Future<void> loadChat() async {
     if (chatPath.isEmpty) {
       return;
@@ -111,7 +136,7 @@ class ChatSessionController extends GetxController {
       final String contents = await chatFile.readAsString();
       final Map<String, dynamic> data = json.decode(contents);
       _chat.value = ChatModel.fromJson(data);
-      chat.fileId = 0; // fileId字段已弃用
+      //chat.fileId = 0; // fileId字段已弃用
       chat.file = chatFile;
     } else {
       //Get.snackbar('聊天加载失败.', '聊天文件不存在');

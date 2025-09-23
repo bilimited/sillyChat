@@ -17,8 +17,8 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
 class MainPageMobile extends StatefulWidget {
@@ -29,7 +29,6 @@ class MainPageMobile extends StatefulWidget {
 }
 
 class _MainPageMobileState extends State<MainPageMobile> {
-  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   //final PageController _pageController = PageController();
 
   final GlobalKey<NavigatorState> _leftPageNavigatorKey =
@@ -37,7 +36,86 @@ class _MainPageMobileState extends State<MainPageMobile> {
   final GlobalKey<NavigatorState> _rightPageNavigatorKey =
       GlobalKey<NavigatorState>();
 
-  int _currentIndex = 0;
+  DateTime? _lastPressedBackAt; // 实现再按一次退出
+
+  @override
+  void dispose() {
+    //_pageController.dispose();
+    super.dispose();
+  }
+
+  CharacterModel get me => CharacterController.of.me;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (ChatController.of.pageController.page == 0) {
+              final bool? canPopInner =
+                  await _leftPageNavigatorKey.currentState?.maybePop();
+              if (canPopInner == false) {
+                final now = DateTime.now();
+                if (_lastPressedBackAt == null ||
+                    now.difference(_lastPressedBackAt!) >
+                        const Duration(seconds: 2)) {
+                  _lastPressedBackAt = now;
+                  SillyChatApp.snackbar(context, '再按一次退出应用',
+                      duration: Duration(seconds: 2));
+                } else {
+                  SystemNavigator.pop(); // 退出应用
+                }
+              }
+            }
+            if (ChatController.of.pageController.page == 1) {
+              final bool? canPopInner =
+                  await _rightPageNavigatorKey.currentState?.maybePop();
+              if (canPopInner == false) {
+                ChatController.of.pageController.animateToPage(0,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut);
+                return;
+              }
+            }
+          },
+          child: PageView(
+            controller: ChatController.of.pageController,
+            children: <Widget>[
+              Navigator(
+                key: _leftPageNavigatorKey,
+                onGenerateRoute: (settings) {
+                  return MaterialPageRoute(builder: (context) => LeftPage());
+                },
+              ),
+              Navigator(
+                key: _rightPageNavigatorKey,
+                onGenerateRoute: (settings) {
+                  return MaterialPageRoute(
+                      builder: (context) => const RightPage());
+                },
+              ),
+            ],
+          )),
+    );
+  }
+}
+
+// 左侧页面
+class LeftPage extends StatefulWidget {
+  LeftPage({super.key});
+
+  @override
+  State<LeftPage> createState() => _LeftPageState();
+}
+
+// 混入 AutomaticKeepAliveClientMixin 以保持状态
+class _LeftPageState extends State<LeftPage>
+    with AutomaticKeepAliveClientMixin {
+  // 重写 wantKeepAlive 并返回 true
+  @override
+  bool get wantKeepAlive => true;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _pages = [
     ChatManagePage(),
@@ -47,11 +125,8 @@ class _MainPageMobileState extends State<MainPageMobile> {
     SettingPage(),
   ];
 
-  @override
-  void dispose() {
-    //_pageController.dispose();
-    super.dispose();
-  }
+  int _currentIndex = 0;
+  CharacterModel get me => CharacterController.of.me;
 
   void _showCharacterSelectDialog() async {
     CharacterModel? character = await customNavigate<CharacterModel>(
@@ -63,13 +138,14 @@ class _MainPageMobileState extends State<MainPageMobile> {
     }
   }
 
-  CharacterModel get me => CharacterController.of.me;
-
   @override
   Widget build(BuildContext context) {
+    // 调用 super.build(context)
     final theme = Theme.of(context);
+    super.build(context);
     return Scaffold(
       key: scaffoldKey,
+      body: _pages[_currentIndex],
       drawer: NavigationDrawer(
         selectedIndex: _currentIndex,
         onDestinationSelected: (value) {
@@ -128,32 +204,6 @@ class _MainPageMobileState extends State<MainPageMobile> {
                     SizedBox(
                       height: 6,
                     ),
-
-                    // Text(
-                    //   SettingController.currectValutName,
-                    //   style: theme.textTheme.titleLarge?.copyWith(
-                    //       color: Colors.white, // 确保文字在背景上清晰可见
-                    //       shadows: [
-                    //         Shadow(
-                    //             color: Colors.black.withOpacity(0.5),
-                    //             blurRadius: 5)
-                    //       ] // 添加阴影以增加可读性
-                    //       ),
-                    // ),
-                    // SizedBox(height: 4),
-                    // Text(
-                    //   '上次同步时间:${VaultSettingController.of().lastSyncTimeString}',
-                    //   maxLines: 2,
-                    //   style: TextStyle(
-                    //       color: Colors.white,
-                    //       fontSize: 14,
-                    //       shadows: [
-                    //         Shadow(
-                    //             color: Colors.black.withOpacity(0.5),
-                    //             blurRadius: 5)
-                    //       ]),
-                    //   //
-                    // ),
                   ],
                 ),
               )),
@@ -217,78 +267,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
           ),
         ],
       ),
-      body: PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) async {
-            if (ChatController.of.pageController.page == 0) {
-              final bool? canPopInner =
-                  await _leftPageNavigatorKey.currentState?.maybePop();
-              if (canPopInner == false) {
-                SystemNavigator.pop(); // 退出应用
-              }
-            }
-            if (ChatController.of.pageController.page == 1) {
-              final bool? canPopInner =
-                  await _rightPageNavigatorKey.currentState?.maybePop();
-              if (canPopInner == false) {
-                ChatController.of.pageController.animateToPage(0,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut);
-                return;
-              }
-            }
-          },
-          child: PageView(
-            //controller: _pageController,
-            controller: ChatController.of.pageController,
-            children: <Widget>[
-              Navigator(
-                key: _leftPageNavigatorKey,
-                onGenerateRoute: (settings) {
-                  return MaterialPageRoute(
-                      builder: (context) => LeftPage(
-                            page: _pages[_currentIndex],
-                          ));
-                },
-              ),
-              Navigator(
-                key: _rightPageNavigatorKey,
-                onGenerateRoute: (settings) {
-                  return MaterialPageRoute(
-                      builder: (context) => const RightPage());
-                },
-              ),
-              // const LeftPage(),
-              // const RightPage(),
-            ],
-          )),
     );
-  }
-}
-
-// 左侧页面
-class LeftPage extends StatefulWidget {
-  LeftPage({super.key, required this.page});
-
-  final Widget page;
-
-  @override
-  State<LeftPage> createState() => _LeftPageState();
-}
-
-// 混入 AutomaticKeepAliveClientMixin 以保持状态
-class _LeftPageState extends State<LeftPage>
-    with AutomaticKeepAliveClientMixin {
-  // 重写 wantKeepAlive 并返回 true
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    // 调用 super.build(context)
-    super.build(context);
-    return Scaffold(body: widget.page //_pages[_currentIndex],
-        );
   }
 }
 

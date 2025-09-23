@@ -1281,12 +1281,12 @@ class _ChatPageState extends State<ChatPage> {
               },
 
               // 3. 这里的 child 会根据条件动态改变
-              child: sessionController.isChatUninitialized
+              child: sessionController.isChatLoading
                   // 关键：为每个状态的根 Widget 提供一个唯一的 Key
                   // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
                   ? Container(
                       key: const ValueKey('LoadScreen'),
-                      child: sessionController.chatPath.isEmpty != true
+                      child: sessionController.isChatUninitialized
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )

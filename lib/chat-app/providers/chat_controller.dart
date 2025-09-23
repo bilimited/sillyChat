@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
@@ -31,6 +32,8 @@ class ChatController extends GetxController {
   // 当前打开的聊天数据路径，若为空则视为聊天根目录
   final RxString currentPath = ''.obs;
 
+  final Rx<FileDeletedEvent?> fileDeleteEvent = Rx(null);
+
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
   List<MessageModel> get messageToPaste {
@@ -55,6 +58,11 @@ class ChatController extends GetxController {
 
   bool get atFirstPage => pageController.page == 0;
   bool get atSecondPage => pageController.page == 1;
+
+  void fireDeleteEvent(String path) {
+    fileDeleteEvent.value = FileDeletedEvent(path);
+    fileDeleteEvent.refresh();
+  }
 
   @override
   void onInit() async {
