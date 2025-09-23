@@ -129,7 +129,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('对话预设管理'),
+        title: const Text('聊天预设'),
         actions: [
           IconButton(
               onPressed: () {

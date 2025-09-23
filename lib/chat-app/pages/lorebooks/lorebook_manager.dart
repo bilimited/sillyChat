@@ -131,7 +131,7 @@ class LoreBookManagerPage extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       appBar: AppBar(
-        title: const Text('世界书管理'),
+        title: const Text('世界书'),
       ),
       body: Obx(() {
         final lorebooks = controller.lorebooks;

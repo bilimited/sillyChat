@@ -1,198 +1,112 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
+// 假设上面的组件代码保存在这个文件中
 
-// 应用根组件
+void main() {
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter 信息列表原型',
-      // 设置主题，并启用Material 3设计
+      title: 'Breadcrumb Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
+        textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16)),
       ),
-      home: const InfoListPage(),
+      home: const BreadcrumbDemoPage(),
     );
   }
 }
 
-// 数据模型类，用于表示每个列表项的数据
-class PromptInfo {
-  final String id;
-  final String title;
-  final int promptCount;
-  final String modelName;
-  final int regexCount;
-  final bool isStreaming;
-
-  PromptInfo({
-    required this.id,
-    required this.title,
-    required this.promptCount,
-    required this.modelName,
-    required this.regexCount,
-    required this.isStreaming,
-  });
-}
-
-// 列表页面，使用StatefulWidget来管理列表数据的变化
-class InfoListPage extends StatefulWidget {
-  const InfoListPage({super.key});
+class BreadcrumbDemoPage extends StatefulWidget {
+  const BreadcrumbDemoPage({Key? key}) : super(key: key);
 
   @override
-  State<InfoListPage> createState() => _InfoListPageState();
+  State<BreadcrumbDemoPage> createState() => _BreadcrumbDemoPageState();
 }
 
-class _InfoListPageState extends State<InfoListPage> {
-  // 用于存储列表项数据的列表
-  final List<PromptInfo> _items = List.generate(
-    20,
-    (index) => PromptInfo(
-      id: 'id_$index',
-      title: '创意写作助手 #${index + 1}',
-      promptCount: 5 + index * 2,
-      modelName: index % 3 == 0 ? 'Gemini Pro' : 'Gemini Ultra',
-      regexCount: index % 4,
-      isStreaming: index % 2 == 0,
-    ),
-  );
+class _BreadcrumbDemoPageState extends State<BreadcrumbDemoPage> {
+  // 定义根路径
+  final String _basePath = 'a/b';
+  // 当前路径，会动态变化
+  String _currentPath = 'a/b/c/d/e';
 
-  // 删除列表项的方法
-  void _removeItem(String id) {
+  void _updatePath(String newPath) {
     setState(() {
-      _items.removeWhere((item) => item.id == id);
+      _currentPath = newPath;
     });
-    // 显示一个简短的提示，告知用户删除成功
+    // 在实际应用中，这里可能会触发真正的页面导航
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('列表项已删除'),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: '好的',
-          onPressed: () {},
-        ),
+        content: Text('导航到: $newPath'),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
-
-  int _currentStep = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('紧凑信息列表 (v2)'),
-          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-        ),
-        // 使用ListView.builder来构建长列表
-        body: Stepper(
-          // 当前激活的步骤
-          currentStep: _currentStep,
-          // 点击步骤的图标触发
-          onStepTapped: (step) => setState(() => _currentStep = step),
-          // 点击“继续”按钮触发
-          onStepContinue: () {
-            if (_currentStep < 2) {
-              setState(() => _currentStep += 1);
-            }
-          },
-          // 点击“取消”按钮触发
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep -= 1);
-            }
-          },
-          // 步骤列表
-          steps: const [
-            Step(
-              title: Text('选择计划'),
-              content: Center(child: Text('这里是选择计划的内容')),
-              isActive: true,
+      appBar: AppBar(
+        title: const Text('Breadcrumb Demo'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 使用面包屑组件
+            BreadcrumbNavigation(
+              path: _currentPath,
+              basePath: _basePath,
+              onCrumbTap: _updatePath, // 传入回调函数
+              // 自定义样式 (可选)
+              style: TextStyle(color: Colors.blue.shade700, fontSize: 16),
+              activeStyle: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
-            Step(
-              title: Text('填写信息'),
-              content: Center(child: Text('这里是填写信息的内容')),
-              isActive: true,
-            ),
-            Step(
-              title: Text('完成支付'),
-              content: Center(child: Text('这里是完成支付的内容')),
-              isActive: true,
+            const Divider(height: 40),
+            Text('当前完整路径: $_currentPath',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+
+            // 用于模拟导航的按钮
+            const Text('模拟导航:', style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _updatePath('a/b'),
+                  child: const Text('跳转到 根路径'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updatePath('a/b/c'),
+                  child: const Text('跳转到 c'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updatePath('a/b/c/d'),
+                  child: const Text('跳转到 d'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updatePath('a/b/c/d/e'),
+                  child: const Text('跳转到 e (超过3级)'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updatePath('a/b/c/d/e/f'),
+                  child: const Text('跳转到 f (超过3级)'),
+                ),
+              ],
             ),
           ],
-        ));
-  }
-}
-
-// [V2] 自定义列表项Widget - 使用Chip和Wrap来美化
-class InfoListItem extends StatelessWidget {
-  final PromptInfo item;
-  final VoidCallback onDelete;
-
-  const InfoListItem({
-    super.key,
-    required this.item,
-    required this.onDelete,
-  });
-
-  // 辅助方法，用于构建带图标和文本的Chip
-  Widget _buildInfoChip(BuildContext context, IconData icon, String label) {
-    final theme = Theme.of(context);
-    return Chip(
-      avatar:
-          Icon(icon, size: 16, color: theme.colorScheme.onSecondaryContainer),
-      label: Text(label),
-      labelStyle: TextStyle(color: theme.colorScheme.onSecondaryContainer),
-      backgroundColor: theme.colorScheme.secondaryContainer,
-      // 使用更紧凑的内外边距
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // 使用Card作为列表项的容器
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        // 列表项主标题
-        title: Text(
-          item.title,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        // 列表项副标题区域，使用Wrap包裹Chips
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 10.0), // 与主标题的间距
-          child: Wrap(
-            spacing: 8.0, // Chip之间的水平间距
-            runSpacing: 6.0, // Chip换行后的垂直间距
-            children: [
-              // 使用辅助方法创建各个信息Chip
-              _buildInfoChip(context, Icons.hub_outlined, item.modelName),
-              _buildInfoChip(context, Icons.format_quote_outlined,
-                  '提示词: ${item.promptCount}'),
-              if (item.regexCount > 0)
-                _buildInfoChip(
-                    context, Icons.code_rounded, '正则: ${item.regexCount}'),
-              if (item.isStreaming)
-                _buildInfoChip(context, Icons.bolt_outlined, '流式'),
-            ],
-          ),
-        ),
-        // 列表项尾部的Widget，这里放置删除按钮
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline),
-          color: theme.colorScheme.error,
-          tooltip: '删除',
-          onPressed: onDelete,
         ),
       ),
     );

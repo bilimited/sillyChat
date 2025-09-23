@@ -10,6 +10,9 @@ class ApiManagerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("API"),
+      ),
       body: Obx(
         () => ReorderableListView.builder(
           itemCount: controller.apis.length,
@@ -31,14 +34,14 @@ class ApiManagerPage extends StatelessWidget {
                   if (api.remarks != null) Text('备注: ${api.remarks}'),
                 ],
               ),
-              onTap: () => customNavigate (ApiEditPage(api: api),context: context),
-              trailing: const Icon(Icons.drag_handle),
+              onTap: () =>
+                  customNavigate(ApiEditPage(api: api), context: context),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => customNavigate (ApiEditPage(), context: context),
+        onPressed: () => customNavigate(ApiEditPage(), context: context),
         child: const Icon(Icons.add),
       ),
     );

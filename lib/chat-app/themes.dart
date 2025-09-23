@@ -55,13 +55,11 @@ abstract final class SillyChatThemeBuilder {
           navigationRailUseIndicator: true,
           navigationRailIndicatorSchemeColor: SchemeColor.primary,
           navigationRailIndicatorOpacity: 1.00,
-          
         ),
         // Direct ThemeData properties.
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
         fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        
-        fontFamilyFallback: ['思源黑体','微软雅黑']);
+        fontFamilyFallback: ['思源黑体', '微软雅黑']);
   }
 
   static buildNight(FlexScheme scheme, String? font) {
@@ -111,12 +109,11 @@ abstract final class SillyChatThemeBuilder {
           navigationRailUseIndicator: true,
           navigationRailIndicatorSchemeColor: SchemeColor.primary,
           navigationRailIndicatorOpacity: 1.00,
-          
         ),
         // Direct ThemeData properties.
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
         fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['思源黑体','微软雅黑']);
+        fontFamilyFallback: ['思源黑体', '微软雅黑']);
   }
 
   // The FlexColorScheme defined dark mode ThemeData.

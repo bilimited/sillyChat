@@ -9,6 +9,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -122,7 +123,7 @@ class _LeftPageState extends State<LeftPage>
     const ContactsPage(),
     ChatOptionsManagerPage(),
     LoreBookManagerPage(),
-    SettingPage(),
+    ApiManagerPage(),
   ];
 
   int _currentIndex = 0;
@@ -229,9 +230,9 @@ class _LeftPageState extends State<LeftPage>
             selectedIcon: Icon(Icons.book),
           ),
           NavigationDrawerDestination(
-            label: Text('设置'),
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
+            label: Text('API'),
+            icon: Icon(Icons.api_outlined),
+            selectedIcon: Icon(Icons.api),
           ),
           const Spacer(), // 将底部组件推到底部
           Divider(
@@ -260,6 +261,16 @@ class _LeftPageState extends State<LeftPage>
                   ),
                   onTap: () {
                     customNavigate(VaultManagerPage(), context: context);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.settings),
+                  title: Text(
+                    '设置',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  onTap: () {
+                    customNavigate(SettingPage(), context: context);
                   },
                 ),
               ],

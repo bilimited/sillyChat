@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -290,20 +290,34 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       );
     } else {
       return AppBar(
-        leading: _currentDirectory.path != widget.directory.path
-            ? IconButton(
-                onPressed: () {
-                  setState(() {
-                    _currentDirectory = _currentDirectory.parent;
-                    ChatController.of.currentPath.value =
-                        _currentDirectory.path;
-                    _loadFiles();
-                  });
-                },
-                icon: Icon(Icons.arrow_back))
-            : null,
-        title: _buildPathTitle(),
-      );
+          // leading: _currentDirectory.path != widget.directory.path
+          //     ? IconButton(
+          //         onPressed: () {
+          //           setState(() {
+          //             _currentDirectory = _currentDirectory.parent;
+          //             ChatController.of.currentPath.value =
+          //                 _currentDirectory.path;
+          //             _loadFiles();
+          //           });
+          //         },
+          //         icon: Icon(Icons.arrow_back))
+          //     : null,
+          title: BreadcrumbNavigation(
+        path: _currentDirectory.path,
+        basePath: widget.directory.path,
+        maxLevels: 10,
+        style: TextStyle(fontSize: 16),
+        activeStyle: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.primaryColor),
+        onCrumbTap: (path) {
+          _currentDirectory = Directory(path);
+          ChatController.of.currentPath.value = _currentDirectory.path;
+          _loadFiles();
+        },
+      ) //_buildPathTitle(),
+          );
     }
   }
 

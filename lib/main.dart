@@ -74,8 +74,10 @@ class SillyChatApp extends StatelessWidget {
     ChatController.of.chatIndex.clear();
     ChatController.of.currentPath.value = '';
     ChatController.of.currentChat.value = ChatSessionController.uninitialized();
-    ChatController.of.pageController
-        .animateToPage(0, duration: Durations.medium1, curve: Curves.easeInOut);
+    if (ChatController.of.pageController.hasClients) {
+      ChatController.of.pageController.animateToPage(0,
+          duration: Durations.medium1, curve: Curves.easeInOut);
+    }
 
     Get.find<VaultSettingController>().apis.value = [];
     await Get.find<VaultSettingController>().loadSettings();

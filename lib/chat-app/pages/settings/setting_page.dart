@@ -30,7 +30,7 @@ class _SettingPageState extends State<SettingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     webDav.init();
   }
 
@@ -355,7 +355,7 @@ class _SettingPageState extends State<SettingPage>
           controller: _tabController,
           tabs: const [
             Tab(text: '常规设置'),
-            Tab(text: 'API管理'),
+            // Tab(text: 'API管理'),
             Tab(text: '外观设置'),
             Tab(text: '提示词设置'),
           ],
@@ -365,7 +365,7 @@ class _SettingPageState extends State<SettingPage>
         controller: _tabController,
         children: [
           _buildGeneralTab(),
-          ApiManagerPage(),
+          // ApiManagerPage(),
           AppearanceSettingsPage(),
           PromptSettingsPage(),
         ],
