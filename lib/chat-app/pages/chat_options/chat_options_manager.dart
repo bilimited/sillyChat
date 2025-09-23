@@ -15,10 +15,42 @@ class ChatOptionsManagerPage extends StatelessWidget {
 
   ChatOptionsManagerPage({Key? key}) : super(key: key);
 
+  void onDelete(BuildContext context, int index) {
+    showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('删除确认'), // 对话框标题
+          content: const Text('你确定要删除这个聊天预设吗？'), // 对话框内容
+          actions: <Widget>[
+            TextButton(
+              child: const Text('取消'), // 取消按钮
+              onPressed: () {
+                Get.back();
+              },
+            ),
+            TextButton(
+              child: const Text('删除'), // 删除按钮
+              onPressed: () {
+                Get.back();
+                _controller.deleteChatOption(index);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildOptionCard(
       ChatOptionModel option, int index, BuildContext context) {
+    final name = option.name;
+    final apiName = option.requestOptions.api?.displayName;
+    final promptCount = option.prompts.length;
+    final regexCount = option.regex.length;
+    final temperature = option.requestOptions.temperature;
+    final colors = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         onTap: () {
           customNavigate(
@@ -27,53 +59,69 @@ class ChatOptionsManagerPage extends StatelessWidget {
               ),
               context: context);
         },
-        child: ListTile(
-          title: Text(option.name),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Row(
             children: [
-              Text('提示词数量: ${option.prompts.length}'),
-              Text('温度: ${option.requestOptions.temperature}'),
-              Text('历史长度: ${option.requestOptions.maxHistoryLength}'),
-              Text('最大Token: ${option.requestOptions.maxTokens}'),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: -4.0,
+                      children: [
+                        if (apiName != null && apiName.isNotEmpty)
+                          _buildInfoChip('$apiName', colors.primary,
+                              icon: Icons.api),
+                        if (promptCount > 0)
+                          _buildInfoChip('$promptCount 提示词 ', colors.secondary),
+                        if (regexCount > 0)
+                          _buildInfoChip('$regexCount 正则', colors.tertiary),
+                        if (temperature != null)
+                          _buildInfoChip('温度 $temperature',
+                              const Color.fromARGB(255, 216, 74, 63)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               IconButton(
-                icon: const Icon(Icons.delete),
+                icon: const Icon(Icons.delete_outline),
                 onPressed: () {
-                  showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('删除确认'), // 对话框标题
-                        content: const Text('你确定要删除这个聊天预设吗？'), // 对话框内容
-                        actions: <Widget>[
-                          TextButton(
-                            child: const Text('取消'), // 取消按钮
-                            onPressed: () {
-                              Get.back();
-                            },
-                          ),
-                          TextButton(
-                            child: const Text('删除'), // 删除按钮
-                            onPressed: () {
-                              Get.back();
-                              _controller.deleteChatOption(index);
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  onDelete(context, index);
                 },
+                tooltip: 'Delete',
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoChip(String label, Color color, {IconData? icon}) {
+    return Chip(
+      avatar: icon != null
+          ? Icon(
+              icon,
+              color: color,
+            )
+          : null,
+      visualDensity: VisualDensity(vertical: -2),
+      label: Text(
+        label,
+      ),
+      backgroundColor: color.withOpacity(0.12),
+      labelStyle: TextStyle(color: color, fontSize: 12),
+      side: BorderSide.none,
+      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 0.0),
+      // shape: const StadiumBorder(),
     );
   }
 

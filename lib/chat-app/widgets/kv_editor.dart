@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/main.dart';
 
 // KeyValueEditor 组件
 class KeyValueEditor extends StatefulWidget {
@@ -92,12 +93,8 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                     (isEditing &&
                         newKey != oldKey &&
                         _data.containsKey(newKey))) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('错误：变量 "$newKey" 已存在！'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
+                  SillyChatApp.snackbarErr(context, '错误：变量 "$newKey" 已存在！');
+
                   return;
                 }
 

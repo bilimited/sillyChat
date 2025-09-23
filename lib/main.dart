@@ -28,6 +28,7 @@ void main() async {
   PlatformDispatcher.instance.onError = (err, stack) {
     LogController.log("Dart错误:$err ", LogLevel.error);
     Get.snackbar('Dart错误', '$err');
+
     return false;
   };
 }
@@ -94,6 +95,21 @@ class SillyChatApp extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: duration,
+      ),
+    );
+  }
+
+  static void snackbarErr(BuildContext context, String message,
+      {Duration duration = const Duration(milliseconds: 1500)}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Theme.of(context).colorScheme.error,
+        content: Text(
+          message,
+          style: TextStyle(color: Theme.of(context).colorScheme.onError),
+        ),
         behavior: SnackBarBehavior.floating,
         duration: duration,
       ),

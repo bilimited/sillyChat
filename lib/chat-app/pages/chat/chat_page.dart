@@ -394,10 +394,11 @@ class _ChatPageState extends State<ChatPage> {
           label: '复制',
           onTap: () async {
             await Clipboard.setData(ClipboardData(text: message.content));
-            Get.showSnackbar(const GetSnackBar(
-              message: "复制成功",
-              duration: Duration(seconds: 1),
-            ));
+            SillyChatApp.snackbar(context, '复制成功');
+            // Get.showSnackbar(const GetSnackBar(
+            //   message: "复制成功",
+            //   duration: Duration(seconds: 1),
+            // ));
           },
         ),
         const SizedBox(width: 8),
@@ -527,40 +528,44 @@ class _ChatPageState extends State<ChatPage> {
     Color? iconColor,
   }) {
     final colors = Theme.of(context).colorScheme;
-    return isDesktop
-        ? Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Icon(
-                  icon,
-                  size: 18,
-                  color: iconColor ?? Theme.of(context).colorScheme.outline,
-                ),
-              ),
-            ),
-          )
-        : Material(
-            color: colors.surfaceContainerHighest.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 14, color: iconColor),
-                  ],
-                ),
-              ),
-            ),
-          );
+    return
+        // isDesktop
+        //     ?
+        Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(
+            icon,
+            size: 18,
+            color: iconColor ?? Theme.of(context).colorScheme.outline,
+          ),
+        ),
+      ),
+    )
+        // :
+        // Material(
+        //     color: colors.surfaceContainerHighest.withOpacity(0.9),
+        //     borderRadius: BorderRadius.circular(12),
+        //     child: InkWell(
+        //       borderRadius: BorderRadius.circular(12),
+        //       onTap: onTap,
+        //       child: Padding(
+        //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        //         child: Row(
+        //           mainAxisSize: MainAxisSize.min,
+        //           children: [
+        //             Icon(icon, size: 14, color: iconColor),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   )
+        ;
   }
 
   // 消息发送方法

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/main.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:uuid/uuid.dart';
@@ -163,12 +164,7 @@ class _ImageCropPageState extends State<_ImageCropPage> {
                 case CropFailure(cause: final cause):
                   // 裁剪失败，可以给用户提示
                   debugPrint('图片裁剪失败: $cause');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('图片裁剪失败: $cause'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  SillyChatApp.snackbarErr(context, '图片裁剪失败: $cause');
                   break;
               }
             },

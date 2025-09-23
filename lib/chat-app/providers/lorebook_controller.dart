@@ -49,6 +49,8 @@ class LoreBookController extends GetxController {
   // 保存世界书和激活的世界书ID
   Future<void> saveLorebooks() async {
     try {
+      lorebooks.refresh();
+
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$fileName');
       final Map<String, dynamic> jsonMap = {

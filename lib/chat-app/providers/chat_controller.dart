@@ -72,11 +72,15 @@ class ChatController extends GetxController {
   }
 
   /// ----迁移用
+  @Deprecated('仅迁移用')
   String getFileName(int fileId) {
     return 'chats_$fileId.json';
   }
 
+  @Deprecated('仅迁移用')
   final RxInt currentFileId = 1.obs;
+
+  @Deprecated('仅迁移用')
   Future<void> loadChats() async {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();

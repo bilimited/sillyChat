@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/pages/regex/edit_regex.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STRegexImporter.dart';
 import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
 class RegexListEditor extends StatefulWidget {
@@ -78,9 +79,7 @@ class _RegexListEditorState extends State<RegexListEditor> {
                 setState(() {
                   final String deletedName = widget.regexList[index].name;
                   widget.regexList.removeAt(index);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('"${deletedName}" 已删除。')),
-                  );
+                  SillyChatApp.snackbarErr(context, '"${deletedName}" 已删除。');
                   _onChanged();
                 });
                 Navigator.of(context).pop();
@@ -119,7 +118,6 @@ class _RegexListEditorState extends State<RegexListEditor> {
                 //   minHeight: 10,
                 // ),
                 child: ReorderableListView.builder(
-                  
                   shrinkWrap: true,
                   // padding: const EdgeInsets.all(10.0),
                   itemCount: widget.regexList.length,
@@ -210,10 +208,11 @@ class _RegexListEditorState extends State<RegexListEditor> {
                   paramList: [],
                   allowedExtensions: ['json'],
                   multiple: true,
-                  onImport: (fileName, fileContent, selectedParams,path) {
+                  onImport: (fileName, fileContent, selectedParams, path) {
                     final regex = STRegexImporter.fromJson(
-                        json.decode(fileContent), fileName, id: startId + id);
-                    id ++;
+                        json.decode(fileContent), fileName,
+                        id: startId + id);
+                    id++;
                     if (regex != null) {
                       setState(() {
                         widget.regexList.add(regex);

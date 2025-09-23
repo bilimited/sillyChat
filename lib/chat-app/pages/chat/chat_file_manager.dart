@@ -542,9 +542,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                     await Directory(newDirPath).create();
                     _loadFiles();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('创建文件夹失败: $e')),
-                    );
+                    SillyChatApp.snackbarErr(context, '创建文件夹失败: $e');
                   }
                   Navigator.of(context).pop();
                 }
@@ -565,9 +563,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       _isMultiSelectMode = false;
       _selectedFiles.clear();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已复制')),
-    );
+    SillyChatApp.snackbar(context, '已复制');
   }
 
   void _cutFiles() {
@@ -578,9 +574,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       _isMultiSelectMode = false;
       _selectedFiles.clear();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已剪切')),
-    );
+    SillyChatApp.snackbar(context, '已剪切');
   }
 
   Future<void> _pasteFiles() async {
@@ -669,9 +663,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('粘贴失败: ${path.basename(entity.path)} - $e')),
-        );
+        SillyChatApp.snackbarErr(
+            context, '粘贴失败: ${path.basename(entity.path)} - $e');
       }
     }
 
@@ -701,9 +694,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   await entity.delete(recursive: true);
                   ChatController.of.fireDeleteEvent(entity.path);
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('删除失败: $e')),
-                  );
+                  SillyChatApp.snackbarErr(context, '删除失败: $e');
                 }
               }
               setState(() {
@@ -757,18 +748,15 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   await Directory(newPath).exists();
               if (targetExists) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('名称已存在!')),
-                );
+                SillyChatApp.snackbarErr(context, '名称已存在!');
+
                 return; // 终止重命名
               }
               try {
                 await entity.rename(newPath);
               } catch (e) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('重命名失败: $e')),
-                );
+                SillyChatApp.snackbarErr(context, '重命名失败: $e');
               }
 
               setState(() {

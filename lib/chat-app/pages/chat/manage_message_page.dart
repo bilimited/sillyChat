@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
 class ManageMessagePage extends StatefulWidget {
@@ -308,9 +309,8 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
             onPressed: () {
               _chatController.putMessageToClipboard(
                   widget.chat.messages, _selectedMessages);
-              Get.showSnackbar(GetSnackBar(
-                  message: "复制了${_selectedMessages.length}条消息",
-                  duration: const Duration(seconds: 2)));
+              SillyChatApp.snackbar(
+                  context, "复制了${_selectedMessages.length}条消息");
               _cancelMultiSelect();
             },
             icon: Icon(Icons.copy_all, color: colors.onSurfaceVariant),
@@ -321,9 +321,8 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
               _chatController.putMessageToClipboard(
                   widget.chat.messages, _selectedMessages);
               widget.chatSessionController.removeMessages(_selectedMessages);
-              Get.showSnackbar(GetSnackBar(
-                  message: "剪切了${_selectedMessages.length}条消息",
-                  duration: const Duration(seconds: 2)));
+              SillyChatApp.snackbar(
+                  context, "剪切了${_selectedMessages.length}条消息");
               _updateChat();
               _cancelMultiSelect();
             },

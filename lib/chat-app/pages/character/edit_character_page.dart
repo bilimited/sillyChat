@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
@@ -186,9 +187,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
     var char = _character!.copyWith(roleName: _character!.roleName + '的副本');
     _characterController.characterCilpBoard = char;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('角色已复制到剪贴板')),
-    );
+    SillyChatApp.snackbar(context, '角色已复制到剪贴板');
   }
 
   Widget _buildBasicInfoTab() {

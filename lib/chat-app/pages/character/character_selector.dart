@@ -105,7 +105,10 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                         itemBuilder: (context, charIndex) {
                           final char = characters[charIndex];
                           return InkWell(
-                            onTap: () => Get.back(result: char),
+                            onTap: () {
+                              Navigator.pop(context, char);
+                            },
+                            // } Get.back(result: char),
                             child: Card(
                               clipBehavior: Clip.antiAlias,
                               shape: RoundedRectangleBorder(
