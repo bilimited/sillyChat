@@ -168,14 +168,6 @@ class _ImageCropPageState extends State<_ImageCropPage> {
                   break;
               }
             },
-            // initialRectBuilder: InitialRectBuilder.withArea(
-            //   Rect.fromLTRB(
-            //         viewportRect.left + 24,
-            //         viewportRect.top + 24,
-            //         viewportRect.right - 24,
-            //         viewportRect.bottom - 24,
-            //     )
-            // ) ,
           ),
           if (_isCropping)
             Container(

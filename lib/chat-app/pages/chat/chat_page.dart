@@ -407,36 +407,6 @@ class _ChatPageState extends State<ChatPage> {
           onTap: () async {
             await Clipboard.setData(ClipboardData(text: message.content));
             SillyChatApp.snackbar(context, '复制成功');
-            // Get.showSnackbar(const GetSnackBar(
-            //   message: "复制成功",
-            //   duration: Duration(seconds: 1),
-            // ));
-          },
-        ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: message.isPinned
-              ? Icons.push_pin_outlined
-              : message.isHidden
-                  ? Icons.visibility_off
-                  : Icons.remove_red_eye,
-          label: 'Pin',
-          iconColor: message.isPinned
-              ? Colors.orange
-              : message.isHidden
-                  ? Colors.blueGrey
-                  : null,
-          onTap: () async {
-            setState(() {
-              if (message.isPinned) {
-                message.visbility = MessageVisbility.hidden;
-              } else if (message.isHidden) {
-                message.visbility = MessageVisbility.common;
-              } else {
-                message.visbility = MessageVisbility.pinned;
-              }
-            });
-            _updateChat();
           },
         ),
         const SizedBox(width: 8),
