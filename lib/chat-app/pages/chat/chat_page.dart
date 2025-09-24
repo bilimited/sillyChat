@@ -86,6 +86,20 @@ class _ChatPageState extends State<ChatPage> {
   // 在创建新聊天中是否可以发送消息。userId延迟初始化。
   bool get canCreateNewChat => chat.assistantId != null;
 
+  List<LorebookItemModel> get manualItems {
+    final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
+    final chars = chat.characters.expand((char) => char.loreBooks).toList();
+    List<LorebookItemModel> lst = [];
+    for (final lorebook in [...global, ...chars]) {
+      for (final item in lorebook.items) {
+        if (item.activationType == ActivationType.manual) {
+          lst.add(item);
+        }
+      }
+    }
+    return lst;
+  }
+
   // 正在重试的消息在消息列表中的位置（0代表新生成的消息,1代表最后一条消息）
   int generatingMessagePosition = 0;
 
@@ -590,7 +604,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildBottomButtonGroup() {
     final colors = Theme.of(context).colorScheme;
     return SizedBox(
-      height: 91,
+      height: 131,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -771,6 +785,16 @@ class _ChatPageState extends State<ChatPage> {
 
                             _updateChat();
                           }),
+                      ...manualItems.map((item) {
+                        return ToggleChip(
+                            icon: Icons.book,
+                            text: item.name,
+                            initialValue: item.isActive,
+                            onToggle: (val) {
+                              item.isActive = val;
+                              LoreBookController.of.saveLorebooks();
+                            });
+                      })
                     ],
                     havaBackgroundImage: chat.assistant.backgroundImage != null,
                     // TOOL BAR

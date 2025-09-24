@@ -32,7 +32,7 @@ class _LoreBookActivatorState extends State<LoreBookActivator> {
     super.initState();
     for (final lorebook in widget.lorebooks) {
       for (final item in lorebook.items) {
-        if (item.activationType == ActivationType.manual) {
+        if (item.activationType != ActivationType.manual) {
           //entries.add(_LorebookItemEntry(lorebook: lorebook, item: item));
           itemMap['${lorebook.id}@${item.id}'] = item.isActive;
         }

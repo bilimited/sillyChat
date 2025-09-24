@@ -17,8 +17,6 @@ class CharacterWheel extends StatelessWidget {
     required this.onCharacterSelected,
   })  : characters = [
           ...characters,
-          // CharacterController.defaultCharacter,
-          // CharacterController.dividerCharacter
         ],
         super(key: key);
 

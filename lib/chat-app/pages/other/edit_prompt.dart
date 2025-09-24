@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:regex_pattern_text_field/regex_pattern_text_field.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/prompt_controller.dart';
 
@@ -21,6 +22,8 @@ class _EditPromptPageState extends State<EditPromptPage> {
   final _formKey = GlobalKey<FormState>();
   final _promptController = Get.find<PromptController>();
 
+  final _contentController = RegexPatternTextEditingController();
+
   late String _name = '';
   late String _content = '';
   late String _role = 'user';
@@ -38,6 +41,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
       _depth = widget.prompt!.depth;
       _priority = widget.prompt!.priority;
       _isInChat = widget.prompt!.isInChat;
+      _contentController.text = widget.prompt!.content;
     }
   }
 
@@ -49,7 +53,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
     final prompt = PromptModel(
         id: widget.prompt?.id ?? DateTime.now().millisecondsSinceEpoch,
         name: _name,
-        content: _content,
+        content: _contentController.text,
         role: _role,
         createDate: widget.prompt?.createDate,
         updateDate: DateTime.now(),
@@ -225,18 +229,83 @@ class _EditPromptPageState extends State<EditPromptPage> {
                       ),
                     ),
                   SizedBox(height: 16),
-                  TextFormField(
-                    initialValue: _content,
+                  RegexPatternTextField(
+                    regexPatternController: _contentController,
                     decoration: InputDecoration(
                       labelText: '内容',
                     ),
                     maxLines: 18,
                     style: TextStyle(fontSize: 14),
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) return '请输入内容';
-                      return null;
+                    onSubmitted: (regexPatternMatchedList, text) {
+                      _contentController.text = text;
                     },
-                    onSaved: (value) => _content = value!,
+                    defaultRegexPatternStyles: false,
+                    regexPatternStyles: [
+                      RegexPatternTextStyle(
+                        regexPattern: r'<char>|{{char}}|<brief>',
+                        textStyle: const TextStyle(
+                            color: Colors.orange, fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'<user>|{{user}}',
+                        textStyle: const TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'<userbrief>',
+                        textStyle: const TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern:
+                            r'\{\{lastuserMessage\}\}|<lastUserMessage>|\{\{lastmessage\}\}',
+                        textStyle: const TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern:
+                            r'<archive>|<description>|<relations>|<recent-characters:\d+>',
+                        textStyle: const TextStyle(
+                            color: Colors.blueAccent,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'<lore .*?>',
+                        textStyle: const TextStyle(
+                            color: Colors.purpleAccent,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'{{getvar::(.*?)}}',
+                        textStyle: const TextStyle(
+                            color: Colors.lightBlue,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'{{setvar::(.*?)::(.*?)}}',
+                        textStyle: const TextStyle(
+                            color: Colors.lightBlue,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'{{addvar::(.*?)::(.*?)}}',
+                        textStyle: const TextStyle(
+                            color: Colors.lightBlue,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'<[^>]*>',
+                        textStyle: const TextStyle(color: Colors.red),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern: r'\{\{[^}]*\}\}',
+                        textStyle: const TextStyle(
+                            color: Colors.grey, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ],
               ),

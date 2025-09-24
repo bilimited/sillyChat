@@ -78,6 +78,7 @@ dependencies:
   url_launcher: ^6.3.0
   code_text_field: ^1.1.0
   uuid: ^4.5.1
+  regex_pattern_text_field: ^1.0.0
   #move_to_background: ^1.0.2
  
 

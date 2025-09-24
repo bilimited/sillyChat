@@ -17,7 +17,7 @@ class LorebookItemModel {
   final ActivationType activationType;
 
   /// 是否激活
-  final bool isActive;
+  bool isActive;
 
   /// 是否收藏
   final bool isFavorite;

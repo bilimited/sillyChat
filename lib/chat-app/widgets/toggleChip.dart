@@ -14,7 +14,7 @@ class ToggleChip extends StatefulWidget {
   final bool initialValue;
 
   /// 显示的图标。
-  final IconData icon;
+  final IconData? icon;
 
   /// 显示的文本。
   final String text;
@@ -24,7 +24,7 @@ class ToggleChip extends StatefulWidget {
 
   const ToggleChip({
     super.key,
-    required this.icon,
+    this.icon,
     required this.text,
     this.initialValue = false,
     required this.onToggle,
@@ -59,46 +59,51 @@ class _ToggleChipState extends State<ToggleChip> {
     final activeContentColor = theme.primaryColor;
     final inactiveBackgroundColor = theme.colorScheme.outline;
 
-    return GestureDetector(
-      onTap: _handleTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-        decoration: BoxDecoration(
-          color: _isSelected
-              ? activeColor.withOpacity(0.2)
-              : inactiveBackgroundColor.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(
-            color: _isSelected ? activeColor : inactiveColor,
-            width: 1.0,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: GestureDetector(
+        onTap: _handleTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: _isSelected
+                ? activeColor.withOpacity(0.2)
+                : inactiveBackgroundColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(
+              color: _isSelected ? activeColor : inactiveColor,
+              width: 1.0,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, animation) =>
-                  ScaleTransition(scale: animation, child: child),
-              child: Icon(
-                widget.icon,
-                key: ValueKey(_isSelected),
-                color: _isSelected ? activeContentColor : inactiveColor,
-                size: 16.0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.icon != null) ...[
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
+                  child: Icon(
+                    widget.icon,
+                    key: ValueKey(_isSelected),
+                    color: _isSelected ? activeContentColor : inactiveColor,
+                    size: 16.0,
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+              ],
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _isSelected ? activeContentColor : inactiveColor,
+                ),
+                child: Text(widget.text),
               ),
-            ),
-            const SizedBox(width: 8.0),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontSize: 12,
-                color: _isSelected ? activeContentColor : inactiveColor,
-              ),
-              child: Text(widget.text),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

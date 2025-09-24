@@ -146,7 +146,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
     final glowColor = colors.primary;
     var cardColor = widget.isDesktop ? colors.surface : colors.surfaceContainer;
     if (widget.havaBackgroundImage) {
-      cardColor = cardColor.withOpacity(0.6);
+      cardColor = cardColor.withOpacity(0.75);
     }
 
     // Define the core UI for the input card.
@@ -350,8 +350,12 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               ),
             ),
           ),
-        Row(
-          children: widget.topToolBar,
+        SingleChildScrollView(
+          // 设置滚动方向为水平方向
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: widget.topToolBar,
+          ),
         ),
         SizedBox(
           height: 12,

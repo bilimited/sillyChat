@@ -1005,6 +1005,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  regex_pattern_text_field:
+    dependency: "direct main"
+    description:
+      name: regex_pattern_text_field
+      sha256: "250199a8e060d02704ad48c83f4586dad7f905c2997378fe0a41f250225d6bef"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.10"
   scrollable_positioned_list:
     dependency: "direct main"
     description:
