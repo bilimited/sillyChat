@@ -65,7 +65,9 @@ class _ApiEditPageState extends State<ApiEditPage> {
             : _selectedProvider.defaultUrl,
         provider: _selectedProvider,
         remarks: _remarksController.text,
-        requestBody: _requestBodyController.text.isNotEmpty ? _requestBodyController.text : null,
+        requestBody: _requestBodyController.text.isNotEmpty
+            ? _requestBodyController.text
+            : null,
       );
 
       if (widget.api == null) {
@@ -122,6 +124,8 @@ class _ApiEditPageState extends State<ApiEditPage> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              style: TextStyle(
+                  fontFamily: 'monospace', fontWeight: FontWeight.bold),
               controller: _apiKeyController,
               obscureText: false,
               decoration: const InputDecoration(
@@ -185,7 +189,8 @@ class _ApiEditPageState extends State<ApiEditPage> {
               controller: _requestBodyController,
               decoration: const InputDecoration(
                 labelText: '请求附加内容(选填)',
-                hintText: '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
+                hintText:
+                    '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
                 helperText: '支持Python风格的True/False/None，会自动转换为JSON格式',
               ),
               maxLines: 5,
@@ -257,7 +262,9 @@ class _ApiEditPageState extends State<ApiEditPage> {
           : _selectedProvider.defaultUrl,
       provider: _selectedProvider,
       remarks: _remarksController.text,
-      requestBody: _requestBodyController.text.isNotEmpty ? _requestBodyController.text : null,
+      requestBody: _requestBodyController.text.isNotEmpty
+          ? _requestBodyController.text
+          : null,
     );
 
     await controller.addApi(newApi);

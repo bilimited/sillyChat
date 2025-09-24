@@ -228,7 +228,7 @@ Widget buildIconTextButton(BuildContext context,
   );
 }
 
-/// 全屏输入页面 (无改动)
+/// 全屏输入页面
 class _FullscreenEditorPage extends StatelessWidget {
   final TextEditingController controller;
 

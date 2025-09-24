@@ -16,6 +16,7 @@ abstract final class SillyChatThemeBuilder {
         // Surface color adjustments.
         surfaceMode: FlexSurfaceMode.highBackgroundLowScaffold,
         blendLevel: 2,
+
         // Component theme configurations for light mode.
         subThemesData: const FlexSubThemesData(
           cardElevation: 0,
@@ -37,7 +38,7 @@ abstract final class SillyChatThemeBuilder {
           inputDecoratorRadius: 12.0,
           inputDecoratorUnfocusedHasBorder: false,
           inputDecoratorPrefixIconSchemeColor: SchemeColor.primary,
-          popupMenuRadius: 6.0,
+          popupMenuRadius: 12.0,
           popupMenuElevation: 8.0,
           alignedDropdown: true,
           drawerIndicatorSchemeColor: SchemeColor.primary,

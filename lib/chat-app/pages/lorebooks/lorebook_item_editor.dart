@@ -22,6 +22,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   late ActivationType activationType;
   late MatchingLogic logic;
   late bool isActive;
+  late bool isFavorite;
   late String position;
   final _formKey = GlobalKey<FormState>();
   late List<FocusNode> _focusNodes;
@@ -39,6 +40,7 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
         TextEditingController(text: (item?.priority ?? 0).toString());
     positionIdController =
         TextEditingController(text: (item?.positionId ?? 0).toString());
+    isFavorite = item?.isFavorite ?? false;
     activationType = item?.activationType ?? ActivationType.keywords;
     logic = item?.logic ?? MatchingLogic.or;
     isActive = item?.isActive ?? true;
@@ -61,17 +63,17 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               content: '',
             ))
         .copyWith(
-      name: nameController.text.trim(),
-      content: contentController.text,
-      keywords: keywordsController.text,
-      activationType: activationType,
-      logic: logic,
-      isActive: isActive,
-      activationDepth: int.tryParse(activationDepthController.text) ?? 3,
-      priority: int.tryParse(priorityController.text) ?? 0,
-      position: position,
-      positionId: int.tryParse(positionIdController.text) ?? 0,
-    );
+            name: nameController.text.trim(),
+            content: contentController.text,
+            keywords: keywordsController.text,
+            activationType: activationType,
+            logic: logic,
+            isActive: isActive,
+            activationDepth: int.tryParse(activationDepthController.text) ?? 3,
+            priority: int.tryParse(priorityController.text) ?? 0,
+            position: position,
+            positionId: int.tryParse(positionIdController.text) ?? 0,
+            isFavorite: isFavorite);
     widget.onSave?.call(item);
   }
 
@@ -239,19 +241,6 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
                   prefixIcon: Icon(Icons.layers),
                 ),
               ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Text('启用'),
-                Switch(
-                  value: isActive,
-                  onChanged: (v) {
-                    setState(() => isActive = v);
-                    save();
-                  },
-                ),
-              ],
-            ),
           ],
         ),
       ),

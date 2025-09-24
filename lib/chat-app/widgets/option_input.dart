@@ -26,9 +26,8 @@ class CustomOptionInputWidget extends StatefulWidget {
     ValueChanged<String>? onChanged,
     bool enableCustomInput = true,
   }) {
-    final mappedOptions = options
-        .map((str) => {'display': str, 'value': str})
-        .toList();
+    final mappedOptions =
+        options.map((str) => {'display': str, 'value': str}).toList();
     return CustomOptionInputWidget(
       key: key,
       labelText: labelText,
@@ -40,7 +39,8 @@ class CustomOptionInputWidget extends StatefulWidget {
   }
 
   @override
-  _CustomOptionInputWidgetState createState() => _CustomOptionInputWidgetState();
+  _CustomOptionInputWidgetState createState() =>
+      _CustomOptionInputWidgetState();
 }
 
 class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
@@ -84,7 +84,8 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
 
     // 在下一帧绘制完成后获取RenderBox，确保尺寸计算正确
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? renderBox =
+          _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox == null) return;
 
       final Offset offset = renderBox.localToGlobal(Offset.zero);
@@ -101,6 +102,7 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
         items: [
           ...widget.options.map((option) {
             return PopupMenuItem<String>(
+              height: 32,
               value: option['value'], // 返回的是实际填充到输入框的value
               child: SizedBox(
                 width: size.width, // 确保选项宽度与输入框相同
@@ -114,6 +116,7 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
           if (widget.enableCustomInput)
             PopupMenuItem<String>(
               value: 'CUSTOM_INPUT_VALUE', // 特殊值表示自定义输入
+              height: 32,
               child: SizedBox(
                 width: size.width,
                 child: const Text('自定义输入'),
@@ -130,8 +133,9 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
             } else {
               _controller.text = selectedValue;
               // 找到对应的display value来更新_currentDisplayValue，以确保rebuild时显示正确
-              _currentDisplayValue = widget.options
-                  .firstWhere((option) => option['value'] == selectedValue, orElse: () => {'display': ''})['display'];
+              _currentDisplayValue = widget.options.firstWhere(
+                  (option) => option['value'] == selectedValue,
+                  orElse: () => {'display': ''})['display'];
             }
             widget.onChanged?.call(_controller.text); // 回调实际填充的值
           });
@@ -143,7 +147,8 @@ class _CustomOptionInputWidgetState extends State<CustomOptionInputWidget> {
   @override
   Widget build(BuildContext context) {
     // 根据当前选中的值来决定TextField的只读状态
-    bool isReadOnly = !widget.enableCustomInput || (_currentDisplayValue != null && _isInOptionsValue(_controller.text));
+    bool isReadOnly = !widget.enableCustomInput ||
+        (_currentDisplayValue != null && _isInOptionsValue(_controller.text));
 
     return Column(
       mainAxisSize: MainAxisSize.min, // 确保Column不会占用多余空间

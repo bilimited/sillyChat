@@ -12,6 +12,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
 import 'package:flutter_example/main.dart';
@@ -58,11 +59,13 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   // 选择头像
   Future<void> _pickAvatar() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImageUtils.selectAndCropImage(
+      context,
+    );
+    //await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _avatarImage = File(pickedFile.path);
+        _avatarImage = File(pickedFile);
       });
     }
   }

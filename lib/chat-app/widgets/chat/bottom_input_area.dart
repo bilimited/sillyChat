@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -44,8 +45,10 @@ class BottomInputArea extends StatefulWidget {
   final bool showRetry;
   final bool showPlus; // 是否显示添加图片/附件
   final bool showToolBar;
+  final bool havaBackgroundImage;
 
   final List<Widget> toolBar;
+  final List<Widget> topToolBar;
 
   BottomInputArea({
     Key? key,
@@ -56,10 +59,12 @@ class BottomInputArea extends StatefulWidget {
     required this.onToggleGroupWheel,
     required this.onUpdateChat,
     this.toolBar = const [],
+    this.topToolBar = const [],
     this.canSend = true,
     this.showPlus = true,
     this.showRetry = true,
     this.showToolBar = true,
+    this.havaBackgroundImage = false,
   }) : super(key: key);
 
   @override
@@ -139,32 +144,10 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
     // 定义外发光效果
     final glowColor = colors.primary;
-    final boxShadow = _isFocused
-        // 外发光
-        ? <BoxShadow>[
-            // BoxShadow(
-            //   color: glowColor.withOpacity(0.5),
-            //   blurRadius: 4,
-            //   spreadRadius: 2,
-            //   offset: const Offset(0, 2),
-            // ),
-            BoxShadow(
-              color: glowColor.withOpacity(0.5),
-              blurRadius: 4,
-              spreadRadius: 2,
-              // offset: const Offset(0, 4),
-            ),
-          ]
-        // 阴影，或者什么也没有
-        : (widget.isDesktop
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : <BoxShadow>[]);
+    var cardColor = widget.isDesktop ? colors.surface : colors.surfaceContainer;
+    if (widget.havaBackgroundImage) {
+      cardColor = cardColor.withOpacity(0.6);
+    }
 
     // Define the core UI for the input card.
     Widget inputCard = Obx(() => AnimatedContainer(
@@ -172,8 +155,8 @@ class _BottomInputAreaState extends State<BottomInputArea> {
           duration: const Duration(milliseconds: 200), // 过渡动画时长
           curve: Curves.easeInOut, // 动画曲线
           decoration: BoxDecoration(
-            color: widget.isDesktop ? colors.surface : colors.surfaceContainer,
-            boxShadow: boxShadow, // 应用动态的阴影
+            color: cardColor,
+            border: _isFocused ? Border.all(color: glowColor, width: 2) : null,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -367,7 +350,12 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               ),
             ),
           ),
-
+        Row(
+          children: widget.topToolBar,
+        ),
+        SizedBox(
+          height: 12,
+        ),
         // Input field and actions card
         Row(
           children: [

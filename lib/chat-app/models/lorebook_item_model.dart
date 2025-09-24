@@ -1,4 +1,3 @@
-
 class LorebookItemModel {
   /// 唯一标识符，用于在数据库或列表中查找和管理条目
   final int id;
@@ -19,6 +18,9 @@ class LorebookItemModel {
 
   /// 是否激活
   final bool isActive;
+
+  /// 是否收藏
+  final bool isFavorite;
 
   /// 激活深度：对于关键词匹配，指示回溯多少条消息；对于RAG，指示检索多少个chunk。0代表使用全局（世界书）设置。
   final int activationDepth;
@@ -41,23 +43,23 @@ class LorebookItemModel {
   /// 最后更新时间
   final DateTime updatedAt;
 
-
-  LorebookItemModel({
-    required this.id,
-    required this.name,
-    required this.content,
-    this.keywords = '',
-    this.activationType = ActivationType.keywords,
-    this.activationDepth = 0, // 默认回溯0条消息
-    this.priority = 0, // 默认优先级
-    this.logic = MatchingLogic.or,
-    this.isActive = true, // 默认激活状态
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    this.positionId = 0, // 默认插入位置ID为0
-    this.position = 'before_char', // 默认插入位置
-  }) : createdAt = createdAt ?? DateTime.now(),
-       updatedAt = updatedAt ?? DateTime.now();
+  LorebookItemModel(
+      {required this.id,
+      required this.name,
+      required this.content,
+      this.keywords = '',
+      this.activationType = ActivationType.keywords,
+      this.activationDepth = 0, // 默认回溯0条消息
+      this.priority = 0, // 默认优先级
+      this.logic = MatchingLogic.or,
+      this.isActive = true, // 默认激活状态
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      this.positionId = 0, // 默认插入位置ID为0
+      this.position = 'before_char', // 默认插入位置
+      this.isFavorite = false})
+      : createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
   // JSON 序列化和反序列化方法
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -73,11 +75,12 @@ class LorebookItemModel {
         'logic': logic.toString().split('.').last, // 枚举转字符串
         'position': position.toString().split('.').last, // 枚举转字符串
         'positionId': positionId,
+        'isFavorite': isFavorite,
       };
 
   factory LorebookItemModel.fromJson(Map<String, dynamic> json) {
     return LorebookItemModel(
-      id: (json['id'] is String) ?  int.parse(json['id']) : json['id'],
+      id: (json['id'] is String) ? int.parse(json['id']) : json['id'],
       name: json['name'],
       content: json['content'],
       keywords: json['keywords'],
@@ -94,6 +97,7 @@ class LorebookItemModel {
       position: json['position'] ?? 'before_char',
       positionId: json['positionId'] ?? 0,
       isActive: json['isActive'] ?? true, // 默认激活状态为true
+      isFavorite: json['isFavorite'] ?? false, // 默认非收藏
     );
   }
 
@@ -111,6 +115,7 @@ class LorebookItemModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? position,
+    bool? isFavorite,
   }) {
     return LorebookItemModel(
       id: id ?? this.id,
@@ -126,18 +131,23 @@ class LorebookItemModel {
       positionId: positionId ?? this.positionId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 
   /// 验证这个条目是否被激活
   /// content为根据激活深度裁剪并拼接得到的消息记录
-  bool verify(String content){
-    if(activationType == ActivationType.keywords){
+  bool verify(String content) {
+    if (activationType == ActivationType.keywords) {
       switch (logic) {
         case MatchingLogic.and:
-          return keywords.split(',').every((keyword) => content.contains(keyword.trim()));
+          return keywords
+              .split(',')
+              .every((keyword) => content.contains(keyword.trim()));
         case MatchingLogic.or:
-          return keywords.split(',').any((keyword) => content.contains(keyword.trim()));
+          return keywords
+              .split(',')
+              .any((keyword) => content.contains(keyword.trim()));
         case MatchingLogic.regex:
           final regex = RegExp(keywords);
           return regex.hasMatch(content);
@@ -154,8 +164,4 @@ enum ActivationType {
   manual, // 手动激活/停用（可能用于特殊场景或调试）
 }
 
-enum MatchingLogic{
-  and,
-  or,
-  regex
-}
+enum MatchingLogic { and, or, regex }

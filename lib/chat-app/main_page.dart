@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -95,6 +96,7 @@ class _MainPageState extends State<MainPage> {
       ContactsPage(),
       ChatOptionsManagerPage(),
       LoreBookManagerPage(),
+      ApiManagerPage(),
     ];
     webDav.init();
   }
@@ -132,7 +134,7 @@ class _MainPageState extends State<MainPage> {
                                 NavigationRail(
                                     selectedIndex: desktop_destination_left,
                                     backgroundColor: colors.surface,
-                                    labelType: NavigationRailLabelType.all,
+                                    labelType: NavigationRailLabelType.selected,
                                     leading: Padding(
                                         padding:
                                             const EdgeInsets.only(top: 16.0),
@@ -163,6 +165,9 @@ class _MainPageState extends State<MainPage> {
                                       NavigationRailDestination(
                                           icon: const Icon(Icons.book),
                                           label: const Text('世界书')),
+                                      NavigationRailDestination(
+                                          icon: const Icon(Icons.api),
+                                          label: const Text('API')),
                                     ],
                                     onDestinationSelected: (index) {
                                       setState(() {
@@ -368,97 +373,8 @@ class _MainPageState extends State<MainPage> {
                 ))));
   }
 
-  @Deprecated('use MobileMainPage instead.')
-  Widget _buildMobile(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: _currentIndex < 2
-          ? AppBar(
-              title: Obx(
-                () => Row(
-                  children: [
-                    GestureDetector(
-                        onTap: _showCharacterSelectDialog,
-                        child: CircleAvatar(
-                            radius: 20,
-                            backgroundImage:
-                                ImageUtils.getProvider(me.avatar))),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          SettingController.currectValutName.isEmpty
-                              ? "根目录"
-                              : SettingController.currectValutName,
-                          style: textTheme.titleLarge,
-                        ),
-                        Text(
-                          "上次同步时间:${_vaultSettingController.lastSyncTimeString}",
-                          style: textTheme.titleSmall,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(Icons.switch_camera),
-                  onPressed: () {
-                    Get.to(() => VaultManagerPage());
-                  },
-                ),
-                IconButton(
-                    onPressed: () {
-                      customNavigate(SettingPage(), context: context);
-                    },
-                    icon: Icon(Icons.settings))
-              ],
-            )
-          : null,
-      body: _pages[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (int index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat),
-            label: '聊天',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.contacts_outlined),
-            selectedIcon: Icon(Icons.contacts),
-            label: '通讯录',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_applications_outlined),
-            selectedIcon: Icon(Icons.settings_applications),
-            label: '聊天预设',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.book_outlined),
-            selectedIcon: Icon(Icons.book),
-            label: '世界书',
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (SillyChatApp.isDesktop()) {
-      return _buildDesktop(context);
-    } else {
-      return _buildMobile(context);
-    }
+    return _buildDesktop(context);
   }
 }

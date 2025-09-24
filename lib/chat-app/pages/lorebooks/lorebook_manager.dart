@@ -76,10 +76,11 @@ class LoreBookManagerPage extends StatelessWidget {
                       children: [
                         if (isGlobal) _buildInfoChip('全局激活', colors.primary),
                         if (itemCount > 0)
-                          _buildInfoChip('条目: $itemCount', colors.secondary),
-                        if (activatedCount > 0)
-                          _buildInfoChip(
-                              '已激活: $activatedCount', colors.tertiary),
+                          _buildInfoChip('已启用 $itemCount/$activatedCount',
+                              colors.secondary),
+                        // if (activatedCount > 0)
+                        //   _buildInfoChip(
+                        //       '已激活: $activatedCount', colors.tertiary),
                       ],
                     ),
                   ],

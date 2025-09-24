@@ -231,8 +231,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 
   void _openChat(String path) {
     ChatController.of.currentChat.value = ChatSessionController(path);
-    ChatController.of.pageController.animateToPage(1,
-        duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+    if (ChatController.of.pageController.hasClients) {
+      ChatController.of.pageController.animateToPage(1,
+          duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
   }
 
   @override
@@ -290,21 +292,9 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       );
     } else {
       return AppBar(
-          // leading: _currentDirectory.path != widget.directory.path
-          //     ? IconButton(
-          //         onPressed: () {
-          //           setState(() {
-          //             _currentDirectory = _currentDirectory.parent;
-          //             ChatController.of.currentPath.value =
-          //                 _currentDirectory.path;
-          //             _loadFiles();
-          //           });
-          //         },
-          //         icon: Icon(Icons.arrow_back))
-          //     : null,
           title: BreadcrumbNavigation(
-        path: _currentDirectory.path,
-        basePath: widget.directory.path,
+        path: path.normalize(_currentDirectory.path).replaceAll('\\', '/'),
+        basePath: path.normalize(widget.directory.path).replaceAll('\\', '/'),
         maxLevels: 10,
         style: TextStyle(fontSize: 16),
         activeStyle: TextStyle(

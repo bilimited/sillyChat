@@ -234,7 +234,6 @@ class _LeftPageState extends State<LeftPage>
             icon: Icon(Icons.api_outlined),
             selectedIcon: Icon(Icons.api),
           ),
-          const Spacer(), // 将底部组件推到底部
           Divider(
             height: 20,
           ),

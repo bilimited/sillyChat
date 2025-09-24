@@ -2,8 +2,9 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_advanced_switch/flutter_advanced_switch.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
+import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
+import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
@@ -18,6 +19,7 @@ import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
+import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -107,21 +109,6 @@ class _ChatPageState extends State<ChatPage> {
       });
     }
   }
-
-  // 这个函数本来是用来处理传入的SessionController更换时热插拔的。去掉似乎也没事。
-  // @override
-  // void didUpdateWidget(ChatDetailPage oldWidget) {
-  //   super.didUpdateWidget(oldWidget);
-  //   // 检查新旧 controller 实例是否是同一个，如果不是，则需要更新
-  //   if (widget.sessionController != oldWidget.sessionController) {
-  //     // 必须使用与注册时相同的 tag
-  //     final tag = oldWidget.sessionController.hashCode.toString();
-  //     if (Get.isRegistered<ChatSessionController>(tag: tag)) {
-  //       Get.delete<ChatSessionController>(tag: tag);
-  //     }
-  //     _registerController(widget.sessionController);
-  //   }
-  // }
 
   void _registerController(ChatSessionController controller) {
     // 使用一个唯一的标识符 (tag) 来注册 controller
@@ -768,27 +755,26 @@ class _ChatPageState extends State<ChatPage> {
                       setState(() => _showWheel = !_showWheel);
                     },
                     onUpdateChat: _updateChat,
+                    topToolBar: [
+                      ToggleChip(
+                          icon: Icons.chat,
+                          text: '群聊模式',
+                          initialValue: chat.mode == ChatMode.group,
+                          onToggle: (value) {
+                            setState(() {
+                              if (chat.mode == ChatMode.group) {
+                                chat.mode = ChatMode.auto;
+                              } else {
+                                chat.mode = ChatMode.group;
+                              }
+                            });
+
+                            _updateChat();
+                          }),
+                    ],
+                    havaBackgroundImage: chat.assistant.backgroundImage != null,
                     // TOOL BAR
                     toolBar: [
-                      AdvancedSwitch(
-                        width: 64,
-                        initialValue: chat.mode == ChatMode.group, // Group为True
-                        activeColor: colors.primary,
-                        inactiveColor: colors.secondary,
-                        onChanged: (value) {
-                          setState(() {
-                            if (chat.mode == ChatMode.group) {
-                              chat.mode = ChatMode.auto;
-                            } else {
-                              chat.mode = ChatMode.group;
-                            }
-                          });
-
-                          _updateChat();
-                        },
-                        activeChild: Text('群聊'),
-                        inactiveChild: Text('自动'),
-                      ),
                       if (isGroupMode && !isGenerating)
                         IconButton(
                           icon: Icon(Icons.group, color: colors.outline),
@@ -1089,50 +1075,6 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.more_horiz),
-                onPressed: () {
-                  final List<PopupMenuEntry<String>> menuItems = [
-                    PopupMenuItem<String>(
-                      child: CheckboxListTile(
-                        title: const Text('聊天模式'),
-                        value: isAutoMode,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            final m =
-                                value == true ? ChatMode.auto : ChatMode.manual;
-                            chat.mode = m;
-                            _updateChat();
-                          });
-                          Get.back(); // 关闭菜单
-                        },
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      child: CheckboxListTile(
-                        title: const Text('群聊模式'),
-                        value: isGroupMode,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            final m = value == true
-                                ? ChatMode.group
-                                : ChatMode.manual;
-                            chat.mode = m;
-                            _updateChat();
-                          });
-                          Get.back(); // 关闭菜单
-                        },
-                      ),
-                    ),
-                  ];
-
-                  showMenu(
-                    context: context,
-                    position: RelativeRect.fromLTRB(1000, 0, 0, 0),
-                    items: menuItems,
-                  );
-                },
-              ),
-              IconButton(
                 icon: Icon(
                   Icons.settings,
                 ),
@@ -1291,7 +1233,7 @@ class _ChatPageState extends State<ChatPage> {
                   // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
                   ? Container(
                       key: const ValueKey('LoadScreen'),
-                      child: sessionController.isChatUninitialized
+                      child: !sessionController.isChatUninitialized
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )
