@@ -235,7 +235,9 @@ class _EditPromptPageState extends State<EditPromptPage> {
                       labelText: '内容',
                     ),
                     maxLines: 18,
-                    style: TextStyle(fontSize: 14),
+                    style: TextStyle(
+                      fontSize: 14,
+                    ),
                     onSubmitted: (regexPatternMatchedList, text) {
                       _contentController.text = text;
                     },

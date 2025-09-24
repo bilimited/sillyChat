@@ -11,11 +11,15 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/utils/markdown/latex_block_syntax.dart';
+import 'package:flutter_example/chat-app/utils/markdown/latex_element_builder.dart';
+import 'package:flutter_example/chat-app/utils/markdown/latex_inline_syntax.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown/flutter_markdown.dart';
+// import 'package:flutter_markdown_latex/flutter_markdown_latex.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -58,11 +62,18 @@ class QuotedTextBuilder extends MarkdownElementBuilder {
   }
 }
 
+class LatexSyntax extends md.InlineSyntax {
+  LatexSyntax() : super(r'"([^"]*)"');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final text = md.Element.text('latex', match.group(1)!);
+    parser.addNode(text);
+    return true;
+  }
+}
+
 class HtmlTagSyntax extends md.InlineSyntax {
-  // 匹配 <tag attribute='value'>content</tag>
-  // 1. Tag name
-  // 2. Attributes
-  // 3. Content
   HtmlTagSyntax() : super(r'<([a-zA-Z0-9]+)\s*([^>]*)>(.*?)<\/\1>');
 
   // 正则表达式用于解析属性
@@ -492,6 +503,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                         'quotedText': QuotedTextBuilder(
                             TextScaler.linear(displaySetting.ContentFontScale)),
                         'font': FontColorBuilder(),
+                        'latex': LatexElementBuilder(
+                          // textStyle: const TextStyle(color: Colors.blue),
+                          textScaleFactor: 1.2,
+                        ),
                       },
                 extensionSet: md.ExtensionSet([
                   const md.FencedCodeBlockSyntax(),
@@ -499,9 +514,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                   const md.UnorderedListWithCheckboxSyntax(),
                   const md.OrderedListWithCheckboxSyntax(),
                   const md.FootnoteDefSyntax(),
+                  LatexBlockSyntax()
                 ], [
                   QuotedTextSyntax(),
                   HtmlTagSyntax(),
+                  LatexInlineSyntax()
                 ]),
                 softLineBreak: true,
                 shrinkWrap: true,
