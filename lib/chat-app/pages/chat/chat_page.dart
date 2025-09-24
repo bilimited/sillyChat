@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
@@ -360,6 +361,16 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  // 显示消息优化对话框
+  void _showOptimizationDialog(MessageModel message) {
+    customNavigate(
+        MessageOptimizationPage(
+          sessionController: sessionController,
+          message: message,
+        ),
+        context: context);
+  }
+
   // 选择消息时的底部操作菜单
   Widget _buildMessageButtonGroup(bool isSelected, MessageModel message) {
     return AnimatedOpacity(
@@ -427,6 +438,12 @@ class _ChatPageState extends State<ChatPage> {
             });
             _updateChat();
           },
+        ),
+        const SizedBox(width: 8),
+        _buildActionButton(
+          icon: Icons.auto_fix_high,
+          label: '优化',
+          onTap: () => _showOptimizationDialog(message),
         ),
         const SizedBox(width: 8),
         _buildActionButton(
