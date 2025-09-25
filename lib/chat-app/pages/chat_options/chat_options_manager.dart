@@ -12,8 +12,9 @@ import '../../models/chat_option_model.dart';
 
 class ChatOptionsManagerPage extends StatelessWidget {
   final ChatOptionController _controller = Get.find<ChatOptionController>();
-
-  ChatOptionsManagerPage({Key? key}) : super(key: key);
+// 顶级菜单的key，用于控制侧边栏
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  ChatOptionsManagerPage({Key? key, this.scaffoldKey}) : super(key: key);
 
   void onDelete(BuildContext context, int index) {
     showDialog<bool>(
@@ -129,6 +130,11 @@ class ChatOptionsManagerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              scaffoldKey?.currentState?.openDrawer();
+            },
+            icon: Icon(Icons.menu)),
         title: const Text('聊天预设'),
         actions: [
           IconButton(

@@ -118,13 +118,7 @@ class _LeftPageState extends State<LeftPage>
   bool get wantKeepAlive => true;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<Widget> _pages = [
-    ChatManagePage(),
-    const ContactsPage(),
-    ChatOptionsManagerPage(),
-    LoreBookManagerPage(),
-    ApiManagerPage(),
-  ];
+  late List<Widget> _pages;
 
   int _currentIndex = 0;
   CharacterModel get me => CharacterController.of.me;
@@ -137,6 +131,28 @@ class _LeftPageState extends State<LeftPage>
       VaultSettingController.of().myId.value = character.id;
       await VaultSettingController.of().saveSettings();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      ChatManagePage(
+        scaffoldKey: scaffoldKey,
+      ),
+      ContactsPage(
+        scaffoldKey: scaffoldKey,
+      ),
+      ChatOptionsManagerPage(
+        scaffoldKey: scaffoldKey,
+      ),
+      LoreBookManagerPage(
+        scaffoldKey: scaffoldKey,
+      ),
+      ApiManagerPage(
+        scaffoldKey: scaffoldKey,
+      ),
+    ];
   }
 
   @override

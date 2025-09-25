@@ -9,7 +9,7 @@ class CharacterController extends GetxController {
   final RxList<CharacterModel> characters = <CharacterModel>[].obs;
   final String fileName = 'characters.json';
 
-  CharacterModel? characterCilpBoard = null;
+  Rx<CharacterModel?> characterCilpBoard = Rx(null);
 
   final VaultSettingController _vaultSettingController = Get.find();
 

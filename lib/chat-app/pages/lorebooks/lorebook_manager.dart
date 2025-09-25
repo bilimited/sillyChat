@@ -7,8 +7,8 @@ import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 
 class LoreBookManagerPage extends StatelessWidget {
   final LoreBookController controller = Get.put(LoreBookController());
-
-  LoreBookManagerPage({super.key});
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  LoreBookManagerPage({super.key, this.scaffoldKey});
 
   // 用于创建信息标签的辅助方法
   Widget _buildInfoChip(String label, Color color, {IconData? icon}) {
@@ -132,6 +132,11 @@ class LoreBookManagerPage extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              scaffoldKey?.currentState?.openDrawer();
+            },
+            icon: Icon(Icons.menu)),
         title: const Text('世界书'),
       ),
       body: Obx(() {

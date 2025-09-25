@@ -6,11 +6,19 @@ import 'api_edit.dart';
 
 class ApiManagerPage extends StatelessWidget {
   final VaultSettingController controller = Get.find();
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+
+  ApiManagerPage({super.key, this.scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              scaffoldKey?.currentState?.openDrawer();
+            },
+            icon: Icon(Icons.menu)),
         title: Text("API"),
       ),
       body: Obx(

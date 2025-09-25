@@ -1,114 +1,99 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
-// 假设上面的组件代码保存在这个文件中
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyTestApp extends StatelessWidget {
+  const MyTestApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Breadcrumb Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 16)),
+        useMaterial3: true,
       ),
-      home: const BreadcrumbDemoPage(),
+      home: const MyHomePage(),
     );
   }
 }
 
-class BreadcrumbDemoPage extends StatefulWidget {
-  const BreadcrumbDemoPage({Key? key}) : super(key: key);
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
 
   @override
-  State<BreadcrumbDemoPage> createState() => _BreadcrumbDemoPageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _BreadcrumbDemoPageState extends State<BreadcrumbDemoPage> {
-  // 定义根路径
-  final String _basePath = 'a/b';
-  // 当前路径，会动态变化
-  String _currentPath = 'a/b/c/d/e';
+class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
 
-  void _updatePath(String newPath) {
-    setState(() {
-      _currentPath = newPath;
-    });
-    // 在实际应用中，这里可能会触发真正的页面导航
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('导航到: $newPath'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
+  final List<Widget> _pages = [
+    const Center(
+      child: Text('首页', style: TextStyle(fontSize: 24)),
+    ),
+    const Center(
+      child: Text('邮件', style: TextStyle(fontSize: 24)),
+    ),
+    const Center(
+      child: Text('设置', style: TextStyle(fontSize: 24)),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Breadcrumb Demo'),
+        title: const Text('NavigationDrawer 示例'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 使用面包屑组件
-            BreadcrumbNavigation(
-              path: _currentPath,
-              basePath: _basePath,
-              onCrumbTap: _updatePath, // 传入回调函数
-              // 自定义样式 (可选)
-              style: TextStyle(color: Colors.blue.shade700, fontSize: 16),
-              activeStyle: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
+      drawer: NavigationDrawer(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          // 点击后关闭抽屉
+          Navigator.of(context).pop();
+        },
+        children: const [
+          // 头部
+          Padding(
+            padding: EdgeInsets.fromLTRB(28, 16, 16, 10),
+            child: Text(
+              '导航菜单',
+              style: TextStyle(
                 fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const Divider(height: 40),
-            Text('当前完整路径: $_currentPath',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-
-            // 用于模拟导航的按钮
-            const Text('模拟导航:', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _updatePath('a/b'),
-                  child: const Text('跳转到 根路径'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _updatePath('a/b/c'),
-                  child: const Text('跳转到 c'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _updatePath('a/b/c/d'),
-                  child: const Text('跳转到 d'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _updatePath('a/b/c/d/e'),
-                  child: const Text('跳转到 e (超过3级)'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _updatePath('a/b/c/d/e/f'),
-                  child: const Text('跳转到 f (超过3级)'),
-                ),
-              ],
+          ),
+          // 导航项
+          NavigationDrawerDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: Text('首页'),
+          ),
+          NavigationDrawerDestination(
+            icon: Icon(Icons.mail_outlined),
+            selectedIcon: Icon(Icons.mail),
+            label: Text('邮件'),
+          ),
+          Divider(), // 分割线
+          Padding(
+            padding: EdgeInsets.fromLTRB(28, 16, 16, 10),
+            child: Text(
+              '其他',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ],
-        ),
+          ),
+          NavigationDrawerDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: Text('设置'),
+          ),
+        ],
       ),
+      body: _pages[_selectedIndex],
     );
   }
 }

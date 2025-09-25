@@ -186,7 +186,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     if (_character == null) return;
 
     var char = _character!.copyWith(roleName: _character!.roleName + '的副本');
-    _characterController.characterCilpBoard = char;
+    _characterController.characterCilpBoard.value = char;
     SillyChatApp.snackbar(context, '角色已复制到剪贴板');
   }
 

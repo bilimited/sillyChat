@@ -27,11 +27,15 @@ typedef FileManagerItemBuilder = Widget Function(BuildContext context,
 class FileManagerWidget extends StatefulWidget {
   final Directory directory; // 管理的文件夹根路径
   final List<String> fileExtensions; // 显示的文件类型
+  final List<Widget> actions; // AppBar actions
+  final Widget? leading;
 
   const FileManagerWidget({
     super.key,
     required this.directory,
     this.fileExtensions = const ['.chat'],
+    this.actions = const [],
+    this.leading,
   });
 
   @override
@@ -292,22 +296,24 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       );
     } else {
       return AppBar(
-          title: BreadcrumbNavigation(
-        path: path.normalize(_currentDirectory.path).replaceAll('\\', '/'),
-        basePath: path.normalize(widget.directory.path).replaceAll('\\', '/'),
-        maxLevels: 10,
-        style: TextStyle(fontSize: 16),
-        activeStyle: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: theme.primaryColor),
-        onCrumbTap: (path) {
-          _currentDirectory = Directory(path);
-          ChatController.of.currentPath.value = _currentDirectory.path;
-          _loadFiles();
-        },
-      ) //_buildPathTitle(),
-          );
+        leading: widget.leading,
+        actions: [...widget.actions],
+        title: BreadcrumbNavigation(
+          path: path.normalize(_currentDirectory.path).replaceAll('\\', '/'),
+          basePath: path.normalize(widget.directory.path).replaceAll('\\', '/'),
+          maxLevels: 10,
+          style: TextStyle(fontSize: 16),
+          activeStyle: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: theme.primaryColor),
+          onCrumbTap: (path) {
+            _currentDirectory = Directory(path);
+            ChatController.of.currentPath.value = _currentDirectory.path;
+            _loadFiles();
+          },
+        ),
+      );
     }
   }
 
@@ -353,6 +359,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     );
   }
 
+  // 多选时的Action
   List<Widget> _buildAppBarActions() {
     List<Widget> actions = [];
 
@@ -869,7 +876,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 }
 
 class ChatManagePage extends StatefulWidget {
-  const ChatManagePage({Key? key}) : super(key: key);
+  // 顶级菜单的key，用于控制侧边栏
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+
+  const ChatManagePage({Key? key, this.scaffoldKey}) : super(key: key);
 
   @override
   State<ChatManagePage> createState() => _ChatManagePageState();
@@ -894,6 +904,11 @@ class _ChatManagePageState extends State<ChatManagePage> {
               }
               if (snapshot.hasData) {
                 return FileManagerWidget(
+                  leading: IconButton(
+                      onPressed: () {
+                        widget.scaffoldKey?.currentState?.openDrawer();
+                      },
+                      icon: Icon(Icons.menu)),
                   directory: snapshot.data!,
                 );
               }

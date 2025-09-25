@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/character/personal_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
@@ -13,7 +14,9 @@ import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
 class ContactsPage extends StatefulWidget {
-  const ContactsPage({Key? key}) : super(key: key);
+  // 顶级菜单的key，用于控制侧边栏
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  const ContactsPage({Key? key, this.scaffoldKey}) : super(key: key);
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -246,6 +249,54 @@ class _ContactsPageState extends State<ContactsPage> {
     );
   }
 
+// 这是一个新的辅助方法，用于显示新增角色的对话框
+  void _showAddCharacterDialog(BuildContext context) {
+    // 获取当前主题，以便对话框样式与应用保持一致
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('新增角色'),
+          // 使用 Column 来垂直排列选项
+          content: Column(
+            mainAxisSize: MainAxisSize.min, // 让 Column 根据内容自适应高度
+            children: <Widget>[
+              // 选项1: 创建空角色
+              ListTile(
+                leading: const Icon(Icons.person_add),
+                title: const Text('创建空角色'),
+                onTap: () {
+                  Navigator.of(dialogContext).pop(); // 首先关闭对话框
+                  customNavigate(const EditCharacterPage(), context: context);
+                },
+              ),
+              // 选项2: 从ST导入
+              ListTile(
+                leading: const Icon(Icons.file_upload),
+                title: const Text('从ST导入角色卡'),
+                onTap: () {
+                  Navigator.of(dialogContext).pop(); // 关闭对话框
+                  _importCharCard();
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            // 提供一个取消按钮
+            TextButton(
+              child: const Text('取消'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // 点击取消时关闭对话框
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   ListTile _contractWidget(BuildContext context, CharacterModel contact) {
     return ListTile(
       leading: Stack(
@@ -287,9 +338,44 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      floatingActionButton: Obx(() => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (CharacterController.of.characterCilpBoard.value != null)
+                FloatingActionButton(
+                  heroTag: 'paste_character',
+                  onPressed: () {
+                    characterController.addCharacter(
+                        characterController.characterCilpBoard.value!);
+                    // setState() is likely needed here to reflect the change
+                    setState(() {
+                      characterController.characterCilpBoard.value = null;
+                    });
+                  },
+                  tooltip: '粘贴角色',
+                  child: const Icon(Icons.paste),
+                ),
+              SizedBox(
+                height: 16,
+              ),
+              FloatingActionButton(
+                onPressed: () {
+                  // 点击按钮时，调用函数显示对话框
+                  _showAddCharacterDialog(context);
+                },
+                tooltip: '新增角色',
+                child: const Icon(Icons.add),
+              ),
+            ],
+          )),
       backgroundColor: theme.scaffoldBackgroundColor,
       // 使用 AppBar
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              widget.scaffoldKey?.currentState?.openDrawer();
+            },
+            icon: Icon(Icons.menu)),
         // AppBar 标题区域放置搜索框
         title: Container(
           height: 40, // 设置一个合适的高度
@@ -332,58 +418,6 @@ class _ContactsPageState extends State<ContactsPage> {
         ),
         // AppBar 操作区域放置按钮
         actions: [
-          // 新增角色按钮
-          PopupMenuButton<int>(
-            icon: Icon(Icons.add, color: theme.colorScheme.onSurface),
-            tooltip: '新增角色', // 添加提示
-
-            onSelected: (value) {
-              if (value == 0) {
-                // 创建空角色
-                customNavigate(const EditCharacterPage(), context: context);
-              } else if (value == 1) {
-                _importCharCard();
-              } else if (value == 2 &&
-                  characterController.characterCilpBoard != null) {
-                characterController
-                    .addCharacter(characterController.characterCilpBoard!);
-                characterController.characterCilpBoard = null;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 0,
-                child: Row(
-                  children: [
-                    const Icon(Icons.person_add, size: 20),
-                    const SizedBox(width: 8),
-                    const Text('创建空角色'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 1,
-                child: Row(
-                  children: [
-                    const Icon(Icons.file_upload, size: 20),
-                    const SizedBox(width: 8),
-                    const Text('从ST导入角色卡'),
-                  ],
-                ),
-              ),
-              if (characterController.characterCilpBoard != null)
-                PopupMenuItem(
-                  value: 2,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.paste, size: 20),
-                      const SizedBox(width: 8),
-                      const Text('从剪切板粘贴角色'),
-                    ],
-                  ),
-                ),
-            ],
-          ),
           // 排序模式切换按钮
           IconButton(
             icon: Icon(_isSortingMode ? Icons.check : Icons.sort,
