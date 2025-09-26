@@ -173,7 +173,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
   }
 
   // 构建用于预览的prompt
-  List<Map<String, String>> _buildPreviewPrompt() {
+  List<LLMMessage> _buildPreviewPrompt() {
     if (selectedOption == null) return [];
 
     final contextMessages = _getContextMessages();
@@ -223,17 +223,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     // 首先调用标准的 getLLMMessageList 方法，这会处理所有的 prompt 构建流程
     final llmMessages = promptBuilder.getLLMMessageList();
 
-    final result = <Map<String, String>>[];
-
-    // 转换为预览格式
-    for (final msg in llmMessages) {
-      result.add({
-        'role': msg.role,
-        'content': msg.content,
-      });
-    }
-
-    return result;
+    return llmMessages;
   }
 
   // 执行优化
@@ -778,7 +768,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                       child: SingleChildScrollView(
                         child: Text(
                           _buildPreviewPrompt()
-                              .map((msg) => '${msg['role']}: ${msg['content']}')
+                              .map((msg) => '${msg.role}: ${msg.content}')
                               .join('\n\n'),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),

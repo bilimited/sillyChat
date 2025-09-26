@@ -76,33 +76,20 @@ enum ServiceProvider {
   };
 
   static findProviderByModelName(String modelName) {
-    return providerData.entries.firstWhere(
-      (entry) => entry.value["modelList"].contains(modelName),
-      orElse: () => MapEntry(ServiceProvider.custom_openai_compatible, {}),
-    ).key;
+    return providerData.entries
+        .firstWhere(
+          (entry) => entry.value["modelList"].contains(modelName),
+          orElse: () => MapEntry(ServiceProvider.custom_openai_compatible, {}),
+        )
+        .key;
   }
 
-  
+  String toLocalString() => providerData[this]?["localString"] ?? name;
 
-  String toLocalString() =>
-      providerData[this]?["localString"] ?? name;
-
-  String get defaultUrl =>
-      providerData[this]?["defaultUrl"] ?? "";
+  String get defaultUrl => providerData[this]?["defaultUrl"] ?? "";
 
   List<String> get modelList =>
       List<String>.from(providerData[this]?["modelList"] ?? []);
-
-  bool get isOpenAICompatiable => [
-        ServiceProvider.openai,
-        ServiceProvider.deepseek,
-        ServiceProvider.siliconflow,
-        ServiceProvider.custom_openai_compatible
-      ].contains(this);
-
-  bool get isGoogleCompatiable => this == ServiceProvider.google;
-
-  bool get isCustom => this == ServiceProvider.custom_openai_compatible;
 }
 
 class ApiModel {
@@ -133,8 +120,7 @@ class ApiModel {
       displayName: json['displayName'] as String? ?? '',
       modelName: json['modelName'] as String,
       url: json['url'] as String,
-      provider:
-          ServiceProvider.fromJson(json['provider'] ?? 'openai'),
+      provider: ServiceProvider.fromJson(json['provider'] ?? 'openai'),
       remarks: json['remarks'] as String?,
       requestBody: json['requestBody'] as String?,
     );

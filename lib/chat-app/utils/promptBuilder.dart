@@ -206,7 +206,7 @@ class Promptbuilder {
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
 
-    return mergeLLMMessages(
+    return _mergeLLMMessages(
         llmMessages, api?.provider == ServiceProvider.google);
   }
 
@@ -265,7 +265,7 @@ class Promptbuilder {
 
   // 合并相邻的，相同role的Message
   // 若isConvertSystemToUser，则先将所有role为system的消息转为user
-  List<LLMMessage> mergeLLMMessages(
+  List<LLMMessage> _mergeLLMMessages(
       List<LLMMessage> messages, bool isConvertSystemToUser) {
     if (messages.isEmpty) return [];
     if (isConvertSystemToUser) {

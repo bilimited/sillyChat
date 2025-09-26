@@ -230,11 +230,7 @@ class _EditChatPageState extends State<EditChatPage>
                       final messages = Promptbuilder(
                               widget.chat, widget.chat.assistant.bindOption)
                           .getLLMMessageList();
-                      customNavigate(
-                          PromptPreviewPage(
-                              messages: messages
-                                  .map((ele) => ele.toOpenAIJson())
-                                  .toList()),
+                      customNavigate(PromptPreviewPage(messages: messages),
                           context: context);
                     },
                   ),

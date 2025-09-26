@@ -72,22 +72,6 @@ class LLMRequestOptions {
     };
   }
 
-  Map<String, dynamic> toOpenAIJson() {
-    return {
-      'messages': messages.map((msg) => msg.toOpenAIJson()).toList(),
-      'max_tokens': maxTokens,
-      'temperature': temperature,
-      'top_p': topP,
-      'presence_penalty': presencePenalty,
-      'frequency_penalty': frequencyPenalty,
-      'max_history_length': maxHistoryLength,
-      'api_id': apiId,
-      'is_delete_thinking': isDeleteThinking,
-      'is_think_mode': isThinkMode,
-      'seed': seed,
-    };
-  }
-
   LLMRequestOptions copyWith({
     List<LLMMessage>? messages,
     int? maxTokens,
