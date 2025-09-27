@@ -89,7 +89,8 @@ class ChatOptionModel {
     );
   }
 
-  factory ChatOptionModel.empty() {
+  // RP预设，包含所有功能
+  factory ChatOptionModel.roleplay() {
     int id = DateTime.now().microsecondsSinceEpoch;
     const String bilimitedComments = "作者注释：\n"
         "<lore xxx default=xxx>代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到<lore x ...> 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
@@ -125,10 +126,6 @@ class ChatOptionModel {
 <userbrief>
 现在，我将开始与你聊天。
 """;
-//     const String userMessage = """<lore before_usermessage>
-// <lastUserMessage>
-// <lore after_usermessage>
-// <char>:""";
 
     return ChatOptionModel(
         id: 0,
@@ -145,6 +142,52 @@ class ChatOptionModel {
               id: id, content: userDefine, role: 'system', name: '角色定义'),
           PromptModel(
               id: id + 1,
+              content: '<messageList>',
+              role: 'system',
+              name: '消息列表',
+              isChatHistory: true),
+          // PromptModel(
+          //     id: id + 2, content: userMessage, role: 'user', name: '用户输入')
+        ],
+        regex: []);
+  }
+
+  // 普通预设，只有角色定义和消息列表
+  factory ChatOptionModel.common() {
+    int id = DateTime.now().microsecondsSinceEpoch;
+    return ChatOptionModel(
+        id: 0,
+        name: '默认预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel(
+              id: id,
+              content: '<archive>',
+              role: 'system',
+              name: '角色定义',
+              isChatHistory: true),
+          PromptModel(
+              id: id,
+              content: '<messageList>',
+              role: 'system',
+              name: '消息列表',
+              isChatHistory: true),
+          // PromptModel(
+          //     id: id + 2, content: userMessage, role: 'user', name: '用户输入')
+        ],
+        regex: []);
+  }
+
+  // 空白预设，只有消息列表
+  factory ChatOptionModel.empty() {
+    int id = DateTime.now().microsecondsSinceEpoch;
+    return ChatOptionModel(
+        id: 0,
+        name: '默认预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel(
+              id: id,
               content: '<messageList>',
               role: 'system',
               name: '消息列表',

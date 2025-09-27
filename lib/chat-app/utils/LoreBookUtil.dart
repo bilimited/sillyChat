@@ -114,8 +114,8 @@ class Lorebookutil {
     List<LorebookItemModel> activatedItems = [];
 
     for (var item in allItems) {
-      // 手动模式特殊对待
-      if (item.activationType == ActivationType.manual) {
+      // 非手动模式特殊对待
+      if (item.activationType != ActivationType.manual) {
         final stat = chat.getLorebookItemStat(loreBook.id, item.id);
         if ((stat == null && item.isActive) || stat == true) {
           activatedItems.add(item);

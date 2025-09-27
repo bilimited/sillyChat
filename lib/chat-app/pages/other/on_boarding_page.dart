@@ -153,7 +153,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       });
     } else {
       // 不导入预设：创建一个空预设，使用第一个Api
-      ChatOptionController.of().addChatOption(ChatOptionModel.empty()
+      ChatOptionController.of().addChatOption(ChatOptionModel.roleplay()
         ..requestOptions =
             LLMRequestOptions(messages: [], apiId: vault.apis.first.id));
     }

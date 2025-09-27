@@ -90,7 +90,7 @@ class _ChatPageState extends State<ChatPage> {
   List<LorebookItemModel> get manualItems {
     final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
     final chars = chat.characters.expand((char) => char.loreBooks).toList();
-    List<LorebookItemModel> lst = [];
+    Set<LorebookItemModel> lst = {};
     for (final lorebook in [...global, ...chars]) {
       for (final item in lorebook.items) {
         if (item.activationType == ActivationType.manual) {
@@ -98,7 +98,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       }
     }
-    return lst;
+    return lst.toList();
   }
 
   // 正在重试的消息在消息列表中的位置（0代表新生成的消息,1代表最后一条消息）

@@ -32,7 +32,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
   void initState() {
     super.initState();
     isEditing = widget.option != null;
-    final defaultOption = ChatOptionModel.empty();
+    final defaultOption = ChatOptionModel.roleplay();
 
     _nameController.text = widget.option?.name ?? '';
     _requestOptions =

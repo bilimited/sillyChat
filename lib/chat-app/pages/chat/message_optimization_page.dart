@@ -207,7 +207,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     print('Debug: widget.message.content = ${widget.message.content}');
     final promptBuilder = Promptbuilder(
         tempChat,
-        ChatOptionModel.empty().copyWith(true,
+        ChatOptionModel.roleplay().copyWith(true,
             prompts: selectedOption!.prompts
                 .map((prompt) => prompt.copyWith(
                     content: prompt.content.replaceAll(
@@ -277,7 +277,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       print('Debug: widget.message.content = ${widget.message.content}');
       final promptBuilder = Promptbuilder(
           tempChat,
-          ChatOptionModel.empty().copyWith(true,
+          ChatOptionModel.roleplay().copyWith(true,
               prompts: selectedOption!.prompts
                   .map((prompt) => prompt.copyWith(
                       content: prompt.content.replaceAll(

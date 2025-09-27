@@ -8,9 +8,8 @@ class ChatOptionController extends GetxController {
   final RxList<ChatOptionModel> chatOptions = <ChatOptionModel>[].obs;
   final String fileName = 'chat_options.json';
 
-  ChatOptionModel get defaultOption => chatOptions.isEmpty
-      ? ChatOptionModel.empty()
-      : chatOptions[0];
+  ChatOptionModel get defaultOption =>
+      chatOptions.isEmpty ? ChatOptionModel.roleplay() : chatOptions[0];
 
   @override
   void onInit() {
@@ -94,7 +93,7 @@ class ChatOptionController extends GetxController {
     saveChatOptions();
   }
 
-  static ChatOptionController of(){
+  static ChatOptionController of() {
     return Get.find<ChatOptionController>();
   }
 }
