@@ -17,6 +17,8 @@ class VaultSettingController extends GetxController {
   final String vaultSettingFileName = 'settings.json';
 
   final RxList<ApiModel> apis = <ApiModel>[].obs;
+  final Rx<int?> defaultApi = Rx(null); // 如果没有设置默认API，则会自动选取第一个。
+
   final RxList<RegexModel> regexes = <RegexModel>[].obs;
   final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
   final RxInt myId = 0.obs;
@@ -84,6 +86,8 @@ class VaultSettingController extends GetxController {
                 .toList()
                 .cast<RegexModel>()
             : <RegexModel>[];
+
+        defaultApi.value = jsonMap['defaultApi'] ?? -1;
       } else {
         // 文件不存在：证明初次启动
         isShowOnBoardPage.value = true;
@@ -116,6 +120,7 @@ class VaultSettingController extends GetxController {
         'vaultName': SettingController.currectValutName,
         'lastSyncTime': lastSyncTime.value?.toIso8601String(),
         'apis': apis.map((api) => api.toJson()).toList(),
+        'defaultApi': defaultApi.value,
         'regexes': regexes.map((reg) => reg.toJson()).toList(),
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
@@ -142,7 +147,11 @@ class VaultSettingController extends GetxController {
 
   // API管理方法
   Future<void> addApi(ApiModel api) async {
+    if (apis.isEmpty) {
+      defaultApi.value = api.id;
+    }
     apis.add(api);
+
     await saveSettings();
   }
 
@@ -156,19 +165,28 @@ class VaultSettingController extends GetxController {
 
   Future<void> deleteApi({required int id}) async {
     apis.removeWhere((a) => a.id == id);
+    if (id == defaultApi.value && apis.isNotEmpty) {
+      defaultApi.value = apis.first.id;
+    }
     await saveSettings();
   }
 
+  @Deprecated('AI写的傻逼方法')
   ApiModel? getApiByUrlAndModel(String url, String modelName) {
     return apis
         .firstWhereOrNull((a) => a.url == url && a.modelName == modelName);
   }
 
   ApiModel? getApiById(int id) {
-    return apis.firstWhereOrNull((a) => a.id == id);
+    final api = apis.firstWhereOrNull((a) => a.id == id);
+    if (api == null) {
+      return apis.firstWhereOrNull((a) => a.id == defaultApi.value);
+    } else {
+      return api;
+    }
   }
 
-  static VaultSettingController of(){
+  static VaultSettingController of() {
     return Get.find<VaultSettingController>();
   }
 }

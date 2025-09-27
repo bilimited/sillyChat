@@ -12,6 +12,7 @@ class ApiManagerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -32,18 +33,93 @@ class ApiManagerPage extends StatelessWidget {
           },
           itemBuilder: (context, index) {
             final api = controller.apis[index];
-            return ListTile(
-              key: ValueKey(api),
-              title: Text('${api.displayName}(${api.modelName})'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('URL: ${api.url}'),
-                  if (api.remarks != null) Text('备注: ${api.remarks}'),
-                ],
+            return Card(
+              key: ValueKey(api.id),
+              child: InkWell(
+                onTap: () =>
+                    customNavigate(ApiEditPage(api: api), context: context),
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // 使用Expanded来让Column占据所有可用空间，从而将按钮推到末尾
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Obx(
+                              () => Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${api.displayName}',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  SizedBox(
+                                    width: 8,
+                                  ),
+                                  if (VaultSettingController.of()
+                                          .defaultApi
+                                          .value ==
+                                      api.id)
+                                    Card(
+                                      color: colors.secondaryContainer,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(4)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 2, horizontal: 6),
+                                        child: Text(
+                                          '默认',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    )
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${api.modelName}',
+                              style: TextStyle(
+                                  fontSize: 16, color: colors.outline),
+                            ),
+                            if (api.remarks != null && api.remarks!.isNotEmpty)
+                              Text(
+                                '备注: ${api.remarks}',
+                                style: TextStyle(
+                                    fontSize: 14, color: colors.outline),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // 这是新添加的弹出菜单按钮
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          // 这里处理点击事件，'value'就是PopupMenuItem的value属性
+                          if (value == 'set_default') {
+                            VaultSettingController.of().defaultApi.value =
+                                api.id;
+                          } else if (value == 'delete') {
+                            VaultSettingController.of().deleteApi(id: api.id);
+                          }
+                        },
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'set_default',
+                            child: Text('设为默认'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text('删除'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              onTap: () =>
-                  customNavigate(ApiEditPage(api: api), context: context),
             );
           },
         ),

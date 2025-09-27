@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/api_model.dart';
 
@@ -183,6 +184,17 @@ class _ApiEditPageState extends State<ApiEditPage> {
               ),
               maxLines: 3,
             ),
+            if (widget.api != null) ...[
+              const SizedBox(height: 16),
+              TextButton(
+                  onPressed: () {
+                    VaultSettingController.of().defaultApi.value =
+                        widget.api!.id;
+                    SillyChatApp.snackbar(context, '设置成功!');
+                  },
+                  child: Text('设为默认API')),
+            ],
+
             Divider(),
             const SizedBox(height: 16),
             TextFormField(

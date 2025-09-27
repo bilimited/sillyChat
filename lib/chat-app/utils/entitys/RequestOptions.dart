@@ -29,7 +29,7 @@ class LLMRequestOptions {
     this.presencePenalty = 0.0,
     this.frequencyPenalty = 0.0,
     this.maxHistoryLength = 64,
-    this.apiId = 0,
+    this.apiId = -1,
     this.isThinkMode = false,
     this.isDeleteThinking = true,
     this.seed = -1,

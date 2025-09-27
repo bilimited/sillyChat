@@ -192,10 +192,13 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         const SizedBox(height: 8),
         Obx(() {
           final apis = vaultSettingController.apis;
-          int? selectedApiId;
+          int? selectedApiId = widget.options.apiId;
+          if (!apis.contains(selectedApiId)) {
+            selectedApiId = -1;
+          }
 
-          selectedApiId =
-              vaultSettingController.getApiById(widget.options.apiId)?.id;
+          // selectedApiId =
+          //     vaultSettingController.getApiById(widget.options.apiId)?.id;
           // if(selectedApiId==null && apis.length>0){
           //   selectedApiId = apis[0].id;
           //   widget.onChanged(widget.options.copyWith(apiId: selectedApiId));
@@ -210,18 +213,32 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                         EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   hint: const Text('请选择API'),
-                  items: apis.map((api) {
-                    return DropdownMenuItem<int>(
-                      value: api.id,
+                  items: [
+                    DropdownMenuItem<int>(
+                      value: -1,
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: 250),
                         child: Text(
-                          '${api.displayName} (${api.modelName})',
+                          '无(使用默认API)',
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.outline),
                         ),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    ...apis.map((api) {
+                      return DropdownMenuItem<int>(
+                        value: api.id,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 250),
+                          child: Text(
+                            '${api.displayName} (${api.modelName})',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      );
+                    }).toList()
+                  ],
                   onChanged: (int? value) {
                     if (value != null) {
                       widget.onChanged(widget.options.copyWith(apiId: value));

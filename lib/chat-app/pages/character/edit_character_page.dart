@@ -39,9 +39,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _briefController;
   late TextEditingController _firstMessageController;
 
-  late int? _bindOption = widget.characterId != null
-      ? _characterController.getCharacterById(widget.characterId!).bindOptionId
-      : null;
+  late int? _bindOption;
 
   String? _avatarPath;
   String? _backgroundPath;
@@ -73,6 +71,16 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     _backgroundPath = _character?.backgroundImage;
     _firstMessageController =
         TextEditingController(text: _character?.firstMessage ?? '');
+
+    _bindOption = widget.characterId != null
+        ? _characterController
+            .getCharacterById(widget.characterId!)
+            .bindOptionId
+        : null;
+
+    if (!ChatOptionController.of().chatOptions.contains(_bindOption)) {
+      _bindOption = null;
+    }
   }
 
   Future<void> _pickImage(bool isAvatar) async {

@@ -69,7 +69,7 @@ class Aihandler {
       final VaultSettingController settingController = Get.find();
       final ApiModel? api = settingController.getApiById(options.apiId);
       if (api == null) {
-        Get.snackbar("未选择API", "请先选择一个API");
+        Get.snackbar("无可用API!", "请检查你是否已经配置了API");
         onGenerateStateChange('未选择API');
         isBusy = false;
         return;

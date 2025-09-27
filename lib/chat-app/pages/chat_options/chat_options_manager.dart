@@ -46,6 +46,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
   Widget _buildOptionCard(
       ChatOptionModel option, int index, BuildContext context) {
     final name = option.name;
+    final isdefaultApi = option.requestOptions.apiId == -1;
     final apiName = option.requestOptions.api?.displayName;
     final promptCount = option.prompts.length;
     final regexCount = option.regex.length;
@@ -78,7 +79,8 @@ class ChatOptionsManagerPage extends StatelessWidget {
                       runSpacing: -4.0,
                       children: [
                         if (apiName != null && apiName.isNotEmpty)
-                          _buildInfoChip('$apiName', colors.primary,
+                          _buildInfoChip(isdefaultApi ? '使用默认' : '$apiName',
+                              colors.primary,
                               icon: Icons.api),
                         if (promptCount > 0)
                           _buildInfoChip('$promptCount 提示词 ', colors.secondary),
