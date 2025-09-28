@@ -190,6 +190,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
                   onPressed: () {
                     VaultSettingController.of().defaultApi.value =
                         widget.api!.id;
+                    VaultSettingController.of().saveSettings();
                     SillyChatApp.snackbar(context, '设置成功!');
                   },
                   child: Text('设为默认API')),

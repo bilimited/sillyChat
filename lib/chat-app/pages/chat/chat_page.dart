@@ -793,12 +793,12 @@ class _ChatPageState extends State<ChatPage> {
                             setState(() => _showWheel = !_showWheel);
                           },
                         ),
-                      IconButton(
-                          onPressed: _showLoreBookActiviator,
-                          icon: Icon(
-                            Icons.book,
-                            color: colors.outline,
-                          )),
+                      // IconButton(
+                      //     onPressed: _showLoreBookActiviator,
+                      //     icon: Icon(
+                      //       Icons.book,
+                      //       color: colors.outline,
+                      //     )),
                     ],
                   );
                 })),

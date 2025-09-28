@@ -100,6 +100,7 @@ class ApiManagerPage extends StatelessWidget {
                           if (value == 'set_default') {
                             VaultSettingController.of().defaultApi.value =
                                 api.id;
+                            VaultSettingController.of().saveSettings();
                           } else if (value == 'delete') {
                             VaultSettingController.of().deleteApi(id: api.id);
                           }

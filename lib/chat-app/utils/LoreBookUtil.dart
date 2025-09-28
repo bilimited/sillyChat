@@ -114,22 +114,23 @@ class Lorebookutil {
     List<LorebookItemModel> activatedItems = [];
 
     for (var item in allItems) {
-      // 非手动模式特殊对待
-      if (item.activationType != ActivationType.manual) {
-        final stat = chat.getLorebookItemStat(loreBook.id, item.id);
-        if ((stat == null && item.isActive) || stat == true) {
-          activatedItems.add(item);
-        }
+      // Manual条目不受手动激活表影响
+      if (item.activationType == ActivationType.manual && item.isActive) {
+        activatedItems.add(item);
         continue;
       }
 
-      // 跳过未启用、activationType为Always的条目
-      if (!item.isActive) continue;
+      final stat = chat.getLorebookItemStat(loreBook.id, item.id);
+      final isActive = (stat == null && item.isActive) || stat == true;
+      if (!isActive) continue;
+
+      // 总是激活情况
       if (item.activationType == ActivationType.always) {
         activatedItems.add(item);
         continue;
       }
 
+      // 剩下的是关键词激活，且启用的条目
       // 获取激活深度,取非Prompt消息,截取最后n条
       int depth =
           item.activationDepth > 0 ? item.activationDepth : loreBook.scanDepth;

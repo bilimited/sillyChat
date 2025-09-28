@@ -7,10 +7,12 @@ import 'package:flutter_example/chat-app/pages/character/character_selector.dart
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/kv_editor.dart';
+import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:get/get.dart';
 import '../../models/chat_model.dart';
 import '../../providers/chat_controller.dart';
@@ -246,6 +248,30 @@ class _EditChatPageState extends State<EditChatPage>
                   // 一个视觉上的分隔
                   const Divider(height: 1),
                   const SizedBox(height: 8), // 增加一些垂直间距
+                  TextButton.icon(
+                    icon: Icon(Icons.book),
+                    label: Text('临时开/关世界书条目'),
+                    onPressed: () {
+                      final global = Get.find<LoreBookController>()
+                          .globalActivitedLoreBooks;
+                      final chars = widget.chat.characters
+                          .expand((char) => char.loreBooks)
+                          .toList();
+
+                      customNavigate(
+                          LoreBookActivator(
+                            chatSessionController: widget.session,
+                            lorebooks: [
+                              ...{...global, ...chars}
+                            ],
+                            chat: widget.chat,
+                          ),
+                          context: context);
+                    },
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
                   TextButton.icon(
                     icon: Icon(Icons.delete_sweep),
                     label: Text('清空聊天记录'),
