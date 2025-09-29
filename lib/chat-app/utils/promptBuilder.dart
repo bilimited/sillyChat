@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
+import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 import 'package:get/get.dart';
 
 class Promptbuilder {
@@ -75,11 +76,6 @@ class Promptbuilder {
         if (requestOptions.isMergeMessageList) {
           return LLMMessage(
               content: promptSetting.groupFormatter
-                  .replaceAll(
-                      '<char>',
-                      characterController
-                          .getCharacterById(msg.senderId)
-                          .roleName)
                   .replaceAll('<message>', content),
               role: msg.senderId == (sender?.id ?? chat.assistantId)
                   ? "assistant"
@@ -303,6 +299,17 @@ class Promptbuilder {
   }
 
   LLMMessage _mergeChatHistory(List<LLMMessage> msglst) {
+    // 获取压缩设置
+    final compressionSettings =
+        (chatOption?.requestOptions ?? chat.requestOptions)
+            .chatCompressionSettings;
+
+    // 检查是否启用 squash 模式
+    if (compressionSettings.onChatHistoryType == 'squash') {
+      return _squashMessages(msglst, compressionSettings);
+    }
+
+    // 默认的 mixin 模式（原有逻辑）
     return msglst.fold(LLMMessage(content: '', role: 'user', fileDirs: []),
         (res, msg) {
       res.fileDirs.addAll(msg.fileDirs);
@@ -311,5 +318,74 @@ class Promptbuilder {
           role: 'user',
           fileDirs: [...res.fileDirs, ...msg.fileDirs]);
     });
+  }
+
+  /// 实现 squash 压缩模式
+  LLMMessage _squashMessages(
+      List<LLMMessage> messages, ChatCompressionSettings settings) {
+    // 分离不同类型的消息
+    final userMessages = <LLMMessage>[];
+    final assistantMessages = <LLMMessage>[];
+    final systemMessages = <LLMMessage>[];
+
+    for (final message in messages) {
+      switch (message.role) {
+        case 'user':
+          userMessages.add(message);
+          break;
+        case 'assistant':
+          assistantMessages.add(message);
+          break;
+        case 'system':
+          systemMessages.add(message);
+          break;
+        default:
+          // 默认归类为 user 消息
+          userMessages.add(message);
+      }
+    }
+
+    // 合并同类消息内容
+    String userContent = '';
+    for (int i = 0; i < userMessages.length; i++) {
+      if (i > 0) userContent += '\n';
+      userContent += userMessages[i].content.trim();
+    }
+
+    String assistantContent = '';
+    for (int i = 0; i < assistantMessages.length; i++) {
+      if (i > 0) assistantContent += '\n';
+      assistantContent += assistantMessages[i].content.trim();
+    }
+
+    String systemContent = '';
+    for (int i = 0; i < systemMessages.length; i++) {
+      if (i > 0) systemContent += '\n';
+      systemContent += systemMessages[i].content.trim();
+    }
+
+    // 添加角色标识前缀和后缀
+    final taggedUserContent =
+        settings.userPrefix + userContent + settings.userSuffix;
+    final taggedAssistantContent =
+        settings.assistantPrefix + assistantContent + settings.assistantSuffix;
+    final taggedSystemContent =
+        settings.systemPrefix + systemContent + settings.systemSuffix;
+
+    // 使用分隔符连接所有内容
+    final parts = [
+      if (userContent.isNotEmpty) taggedUserContent,
+      if (assistantContent.isNotEmpty) taggedAssistantContent,
+      if (systemContent.isNotEmpty) taggedSystemContent,
+    ];
+
+    final squashedText = parts.join(settings.separatorValue);
+
+    // 创建新的压缩消息对象
+    return LLMMessage(
+      content: squashedText.trim(),
+      role: settings.squashRole,
+      fileDirs: messages.expand((msg) => msg.fileDirs).toList(),
+    );
   }
 }

@@ -21,9 +21,7 @@ class ChatCompressionSettings {
       separatorType; // e.g., 'space', 'newline', 'double newline', 'custom'
   final String separatorValue;
 
-  final bool putSystemInjectionAfterChatHistory;
-
-  final String onChatHistoryType; // mixin, seperate, squash
+  final String onChatHistoryType; // mixin, squash
   final String squashRole; // system, user, assistant
 
   final String userPrefix;
@@ -36,7 +34,7 @@ class ChatCompressionSettings {
   const ChatCompressionSettings({
     this.separatorType = 'double newline',
     this.separatorValue = '\n\n',
-    this.putSystemInjectionAfterChatHistory = false,
+
     this.onChatHistoryType = 'mixin',
     this.squashRole = 'assistant',
     this.userPrefix = '{{user}}: ',
@@ -51,8 +49,7 @@ class ChatCompressionSettings {
     return ChatCompressionSettings(
       separatorType: json['seperator_type'] ?? 'double newline',
       separatorValue: json['seperator_value'] ?? '\n\n',
-      putSystemInjectionAfterChatHistory:
-          json['put_system_injection_after_chat_history'] ?? false,
+
       onChatHistoryType: json['on_chat_history_type'] ?? 'mixin',
       squashRole: json['squash_role'] ?? 'assistant',
       userPrefix: json['user_prefix'] ?? '{{user}}: ',
@@ -68,8 +65,7 @@ class ChatCompressionSettings {
     return {
       'seperator_type': separatorType,
       'seperator_value': separatorValue,
-      'put_system_injection_after_chat_history':
-          putSystemInjectionAfterChatHistory,
+
       'on_chat_history_type': onChatHistoryType,
       'squash_role': squashRole,
       'user_prefix': userPrefix,
@@ -85,7 +81,7 @@ class ChatCompressionSettings {
   ChatCompressionSettings copyWith({
     String? separatorType,
     String? separatorValue,
-    bool? putSystemInjectionAfterChatHistory,
+
     String? onChatHistoryType,
     String? squashRole,
     String? userPrefix,
@@ -98,8 +94,7 @@ class ChatCompressionSettings {
     return ChatCompressionSettings(
       separatorType: separatorType ?? this.separatorType,
       separatorValue: separatorValue ?? this.separatorValue,
-      putSystemInjectionAfterChatHistory: putSystemInjectionAfterChatHistory ??
-          this.putSystemInjectionAfterChatHistory,
+
       onChatHistoryType: onChatHistoryType ?? this.onChatHistoryType,
       squashRole: squashRole ?? this.squashRole,
       userPrefix: userPrefix ?? this.userPrefix,
@@ -115,8 +110,7 @@ class ChatCompressionSettings {
     return copyWith(
       separatorType: other.separatorType,
       separatorValue: other.separatorValue,
-      putSystemInjectionAfterChatHistory:
-          other.putSystemInjectionAfterChatHistory,
+
       onChatHistoryType: other.onChatHistoryType,
       squashRole: other.squashRole,
       userPrefix: other.userPrefix,
@@ -136,7 +130,7 @@ class _ChatCompressionSettingsPageState
 
   String _separatorType = 'double newline';
   String _separatorValue = '\n\n';
-  bool _putSystemInjectionAfterChatHistory = false;
+
   String _onChatHistoryType = 'mixin';
   String _squashRole = 'assistant';
   String _userPrefix = '{{user}}: ';
@@ -168,10 +162,9 @@ class _ChatCompressionSettingsPageState
   };
 
   // 聊天历史处理方式
-  final List<String> historyTypes = ['mixin', 'seperate', 'squash'];
+  final List<String> historyTypes = ['mixin', 'squash'];
   final Map<String, String> historyLabels = {
     'mixin': '与其他提示词混合',
-    'seperate': '与其他提示词隔离',
     'squash': '单独压缩为一条消息',
   };
 
@@ -182,55 +175,6 @@ class _ChatCompressionSettingsPageState
     'user': '用户',
     'assistant': '助手',
   };
-
-  // 显示帮助弹窗
-  void showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('关于“将 D⚙ 移至末尾”'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text.rich(
-                TextSpan(children: [
-                  const TextSpan(text: '根据 '),
-                  WidgetSpan(
-                    child: Text(
-                      '部分预设作者的说法',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                  ),
-                  TextSpan(
-                      text: '，Gemini 和 Claude 不需要将系统条目插入聊天记录中，反而会影响连贯性。\n\n'),
-                ]),
-              ),
-              Text(
-                '此选项会将注入的系统消息（D⚙）按顺序移动到聊天记录末尾（D0），而不是保留在原始深度。',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '虽然无需角色卡作者手动设为 D0，但仍需适配。如果角色设定随剧情发展，放置在深度条目中，则开启此选项可能导致角色固化。',
-                style: TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {});
-            },
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // 更新 separator.value 根据 type
   void updateSeparatorValue() {
@@ -257,7 +201,7 @@ class _ChatCompressionSettingsPageState
     final updatedSettings = settings.copyWith(
       separatorType: _separatorType,
       separatorValue: _separatorValue,
-      putSystemInjectionAfterChatHistory: _putSystemInjectionAfterChatHistory,
+
       onChatHistoryType: _onChatHistoryType,
       squashRole: _squashRole,
       userPrefix: _userPrefix,
@@ -307,7 +251,7 @@ class _ChatCompressionSettingsPageState
             const SizedBox(height: 8),
 
             // 自定义分隔符输入框
-            if (_separatorType == 'custom')
+            if (_separatorType == 'custom' || settings.separatorType == 'custom')
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -328,36 +272,6 @@ class _ChatCompressionSettingsPageState
                   const SizedBox(height: 16),
                 ],
               ),
-
-            const Divider(),
-
-            // --- 系统消息移动到末尾 ---
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const Text("将 D⚙ (系统深度条目) 按序移到聊天记录后"),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.help_outline, size: 16),
-                        onPressed: showHelpDialog,
-                        tooltip: '显示帮助',
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: settings.putSystemInjectionAfterChatHistory || _putSystemInjectionAfterChatHistory,
-                  onChanged: (value) {
-                    setState(() {
-                      _putSystemInjectionAfterChatHistory = value;
-                      saveSettings();
-                    });
-                  },
-                ),
-              ],
-            ),
 
             const Divider(),
 
@@ -387,7 +301,7 @@ class _ChatCompressionSettingsPageState
             const SizedBox(height: 16),
 
             // --- 压缩角色选择（仅当 squash 时显示）---
-            if (_onChatHistoryType == 'squash')
+            if (_onChatHistoryType == 'squash'|| settings.onChatHistoryType == 'squash')
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
