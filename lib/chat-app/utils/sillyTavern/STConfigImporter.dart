@@ -16,16 +16,14 @@ abstract class STConfigImporter {
     try {
       ErrMsg = '转换请求参数';
       LLMRequestOptions llmRequestOptions = LLMRequestOptions(
-          messages: [],
-          maxTokens: json['openai_max_tokens'] as int,
-          temperature: (json['temperature'] as num).toDouble(),
-          frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
-          presencePenalty: (json['presence_penalty'] as num).toDouble(),
-          topP: (json['top_p'] as num).toDouble(),
-          isStreaming: json['stream_openai'],
-          apiId: VaultSettingController.of().apis.isNotEmpty
-              ? VaultSettingController.of().apis.first.id
-              : 0);
+        messages: [],
+        maxTokens: json['openai_max_tokens'] as int,
+        temperature: (json['temperature'] as num).toDouble(),
+        frequencyPenalty: (json['frequency_penalty'] as num).toDouble(),
+        presencePenalty: (json['presence_penalty'] as num).toDouble(),
+        topP: (json['top_p'] as num).toDouble(),
+        isStreaming: json['stream_openai'],
+      );
       List<PromptModel> prompts = [];
 
       ErrMsg = '导入Prompt';

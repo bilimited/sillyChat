@@ -142,6 +142,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
           provider: _selectedServiceProvider);
 
       vault.addApi(api);
+      vault.defaultApi.value = api.id;
     }
 
     vault.isShowOnBoardPage.value = false;
@@ -153,9 +154,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       });
     } else {
       // 不导入预设：创建一个空预设，使用第一个Api
-      ChatOptionController.of().addChatOption(ChatOptionModel.roleplay()
-        ..requestOptions =
-            LLMRequestOptions(messages: [], apiId: vault.apis.first.id));
+      ChatOptionController.of().addChatOption(ChatOptionModel.roleplay());
     }
 
     if (_characterCardImage != null) {
