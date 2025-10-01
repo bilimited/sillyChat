@@ -68,6 +68,13 @@ class VaultSettingController extends GetxController {
             .map((item) => ApiModel.fromJson(item))
             .toList()
             .cast<ApiModel>();
+
+        // 版本迁移代码
+        apis.value = apis
+            .map((api) =>
+                api.copyWith(url: api.url.replaceAll('/chat/completions', '')))
+            .toList();
+
         lastSyncTime.value = jsonMap['lastSyncTime'] != null
             ? DateTime.tryParse(jsonMap['lastSyncTime'])
             : null;

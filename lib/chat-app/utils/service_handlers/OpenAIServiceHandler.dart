@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart' as dio;
+import 'package:dio/dio.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
+import 'package:get/get.dart';
 
 class Openaiservicehandler extends Servicehandler {
   const Openaiservicehandler(
@@ -15,8 +17,48 @@ class Openaiservicehandler extends Servicehandler {
       required super.defaultModelList});
 
   @override
-  Future<List<String>> fetchModelList() async {
-    return [];
+  Future<List<String>> fetchModelList(String apiKey) async {
+    final String url = '$baseUrl/models';
+
+    try {
+      final Dio _dio = Dio();
+      // 1. 设置请求头
+      final options = Options(
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+      );
+
+      // 2. 发送 GET 请求
+      final response = await _dio.get(url, options: options);
+
+      // 3. 检查响应状态码并解析数据
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = response.data;
+
+        // 从响应中获取 'data' 字段，它是一个列表
+        final List<dynamic> modelsData = responseData['data'] as List;
+
+        // 4. 遍历列表，提取每个模型的 'id'
+        final List<String> modelIds =
+            modelsData.map((model) => model['id'].toString()).toList();
+
+        return modelIds;
+      } else {
+        // 如果服务器返回非 200 的状态码，打印错误信息
+        Get.snackbar('获取模型列表失败', ' Status code: ${response.statusCode}');
+        LogController.log(json.encode(response.data), LogLevel.error,
+            type: LogType.json, title: '获取模型列表失败');
+        return [];
+      }
+    } on DioException catch (e) {
+      Get.snackbar('获取模型列表失败', ' ${e.message}');
+      return [];
+    } catch (e) {
+      Get.snackbar('获取模型列表失败', '$e');
+      return [];
+    }
   }
 
   @override
@@ -56,7 +98,7 @@ class Openaiservicehandler extends Servicehandler {
 
     String key = api.apiKey;
     String model = api.modelName;
-    String url = api.url;
+    String url = api.url + '/chat/completions';
     final dioInstance = aihandler.dioInstance;
 
     // 构建请求数据

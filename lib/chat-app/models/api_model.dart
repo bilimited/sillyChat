@@ -1,3 +1,5 @@
+import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
+
 enum ServiceProvider {
   custom_openai_compatible,
   openai,
@@ -8,6 +10,7 @@ enum ServiceProvider {
   String toJson() => name;
   static ServiceProvider fromJson(String json) => values.byName(json);
 
+  @Deprecated('使用ServiceHandlerFactory')
   static const Map<ServiceProvider, Map<String, dynamic>> providerData = {
     ServiceProvider.custom_openai_compatible: {
       "localString": "自定义",
@@ -75,6 +78,7 @@ enum ServiceProvider {
     },
   };
 
+  @Deprecated('使用ServiceHandlerFactory')
   static findProviderByModelName(String modelName) {
     return providerData.entries
         .firstWhere(
@@ -84,12 +88,12 @@ enum ServiceProvider {
         .key;
   }
 
-  String toLocalString() => providerData[this]?["localString"] ?? name;
+  String toLocalString() => Servicehandlerfactory.getHandler(this).name;
 
-  String get defaultUrl => providerData[this]?["defaultUrl"] ?? "";
+  String get defaultUrl => Servicehandlerfactory.getHandler(this).baseUrl;
 
-  List<String> get modelList =>
-      List<String>.from(providerData[this]?["modelList"] ?? []);
+  List<String> get modelList => List<String>.from(
+      Servicehandlerfactory.getHandler(this).defaultModelList);
 }
 
 class ApiModel {

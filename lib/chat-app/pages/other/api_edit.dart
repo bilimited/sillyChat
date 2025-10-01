@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
+import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -27,6 +30,8 @@ class _ApiEditPageState extends State<ApiEditPage> {
   late TextEditingController _displayNameController;
   late TextEditingController _requestBodyController;
   late ServiceProvider _selectedProvider;
+
+  bool isFetchingModelList = false;
 
   @override
   void initState() {
@@ -79,6 +84,13 @@ class _ApiEditPageState extends State<ApiEditPage> {
 
       Get.back(result: api);
     }
+  }
+
+  List<String> get modelList {
+    if (SettingController.cachedModelList[_selectedProvider] != null) {
+      return SettingController.cachedModelList[_selectedProvider]!;
+    }
+    return _selectedProvider.modelList;
   }
 
   @override
@@ -141,25 +153,25 @@ class _ApiEditPageState extends State<ApiEditPage> {
               },
             ),
             const SizedBox(height: 16),
-            CustomOptionInputWidget.fromStringOptions(
-              options: _selectedProvider.modelList,
-              labelText: "模型名称",
-              initialValue: modelName,
-              onChanged: (value) {
-                final oldval = modelName;
-                modelName = value;
-                if (_displayNameController.text.isEmpty ||
-                    _displayNameController.text == oldval) {
-                  _displayNameController.text = value;
-                }
-              },
-            ),
+            Obx(() => CustomOptionInputWidget.fromStringOptions(
+                  options: modelList,
+                  labelText: "模型名称",
+                  initialValue: modelName,
+                  onChanged: (value) {
+                    final oldval = modelName;
+                    modelName = value;
+                    if (_displayNameController.text.isEmpty ||
+                        _displayNameController.text == oldval) {
+                      _displayNameController.text = value;
+                    }
+                  },
+                )),
             const SizedBox(height: 16),
             if (_selectedProvider.defaultUrl.isEmpty)
               TextFormField(
                 controller: _urlController,
                 decoration: const InputDecoration(
-                  labelText: 'URL',
+                  labelText: 'URL(格式如:https://api.openai.com/v1)',
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -195,6 +207,47 @@ class _ApiEditPageState extends State<ApiEditPage> {
                   },
                   child: Text('设为默认API')),
             ],
+
+            const SizedBox(height: 16),
+            isFetchingModelList
+                ? ElevatedButton.icon(
+                    onPressed: null,
+                    icon: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    label: Text('正在获取...'),
+                  )
+                : TextButton(
+                    onPressed: () async {
+                      if (_apiKeyController.text.isEmpty) {
+                        SillyChatApp.snackbarErr(context, '请先填写apiKey!');
+                        return;
+                      }
+                      setState(() {
+                        isFetchingModelList = true;
+                      });
+                      SillyChatApp.snackbar(context, '正在获取模型列表...');
+                      final list = await Servicehandlerfactory.getHandler(
+                              _selectedProvider)
+                          .fetchModelList(_apiKeyController.text);
+                      if (list.isNotEmpty) {
+                        SillyChatApp.snackbar(
+                            context, '获取成功，共${list.length}个模型');
+                        SettingController.cachedModelList[_selectedProvider] =
+                            list;
+                        SettingController.cachedModelList.refresh();
+                        SettingController.of.saveGlobalSettings();
+                      } else {
+                        SillyChatApp.snackbar(context, '获取失败');
+                      }
+                      setState(() {
+                        isFetchingModelList = false;
+                      });
+                    },
+                    child: Text('获取模型列表'),
+                  ),
 
             Divider(),
             const SizedBox(height: 16),

@@ -168,26 +168,6 @@ class _ChatPageState extends State<ChatPage> {
         context: context);
   }
 
-  void _showLoreBookActiviator() {
-    final colors = Theme.of(context).colorScheme;
-    final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
-    final chars = chat.characters.expand((char) => char.loreBooks).toList();
-    Get.bottomSheet(Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: SafeArea(
-            child: LoreBookActivator(
-          chatSessionController: sessionController,
-          lorebooks: [
-            ...{...global, ...chars}
-          ],
-          chat: chat,
-        ))));
-  }
-
   void _showDeleteConfirmation(MessageModel message) {
     final colors = Theme.of(context).colorScheme;
     Get.dialog(

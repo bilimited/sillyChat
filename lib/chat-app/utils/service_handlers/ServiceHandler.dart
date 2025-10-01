@@ -17,7 +17,7 @@ abstract class Servicehandler {
   // TODO:模型自定义API选项
 
   // 获取模型列表
-  Future<List<String>> fetchModelList();
+  Future<List<String>> fetchModelList(String apikey);
 
   // 测试连通性
   Future<bool> testConnectivity();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -17,6 +18,9 @@ class SettingController extends GetxController {
   static String webdav_url = '';
   static String webdav_password = '';
   static String webdav_username = '';
+
+  static RxMap<ServiceProvider, List<String>> cachedModelList =
+      <ServiceProvider, List<String>>{}.obs;
 
   static String vaultPath = '';
 
@@ -104,6 +108,11 @@ class SettingController extends GetxController {
         isDarkMode.value = settings['isDarkMode'] ?? false;
         currectValutName = settings['currectVaultName'] ?? '';
 
+        cachedModelList.value = (jsonDecode(settings['cachedModelList'] ?? '')
+                as Map<String, dynamic>)
+            .map((key, value) => MapEntry(
+                ServiceProvider.fromJson(key), List<String>.from(value)));
+
         vaultPath = await getVaultPath();
       }
     } catch (e) {
@@ -123,6 +132,8 @@ class SettingController extends GetxController {
         'webdav_url': webdav_url,
         'webdav_username': webdav_username,
         'webdav_password': webdav_password,
+        'cachedModelList': jsonEncode(
+            cachedModelList.map((key, value) => MapEntry(key.toJson(), value)))
       };
 
       final String jsonString = json.encode(settings);

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:get/get.dart';
 
 class Googleservicehandler extends Servicehandler {
   const Googleservicehandler(
@@ -16,8 +18,60 @@ class Googleservicehandler extends Servicehandler {
       required super.defaultModelList});
 
   @override
-  Future<List<String>> fetchModelList() async {
-    return [];
+  Future<List<String>> fetchModelList(apiKey) async {
+    // 将 API 密钥作为查询参数添加到 URL 中
+    const String baseUrl =
+        'https://generativelanguage.googleapis.com/v1beta/models';
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: {'key': apiKey});
+
+    try {
+      final Dio _dio = Dio();
+      // 1. 发送 GET 请求
+      final response = await _dio.getUri(uri);
+
+      // 2. 检查响应状态码并解析数据
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = response.data;
+
+        // 安全地获取 'models' 列表
+        final List<dynamic>? modelsList = responseData['models'] as List?;
+
+        if (modelsList == null) {
+          // 如果响应中没有 'models' 字段，返回空列表
+          Get.snackbar(
+              '获取模型列表时出错', "Response JSON does not contain a 'models' key.");
+          return [];
+        }
+        final List<String> baseModelIds = modelsList
+            .where((model) =>
+                model is Map &&
+                model.containsKey('name') &&
+                model['name'] != null)
+            .map((model) => model['name'].toString().replaceAll('models/', ''))
+            .toList();
+
+        return baseModelIds;
+      } else {
+        Get.snackbar('获取模型列表时出错',
+            'Failed to load model list. Status code: ${response.statusCode}');
+        LogController.log(json.encode(response.data), LogLevel.error,
+            title: '获取模型列表出错', type: LogType.json);
+        return [];
+      }
+    } on DioException catch (e) {
+      Get.snackbar(
+          '获取模型列表时出错', 'Failed to load model list. Status code: ${e.message}');
+      if (e.response != null) {
+        LogController.log(json.encode(e.response?.data), LogLevel.error,
+            title: '获取模型列表出错', type: LogType.json);
+      }
+      return [];
+    } catch (e) {
+      // 处理其他任何意外错误
+      Get.snackbar('获取模型列表时出错', 'An unexpected error occurred: $e');
+      return [];
+    }
   }
 
   @override
