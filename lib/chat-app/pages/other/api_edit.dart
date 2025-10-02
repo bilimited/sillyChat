@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
-import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
-import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart';
 import '../../models/api_model.dart';
 
 class ApiEditPage extends StatefulWidget {
@@ -227,7 +223,7 @@ class _ApiEditPageState extends State<ApiEditPage> {
                         VaultSettingController.of().saveSettings();
                         SillyChatApp.snackbar(context, '设置成功!');
                       },
-                      child: Text('设为默认API')),
+                      child: Text('设为默认')),
                 ],
                 const SizedBox(height: 16),
                 isFetchingModelList

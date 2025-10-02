@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
-import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
@@ -357,7 +356,7 @@ class _SettingPageState extends State<SettingPage>
             Tab(text: '常规设置'),
             // Tab(text: 'API管理'),
             Tab(text: '外观设置'),
-            Tab(text: '提示词设置'),
+            Tab(text: '格式设置'),
           ],
         ),
       ),

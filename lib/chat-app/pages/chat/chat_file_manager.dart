@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
+import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -297,7 +298,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     } else {
       return AppBar(
         leading: widget.leading,
-        actions: [...widget.actions],
+        actions: [...widget.actions, ..._buildAppBarActions()],
         title: BreadcrumbNavigation(
           path: path.normalize(_currentDirectory.path).replaceAll('\\', '/'),
           basePath: path.normalize(widget.directory.path).replaceAll('\\', '/'),
@@ -376,15 +377,21 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         icon: const Icon(Icons.delete),
         onPressed: _deleteFiles,
       ));
+    } else {
+      actions.add(IconButton(
+        icon: const Icon(Icons.search),
+        onPressed: () {
+          customNavigate(
+              SearchPage(
+                  searchPath: _currentDirectory.path,
+                  onMessageTap: (path, msg, chat) {
+                    Navigator.pop(context);
+                    _openChat(path);
+                  }),
+              context: context);
+        },
+      ));
     }
-
-    // 暂时取消直接重命名文件的方法
-    // if (_selectedFiles.length == 1) {
-    //   actions.add(IconButton(
-    //     icon: const Icon(Icons.drive_file_rename_outline),
-    //     onPressed: _renameFile,
-    //   ));
-    // }
 
     return actions;
   }
