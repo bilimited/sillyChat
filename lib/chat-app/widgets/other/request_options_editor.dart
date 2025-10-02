@@ -193,7 +193,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         Obx(() {
           final apis = vaultSettingController.apis;
           int? selectedApiId = widget.options.apiId;
-          if (!apis.contains(selectedApiId)) {
+          if (!apis.map((a) => a.id).contains(selectedApiId)) {
             selectedApiId = -1;
           }
 
