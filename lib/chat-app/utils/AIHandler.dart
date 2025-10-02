@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:get/get.dart';
 
@@ -21,6 +22,8 @@ class Aihandler {
 
   bool isInterrupt = false;
   bool isBusy = false;
+  bool isError = false; // 用于测试上次生成中是否出错
+
   dio.Dio? dioInstance;
   //int token_used = 0;
   dio.CancelToken cancelToken = dio.CancelToken(); // 用于中断请求
@@ -55,9 +58,55 @@ class Aihandler {
     }
   }
 
+  Stream<String> requestTest(String apiKey, String modelName, String url,
+      ServiceProvider provider) async* {
+    try {
+      isInterrupt = false;
+      isError = false;
+      cancelToken = dio.CancelToken();
+
+      if (isBusy) {
+        return;
+      } else {
+        isBusy = true;
+      }
+
+      initDio();
+      final handler = Servicehandlerfactory.getHandler(provider);
+
+      await for (final token in handler.request(
+          this,
+          LLMRequestOptions(
+              messages: [LLMMessage(content: '你好', role: 'user')]),
+          ApiModel(
+              id: -1,
+              apiKey: apiKey,
+              displayName: '',
+              modelName: modelName,
+              url: url,
+              provider: provider))) {
+        yield token;
+      }
+    } on dio.DioException catch (e) {
+      isError = true;
+      onGenerateStateChange('生成已停止');
+      if (dio.CancelToken.isCancel(e)) {
+      } else {
+        Get.snackbar("发生错误", "$e", colorText: Colors.red);
+        LogController.log("发生错误:$e", LogLevel.error);
+      }
+    } catch (e) {
+      isError = true;
+      Get.snackbar("发生错误", "$e", colorText: Colors.red);
+      LogController.log("发生错误:$e", LogLevel.error);
+    }
+    isBusy = false;
+  }
+
   Stream<String> requestTokenStream(LLMRequestOptions options) async* {
     try {
       isInterrupt = false;
+      isError = false;
       cancelToken = dio.CancelToken();
 
       if (isBusy) {
@@ -81,6 +130,7 @@ class Aihandler {
         yield token;
       }
     } on dio.DioException catch (e) {
+      isError = true;
       onGenerateStateChange('生成已停止');
       if (dio.CancelToken.isCancel(e)) {
       } else {
@@ -88,12 +138,17 @@ class Aihandler {
         LogController.log("发生错误:$e", LogLevel.error);
       }
     } catch (e) {
+      isError = true;
       Get.snackbar("发生错误", "$e", colorText: Colors.red);
       LogController.log("发生错误:$e", LogLevel.error);
     }
     isBusy = false;
   }
 
+  /***
+   * 解析流式响应
+   * 写的乱七八糟但是可以运行
+   */
   Stream<String> parseSseStream(
       dio.Response response, String Function(dynamic json) parser) async* {
     String buffer = ''; // 用于积累不完整的行
@@ -127,9 +182,10 @@ class Aihandler {
               yield content;
             }
           } catch (e) {
-            LogController.log(
-                "SSE JSON解析错误: $line\n错误信息: $e", LogLevel.warning);
-            continue;
+            throw Exception("SSE JSON解析错误: $line\n错误信息: $e");
+            // LogController.log(
+            //     "SSE JSON解析错误: $line\n错误信息: $e", LogLevel.warning);
+            //continue;
           }
         } else {
           print("Non-data SSE line: $line");
@@ -177,8 +233,9 @@ class Aihandler {
         accumulatedBuffer.clear();
       } catch (e) {
         if (e is! FormatException) {
-          LogController.log(
-              "Google JSON解析错误: $currentBuffer\n错误信息: $e", LogLevel.warning);
+          throw Exception("Google JSON解析错误: $currentBuffer\n错误信息: $e");
+          // LogController.log(
+          //     "Google JSON解析错误: $currentBuffer\n错误信息: $e", LogLevel.warning);
         }
       }
     }
