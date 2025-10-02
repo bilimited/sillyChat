@@ -44,7 +44,7 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
           if (widget.isSelector) {
             Get.back(result: prompt.id);
           } else {
-            customNavigate(EditPromptPage(prompt: prompt),context: context);
+            customNavigate(EditPromptPage(prompt: prompt), context: context);
           }
         },
         child: ListTile(
@@ -70,42 +70,48 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Text(
                 '更新时间: ${prompt.updateDate.toString().split('.')[0]}',
                 style: TextStyle(fontSize: 11),
               ),
             ],
           ),
-          trailing: widget.isSelector ? null : (prompt.isInChat ? null : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () async {
-                  if (await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('确认删除'),
-                      content: Text('确定要删除这个提示词吗？'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: Text('取消'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text('确定'),
+          trailing: widget.isSelector
+              ? null
+              : (prompt.isInChat
+                  ? null
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () async {
+                            if (await showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text('确认删除'),
+                                    content: Text('确定要删除这个提示词吗？'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: Text('确定'),
+                                      ),
+                                    ],
+                                  ),
+                                ) ??
+                                false) {
+                              _promptController.deletePrompt(prompt.id);
+                            }
+                          },
                         ),
                       ],
-                    ),
-                  ) ?? false) {
-                    _promptController.deletePrompt(prompt.id);
-                  }
-                },
-              ),
-            ],
-          )),
+                    )),
         ),
       ),
     );
@@ -116,8 +122,7 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isSelector ? '选择提示词' : '常用提示词管理'),
-        actions: widget.isSelector ? [] : [
-        ],
+        actions: widget.isSelector ? [] : [],
       ),
       body: Column(
         children: [
@@ -145,7 +150,6 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
               if (widget.isSelector) {
                 return ListView.builder(
                   itemCount: prompts.length,
-                  
                   itemBuilder: (context, index) {
                     final prompt = prompts[index];
                     return _buildPromptCard(prompt);
@@ -177,12 +181,19 @@ class _PromptManagerPageState extends State<PromptManagerPage> {
           ),
         ],
       ),
-      floatingActionButton: widget.isSelector ? null : FloatingActionButton(
-        onPressed: () {
-          Get.to(() => EditPromptPage());
-        },
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: widget.isSelector
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                Get.find<PromptController>().addPrompt(PromptModel(
+                    id: DateTime.now().microsecondsSinceEpoch,
+                    content: '',
+                    role: 'user',
+                    name: '空白提示词'));
+                //Get.to(() => EditPromptPage());
+              },
+              child: Icon(Icons.add),
+            ),
     );
   }
 }

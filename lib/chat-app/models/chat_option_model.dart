@@ -90,7 +90,7 @@ class ChatOptionModel {
   }
 
   // RP预设，包含所有功能
-  factory ChatOptionModel.roleplay() {
+  factory ChatOptionModel.roleplay({String? name}) {
     int id = DateTime.now().microsecondsSinceEpoch;
     const String bilimitedComments = "作者注释：\n"
         "<lore xxx default=xxx>代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到<lore x ...> 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
@@ -128,8 +128,8 @@ class ChatOptionModel {
 """;
 
     return ChatOptionModel(
-        id: 0,
-        name: '默认预设',
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: name ?? '默认预设',
         requestOptions: LLMRequestOptions(messages: []),
         prompts: [
           PromptModel(
@@ -153,11 +153,11 @@ class ChatOptionModel {
   }
 
   // 普通预设，只有角色定义和消息列表
-  factory ChatOptionModel.common() {
+  factory ChatOptionModel.common({String? name}) {
     int id = DateTime.now().microsecondsSinceEpoch;
     return ChatOptionModel(
-        id: 0,
-        name: '默认预设',
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: name ?? '默认预设',
         requestOptions: LLMRequestOptions(messages: []),
         prompts: [
           PromptModel(
@@ -179,11 +179,11 @@ class ChatOptionModel {
   }
 
   // 空白预设，只有消息列表
-  factory ChatOptionModel.empty() {
+  factory ChatOptionModel.empty({String? name}) {
     int id = DateTime.now().microsecondsSinceEpoch;
     return ChatOptionModel(
-        id: 0,
-        name: '默认预设',
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: name ?? '默认预设',
         requestOptions: LLMRequestOptions(messages: []),
         prompts: [
           PromptModel(

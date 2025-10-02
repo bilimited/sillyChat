@@ -173,7 +173,9 @@ class ChatOptionsManagerPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          customNavigate(EditChatOptionPage(), context: context);
+          ChatOptionController.of()
+              .addChatOption(ChatOptionModel.roleplay(name: '空白预设'));
+          //customNavigate(EditChatOptionPage(), context: context);
         },
         child: const Icon(Icons.add),
       ),

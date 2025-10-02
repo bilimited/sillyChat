@@ -130,10 +130,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                     decoration: InputDecoration(
                       labelText: '名称',
                     ),
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) return '请输入名称';
-                      return null;
-                    },
                     onSaved: (value) => _name = value!,
                   ),
                   SizedBox(height: 16),

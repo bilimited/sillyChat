@@ -120,12 +120,6 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                       decoration: const InputDecoration(
                         labelText: '预设名称',
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入预设名称';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     // TabBar for switching between modules
