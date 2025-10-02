@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/prompt_preview_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
+import 'package:flutter_example/chat-app/pages/other/edit_prompt.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -24,9 +25,7 @@ enum ContextSendMode {
 }
 
 enum OptimizationType {
-  blank,
-  plot, // 剧情优化
-  text, // 正文优化
+  custom,
 }
 
 class MessageOptimizationPage extends StatefulWidget {
@@ -56,8 +55,9 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
   static int _lastContextDepth = 1;
   static ContextSendMode _lastContextSendMode =
       ContextSendMode.userAndAssistant;
-  static OptimizationType _lastOptimizationType = OptimizationType.text;
+  static OptimizationType _lastOptimizationType = OptimizationType.custom;
   static bool _lastOnlyRenderContent = false;
+  static int? _lastSelectedPromptId; // 保存上次选择的提示词ID
 
   // 选择的角色
   CharacterModel? selectedCharacter;
@@ -72,12 +72,21 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
   ContextSendMode contextSendMode = ContextSendMode.userAndAssistant;
 
   // 优化类型
-  OptimizationType optimizationType = OptimizationType.text;
+  OptimizationType optimizationType = OptimizationType.custom;
 
   // 仅发送渲染内容
   bool onlyRenderContent = false;
 
+  // 可用的提示词列表（从下往上搜索到的第一个匹配提示词及其下面的所有提示词）
+  List<PromptModel> availablePrompts = [];
+
+  // 选中的提示词
+  PromptModel? selectedPrompt;
+
   bool isLoading = false;
+
+  // 错误提示
+  String? errorMessage;
 
   @override
   void initState() {
@@ -105,8 +114,67 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     // 恢复其他设置
     contextDepth = _lastContextDepth;
     contextSendMode = _lastContextSendMode;
-    optimizationType = _lastOptimizationType;
+    optimizationType = OptimizationType.custom;
     onlyRenderContent = _lastOnlyRenderContent;
+
+    // 如果有选中的预设，搜索匹配的提示词
+    if (selectedOption != null) {
+      _searchMatchingPrompts();
+
+      // 恢复上次选择的提示词
+      if (_lastSelectedPromptId != null) {
+        selectedPrompt = availablePrompts
+            .firstWhereOrNull((prompt) => prompt.id == _lastSelectedPromptId);
+      }
+    }
+  }
+
+  // 从下往上搜索匹配的提示词
+  void _searchMatchingPrompts() {
+    errorMessage = null;
+    availablePrompts.clear();
+    selectedPrompt = null;
+
+    if (selectedOption == null) {
+      errorMessage = '请先选择一个预设';
+      setState(() {});
+      return;
+    }
+
+    // 从下往上搜索
+    final prompts = selectedOption!.prompts;
+    int matchIndex = -1;
+
+    // 定义匹配的正则表达式
+    final regex = RegExp(
+        r'\{\{lastuserMessage\}\}|\{\{lastUserMessage\}\}|\{\{lastmessage\}\}',
+        caseSensitive: false);
+
+    // 从后往前搜索
+    for (int i = prompts.length - 1; i >= 0; i--) {
+      if (regex.hasMatch(prompts[i].content)) {
+        matchIndex = i;
+        break;
+      }
+    }
+
+    if (matchIndex == -1) {
+      errorMessage = '在选中的预设中未找到包含{{lastuserMessage}}的提示词';
+      setState(() {});
+      return;
+    }
+
+    // 将匹配到的提示词及其下面的所有提示词添加到可用列表中
+    for (int i = matchIndex; i < prompts.length; i++) {
+      availablePrompts.add(prompts[i]);
+    }
+
+    // 默认选择第一个可用的提示词
+    if (availablePrompts.isNotEmpty) {
+      selectedPrompt = availablePrompts.first;
+    }
+
+    setState(() {});
   }
 
   @override
@@ -182,27 +250,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
     // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
     // 使用深拷贝确保不会修改原始聊天对象
     final tempChat = chat.shallowCopyWith(messages: List.from(contextMessages));
-
-    // 添加优化指令
-    String optimizationPrompt = '';
-    switch (optimizationType) {
-      case OptimizationType.plot:
-        optimizationPrompt =
-            '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。';
-        break;
-      case OptimizationType.text:
-        optimizationPrompt = '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
-        break;
-      default:
-        optimizationPrompt = '';
-        break;
-    }
     // 按照 Promptbuilder 的标准流程构建 prompt
     // 获取当前选中的待优化消息内容，不包含前文
-    final targetContent = '\n<待优化文段>' +
-        _getCurrentMessageContent() +
-        '</待优化文段>\n\n' +
-        optimizationPrompt;
+    final targetContent =
+        '\n<待优化文段>' + _getCurrentMessageContent() + '</待优化文段>\n\n';
     print('Debug: targetContent = $targetContent');
     print('Debug: widget.message.content = ${widget.message.content}');
     final promptBuilder = Promptbuilder(
@@ -228,8 +279,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
   // 执行优化
   Future<void> _performOptimization() async {
-    if (selectedOption == null || selectedCharacter == null) {
-      Get.snackbar('错误', '请选择角色和预设');
+    if (selectedOption == null ||
+        selectedCharacter == null ||
+        selectedPrompt == null) {
+      Get.snackbar('错误', '请选择角色、预设和提示词');
       return;
     }
 
@@ -244,6 +297,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       _lastContextSendMode = contextSendMode;
       _lastOptimizationType = optimizationType;
       _lastOnlyRenderContent = onlyRenderContent;
+      // _lastSelectedPromptId = selectedPrompt?.id;
 
       final contextMessages = _getContextMessages();
       final chat = widget.sessionController.chat;
@@ -253,26 +307,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       final tempChat =
           chat.shallowCopyWith(messages: List.from(contextMessages));
 
-      // 添加优化指令
-      String optimizationPrompt = '';
-      switch (optimizationType) {
-        case OptimizationType.plot:
-          optimizationPrompt =
-              '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。';
-          break;
-        case OptimizationType.text:
-          optimizationPrompt = '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
-          break;
-        default:
-          optimizationPrompt = '';
-          break;
-      }
       // 按照 Promptbuilder 的标准流程构建 prompt
       // 获取当前选中的待优化消息内容，不包含前文
-      final targetContent = '\n<待优化文段>' +
-          _getCurrentMessageContent() +
-          '</待优化文段>\n\n' +
-          optimizationPrompt;
+      final targetContent =
+          '\n<待优化文段>' + _getCurrentMessageContent() + '</待优化文段>\n\n';
       print('Debug: targetContent = $targetContent');
       print('Debug: widget.message.content = ${widget.message.content}');
       final promptBuilder = Promptbuilder(
@@ -323,18 +361,13 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       widget.sessionController.setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
-        GenerateState: optimizationType == OptimizationType.plot
-            ? "正在进行剧情优化..."
-            : "正在进行正文优化...",
+        GenerateState: "正在进行优化...",
         currentAssistant: selectedCharacter!.id,
       ));
 
-      // 发送请求并获取优化结果，根据优化类型设置不同token数
-      final maxTokens =
-          optimizationType == OptimizationType.plot ? 20000 : 65500;
+      // 发送请求并获取优化结果
       final requestOptions = selectedOption!.requestOptions.copyWith(
         messages: llmMessages,
-        maxTokens: maxTokens,
       );
       final StringBuffer result = StringBuffer();
 
@@ -388,19 +421,6 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-
-    String type_info = '';
-    switch (optimizationType) {
-      case OptimizationType.plot:
-        type_info = '主要关注故事的逻辑一致性、情节发展以及角色设定';
-        break;
-      case OptimizationType.text:
-        type_info = '主要关注文字的美感、表达力以及修辞手法的运用';
-        break;
-      default:
-        type_info = '请自行在所用预设{{lastusermessage}}之后插入需要的优化描述';
-        break;
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -525,6 +545,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                                 if (mounted) {
                                   setState(() {
                                     selectedOption = validSelectedOption;
+                                    // 当预设改变时，重新搜索匹配的提示词
+                                    if (selectedOption != null) {
+                                      _searchMatchingPrompts();
+                                    }
                                   });
                                 }
                               });
@@ -544,6 +568,10 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                               onChanged: (ChatOptionModel? value) {
                                 setState(() {
                                   selectedOption = value;
+                                  // 当预设改变时，重新搜索匹配的提示词
+                                  if (selectedOption != null) {
+                                    _searchMatchingPrompts();
+                                  }
                                 });
                               },
                             );
@@ -572,7 +600,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
             const SizedBox(height: 16),
 
-            // 优化类型选择
+            // 选择提示词
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -580,42 +608,116 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '优化类型',
+                      '选择提示词',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<OptimizationType>(
-                      value: optimizationType,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                    if (errorMessage != null) ...[
+                      Text(
+                        errorMessage!,
+                        style: TextStyle(color: Colors.red),
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: OptimizationType.plot,
-                          child: Text('剧情优化 (20K tokens)'),
-                        ),
-                        DropdownMenuItem(
-                          value: OptimizationType.text,
-                          child: Text('正文优化 (65.5K tokens)'),
-                        ),
-                        DropdownMenuItem(
-                          value: OptimizationType.blank,
-                          child: Text('不使用默认优化词'),
+                      const SizedBox(height: 8),
+                    ],
+                    if (errorMessage == null) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<PromptModel>(
+                              value: selectedPrompt,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                              ),
+                              items: availablePrompts.map((prompt) {
+                                return DropdownMenuItem(
+                                  value: prompt,
+                                  child: Text(
+                                    prompt.name.isEmpty
+                                        ? prompt.content.length > 75
+                                            ? prompt.content.substring(0, 75) +
+                                                '...'
+                                            : prompt.content
+                                        : prompt.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (PromptModel? value) {
+                                setState(() {
+                                  selectedPrompt = value;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () {
+                              if (selectedPrompt != null &&
+                                  selectedOption != null) {
+                                // 导航到编辑提示词页面
+                                customNavigate(
+                                        EditPromptPage(
+                                          prompt: selectedPrompt!,
+                                          editTempPrompt: true,
+                                        ),
+                                        context: context)
+                                    .then((updatedPrompt) {
+                                  if (updatedPrompt != null) {
+                                    // 更新选中的提示词
+                                    setState(() {
+                                      selectedPrompt =
+                                          updatedPrompt as PromptModel?;
+
+                                      // 更新预设中的提示词
+                                      if (updatedPrompt is PromptModel) {
+                                        final promptIndex = selectedOption!
+                                            .prompts
+                                            .indexWhere((p) =>
+                                                p.id == updatedPrompt.id);
+                                        if (promptIndex != -1) {
+                                          selectedOption!.prompts[promptIndex] =
+                                              updatedPrompt;
+                                        }
+                                      }
+
+                                      // 重新搜索匹配的提示词
+                                      _searchMatchingPrompts();
+                                    });
+                                  }
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.edit),
+                            tooltip: '编辑提示词',
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '参考用语：\n请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。\n请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colors.outline,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (selectedPrompt != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: colors.outline.withOpacity(0.5)),
+                            borderRadius: BorderRadius.circular(8),
+                            color:
+                                colors.surfaceContainerHighest.withOpacity(0.3),
+                          ),
+                          child: Text(
+                            selectedPrompt!.content,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
                       ],
-                      onChanged: (OptimizationType? value) {
-                        setState(() {
-                          optimizationType = value ?? OptimizationType.text;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      type_info,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colors.outline,
-                          ),
-                    ),
+                    ],
                   ],
                 ),
               ),
