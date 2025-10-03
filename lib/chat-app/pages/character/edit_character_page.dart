@@ -78,7 +78,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             .bindOptionId
         : null;
 
-    if (!ChatOptionController.of().chatOptions.contains(_bindOption)) {
+    if (!ChatOptionController.of()
+        .chatOptions
+        .map((option) => option.id)
+        .contains(_bindOption)) {
       _bindOption = null;
     }
   }

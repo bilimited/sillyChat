@@ -197,12 +197,6 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
             selectedApiId = -1;
           }
 
-          // selectedApiId =
-          //     vaultSettingController.getApiById(widget.options.apiId)?.id;
-          // if(selectedApiId==null && apis.length>0){
-          //   selectedApiId = apis[0].id;
-          //   widget.onChanged(widget.options.copyWith(apiId: selectedApiId));
-          // }
           return Row(
             children: [
               Expanded(

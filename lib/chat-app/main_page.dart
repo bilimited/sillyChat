@@ -101,13 +101,6 @@ class _MainPageState extends State<MainPage> {
     webDav.init();
   }
 
-  final List<Widget> _pages = [
-    ChatManagePage(),
-    const ContactsPage(),
-    ChatOptionsManagerPage(),
-    LoreBookManagerPage(),
-  ];
-
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     const LEFT_WIDTH = 350.0;

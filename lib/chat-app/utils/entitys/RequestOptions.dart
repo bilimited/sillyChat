@@ -39,7 +39,9 @@ class LLMRequestOptions {
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
     return LLMRequestOptions(
-      messages: [],
+      messages: (json['messages'] as List<dynamic>? ?? [])
+          .map((e) => LLMMessage.fromJson(e as Map<String, dynamic>))
+          .toList(),
       maxTokens: json['max_tokens'] ?? 4000,
       temperature: json['temperature']?.toDouble() ?? 0.7,
       topP: json['top_p']?.toDouble() ?? 1.0,
