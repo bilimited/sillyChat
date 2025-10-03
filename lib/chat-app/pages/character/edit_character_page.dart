@@ -201,6 +201,52 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     SillyChatApp.snackbar(context, '角色已复制到剪贴板');
   }
 
+  Widget _buildBackgroundimageSelecter() {
+    return GestureDetector(
+      onTap: () => _pickImage(false),
+      onLongPress: () {
+        setState(() {
+          _backgroundPath = null;
+        });
+      },
+      child: Container(
+        height: 160,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300),
+          color: Colors.grey.shade100,
+        ),
+        child: _backgroundPath != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  File(_backgroundPath!),
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_photo_alternate,
+                    size: 40,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '点击选择背景图片',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
   Widget _buildBasicInfoTab() {
     return ListView(
       padding: const EdgeInsets.all(10),
@@ -468,49 +514,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   ),
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () => _pickImage(false),
-                  onLongPress: () {
-                    setState(() {
-                      _backgroundPath = null;
-                    });
-                  },
-                  child: Container(
-                    height: 160,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                      color: Colors.grey.shade100,
-                    ),
-                    child: _backgroundPath != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_backgroundPath!),
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate,
-                                size: 40,
-                                color: Colors.grey.shade600,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '点击选择背景图片',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
+                _buildBackgroundimageSelecter()
               ],
             ),
           ),
@@ -829,6 +833,10 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     });
                   },
                 ),
+                SizedBox(
+                  height: 32,
+                ),
+                _buildBackgroundimageSelecter(),
               ],
             ),
           ),
