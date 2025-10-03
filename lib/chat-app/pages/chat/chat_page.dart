@@ -21,6 +21,7 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
+import 'package:flutter_example/chat-app/widgets/webview/message_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -310,18 +311,12 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.text_snippet_rounded),
-                title: const Text('LLM重写'),
+                leading: const Icon(Icons.web),
+                title: const Text('预览Html代码'),
                 onTap: () async {
-                  Get.back();
-                  final result = await customNavigate<String?>(
-                      ContentGenerator(
-                          messages: [LLMMessage.fromMessageModel(message)]),
-                      context: context);
-                  if (result != null) {
-                    message.content = result;
-                    _updateChat();
-                  }
+                  Get.to(() => MessageWebview(content: message.content));
+                  // customNavigate(MessageWebview(content: message.content),
+                  //     context: context);
                 },
               ),
               ListTile(
@@ -1228,12 +1223,13 @@ class _ChatPageState extends State<ChatPage> {
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )
-                  : Container(
+                  : SafeArea(
+                      child: Container(
                       key: const ValueKey('ChatScreen'),
                       child: isDesktop
                           ? _buildDesktop(context)
                           : _buildMobile(context),
-                    ),
+                    )),
             )));
   }
 }
