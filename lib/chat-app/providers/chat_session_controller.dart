@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
@@ -18,7 +19,7 @@ import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
-class ChatSessionController extends GetxController {
+class ChatSessionController extends SessionController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
 
@@ -234,6 +235,11 @@ class ChatSessionController extends GetxController {
     }
   }
 
+  /**
+   * ----------- WARNING ------------
+   * 以下代码是一坨  不要乱碰，如果一定得碰请联系作者重构
+   */
+
   /// 发送信息方法
   /// 行为：创建一个新的消息插入该聊天；自动获取当前聊天默认assistant的回复
   Future<void> sendMessageAndGetReply(
@@ -255,7 +261,7 @@ class ChatSessionController extends GetxController {
         return;
       } else if (chat.mode == ChatMode.auto) {
         await for (var content in _handleLLMMessage(
-          chat.assistant.bindOption,
+          chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
         )) {
           _handleAIResult(chat, content, chat.assistantId ?? -1);
         }
