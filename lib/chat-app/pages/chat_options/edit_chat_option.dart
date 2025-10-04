@@ -11,8 +11,10 @@ import '../../widgets/other/request_options_editor.dart';
 
 class EditChatOptionPage extends StatefulWidget {
   final ChatOptionModel? option;
+  final void Function(ChatOptionModel newOption)? onSave;
 
-  const EditChatOptionPage({Key? key, this.option}) : super(key: key);
+  const EditChatOptionPage({Key? key, this.option, this.onSave})
+      : super(key: key);
 
   @override
   State<EditChatOptionPage> createState() => _EditChatOptionPageState();
@@ -61,14 +63,19 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       regex: _regexs,
     );
 
-    if (isEditing) {
-      final index = _controller.chatOptions.indexOf(widget.option!);
-      _controller.updateChatOption(chatOption, index);
+    if (widget.onSave != null) {
+      widget.onSave!(chatOption);
+      Navigator.of(context).pop();
     } else {
-      _controller.addChatOption(chatOption);
-    }
+      if (isEditing) {
+        final index = _controller.chatOptions.indexOf(widget.option!);
+        _controller.updateChatOption(chatOption, index);
+      } else {
+        _controller.addChatOption(chatOption);
+      }
 
-    Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    }
   }
 
   void _handleCopy() {

@@ -20,6 +20,15 @@ class LLMMessage {
     this.senderId,
   });
 
+  LLMMessage.fromJson(Map<String, dynamic> json)
+      : content = json['content'] ?? '',
+        role = json['role'] ?? 'user',
+        fileDirs = (json['fileDirs'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+        isPrompt = json['isPrompt'] ?? false,
+        senderId = json['senderId'];
+
   /// 从 MessageModel 创建
   factory LLMMessage.fromMessageModel(MessageModel msg) {
     return LLMMessage(

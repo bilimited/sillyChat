@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
+import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:flutter_example/main.dart';
@@ -31,7 +31,10 @@ class _ApiEditPageState extends State<ApiEditPage> {
   late TextEditingController _requestBodyController;
   late ServiceProvider _selectedProvider;
 
+  bool _isPanelExpanded = false;
   bool isFetchingModelList = false;
+  bool isTesting = false;
+  bool? isTestSuccess = null; // null 代表未测试
 
   @override
   void initState() {
@@ -84,6 +87,35 @@ class _ApiEditPageState extends State<ApiEditPage> {
 
       Get.back(result: api);
     }
+  }
+
+  Future<bool> _sendTestMessage() async {
+    if (_apiKeyController.text.isEmpty) {
+      return false;
+    }
+    setState(() {
+      isTesting = true;
+    });
+
+    final handler = Aihandler();
+    handler.initDio();
+    await for (String token in handler.requestTest(
+        _apiKeyController.text,
+        modelName,
+        _selectedProvider.defaultUrl.isEmpty
+            ? _urlController.text
+            : _selectedProvider.defaultUrl,
+        _selectedProvider)) {
+      if (token.isNotEmpty) {
+        handler.interrupt();
+        break;
+      }
+    }
+    setState(() {
+      isTesting = false;
+    });
+
+    return !handler.isError;
   }
 
   List<String> get modelList {
@@ -180,89 +212,149 @@ class _ApiEditPageState extends State<ApiEditPage> {
                   return null;
                 },
               ),
-            Divider(),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _displayNameController,
-              decoration: const InputDecoration(
-                labelText: '显示名称(选填)',
-              ),
+            Row(
+              children: [
+                if (widget.api != null) ...[
+                  const SizedBox(height: 16),
+                  TextButton(
+                      onPressed: () {
+                        VaultSettingController.of().defaultApi.value =
+                            widget.api!.id;
+                        VaultSettingController.of().saveSettings();
+                        SillyChatApp.snackbar(context, '设置成功!');
+                      },
+                      child: Text('设为默认')),
+                ],
+                const SizedBox(height: 16),
+                isFetchingModelList
+                    ? ElevatedButton.icon(
+                        onPressed: null,
+                        icon: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        label: Text('正在获取...'),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          if (_apiKeyController.text.isEmpty) {
+                            SillyChatApp.snackbarErr(context, '请先填写apiKey!');
+                            return;
+                          }
+                          setState(() {
+                            isFetchingModelList = true;
+                          });
+                          final list = await Servicehandlerfactory.getHandler(
+                                  _selectedProvider)
+                              .fetchModelList(_apiKeyController.text);
+                          if (list.isNotEmpty) {
+                            SillyChatApp.snackbar(
+                                context, '获取成功，共${list.length}个模型');
+                            SettingController
+                                .cachedModelList[_selectedProvider] = list;
+                            SettingController.cachedModelList.refresh();
+                            SettingController.of.saveGlobalSettings();
+                          } else {
+                            SillyChatApp.snackbar(context, '获取失败');
+                          }
+                          setState(() {
+                            isFetchingModelList = false;
+                          });
+                        },
+                        child: Text('获取模型列表'),
+                      ),
+                const SizedBox(height: 16),
+                isTesting
+                    ? ElevatedButton.icon(
+                        onPressed: null,
+                        icon: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        label: Text('正在等待响应...'),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          if (_apiKeyController.text.isEmpty) {
+                            SillyChatApp.snackbarErr(context, '请先填写apiKey!');
+                            return;
+                          }
+                          isTestSuccess = await _sendTestMessage();
+                          if (isTestSuccess!) {
+                            SillyChatApp.snackbar(context, '测试成功!');
+                          } else {}
+                        },
+                        child: isTestSuccess == null
+                            ? Text('发送测试消息')
+                            : isTestSuccess!
+                                ? Text(
+                                    '测试成功！',
+                                    style: TextStyle(color: Colors.green),
+                                  )
+                                : Text('连接失败...',
+                                    style: TextStyle(color: Colors.red)),
+                      ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _remarksController,
-              decoration: const InputDecoration(
-                labelText: '备注(选填)',
-              ),
-              maxLines: 3,
+            SizedBox(
+              height: 32,
             ),
-            if (widget.api != null) ...[
-              const SizedBox(height: 16),
-              TextButton(
-                  onPressed: () {
-                    VaultSettingController.of().defaultApi.value =
-                        widget.api!.id;
-                    VaultSettingController.of().saveSettings();
-                    SillyChatApp.snackbar(context, '设置成功!');
+            ExpansionPanelList(
+              expansionCallback: (int index, bool isExpanded) {
+                setState(() {
+                  _isPanelExpanded = !_isPanelExpanded;
+                });
+              },
+              children: [
+                ExpansionPanel(
+                  headerBuilder: (context, isExpanded) {
+                    return ListTile(
+                      title: Text('高级设置'),
+                    );
                   },
-                  child: Text('设为默认API')),
-            ],
-
-            const SizedBox(height: 16),
-            isFetchingModelList
-                ? ElevatedButton.icon(
-                    onPressed: null,
-                    icon: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  isExpanded: _isPanelExpanded,
+                  body: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _displayNameController,
+                          decoration: const InputDecoration(
+                            labelText: '显示名称(选填)',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _remarksController,
+                          decoration: const InputDecoration(
+                            labelText: '备注(选填)',
+                          ),
+                          maxLines: 3,
+                        ),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        TextFormField(
+                          controller: _requestBodyController,
+                          decoration: const InputDecoration(
+                            labelText: '请求附加内容(选填)',
+                            hintText:
+                                '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
+                            helperText:
+                                '支持Python风格的True/False/None，会自动转换为JSON格式',
+                          ),
+                          maxLines: 5,
+                          keyboardType: TextInputType.multiline,
+                        ),
+                      ],
                     ),
-                    label: Text('正在获取...'),
-                  )
-                : TextButton(
-                    onPressed: () async {
-                      if (_apiKeyController.text.isEmpty) {
-                        SillyChatApp.snackbarErr(context, '请先填写apiKey!');
-                        return;
-                      }
-                      setState(() {
-                        isFetchingModelList = true;
-                      });
-                      SillyChatApp.snackbar(context, '正在获取模型列表...');
-                      final list = await Servicehandlerfactory.getHandler(
-                              _selectedProvider)
-                          .fetchModelList(_apiKeyController.text);
-                      if (list.isNotEmpty) {
-                        SillyChatApp.snackbar(
-                            context, '获取成功，共${list.length}个模型');
-                        SettingController.cachedModelList[_selectedProvider] =
-                            list;
-                        SettingController.cachedModelList.refresh();
-                        SettingController.of.saveGlobalSettings();
-                      } else {
-                        SillyChatApp.snackbar(context, '获取失败');
-                      }
-                      setState(() {
-                        isFetchingModelList = false;
-                      });
-                    },
-                    child: Text('获取模型列表'),
                   ),
-
-            Divider(),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _requestBodyController,
-              decoration: const InputDecoration(
-                labelText: '请求附加内容(选填)',
-                hintText:
-                    '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
-                helperText: '支持Python风格的True/False/None，会自动转换为JSON格式',
-              ),
-              maxLines: 5,
-              keyboardType: TextInputType.multiline,
+                ),
+              ],
             ),
-            Divider(),
             // ElevatedButton.icon(
             //     onPressed: () {
             //       Aihandler.testConnectivity(

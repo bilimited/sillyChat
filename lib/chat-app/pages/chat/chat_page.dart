@@ -21,7 +21,9 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
+import 'package:flutter_example/chat-app/widgets/webview/message_webview.dart';
 import 'package:flutter_example/main.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -310,18 +312,12 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.text_snippet_rounded),
-                title: const Text('LLM重写'),
+                leading: const Icon(Icons.web),
+                title: const Text('预览Html代码'),
                 onTap: () async {
-                  Get.back();
-                  final result = await customNavigate<String?>(
-                      ContentGenerator(
-                          messages: [LLMMessage.fromMessageModel(message)]),
-                      context: context);
-                  if (result != null) {
-                    message.content = result;
-                    _updateChat();
-                  }
+                  Get.to(() => MessageWebview(content: message.content));
+                  // customNavigate(MessageWebview(content: message.content),
+                  //     context: context);
                 },
               ),
               ListTile(
@@ -543,7 +539,7 @@ class _ChatPageState extends State<ChatPage> {
         await _updateChat();
       }
 
-      sessionController.sendMessageAndGetReply(text, selectedPath);
+      sessionController.onSendMessage(text, selectedPath);
     }
   }
 
@@ -730,7 +726,7 @@ class _ChatPageState extends State<ChatPage> {
                     sessionController: sessionController,
                     onSendMessage: _sendMessage,
                     onRetryLastest: () {
-                      sessionController.retry(chat);
+                      sessionController.onRetry();
                     },
                     onToggleGroupWheel: () {
                       setState(() => _showWheel = !_showWheel);
@@ -806,6 +802,7 @@ class _ChatPageState extends State<ChatPage> {
               child: Stack(
                 children: [
                   Obx(() {
+                    //final messages = chat.messages.reversed.toList();
                     final messages = chat.messages.reversed.toList();
                     // 聊天正文
                     return ScrollablePositionedList.builder(
@@ -982,7 +979,7 @@ class _ChatPageState extends State<ChatPage> {
                       .toList(),
                   onCharacterSelected: (character) {
                     setState(() => _showWheel = false);
-                    sessionController.getGroupReply(character);
+                    sessionController.onGroupMessage(character);
                   },
                 ),
               ),
@@ -1038,11 +1035,28 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.5,
-                        child: Text(
-                          chat.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 19),
-                        ),
+                        child: sessionController.isGeneratingTitle
+                            ? Row(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SpinKitWave(
+                                      itemCount: 3,
+                                      color: colors.onSurface,
+                                      size: 16.0,
+                                    ),
+                                  ),
+                                  Text(
+                                    '正在生成标题...',
+                                    style: TextStyle(color: colors.outline),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                chat.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 19),
+                              ),
                       ),
                       Text(
                         "${chat.characterIds.length}位成员",
@@ -1228,12 +1242,13 @@ class _ChatPageState extends State<ChatPage> {
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )
-                  : Container(
+                  : SafeArea(
+                      child: Container(
                       key: const ValueKey('ChatScreen'),
                       child: isDesktop
                           ? _buildDesktop(context)
                           : _buildMobile(context),
-                    ),
+                    )),
             )));
   }
 }

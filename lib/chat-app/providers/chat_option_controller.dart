@@ -25,7 +25,21 @@ class ChatOptionController extends GetxController {
 
       if (await file.exists()) {
         final String contents = await file.readAsString();
-        final List<dynamic> jsonList = json.decode(contents);
+        final dynamic jsonData = json.decode(contents);
+
+        // 兼容老数据格式（数组），新格式为对象包含 chatOptions 字段
+        List<dynamic> jsonList;
+        if (jsonData is List) {
+          // 老数据格式，迁移为新格式
+          jsonList = jsonData;
+          // 保存为新格式
+          await saveChatOptions();
+        } else if (jsonData is Map && jsonData['chatOptions'] is List) {
+          jsonList = jsonData['chatOptions'];
+        } else {
+          jsonList = [];
+        }
+
         chatOptions.value =
             jsonList.map((json) => ChatOptionModel.fromJson(json)).toList();
       }
@@ -40,8 +54,9 @@ class ChatOptionController extends GetxController {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$fileName');
 
-      final String jsonString =
-          json.encode(chatOptions.map((option) => option.toJson()).toList());
+      final String jsonString = json.encode({
+        'chatOptions': chatOptions.map((option) => option.toJson()).toList(),
+      });
       await file.writeAsString(jsonString);
     } catch (e) {
       print('保存聊天选项数据失败: $e');

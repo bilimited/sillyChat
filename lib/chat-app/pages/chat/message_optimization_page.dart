@@ -249,7 +249,22 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
     // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
     // 使用深拷贝确保不会修改原始聊天对象
-    final tempChat = chat.shallowCopyWith(messages: List.from(contextMessages));
+    final tempChat = chat.copyWith(messages: List.from(contextMessages));
+
+    // 添加优化指令
+    String optimizationPrompt = '';
+    switch (optimizationType) {
+      case OptimizationType.plot:
+        optimizationPrompt =
+            '请优化上述消息内容的剧情逻辑，关注故事的逻辑一致性、情节发展以及角色设定，使其更加合理和引人入胜。';
+        break;
+      case OptimizationType.text:
+        optimizationPrompt = '请优化上述消息内容的文字表达，关注文字的美感、表达力以及修辞手法的运用，使其更加自然流畅。';
+        break;
+      default:
+        optimizationPrompt = '';
+        break;
+    }
     // 按照 Promptbuilder 的标准流程构建 prompt
     // 获取当前选中的待优化消息内容，不包含前文
     final targetContent =
@@ -304,8 +319,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
       // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
       // 使用深拷贝确保不会修改原始聊天对象
-      final tempChat =
-          chat.shallowCopyWith(messages: List.from(contextMessages));
+      final tempChat = chat.copyWith(messages: List.from(contextMessages));
 
       // 按照 Promptbuilder 的标准流程构建 prompt
       // 获取当前选中的待优化消息内容，不包含前文

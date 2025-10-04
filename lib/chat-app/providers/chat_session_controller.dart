@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
@@ -10,6 +11,8 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/session_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
@@ -18,7 +21,7 @@ import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
-class ChatSessionController extends GetxController {
+class ChatSessionController extends SessionController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
 
@@ -29,6 +32,10 @@ class ChatSessionController extends GetxController {
 
   bool get isGenerating => aiState.isGenerating;
 
+  bool isGeneratingTitle = false;
+
+  int backGroundTasks = 0; // 后台正在执行的任务数量（如生成标题等）
+
   final Rx<ChatModel> _chat = ChatModel(
       id: -1,
       name: '未加载的聊天',
@@ -38,6 +45,9 @@ class ChatSessionController extends GetxController {
       messages: []).obs;
 
   late Rx<ChatAIState> _aiState;
+  Aihandler _autoTitleHandler = Aihandler();
+
+  Rx<NewMessageEvent?> newMessageEvent = Rx(null);
 
   ChatAIState get aiState =>
       _aiState.value; //=> Get.find<ChatController>().getAIState(file.path);
@@ -86,6 +96,18 @@ class ChatSessionController extends GetxController {
         close();
       }
     });
+    ever(newMessageEvent, (ev) {
+      if (ev == null) {
+        return;
+      }
+      print('收到新消息...${ev.message.content}');
+      if (ev.chat.needAutoTitle &&
+          ev.chat.messages.length >=
+              VaultSettingController.of().autoTitleSetting.value.level) {
+        ev.chat.needAutoTitle = false;
+        generateTitle();
+      }
+    });
     _aiState = ChatAIState(
             aihandler: Aihandler()
               ..onGenerateStateChange = (str) {
@@ -108,7 +130,9 @@ class ChatSessionController extends GetxController {
 
   /// 只有该值为True时，退出聊天时SessionController会被销毁
   bool get canDestory {
-    return !_aiState.value.isGenerating && inputController.text.isEmpty;
+    return !_aiState.value.isGenerating &&
+        inputController.text.isEmpty &&
+        backGroundTasks == 0;
   }
 
   // 手动关闭此聊天，使其不能再打开。
@@ -120,8 +144,10 @@ class ChatSessionController extends GetxController {
         lastMessage: '',
         time: '',
         messages: []);
-    isChatUninitialized = true;
+
     inputController.text = '';
+
+    isChatUninitialized = true;
   }
 
   Future<void> loadChat() async {
@@ -152,6 +178,7 @@ class ChatSessionController extends GetxController {
 
       await ChatController.of
           .updateChatMeta(file.path, ChatMetaModel.fromChatModel(chat));
+      print('save Chat');
     } else {
       Get.snackbar('聊天${file.path}保存失败.', '聊天文件不存在');
     }
@@ -180,9 +207,10 @@ class ChatSessionController extends GetxController {
     chat.lastMessage = lastMessage != null ? lastMessage : message.content;
     chat.time = message.time.toString();
 
+    newMessageEvent.value = NewMessageEvent(message, chat);
+
     _chat.refresh();
     await saveChat();
-    print("AddMessage: ${message.content}");
   }
 
   // 在指定聊天中删除消息
@@ -234,10 +262,14 @@ class ChatSessionController extends GetxController {
     }
   }
 
+  /**
+   * ----------- WARNING ------------
+   * 以下代码是一坨  不要乱碰，如果一定得碰请联系作者重构
+   */
+
   /// 发送信息方法
   /// 行为：创建一个新的消息插入该聊天；自动获取当前聊天默认assistant的回复
-  Future<void> sendMessageAndGetReply(
-      String text, List<String> selectedPath) async {
+  Future<void> onSendMessage(String text, List<String> selectedPath) async {
     if (text.isNotEmpty) {
       final message = MessageModel(
           id: DateTime.now().microsecondsSinceEpoch,
@@ -254,10 +286,10 @@ class ChatSessionController extends GetxController {
       if (chat.mode == ChatMode.group) {
         return;
       } else if (chat.mode == ChatMode.auto) {
-        await for (var content in _handleLLMMessage(
-          chat.assistant.bindOption,
+        await for (var content in _getResponse(
+          overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
         )) {
-          _handleAIResult(chat, content, chat.assistantId ?? -1);
+          _handleAIResult(content, chat.assistantId ?? -1);
         }
       } else {
         return;
@@ -265,18 +297,19 @@ class ChatSessionController extends GetxController {
     }
   }
 
+  /// 仅群聊模式下可用
   /// 让AI直接发送一条消息，无需输入问题
-  Future<void> getGroupReply(CharacterModel sender) async {
-    await for (var content in _handleLLMMessage(
-      sender.bindOption,
-      sender: sender,
+  Future<void> onGroupMessage(CharacterModel assistant) async {
+    await for (var content in _getResponse(
+      overrideOption: assistant.bindOption,
+      overrideAssistant: assistant,
     )) {
-      _handleAIResult(chat, content, sender.id);
+      _handleAIResult(content, assistant.id);
     }
   }
 
-  // 重新发送ai请求（会自动追加在最新的AI回复后面。若无最新AI回复且为群聊模式，则不可用）（该方法未完成）
-  Future<void> retry(ChatModel chat, {int index = 1}) async {
+  // 重新发送ai请求（会自动追加在最新的AI回复后面。若无最新AI回复且为群聊模式，则不可用）
+  Future<void> onRetry({int index = 1}) async {
     final msgList = chat.messages;
 
     // 获取需要重生成的消息
@@ -298,25 +331,39 @@ class ChatSessionController extends GetxController {
 
     if (chat.mode == ChatMode.auto) {
       // TODO:有时会无法retry，似乎是因为mode不正常，重新设置mode即可
-      await for (var content in _handleLLMMessage(
-        chat.assistant.bindOption,
+      await for (var content in _getResponse(
+        overrideOption: chat.assistant.bindOption,
       )) {
-        _handleAIResult(chat, content, chat.assistantId ?? -1,
+        _handleAIResult(content, chat.assistantId ?? -1,
             existedMessage: message);
       }
     } else if (chat.mode == ChatMode.group && message != null) {
       final CharacterController controller = Get.find();
-      await for (var content in _handleLLMMessage(
-        message.sender.bindOption,
-        sender: controller.getCharacterById(message.senderId),
+      await for (var content in _getResponse(
+        overrideOption: message.sender.bindOption,
+        overrideAssistant: controller.getCharacterById(message.senderId),
       )) {
-        _handleAIResult(chat, content, message.senderId,
-            existedMessage: message);
+        _handleAIResult(content, message.senderId, existedMessage: message);
       }
     }
   }
 
-  Future<void> _handleAIResult(ChatModel chat, String content, int senderID,
+  Future<void> generateTitle() async {
+    isGeneratingTitle = true;
+    String title = "";
+    await for (String token in _getResponseInBackground(_autoTitleHandler,
+        overrideOption:
+            VaultSettingController.of().autoTitleSetting.value.option)) {
+      title += token;
+    }
+    chat.name = title;
+    _chat.refresh();
+    isGeneratingTitle = false;
+
+    await saveChat();
+  }
+
+  Future<void> _handleAIResult(String content, int senderID,
       {MessageModel? existedMessage}) async {
     List<String?> existedContent = [null];
     if (existedMessage != null) {
@@ -342,23 +389,27 @@ class ChatSessionController extends GetxController {
     }
   }
 
-  // 按行分割功能:已弃用
-  // 处理消息功能，默认为单聊
-  Stream<String> _handleLLMMessage(ChatOptionModel? option,
-      {CharacterModel? sender = null}) async* {
+  /// 在当前聊天上下文下生成AI回复
+  /// [overrideOption] 若设为空，则使用聊天设置的Option
+  /// [overrideAssistant] 若设为空，则使用聊天设置的AI角色生成回复
+  Stream<String> _getResponse(
+      {ChatOptionModel? overrideOption,
+      CharacterModel? overrideAssistant = null}) async* {
     late List<LLMMessage> messages;
 
-    messages = Promptbuilder(chat, option).getLLMMessageList(sender: sender);
+    messages = Promptbuilder(chat, overrideOption)
+        .getLLMMessageList(sender: overrideAssistant);
 
-    final reqOptions = option?.requestOptions ?? chat.requestOptions;
+    final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);
 
     setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
         GenerateState: "正在激活世界书...",
-        currentAssistant:
-            sender == null ? (chat.assistantId ?? 0) : sender.id));
+        currentAssistant: overrideAssistant == null
+            ? (chat.assistantId ?? 0)
+            : overrideAssistant.id));
 
     await for (String token in aiState.aihandler.requestTokenStream(options)) {
       final oldState = aiState;
@@ -368,6 +419,24 @@ class ChatSessionController extends GetxController {
 
     setAIState(aiState.copyWith(isGenerating: false));
     yield aiState.LLMBuffer;
+  }
+
+  /// 在后台生成回复
+  Stream<String> _getResponseInBackground(Aihandler handler,
+      {ChatOptionModel? overrideOption}) async* {
+    backGroundTasks++;
+    late List<LLMMessage> messages;
+
+    messages = Promptbuilder(chat, overrideOption).getLLMMessageList();
+
+    final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
+    LLMRequestOptions options = reqOptions.copyWith(messages: messages);
+
+    await for (String token in handler.requestTokenStream(options)) {
+      yield token;
+      //LLMMessageBuffer.refresh();
+    }
+    backGroundTasks--;
   }
 
   void interrupt() {

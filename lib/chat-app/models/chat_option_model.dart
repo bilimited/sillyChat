@@ -197,4 +197,27 @@ class ChatOptionModel {
         ],
         regex: []);
   }
+
+  factory ChatOptionModel.autoTitle() {
+    int id = DateTime.now().microsecondsSinceEpoch;
+    return ChatOptionModel(
+        id: 0,
+        name: '自动标题',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel(
+              id: id,
+              content: '<messageList>',
+              role: 'user',
+              name: '消息列表',
+              isChatHistory: true),
+          PromptModel(
+            id: id + 1,
+            content: '请根据以上聊天记录生成一个简洁的标题，不超过10个字。',
+            role: 'user',
+            name: '指令',
+          ),
+        ],
+        regex: []);
+  }
 }

@@ -503,10 +503,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                         'quotedText': QuotedTextBuilder(
                             TextScaler.linear(displaySetting.ContentFontScale)),
                         'font': FontColorBuilder(),
-                        'latex': LatexElementBuilder(
-                          // textStyle: const TextStyle(color: Colors.blue),
-                          textScaleFactor: 1.2,
-                        ),
+                        // 'latex': LatexElementBuilder(
+                        //   // textStyle: const TextStyle(color: Colors.blue),
+                        //   textScaleFactor: 1.2,
+                        // ),
                       },
                 extensionSet: md.ExtensionSet([
                   const md.FencedCodeBlockSyntax(),

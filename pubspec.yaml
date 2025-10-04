@@ -31,15 +31,13 @@ dependencies:
 
   flutter:
     sdk: flutter
-  provider: ^6.0.5
+  # provider: ^6.0.5
   photo_view: ^0.14.0
   
-  carousel_slider: ^4.2.1
-
-  cupertino_icons: ^1.0.8
+  # cupertino_icons: ^1.0.8
   flutter_remix: ^0.0.3
 
-  floor: ^1.4.2
+  # floor: ^1.4.2
 
   archive: ^3.3.0
 
@@ -48,48 +46,41 @@ dependencies:
   dio_http2_adapter: ^2.4.0 
   path: ^1.8.3
   image_picker: ^1.0.7
-  flutter_colorpicker: ^1.1.0
-  # image_cropper: ^5.0.1
-  
+   
   get: ^4.7.2
   http: ^1.1.0
 
   encrypt: ^5.0.3
 
   # waterfall_flow: ^3.0.2
-  file_picker: ^5.3.1
+  file_picker: ^8.3.7
 
   webdav_client: ^1.2.0
 
   scrollable_positioned_list: ^0.3.8
-  package_info_plus: ^6.0.0
-  logger: ^2.6.0
-  flex_color_scheme: ^8.0.2
-  permission_handler: ^12.0.1
+  package_info_plus: 9.0.0
+  # logger: ^2.6.0
+  flex_color_scheme: ^8.3.0
   flutter_json_view: ^1.1.5
 
   flutter_markdown: ^0.7.7+1
   introduction_screen: ^3.1.17
-  # animated_tree_view: ^2.3.0
-  # markdown_widget: ^2.3.2+8
+
   intl: ^0.20.2 
   crop_your_image: ^2.0.0
 
   url_launcher: ^6.3.0
-  code_text_field: ^1.1.0
+  # code_text_field: ^1.1.0
   uuid: ^4.5.1
   regex_pattern_text_field: ^1.0.0
-  flutter_math_fork:
-    git:
-      url: https://github.com/dakshatsuraasa/flutter_math.git
-      ref: main
   # flutter_markdown_latex: ^0.3.4
   flutter_image_compress: ^2.3.0
-  # flutter_inappwebview: ^5.8.0
+  flutter_inappwebview: ^6.1.5
+  flutter_spinkit: ^5.2.2
   
   #move_to_background: ^1.0.2
  
-
+ 
 
 dev_dependencies:
   flutter_test:
@@ -97,6 +88,7 @@ dev_dependencies:
 
   # floor_generator: ^1.4.2
   build_runner: ^2.1.2
+  dependency_validator: ^3.2.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

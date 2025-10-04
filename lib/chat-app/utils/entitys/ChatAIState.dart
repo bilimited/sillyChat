@@ -1,7 +1,8 @@
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 
-class ChatAIState{
-  
+/** TODO:本类意义不明，回头改一下 */
+class ChatAIState {
+  final String id;
   final String LLMBuffer;
   final String GenerateState;
   final bool isGenerating;
@@ -9,6 +10,7 @@ class ChatAIState{
   final Aihandler aihandler;
 
   ChatAIState({
+    this.id = "_",
     this.LLMBuffer = "",
     this.GenerateState = "",
     this.isGenerating = false,
@@ -30,5 +32,4 @@ class ChatAIState{
       aihandler: this.aihandler,
     );
   }
-
 }
