@@ -1,6 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
+import 'package:flutter_example/chat-app/models/settings/auto_title_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -24,6 +25,9 @@ class VaultSettingController extends GetxController {
   final RxInt myId = 0.obs;
   late Rx<ChatDisplaySettingModel> displaySettingModel =
       ChatDisplaySettingModel().obs;
+  late Rx<AutoTitleSettingModel> autoTitleSetting = AutoTitleSettingModel(
+          enabled: false, level: 1, option: AutoTitleSettingModel.defaultOption)
+      .obs;
 
   final RxBool isShowOnBoardPage = false.obs;
 
@@ -95,6 +99,11 @@ class VaultSettingController extends GetxController {
             : <RegexModel>[];
 
         defaultApi.value = jsonMap['defaultApi'] ?? -1;
+
+        if (jsonMap['autoTileSetting'] != null) {
+          autoTitleSetting.value =
+              AutoTitleSettingModel.fromJson(jsonMap['autoTileSetting']);
+        }
       } else {
         // 文件不存在：证明初次启动
         isShowOnBoardPage.value = true;
@@ -132,6 +141,7 @@ class VaultSettingController extends GetxController {
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
         'promptSettingModel': promptSettingModel.toJson(),
+        'autoTileSetting': autoTitleSetting.toJson(),
       };
 
       final String jsonString = json.encode(jsonMap);

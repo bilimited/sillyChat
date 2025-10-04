@@ -20,9 +20,6 @@ class ChatModel {
 
   int id = 1;
 
-  @Deprecated('不再使用了')
-  int sortIndex = 0; // 排序用
-
   String name;
   String avatar;
   String? backgroundImage;
@@ -35,6 +32,8 @@ class ChatModel {
   List<int> characterIds = [];
   Map<String, String> chatVars = {};
   Map<String, bool> activitedLorebookItems = {}; // 手动激活的LorebookItem
+
+  bool needAutoTitle = false; // 是否需要自动生成标题
 
   // 对话摘要，介绍或作者注释
   // 会被插入到提示词中
@@ -108,7 +107,7 @@ class ChatModel {
     this.assistantId, // 新增
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
-    this.sortIndex = 0,
+    this.needAutoTitle = false,
   }) {}
 
   List<String> getAllAvatars(CharacterController controller) {
@@ -143,7 +142,7 @@ class ChatModel {
       userId: json['userId'], // 新增
       assistantId: json['assistantId'], // 新增
       messageTemplate: json['messageTemplate'] ?? "{{msg}}", // 新增：反序列化
-      sortIndex: json['sortIndex'] ?? 0,
+      needAutoTitle: json['needAutoTitle'] ?? false,
     )
       ..mode = json['mode'] != null
           ? ChatMode.values.firstWhere(
@@ -185,93 +184,88 @@ class ChatModel {
         'bookmarks': bookmarks.map((b) => b.toJson()).toList(),
         'chatVars': chatVars,
         'activitedLorebookItems': activitedLorebookItems,
-        'sortIndex': sortIndex,
+        'needAutoTitle': needAutoTitle,
       };
 
-  ChatModel shallowCopyWith({
-    int? id,
-    String? name,
-    String? avatar,
-    String? backgroundImage,
-    String? lastMessage,
-    String? time,
-    String? description,
-    List<int>? characterIds,
-    List<MessageModel>? messages,
-    int? chatOptionId,
-    int? userId,
-    int? assistantId,
-    ChatMode? mode,
-    String? messageTemplate,
-    List<String>? tags,
-    int? parentId,
-    int? entranceId,
-    List<BookMarkModel>? bookmarks,
-    Map<String, String>? chatVars,
-    Map<String, bool>? activitedLorebookItems,
-    int? sortIndex,
-  }) {
+  ChatModel copyWith(
+      {int? id,
+      String? name,
+      String? avatar,
+      String? backgroundImage,
+      String? lastMessage,
+      String? time,
+      String? description,
+      List<int>? characterIds,
+      List<MessageModel>? messages,
+      int? chatOptionId,
+      int? userId,
+      int? assistantId,
+      ChatMode? mode,
+      String? messageTemplate,
+      List<String>? tags,
+      List<BookMarkModel>? bookmarks,
+      Map<String, String>? chatVars,
+      Map<String, bool>? activitedLorebookItems,
+      bool? needAutoTitle}) {
     return ChatModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      avatar: avatar ?? this.avatar,
-      backgroundImage: backgroundImage ?? this.backgroundImage,
-      lastMessage: lastMessage ?? this.lastMessage,
-      time: time ?? this.time,
-      description: description ?? this.description,
-      messages: messages ?? this.messages,
-      userId: userId ?? this.userId,
-      assistantId: assistantId ?? this.assistantId,
-      mode: mode ?? this.mode,
-      messageTemplate: messageTemplate ?? this.messageTemplate,
-      chatOptionId: chatOptionId ?? this.chatOptionId,
-      sortIndex: sortIndex ?? this.sortIndex,
-    )
+        id: id ?? this.id,
+        name: name ?? this.name,
+        avatar: avatar ?? this.avatar,
+        backgroundImage: backgroundImage ?? this.backgroundImage,
+        lastMessage: lastMessage ?? this.lastMessage,
+        time: time ?? this.time,
+        description: description ?? this.description,
+        messages: messages ?? this.messages,
+        userId: userId ?? this.userId,
+        assistantId: assistantId ?? this.assistantId,
+        mode: mode ?? this.mode,
+        messageTemplate: messageTemplate ?? this.messageTemplate,
+        chatOptionId: chatOptionId ?? this.chatOptionId,
+        needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..bookmarks = bookmarks ?? this.bookmarks
-      ..tags = tags ?? []
+      ..tags = tags ?? this.tags
       ..characterIds = characterIds ?? this.characterIds
       ..chatVars = chatVars ?? this.chatVars
       ..activitedLorebookItems =
-          activitedLorebookItems ?? this.activitedLorebookItems;
+          activitedLorebookItems ?? this.activitedLorebookItems
+      ..file = this.file;
   }
 
-  ChatModel deepCopyWith({
-    int? id,
-    String? name,
-    String? avatar,
-    String? backgroundImage,
-    String? lastMessage,
-    String? time,
-    String? description,
-    List<int>? characterIds,
-    List<MessageModel>? messages,
-    int? chatOptionId,
-    int? userId,
-    int? assistantId,
-    ChatMode? mode,
-    String? messageTemplate,
-    List<String>? tags,
-    List<BookMarkModel>? bookmarks,
-    Map<String, String>? chatVars,
-    Map<String, bool>? activitedLorebookItems,
-    int? sortIndex,
-  }) {
+  ChatModel deepCopyWith(
+      {int? id,
+      String? name,
+      String? avatar,
+      String? backgroundImage,
+      String? lastMessage,
+      String? time,
+      String? description,
+      List<int>? characterIds,
+      List<MessageModel>? messages,
+      int? chatOptionId,
+      int? userId,
+      int? assistantId,
+      ChatMode? mode,
+      String? messageTemplate,
+      List<String>? tags,
+      List<BookMarkModel>? bookmarks,
+      Map<String, String>? chatVars,
+      Map<String, bool>? activitedLorebookItems,
+      bool? needAutoTitle}) {
     return ChatModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      avatar: avatar ?? this.avatar,
-      backgroundImage: backgroundImage ?? this.backgroundImage,
-      lastMessage: lastMessage ?? this.lastMessage,
-      time: time ?? this.time,
-      description: description ?? this.description,
-      messages: messages ?? this.messages.map((e) => e.copyWith()).toList(),
-      userId: userId ?? this.userId,
-      assistantId: assistantId ?? this.assistantId,
-      mode: mode ?? this.mode,
-      messageTemplate: messageTemplate ?? this.messageTemplate,
-      chatOptionId: chatOptionId ?? this.chatOptionId,
-      sortIndex: sortIndex ?? this.sortIndex,
-    )
+        id: id ?? this.id,
+        name: name ?? this.name,
+        avatar: avatar ?? this.avatar,
+        backgroundImage: backgroundImage ?? this.backgroundImage,
+        lastMessage: lastMessage ?? this.lastMessage,
+        time: time ?? this.time,
+        description: description ?? this.description,
+        messages: messages ?? this.messages.map((e) => e.copyWith()).toList(),
+        userId: userId ?? this.userId,
+        assistantId: assistantId ?? this.assistantId,
+        mode: mode ?? this.mode,
+        messageTemplate: messageTemplate ?? this.messageTemplate,
+        chatOptionId: chatOptionId ?? this.chatOptionId,
+        needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
       ..characterIds = characterIds ?? [...this.characterIds]

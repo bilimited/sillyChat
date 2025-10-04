@@ -91,6 +91,9 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
         }
 
         return Scaffold(
+          appBar: AppBar(
+            title: Text('聊天界面设置'),
+          ),
           body: ListView(
             padding: const EdgeInsets.all(16.0),
             children: <Widget>[

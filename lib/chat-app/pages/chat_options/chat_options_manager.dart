@@ -128,6 +128,48 @@ class ChatOptionsManagerPage extends StatelessWidget {
     );
   }
 
+  Widget _buildBuiltinOptionCard(
+      IconData icon,
+      String name,
+      BuildContext context,
+      ChatOptionModel option,
+      void Function(ChatOptionModel) onSave) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        onTap: () {
+          customNavigate(
+              EditChatOptionPage(
+                option: option,
+                onSave: (option) {
+                  onSave(option);
+                  _controller.saveChatOptions();
+                },
+              ),
+              context: context);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: colors.primary,
+              ),
+              const SizedBox(
+                width: 12,
+              ),
+              Text(
+                name,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +179,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
               scaffoldKey?.currentState?.openDrawer();
             },
             icon: Icon(Icons.menu)),
-        title: const Text('聊天预设'),
+        title: const Text('对话预设'),
         actions: [
           IconButton(
               onPressed: () {
@@ -158,17 +200,20 @@ class ChatOptionsManagerPage extends StatelessWidget {
         ],
       ),
       body: Obx(
-        () => ReorderableListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
-          itemCount: _controller.chatOptions.length,
-          onReorder: _controller.reorderChatOptions,
-          itemBuilder: (context, index) {
-            return KeyedSubtree(
-              key: ValueKey(_controller.chatOptions[index].id),
-              child: _buildOptionCard(
-                  _controller.chatOptions[index], index, context),
-            );
-          },
+        () => Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ReorderableListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: _controller.chatOptions.length,
+            onReorder: _controller.reorderChatOptions,
+            itemBuilder: (context, index) {
+              return KeyedSubtree(
+                key: ValueKey(_controller.chatOptions[index].id),
+                child: _buildOptionCard(
+                    _controller.chatOptions[index], index, context),
+              );
+            },
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

@@ -76,6 +76,7 @@ dependencies:
   # flutter_markdown_latex: ^0.3.4
   flutter_image_compress: ^2.3.0
   flutter_inappwebview: ^6.1.5
+  flutter_spinkit: ^5.2.2
   
   #move_to_background: ^1.0.2
  

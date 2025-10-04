@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
+import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
@@ -107,10 +108,6 @@ class ChatController extends GetxController {
       }
 
       currentFileId.value = maxFileId - 1;
-
-      chats.sort((chat1, chat2) {
-        return chat1.sortIndex - chat2.sortIndex;
-      });
     } catch (e) {
       print('加载聊天数据失败: $e');
       throw e;
@@ -169,7 +166,7 @@ class ChatController extends GetxController {
 
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
-    chatIndex[path] = (chatMeta);
+    chatIndex[path] = chatMeta;
     //chatIndex.assign(path, chatMeta);
     await saveChatIndex();
   }
@@ -198,13 +195,19 @@ class ChatController extends GetxController {
 
   /// [path] 要创建聊天的绝对路径。不包含文件名。
   Future<void> createChat(ChatModel chat, String path) async {
-    final fullPath = '$path/${chat.name}-${DateTime.now().hashCode}.chat';
+    final fullPath = '$path\\${chat.name}-${DateTime.now().hashCode}.chat';
     final file =
         await createUniqueFile(originalPath: fullPath, recursive: true);
     //file.create(recursive: true);
+
+    chat.needAutoTitle =
+        VaultSettingController.of().autoTitleSetting.value.enabled;
     final String contents = json.encode(chat.toJson());
     chat.file = file;
+
     await file.writeAsString(contents);
+
+    // 启用自动标题
 
     // 新增：创建聊天后，同步更新聊天元数据索引
     final chatMeta = ChatMetaModel.fromChatModel(chat);

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
-import 'package:flutter_example/chat-app/pages/settings/prompt_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/auto_title_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 import 'package:get/get.dart';
@@ -171,40 +172,77 @@ class _SettingPageState extends State<SettingPage>
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: Obx(
-              () => Icon(
-                _settingController.isDarkMode.value
-                    ? Icons.nightlight_round
-                    : Icons.wb_sunny_rounded,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            title: Text(
-              '切换主题',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              _settingController.isDarkMode.value ? '切换到明亮主题' : '切换到暗黑主题',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            trailing: Obx(
-              () => Switch(
-                value: _settingController.isDarkMode.value,
-                onChanged: (newValue) {
-                  setState(() {
-                    _pageKey =
-                        UniqueKey(); // Update page key to force theme redraw
-                  });
-                  _settingController.toggleDarkMode();
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.color_lens,
+                    color: Theme.of(context).colorScheme.secondary),
+                onTap: () {
+                  customNavigate(AppearanceSettingsPage(), context: context);
                 },
+                title: Text(
+                  '聊天界面设置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '编辑聊天界面的样式，包括气泡、头像、背景等',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
               ),
-            ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.format_align_center,
+                    color: Theme.of(context).colorScheme.secondary),
+                onTap: () {
+                  customNavigate(PromptFormatSettingsPage(), context: context);
+                },
+                title: Text(
+                  '格式设置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '编辑连续输出时的格式、群聊消息的格式等',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.title,
+                    color: Theme.of(context).colorScheme.secondary),
+                onTap: () {
+                  customNavigate(AutoTitleSettingsPage(), context: context);
+                },
+                title: Text(
+                  '自动标题设置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '编辑自动生成标题的相关设置',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+            ],
           ),
         ),
 
@@ -350,25 +388,8 @@ class _SettingPageState extends State<SettingPage>
       key: _pageKey,
       appBar: AppBar(
         title: const Text('设置'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: '常规设置'),
-            // Tab(text: 'API管理'),
-            Tab(text: '外观设置'),
-            Tab(text: '格式设置'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildGeneralTab(),
-          // ApiManagerPage(),
-          AppearanceSettingsPage(),
-          PromptSettingsPage(),
-        ],
-      ),
+      body: _buildGeneralTab(),
     );
   }
 }

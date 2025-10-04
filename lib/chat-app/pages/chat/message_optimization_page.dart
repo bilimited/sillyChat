@@ -181,7 +181,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
     // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
     // 使用深拷贝确保不会修改原始聊天对象
-    final tempChat = chat.shallowCopyWith(messages: List.from(contextMessages));
+    final tempChat = chat.copyWith(messages: List.from(contextMessages));
 
     // 添加优化指令
     String optimizationPrompt = '';
@@ -250,8 +250,7 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
 
       // 创建临时聊天模型，只包含前文消息（不包含要优化的消息）
       // 使用深拷贝确保不会修改原始聊天对象
-      final tempChat =
-          chat.shallowCopyWith(messages: List.from(contextMessages));
+      final tempChat = chat.copyWith(messages: List.from(contextMessages));
 
       // 添加优化指令
       String optimizationPrompt = '';

@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
 
-class PromptSettingsPage extends StatelessWidget {
-  const PromptSettingsPage({super.key});
+class PromptFormatSettingsPage extends StatelessWidget {
+  const PromptFormatSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     // 通过GetX查找已初始化的VaultSettingController实例
-    final VaultSettingController controller = Get.find<VaultSettingController>();
+    final VaultSettingController controller =
+        Get.find<VaultSettingController>();
     // 获取响应式的设置模型
     final settings = controller.promptSettingModel;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('格式设置'),
+      ),
       body: Obx(
         // 使用Obx包裹，以确保在模型对象本身被替换时UI能正确刷新
         () => ListView(

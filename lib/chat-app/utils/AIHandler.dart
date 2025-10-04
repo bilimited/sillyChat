@@ -11,11 +11,10 @@ import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:get/get.dart';
 
+/**
+ * 用于维护一个同API之间的连接
+ */
 class Aihandler {
-  // 默认API已禁用
-  static const String API_URL = "";
-  static const String API_KEY = "";
-  static const String MODEL_NAME = "";
   static const bool enableSSE = true;
 
   void Function(String newState) onGenerateStateChange = (newStat) {};

@@ -1,5 +1,6 @@
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 
+/** TODO:本类意义不明，回头改一下 */
 class ChatAIState {
   final String id;
   final String LLMBuffer;
