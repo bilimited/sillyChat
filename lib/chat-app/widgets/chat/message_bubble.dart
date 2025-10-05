@@ -534,53 +534,48 @@ class _MessageBubbleState extends State<MessageBubble> {
     final isLoading = message.id == -9999;
 
     // 气泡外的动画效果、加载条
-    return AnimatedSize(
-      alignment: Alignment.topLeft,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      child: Stack(
-        children: [
-          displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
-              ? Container(
-                  decoration: BoxDecoration(
-                    color: isMe
-                        ? colors.primary
-                        : isDesktop
-                            ? colors.surface
-                            : colors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(
-                        displaySetting.MessageBubbleBorderRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
+    return Stack(
+      children: [
+        displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble
+            ? Container(
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? colors.primary
+                      : isDesktop
+                          ? colors.surface
+                          : colors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(
+                      displaySetting.MessageBubbleBorderRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: _buildMessageContent(content))
+            : displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
+                ? Column(
+                    children: [
+                      _buildMessageContent(content),
+                      SizedBox(
+                        height: 16,
+                      )
                     ],
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: _buildMessageContent(content))
-              : displaySetting.messageBubbleStyle == MessageBubbleStyle.compact
-                  ? Column(
-                      children: [
-                        _buildMessageContent(content),
-                        SizedBox(
-                          height: 16,
-                        )
-                      ],
-                    )
-                  : _buildMessageContent(content),
-          if (isLoading)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0, // 假设一个ProgressIndicator的高度
-              child: const LinearProgressIndicator(
-                backgroundColor: Colors.transparent,
-              ),
+                  )
+                : _buildMessageContent(content),
+        if (isLoading)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0, // 假设一个ProgressIndicator的高度
+            child: const LinearProgressIndicator(
+              backgroundColor: Colors.transparent,
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
