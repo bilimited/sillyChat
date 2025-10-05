@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 
 class StackAvatar extends StatelessWidget {
   final List<String> avatarUrls;
@@ -42,18 +43,14 @@ class StackAvatar extends StatelessWidget {
             return Positioned(
               left: index * dynamicSpacing,
               child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.surface,
-                    width: 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
-                ),
-                child: CircleAvatar(
-                  radius: avatarSize / 2,
-                  backgroundImage: ImageUtils.getProvider(avatarUrls[index]),
-                ),
-              ),
+                  child: AvatarImage.round(avatarUrls[index], avatarSize / 2)),
             );
           }),
           if (hasMore)

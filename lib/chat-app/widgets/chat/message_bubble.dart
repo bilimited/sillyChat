@@ -211,10 +211,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     Widget _buildAvatar() {
       switch (displaySetting.avatarStyle) {
         case AvatarStyle.circle:
-          return CircleAvatar(
-            backgroundImage: ImageUtils.getProvider(character.avatar),
-            radius: avatarRadius,
-          );
+          return AvatarImage.round(character.avatar, avatarRadius);
         case AvatarStyle.rounded:
           return ClipRRect(
               borderRadius:
@@ -236,6 +233,9 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     return GestureDetector(
       onTap: () {
+        if (character.isDefaultAssistant) {
+          return;
+        }
         customNavigate(
             EditCharacterPage(
               characterId: character.id,

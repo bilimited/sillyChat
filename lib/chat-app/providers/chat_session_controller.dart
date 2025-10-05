@@ -408,7 +408,7 @@ class ChatSessionController extends SessionController {
         isGenerating: true,
         GenerateState: "正在激活世界书...",
         currentAssistant: overrideAssistant == null
-            ? (chat.assistantId ?? 0)
+            ? (chat.assistantId ?? -1)
             : overrideAssistant.id));
 
     await for (String token in aiState.aihandler.requestTokenStream(options)) {

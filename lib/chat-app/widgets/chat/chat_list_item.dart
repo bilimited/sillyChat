@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:get/get.dart';
 
@@ -52,6 +53,8 @@ class ChatListItem extends StatelessWidget {
       print('缓存命中');
     }
 
+    bool isQuickChat = chat?.assistant.isDefaultAssistant ?? true;
+
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -62,22 +65,25 @@ class ChatListItem extends StatelessWidget {
                 if (chat != null)
                   chat!.mode == ChatMode.group
                       ? StackAvatar(avatarUrls: chat!.getAllAvatars())
-                      : CircleAvatar(
-                          radius: 24,
-                          backgroundImage:
-                              ImageUtils.getProvider(chat!.assistant.avatar),
-                        ),
+                      : isQuickChat
+                          ? SizedBox.shrink()
+                          : AvatarImage.round(chat!.assistant.avatar, 24),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        chat?.name ?? p.basenameWithoutExtension(path),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurfaceVariant,
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          chat?.name ?? p.basenameWithoutExtension(path),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),

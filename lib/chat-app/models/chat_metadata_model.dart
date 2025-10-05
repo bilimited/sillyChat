@@ -32,7 +32,7 @@ class ChatMetaModel {
 
   CharacterModel get assistant {
     CharacterController controller = Get.find();
-    return controller.getCharacterById(assistantId ?? -1);
+    return controller.getCharacterById(assistantId);
   }
 
   List<String> getAllAvatars() {

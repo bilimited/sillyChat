@@ -461,7 +461,7 @@ class _ChatPageState extends State<ChatPage> {
   // 消息气泡
   Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
       {int index = 0, bool isNarration = false}) {
-    return MessageBubble(
+    var messageBubble = MessageBubble(
       chat: chat,
       message: message,
       isSelected: _selectedMessage == message,
@@ -482,6 +482,18 @@ class _ChatPageState extends State<ChatPage> {
       onUpdateChat: _updateChat,
       state: sessionController.aiState,
     );
+
+    // 防遮挡设计
+    return message == chat.messages.first
+        ? Column(
+            children: [
+              SizedBox(
+                height: 64,
+              ),
+              messageBubble,
+            ],
+          )
+        : messageBubble;
   }
 
   // 消息操作按钮小组件
@@ -748,16 +760,6 @@ class _ChatPageState extends State<ChatPage> {
 
                             _updateChat();
                           }),
-                      ...manualItems.map((item) {
-                        return ToggleChip(
-                            icon: Icons.book,
-                            text: item.name,
-                            initialValue: item.isActive,
-                            onToggle: (val) {
-                              item.isActive = val;
-                              LoreBookController.of.saveLorebooks();
-                            });
-                      })
                     ],
                     havaBackgroundImage: chat.assistant.backgroundImage != null,
                     // TOOL BAR
@@ -798,7 +800,7 @@ class _ChatPageState extends State<ChatPage> {
               maxHeight: double.infinity,
             ),
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.bottomCenter,
               child: Stack(
                 children: [
                   Obx(() {
@@ -1026,7 +1028,9 @@ class _ChatPageState extends State<ChatPage> {
                 : null,
             toolbarHeight: isDesktop ? 66 : null,
             scrolledUnderElevation: isDesktop ? 0 : 0,
-            backgroundColor: isDesktop ? colors.surfaceContainerHigh : null,
+            backgroundColor: Colors
+                .transparent, //isDesktop ? colors.surfaceContainerHigh : null,
+
             title: Obx(
               () => Row(
                 children: [
@@ -1068,6 +1072,7 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
             actions: [
+              _buildMoreVertButton(),
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
@@ -1090,6 +1095,38 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ],
           );
+  }
+
+  Widget _buildMoreVertButton() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert),
+      onSelected: (value) {
+        // 处理菜单项点击
+        if (value == 'reading') {
+          // 执行操作1
+        } else if (value == 'option2') {
+          // 执行操作2
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        // PopupMenuItem<String>(
+        //   value: 'reading',
+        //   child: Row(
+        //     children: [
+        //       Icon(Icons.book),
+        //       SizedBox(
+        //         width: 8,
+        //       ),
+        //       Text('阅读模式'),
+        //     ],
+        //   ),
+        // ),
+        PopupMenuItem<String>(
+          value: 'small_summary',
+          child: Text('执行总结'),
+        ),
+      ],
+    );
   }
 
   Widget _buildBackgroundImage() {
@@ -1145,6 +1182,7 @@ class _ChatPageState extends State<ChatPage> {
       //   }
       // },
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: colors.surface,
 
         // APPBar
@@ -1167,6 +1205,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       // floatingActionButton: _buildFloatingButtonOverlay(),
       backgroundColor: colors.surfaceContainerHigh,
 

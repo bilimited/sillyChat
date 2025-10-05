@@ -248,6 +248,26 @@ class ChatController extends GetxController {
     return chatModel;
   }
 
+  Future<ChatModel> createQuickChat(String path) async {
+    final id = DateTime.now().microsecond;
+    ChatModel chatModel = ChatModel(
+        id: id,
+        name: '快速聊天',
+        avatar: '',
+        lastMessage: '聊天已创建',
+        time: DateTime.now().toString(),
+        assistantId: -1,
+        messages: [],
+        chatOptionId: Get.find<ChatOptionController>()
+            .chatOptions
+            .elementAtOrNull(0)
+            ?.id);
+
+    await createChat(chatModel, path);
+
+    return chatModel;
+  }
+
   static ChatController get of => Get.find<ChatController>();
 
   Future<File> createUniqueFile({

@@ -506,6 +506,17 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   _createGroupChat(context);
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.quickreply),
+                title: const Text('快速开始'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final chat = await ChatController.of
+                      .createQuickChat(_currentDirectory.path);
+                  _openChat(chat.file.path);
+                  _loadFiles();
+                },
+              ),
             ],
           ),
         );

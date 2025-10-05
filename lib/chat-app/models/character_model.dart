@@ -63,9 +63,17 @@ class CharacterModel {
 
   int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
 
-  ChatOptionModel? get bindOption => bindOptionId == null
-      ? null
-      : ChatOptionController.of().getChatOptionById(bindOptionId!);
+  bool get isDefaultAssistant => this.id == -1;
+
+  ChatOptionModel? get bindOption {
+    // 默认助手直接绑定空预设
+    if (isDefaultAssistant) {
+      return ChatOptionModel.empty();
+    }
+    return bindOptionId == null
+        ? null
+        : ChatOptionController.of().getChatOptionById(bindOptionId!);
+  }
 
   CharacterModel(
       {required this.id,

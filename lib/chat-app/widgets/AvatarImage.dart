@@ -47,6 +47,13 @@ class AvatarImage extends StatelessWidget {
     return '${SettingController.of.getImagePathSync()}/${p.basename(filename)}';
   }
 
+  static Widget round(String path, double radius) {
+    return ClipRRect(
+        borderRadius: BorderRadiusGeometry.circular(114514),
+        child:
+            AvatarImage(fileName: path, width: radius * 2, height: radius * 2));
+  }
+
   @override
   Widget build(BuildContext context) {
     final file = File(getPath(fileName));
@@ -55,6 +62,13 @@ class AvatarImage extends StatelessWidget {
       width: width,
       height: height,
       fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Icon(
+          Icons.account_circle,
+          color: Theme.of(context).colorScheme.secondary,
+          size: width,
+        );
+      },
     );
   }
 }
