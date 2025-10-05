@@ -1,6 +1,7 @@
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 
 class LLMRequestOptions {
   final List<LLMMessage> messages; // 消息记录
@@ -18,6 +19,7 @@ class LLMRequestOptions {
   final bool isStreaming; // 是否流式响应
 
   final bool isMergeMessageList;
+  final ChatCompressionSettings chatCompressionSettings;
 
   ApiModel? get api => VaultSettingController.of().getApiById(apiId);
 
@@ -35,7 +37,8 @@ class LLMRequestOptions {
     this.seed = -1,
     this.isMergeMessageList = false,
     this.isStreaming = true,
-  });
+    ChatCompressionSettings? chatCompressionSettings,
+  }) : chatCompressionSettings = chatCompressionSettings ?? const ChatCompressionSettings();
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
     return LLMRequestOptions(
@@ -54,6 +57,9 @@ class LLMRequestOptions {
       seed: json['seed'] ?? -1,
       isMergeMessageList: json['is_merge_message_list'] ?? false,
       isStreaming: json['is_streaming'] ?? true,
+      chatCompressionSettings: json.containsKey('chat_compression_settings')
+          ? ChatCompressionSettings.fromJson(json['chat_compression_settings'])
+          : null,
     );
   }
 
@@ -71,6 +77,7 @@ class LLMRequestOptions {
       'seed': seed,
       'is_merge_message_list': isMergeMessageList,
       'is_streaming': isStreaming,
+      'chat_compression_settings': chatCompressionSettings.toJson(),
     };
   }
 
@@ -88,6 +95,7 @@ class LLMRequestOptions {
     int? seed,
     bool? isMergeMessageList,
     bool? isStreaming,
+    ChatCompressionSettings? chatCompressionSettings,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -103,6 +111,7 @@ class LLMRequestOptions {
       seed: seed ?? this.seed,
       isMergeMessageList: isMergeMessageList ?? this.isMergeMessageList,
       isStreaming: isStreaming ?? this.isStreaming,
+      chatCompressionSettings: chatCompressionSettings ?? this.chatCompressionSettings,
     );
   }
 }

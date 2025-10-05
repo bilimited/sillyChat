@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 import 'package:get/get.dart';
 import '../../utils/entitys/RequestOptions.dart';
 
@@ -114,13 +115,32 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
             widget.onChanged(widget.options.copyWith(isDeleteThinking: value));
           },
         ),
-        _buildCheckbox(
-          label: '是否合并消息列表',
-          value: widget.options.isMergeMessageList,
-          onChanged: (value) {
-            widget
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 保留原始复选框功能
+            _buildCheckbox(
+              label: '是否合并消息列表',
+              value: widget.options.isMergeMessageList,
+              onChanged: (value) {
+                widget
                 .onChanged(widget.options.copyWith(isMergeMessageList: value));
-          },
+              },
+            ),
+            // 新增信息图标按钮
+            IconButton(
+                onPressed: () {
+                  customNavigate(
+                      ChatCompressionSettingsPage(
+                        settings_: widget.options.chatCompressionSettings,
+                        onChanged: (settings) {
+                          widget.onChanged(widget.options.copyWith(chatCompressionSettings: settings));
+                        },
+                      ),
+                      context: context);
+                },
+                icon: Icon(Icons.edit)),
+          ],
         ),
         const SizedBox(height: 16),
         _buildApiSelector(),
