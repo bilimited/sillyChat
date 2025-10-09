@@ -9,6 +9,7 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
+import 'package:flutter_example/chat-app/widgets/character/memory_editor.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -43,6 +44,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   String? _avatarPath;
   String? _backgroundPath;
+  List<CharacterMemory> _memories = [];
+
   CharacterModel? _character;
   bool get isEditMode => widget.characterId != null;
   bool get isEditPlayer => widget.characterId == 0;
@@ -50,7 +53,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     if (widget.characterId != null) {
       _character = _characterController.getCharacterById(widget.characterId!);
     }
@@ -77,6 +80,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             .getCharacterById(widget.characterId!)
             .bindOptionId
         : null;
+    _memories = _character?.memories ?? [];
 
     if (!ChatOptionController.of()
         .chatOptions
@@ -120,6 +124,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           _categoryController.text.isEmpty ? "默认" : _categoryController.text,
       lorebookIds: _character?.lorebookIds ?? [],
       firstMessage: _firstMessageController.text,
+      memories: _memories,
     )
       ..backgroundImage = _backgroundPath
       ..brief = _briefController.text
@@ -433,13 +438,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 DropdownButtonFormField<MessageStyle>(
                   value: _character?.messageStyle,
                   decoration: const InputDecoration(
-                    labelText: '对话样式',
+                    labelText: '消息气泡样式',
                   ),
                   items: const [
                     DropdownMenuItem(
                         value: MessageStyle.common, child: Text('普通')),
                     DropdownMenuItem(
                         value: MessageStyle.narration, child: Text('旁白')),
+                    DropdownMenuItem(
+                        value: MessageStyle.summary, child: Text('摘要')),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -759,6 +766,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     );
   }
 
+  Widget _buildMemoryTab() {
+    return MemoryEditor(
+      memories: _character?.memories ?? [],
+    );
+  }
+
   // 用户（Id==0）的设置界面
   Widget _buildPlayerSetting() {
     return ListView(
@@ -817,7 +830,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 DropdownButtonFormField<MessageStyle>(
                   value: _character?.messageStyle,
                   decoration: const InputDecoration(
-                    labelText: '对话样式',
+                    labelText: '消息气泡样式',
                   ),
                   items: const [
                     DropdownMenuItem(
@@ -865,6 +878,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     tabs: const [
                       Tab(text: '基本信息'),
                       Tab(text: '其他设置'),
+                      Tab(text: '编辑记忆'),
                     ],
                   ),
             actions: isEditPlayer
@@ -889,6 +903,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     children: [
                       _buildBasicInfoTab(),
                       _buildSettingsTab(),
+                      _buildMemoryTab()
                     ],
                   ),
           ),

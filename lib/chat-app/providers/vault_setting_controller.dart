@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/auto_title_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
+import 'package:flutter_example/chat-app/models/settings/summary_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
@@ -28,6 +29,8 @@ class VaultSettingController extends GetxController {
   late Rx<AutoTitleSettingModel> autoTitleSetting = AutoTitleSettingModel(
           enabled: false, level: 1, option: AutoTitleSettingModel.defaultOption)
       .obs;
+  late Rx<SummarySettingModel> summarySetting =
+      SummarySettingModel.defaultOption().obs;
 
   final RxBool isShowOnBoardPage = false.obs;
 

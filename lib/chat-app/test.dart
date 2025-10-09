@@ -1,171 +1,74 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/widgets/character/memory_editor.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-
-Future<void> main() async {
-  runApp(const MyApp());
+void main() {
+  // 初始化中文日期格式
+  initializeDateFormatting('zh_CN', null).then((_) => runApp(MyApp()));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: InAppWebViewExample(),
+    return MaterialApp(
+      title: '记忆编辑器',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: MemoryScreen(),
     );
   }
 }
 
-class InAppWebViewExample extends StatefulWidget {
-  const InAppWebViewExample({super.key});
-
+class MemoryScreen extends StatefulWidget {
   @override
-  State<InAppWebViewExample> createState() => _InAppWebViewExampleState();
+  _MemoryScreenState createState() => _MemoryScreenState();
 }
 
-class _InAppWebViewExampleState extends State<InAppWebViewExample> {
-  late InAppWebViewController _webViewController;
-  String _dartVariable = "初始值";
+class _MemoryScreenState extends State<MemoryScreen> {
+  // GlobalKey 用于从外部访问 MemoryEditorState 的方法
+  final GlobalKey<MemoryEditorState> _editorKey =
+      GlobalKey<MemoryEditorState>();
 
-  // HTML 内容
-  final String _htmlContent = """
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>WebView交互示例</title>
-      <style>
-          body { font-family: sans-serif; text-align: center; padding: 20px; }
-          button { padding: 10px 20px; font-size: 16px; margin: 10px; }
-          #messageFromDart { margin-top: 20px; font-weight: bold; color: blue; }
-      </style>
-  </head>
-  <body>
-      <h1>WebView 与 Dart 交互</h1>
-
-      <p>Dart 变量的值: <span id="dartVarDisplay">初始值</span></p>
-
-      <button onclick="updateDartVariable()">通过JS修改Dart变量</button>
-      <button onclick="callDartMethod()">通过JS调用Dart方法</button>
-
-      <div id="messageFromDart"></div>
-
-      <script>
-          // 等待flutter_inappwebview平台准备就绪
-          window.addEventListener("flutterInAppWebViewPlatformReady", function(event) {
-              console.log("Flutter InAppWebView is ready!");
-          });
-
-          // 1. 通过调用JS方法修改Dart变量
-          function updateDartVariable() {
-              const newValue = "由JS在 " + new Date().toLocaleTimeString() + " 修改";
-              window.flutter_inappwebview.callHandler('updateDartVariableHandler', newValue);
-          }
-
-          // 2. 通过JS调用Dart方法
-          async function callDartMethod() {
-              try {
-                  const result = await window.flutter_inappwebview.callHandler('showDartAlert', '这是一个来自JS的消息！');
-                  console.log("从Dart返回的数据: " + result.message);
-                  alert("Dart方法执行完毕，并返回: " + result.message);
-              } catch (e) {
-                  console.error(e);
-              }
-          }
-
-          // 供Dart调用的JS函数
-          function updateTextFromDart(message, value) {
-              document.getElementById('messageFromDart').innerText = message + " 值为: " + value;
-          }
-
-          // 更新显示的Dart变量的值
-          function updateDartVariableDisplay(newValue) {
-              document.getElementById('dartVarDisplay').innerText = newValue;
-          }
-      </script>
-  </body>
-  </html>
-  """;
+  // 示例记忆数据
+  final List<CharacterMemory> _memories = [
+    CharacterMemory(time: DateTime.now(), content: '今天天气很好。'),
+    CharacterMemory(
+        time: DateTime.now().subtract(Duration(days: 1)),
+        content: '昨天学习了 Flutter。'),
+    CharacterMemory(
+        time: DateTime.now().subtract(Duration(days: 2)),
+        content: '前天和朋友一起去吃饭了。'),
+    CharacterMemory(
+        time: DateTime.now().subtract(Duration(days: 35)),
+        content: '上个月去旅游了，很开心。'),
+    CharacterMemory(
+        time: DateTime.now().subtract(Duration(days: 40)),
+        content: '上个月的项目顺利完成了。'),
+    CharacterMemory(
+        time: DateTime.now().subtract(Duration(days: 70)),
+        content: '两个月前开始学习新的技能。'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter InAppWebView 示例'),
+        title: Text('记忆编辑器'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: InAppWebView(
-              initialData: InAppWebViewInitialData(data: _htmlContent),
-              onWebViewCreated: (controller) {
-                _webViewController = controller;
-
-                // 注册一个JavaScript处理器来更新Dart变量
-                _webViewController.addJavaScriptHandler(
-                    handlerName: 'updateDartVariableHandler',
-                    callback: (args) {
-                      setState(() {
-                        _dartVariable = args[0];
-                      });
-                      // 更新WebView中的显示
-                      _webViewController.evaluateJavascript(
-                          source:
-                              "updateDartVariableDisplay('$_dartVariable')");
-                    });
-
-                // 注册一个JavaScript处理器来让JS调用Dart方法
-                _webViewController.addJavaScriptHandler(
-                    handlerName: 'showDartAlert',
-                    callback: (args) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('来自JS的调用'),
-                          content: Text(args[0]),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('关闭'),
-                            )
-                          ],
-                        ),
-                      );
-                      // 返回数据给JavaScript
-                      return {'message': '成功！'};
-                    });
-              },
-              onConsoleMessage: (controller, consoleMessage) {
-                print(consoleMessage);
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Text(
-                  'Dart变量: $_dartVariable',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    // 3. Dart调用JS方法并传值
-                    _webViewController.evaluateJavascript(
-                        source: "updateTextFromDart('来自Dart的消息', 12345)");
-                  },
-                  child: const Text('Dart调用JS方法并传值'),
-                ),
-              ],
-            ),
-          )
-        ],
+      body: MemoryEditor(
+        key: _editorKey, // 将 key 传递给编辑器
+        memories: _memories,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 通过 key 调用 MemoryEditorState 中的 addMemory 方法
+          _editorKey.currentState?.addMemory();
+        },
+        child: Icon(Icons.add),
+        tooltip: '添加记忆',
       ),
     );
   }

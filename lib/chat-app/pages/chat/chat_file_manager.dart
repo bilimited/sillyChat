@@ -377,6 +377,12 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         icon: const Icon(Icons.delete),
         onPressed: _deleteFiles,
       ));
+      if (_selectedFiles.length == 1 && _selectedFiles.first is Directory) {
+        actions.add(IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: _renameFile,
+        ));
+      }
     } else {
       actions.add(IconButton(
         icon: const Icon(Icons.search),

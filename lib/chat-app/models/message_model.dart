@@ -1,29 +1,29 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 
-enum MessageType { text, image, narration, divider }
+// enum MessageType { common, narration }
 
-extension MessageTypeExtension on MessageType {
-  String toJson() => toString().split('.').last;
+// extension MessageTypeExtension on MessageType {
+//   String toJson() => toString().split('.').last;
 
-  static MessageType fromJson(String json) {
-    return MessageType.values.firstWhere(
-      (type) => type.toString().split('.').last == json,
-      orElse: () => MessageType.text,
-    );
-  }
+//   static MessageType fromJson(String json) {
+//     return MessageType.values.firstWhere(
+//       (type) => type.toString().split('.').last == json,
+//       orElse: () => MessageType.common,
+//     );
+//   }
 
-  static MessageType fromMessageStyle(MessageStyle style) {
-    switch (style) {
-      case MessageStyle.common:
-        return MessageType.text;
-      case MessageStyle.narration:
-        return MessageType.narration;
-      default:
-        return MessageType.text;
-    }
-  }
-}
+//   static MessageType fromMessageStyle(MessageStyle style) {
+//     switch (style) {
+//       case MessageStyle.common:
+//         return MessageType.common;
+//       case MessageStyle.narration:
+//         return MessageType.narration;
+//       default:
+//         return MessageType.common;
+//     }
+//   }
+// }
 
 enum MessageRole { user, assistant, system }
 
@@ -48,7 +48,7 @@ class MessageModel {
   final List<String?> alternativeContent;
   int senderId;
   final DateTime time;
-  MessageType type;
+  MessageStyle type;
   bool get isAssistant => role == MessageRole.assistant;
 
   final int? token;
@@ -72,7 +72,7 @@ class MessageModel {
     required this.content,
     required this.senderId,
     required this.time,
-    this.type = MessageType.text,
+    this.type = MessageStyle.common,
     this.role = MessageRole.user,
     this.token = 0,
     this.resPath = const [],
@@ -94,7 +94,7 @@ class MessageModel {
                 orElse: () => MessageRole.user,
               ),
         time = DateTime.parse(json['time']),
-        type = MessageTypeExtension.fromJson(json['type']),
+        type = MessageStyle.fromJson(json['type']),
         token = (json['token'] ?? 0) as int,
         resPath = json['resPath'] is String
             ? [if ((json['resPath'] as String).isNotEmpty) json['resPath']]
@@ -133,7 +133,7 @@ class MessageModel {
       content: map['content'],
       senderId: map['sender'] ?? -1,
       time: DateTime.parse(map['time']),
-      type: MessageTypeExtension.fromJson(map['type']),
+      type: MessageStyle.fromJson(map['type']),
       role: MessageRole.values.firstWhere(
         (e) => e.toString() == 'MessageRole.${map['role']}',
         orElse: () => MessageRole.user,
@@ -157,7 +157,7 @@ class MessageModel {
     String? content,
     int? sender,
     DateTime? time,
-    MessageType? type,
+    MessageStyle? type,
     MessageRole? role,
     bool? isAssistant,
     int? token,

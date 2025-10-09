@@ -276,7 +276,7 @@ class ChatSessionController extends SessionController {
           content: text,
           senderId: chat.user.id,
           time: DateTime.now(),
-          type: MessageTypeExtension.fromMessageStyle(chat.user.messageStyle),
+          type: chat.user.messageStyle,
           role: MessageRole.user,
           alternativeContent: [null],
           resPath: selectedPath);

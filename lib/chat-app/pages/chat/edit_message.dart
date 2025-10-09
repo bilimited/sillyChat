@@ -27,7 +27,7 @@ class _EditMessagePageState extends State<EditMessagePage> {
   late TextEditingController _editController;
 
   late int _senderId;
-  late MessageType _messageType;
+  late MessageStyle _messageType;
 
   @override
   void initState() {
@@ -75,19 +75,23 @@ class _EditMessagePageState extends State<EditMessagePage> {
           // 消息类型选择
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: DropdownButtonFormField<MessageType>(
+            child: DropdownButtonFormField<MessageStyle>(
               value: _messageType,
               decoration: const InputDecoration(
                 labelText: '消息类型',
               ),
               items: [
                 DropdownMenuItem(
-                  value: MessageType.text,
+                  value: MessageStyle.common,
                   child: Text('文本'),
                 ),
                 DropdownMenuItem(
-                  value: MessageType.narration,
+                  value: MessageStyle.narration,
                   child: Text('旁白'),
+                ),
+                DropdownMenuItem(
+                  value: MessageStyle.summary,
+                  child: Text('摘要'),
                 ),
               ],
               onChanged: (val) {

@@ -21,9 +21,7 @@ class CharacterWheel extends StatelessWidget {
         super(key: key);
 
   Widget _buildAvatar(CharacterModel character) {
-    if (character.messageStyle == MessageType.divider) {
-      return Icon(Icons.safety_divider);
-    } else if (character.messageStyle == MessageType.narration) {
+    if (character.messageStyle == MessageStyle.narration) {
       return Icon(Icons.chat);
     } else {
       return AvatarImage(fileName: character.avatar);

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
+import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
@@ -760,6 +761,16 @@ class _ChatPageState extends State<ChatPage> {
 
                             _updateChat();
                           }),
+                      ...manualItems.map((item) {
+                        return ToggleChip(
+                            icon: Icons.book,
+                            text: item.name,
+                            initialValue: item.isActive,
+                            onToggle: (val) {
+                              item.isActive = val;
+                              LoreBookController.of.saveLorebooks();
+                            });
+                      })
                     ],
                     havaBackgroundImage: chat.assistant.backgroundImage != null,
                     // TOOL BAR
@@ -863,7 +874,7 @@ class _ChatPageState extends State<ChatPage> {
                                             : null,
                                         index: i,
                                         isNarration: message.type ==
-                                            MessageType.narration);
+                                            MessageStyle.narration);
                                   }),
                                 )
                               ],

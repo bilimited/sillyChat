@@ -43,6 +43,8 @@ class ChatListItem extends StatelessWidget {
 
   ChatMetaModel? get chat => ChatController.of.chatIndex[path];
 
+  bool get isQuickChat => chat?.assistant.isDefaultAssistant ?? true;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -52,9 +54,6 @@ class ChatListItem extends StatelessWidget {
     } else {
       print('缓存命中');
     }
-
-    bool isQuickChat = chat?.assistant.isDefaultAssistant ?? true;
-
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
