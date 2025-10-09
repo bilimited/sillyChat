@@ -112,12 +112,14 @@ class SillyChatApp extends StatelessWidget {
 
   /// 用于显示单行提示消息。显示错误信息请使用Get.snackbar。
   static void snackbar(BuildContext context, String message,
-      {Duration duration = const Duration(milliseconds: 1500)}) {
+      {Duration duration = const Duration(milliseconds: 1500),
+      SnackBarAction? action}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
         duration: duration,
+        action: action,
       ),
     );
   }

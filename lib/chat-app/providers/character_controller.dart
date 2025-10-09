@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_example/chat-app/models/summary_character_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
@@ -24,12 +23,13 @@ class CharacterController extends GetxController {
       messageStyle: MessageStyle.common);
 
   static const SUMMARY_CHARACTER_ID = -2;
-  static final summaryCharacter = SummaryCharacterModel(
+  static final summaryCharacter = CharacterModel(
       id: SUMMARY_CHARACTER_ID,
       remark: '总结姬',
       roleName: '总结姬',
       avatar: '',
-      category: '');
+      category: '',
+      messageStyle: MessageStyle.summary);
 
   int? get myId => _vaultSettingController.myId.value;
   set myId(val) {

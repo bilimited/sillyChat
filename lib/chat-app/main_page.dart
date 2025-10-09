@@ -35,9 +35,6 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  // ignore: unused_field
-  static const String AppVersion = 'v1.11.1-alpha';
-
   int _currentIndex = 0;
   final VaultSettingController _vaultSettingController = Get.find();
   final CharacterController _characterController = Get.find();
@@ -233,9 +230,21 @@ class _MainPageState extends State<MainPage> {
                                               context: context);
                                         } else if (value == 2) {
                                           showLicensePage(context: context);
-                                        } else if (value == 3) {}
+                                        } else if (value == 3) {
+                                          SettingController.of.toggleDarkMode();
+                                        }
                                       },
                                       itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          value: 3,
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.dark_mode, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('切换昼/夜'),
+                                            ],
+                                          ),
+                                        ),
                                         PopupMenuItem(
                                           value: 0,
                                           child: Row(

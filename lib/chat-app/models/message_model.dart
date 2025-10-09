@@ -48,7 +48,7 @@ class MessageModel {
   final List<String?> alternativeContent;
   int senderId;
   final DateTime time;
-  MessageStyle type;
+  MessageStyle style;
   bool get isAssistant => role == MessageRole.assistant;
 
   final int? token;
@@ -72,7 +72,7 @@ class MessageModel {
     required this.content,
     required this.senderId,
     required this.time,
-    this.type = MessageStyle.common,
+    this.style = MessageStyle.common,
     this.role = MessageRole.user,
     this.token = 0,
     this.resPath = const [],
@@ -94,7 +94,7 @@ class MessageModel {
                 orElse: () => MessageRole.user,
               ),
         time = DateTime.parse(json['time']),
-        type = MessageStyle.fromJson(json['type']),
+        style = MessageStyle.fromJson(json['type']),
         token = (json['token'] ?? 0) as int,
         resPath = json['resPath'] is String
             ? [if ((json['resPath'] as String).isNotEmpty) json['resPath']]
@@ -116,7 +116,7 @@ class MessageModel {
         'content': content,
         'sender': senderId,
         'time': time.toIso8601String(),
-        'type': type.toJson(),
+        'type': style.toJson(),
         'role': role.toString().split('.').last,
         // 'isRead': isAssistant,
         'token': token,
@@ -133,7 +133,7 @@ class MessageModel {
       content: map['content'],
       senderId: map['sender'] ?? -1,
       time: DateTime.parse(map['time']),
-      type: MessageStyle.fromJson(map['type']),
+      style: MessageStyle.fromJson(map['type']),
       role: MessageRole.values.firstWhere(
         (e) => e.toString() == 'MessageRole.${map['role']}',
         orElse: () => MessageRole.user,
@@ -172,7 +172,7 @@ class MessageModel {
       content: content ?? this.content,
       senderId: sender ?? this.senderId,
       time: time ?? this.time,
-      type: type ?? this.type,
+      style: type ?? this.style,
       role: role ?? this.role,
       // isAssistant: isAssistant ?? this.isAssistant,
       token: token ?? this.token,

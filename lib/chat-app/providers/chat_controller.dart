@@ -34,6 +34,7 @@ class ChatController extends GetxController {
   final RxString currentPath = ''.obs;
 
   final Rx<FileDeletedEvent?> fileDeleteEvent = Rx(null);
+  final Rx<FileCreatedEvent?> fileCreateEvent = Rx(null);
 
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
@@ -194,7 +195,8 @@ class ChatController extends GetxController {
   }
 
   /// [path] 要创建聊天的绝对路径。不包含文件名。
-  Future<void> createChat(ChatModel chat, String path) async {
+  /// TODO:添加事件监听实现自动更新聊天列表
+  Future<String> createChat(ChatModel chat, String path) async {
     final fullPath =
         p.join(path, '${chat.name}-${DateTime.now().hashCode}.chat');
     //'$path\\${chat.name}-${DateTime.now().hashCode}.chat';
@@ -214,6 +216,8 @@ class ChatController extends GetxController {
     // 新增：创建聊天后，同步更新聊天元数据索引
     final chatMeta = ChatMetaModel.fromChatModel(chat);
     await updateChatMeta(fullPath, chatMeta);
+    fileCreateEvent.value = FileCreatedEvent(fullPath);
+    return fullPath;
   }
 
   Future<ChatModel> createChatFromCharacter(

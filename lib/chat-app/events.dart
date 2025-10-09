@@ -9,6 +9,11 @@ class FileDeletedEvent extends AppEvent {
   FileDeletedEvent(this.filePath);
 }
 
+class FileCreatedEvent extends AppEvent {
+  final String filePath;
+  FileCreatedEvent(this.filePath);
+}
+
 class NewMessageEvent extends AppEvent {
   final MessageModel message;
   final ChatModel chat;

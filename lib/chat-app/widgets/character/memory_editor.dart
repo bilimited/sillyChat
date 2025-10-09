@@ -159,7 +159,7 @@ class MemoryEditorState extends State<MemoryEditor> {
       body: sortedKeys.isEmpty
           ? Center(
               child: Text(
-                '还没有任何记忆\n点击右下角按钮添加一条吧',
+                '记忆系统施工中\n敬请期待',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),

@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/auto_title_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/summary_setting_page.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 import 'package:get/get.dart';
@@ -237,6 +238,29 @@ class _SettingPageState extends State<SettingPage>
                 ),
                 subtitle: Text(
                   '编辑自动生成标题的相关设置',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.summarize,
+                    color: Theme.of(context).colorScheme.secondary),
+                onTap: () {
+                  customNavigate(SummarySettingsPage(), context: context);
+                },
+                title: Text(
+                  '摘要设置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '生成对话摘要&记忆系统的相关设置',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 trailing: Icon(Icons.arrow_forward_ios,

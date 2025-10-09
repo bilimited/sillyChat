@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/option_input.dart';
 
 class LoreBookItemEditorPage extends StatefulWidget {
   final LorebookItemModel? item;
@@ -207,27 +208,23 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
               ],
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: position,
-              decoration: const InputDecoration(
-                labelText: '插入位置',
-                prefixIcon: Icon(Icons.location_on),
-              ),
-              items: [
-                DropdownMenuItem(value: 'before_char', child: Text('角色定义前')),
-                DropdownMenuItem(value: 'after_char', child: Text('角色定义后')),
-                DropdownMenuItem(value: 'before_em', child: Text('对话示例前')),
-                DropdownMenuItem(value: 'after_em', child: Text('对话示例后')),
-                DropdownMenuItem(value: '@Duser', child: Text('@D 👤')),
-                DropdownMenuItem(value: '@Dassistant', child: Text('@D 🤖')),
-                DropdownMenuItem(value: '@Dsystem', child: Text('@D ⚙')),
+            CustomOptionInputWidget(
+              initialValue: position,
+              labelText: '插入位置',
+              options: [
+                {'display': '角色定义前', 'value': 'before_char'},
+                {'display': '角色定义后', 'value': 'after_char'},
+                {'display': '对话示例前', 'value': 'before_em'},
+                {'display': '对话示例后', 'value': 'after_em'},
+                {'display': '@D 👤', 'value': '@Duser'},
+                {'display': '@D 🤖', 'value': '@Dassistant'},
+                {'display': '@D ⚙', 'value': '@Dsystem'},
               ],
-              onChanged: (v) {
-                if (v != null) {
-                  setState(() => position = v);
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => position = value);
                   save();
                 }
-                ;
               },
             ),
             const SizedBox(height: 16),

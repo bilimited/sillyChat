@@ -29,8 +29,7 @@ class VaultSettingController extends GetxController {
   late Rx<AutoTitleSettingModel> autoTitleSetting = AutoTitleSettingModel(
           enabled: false, level: 1, option: AutoTitleSettingModel.defaultOption)
       .obs;
-  late Rx<SummarySettingModel> summarySetting =
-      SummarySettingModel.defaultOption().obs;
+  late Rx<SummarySettingModel> summarySetting = SummarySettingModel.empty().obs;
 
   final RxBool isShowOnBoardPage = false.obs;
 
@@ -107,6 +106,11 @@ class VaultSettingController extends GetxController {
           autoTitleSetting.value =
               AutoTitleSettingModel.fromJson(jsonMap['autoTileSetting']);
         }
+
+        if (jsonMap['summarySetting'] != null) {
+          summarySetting.value =
+              SummarySettingModel.fromJson(jsonMap['summarySetting']);
+        }
       } else {
         // 文件不存在：证明初次启动
         isShowOnBoardPage.value = true;
@@ -145,6 +149,7 @@ class VaultSettingController extends GetxController {
         'displaySettingModel': displaySettingModel.toJson(),
         'promptSettingModel': promptSettingModel.toJson(),
         'autoTileSetting': autoTitleSetting.toJson(),
+        'summarySetting': summarySetting.toJson(),
       };
 
       final String jsonString = json.encode(jsonMap);

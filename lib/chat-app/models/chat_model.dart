@@ -188,7 +188,8 @@ class ChatModel {
       };
 
   ChatModel copyWith(
-      {int? id,
+      {bool isCopyFile = true,
+      int? id,
       String? name,
       String? avatar,
       String? backgroundImage,
@@ -207,7 +208,7 @@ class ChatModel {
       Map<String, String>? chatVars,
       Map<String, bool>? activitedLorebookItems,
       bool? needAutoTitle}) {
-    return ChatModel(
+    final chat = ChatModel(
         id: id ?? this.id,
         name: name ?? this.name,
         avatar: avatar ?? this.avatar,
@@ -227,8 +228,9 @@ class ChatModel {
       ..characterIds = characterIds ?? this.characterIds
       ..chatVars = chatVars ?? this.chatVars
       ..activitedLorebookItems =
-          activitedLorebookItems ?? this.activitedLorebookItems
-      ..file = this.file;
+          activitedLorebookItems ?? this.activitedLorebookItems;
+    if (isCopyFile) chat.file = this.file;
+    return chat;
   }
 
   ChatModel deepCopyWith(

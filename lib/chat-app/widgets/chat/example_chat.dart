@@ -19,7 +19,6 @@ class ExampleChat extends StatelessWidget {
         message: message,
         isSelected: false,
         onTap: () {},
-        isNarration: isNarration,
         index: message.id,
         onLongPress: () {},
         buildBottomButtons: (p1, p2) => SizedBox.shrink(),

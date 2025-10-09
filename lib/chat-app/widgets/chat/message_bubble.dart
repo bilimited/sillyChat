@@ -17,6 +17,7 @@ import 'package:flutter_example/chat-app/utils/markdown/latex_inline_syntax.dart
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown/flutter_markdown.dart';
 // import 'package:flutter_markdown_latex/flutter_markdown_latex.dart';
@@ -153,7 +154,7 @@ class MessageBubble extends StatefulWidget {
   final MessageModel? lastMessage;
   final int index;
   final bool isSelected;
-  final bool isNarration;
+  //final MessageStyle style;
   final void Function() onTap;
   final void Function() onLongPress;
   final void Function() onUpdateChat;
@@ -173,7 +174,7 @@ class MessageBubble extends StatefulWidget {
       required this.onLongPress,
       required this.buildBottomButtons,
       required this.onUpdateChat,
-      required this.isNarration,
+      //required this.style,
       this.lastMessage,
       this.avatarHero = false,
       this.index = 0,
@@ -201,6 +202,9 @@ class _MessageBubbleState extends State<MessageBubble> {
   double get avatarRadius => displaySetting.AvatarSize;
 
   final bool isDesktop = SillyChatApp.isDesktop();
+
+  bool get isLoading => message.id == -9999;
+  MessageStyle get style => message.style;
 
   @override
   void initState() {
@@ -247,7 +251,7 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   Widget _buildMessageUserName() {
-    bool isNarration = widget.isNarration;
+    bool isNarration = widget.message.style == MessageStyle.narration;
     int index = widget.index;
 
     bool shouldDisplayRoleName =
@@ -275,13 +279,13 @@ class _MessageBubbleState extends State<MessageBubble> {
           textScaler: TextScaler.linear(displaySetting.ContentFontScale),
         ),
       // BookMark icon (blue)
-      if (message.bookmark != null)
-        const Icon(Icons.bookmark, color: Colors.blue, size: 16),
-      // Pin icon (orange)
-      if (message.isPinned)
-        const Icon(Icons.push_pin, color: Colors.orange, size: 16),
-      if (message.isHidden)
-        const Icon(Icons.visibility_off, color: Colors.blueGrey, size: 16),
+      // if (message.bookmark != null)
+      //   const Icon(Icons.bookmark, color: Colors.blue, size: 16),
+      // // Pin icon (orange)
+      // if (message.isPinned)
+      //   const Icon(Icons.push_pin, color: Colors.orange, size: 16),
+      // if (message.isHidden)
+      //   const Icon(Icons.visibility_off, color: Colors.blueGrey, size: 16),
     ];
 
     return Column(
@@ -531,8 +535,6 @@ class _MessageBubbleState extends State<MessageBubble> {
   Widget _buildMessageBubbleBody(String content) {
     final colors = Theme.of(context).colorScheme;
 
-    final isLoading = message.id == -9999;
-
     // 气泡外的动画效果、加载条
     return Stack(
       children: [
@@ -651,73 +653,225 @@ class _MessageBubbleState extends State<MessageBubble> {
       afterThink = regex.process(afterThink);
     }
 
-    return Obx(() => GestureDetector(
-          //behavior: HitTestBehavior.translucent,
-          onTap: widget.onTap,
-          onLongPress: widget.onLongPress,
-          child: widget.isNarration
-              ? _buildNarration()
-              : Padding(
-                  padding: isHideName
-                      ? const EdgeInsets.symmetric(horizontal: 16, vertical: 3)
-                      : const EdgeInsets.only(
-                          left: 16, right: 16, top: 10, bottom: 4),
-                  child: Column(
-                    crossAxisAlignment: isMe
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: isMe
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!isMe && !isHideName) ...[
-                            _buildMessageAvatar(),
-                            const SizedBox(width: 10),
+    return Obx(() {
+      var gestureDetector = GestureDetector(
+        //behavior: HitTestBehavior.translucent,
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        child: style == MessageStyle.narration
+            ? _buildNarration()
+            : style == MessageStyle.summary
+                ? SummaryMessageBubble(
+                    context: context,
+                    isLoading: isLoading,
+                    message: message,
+                    displaySetting: displaySetting,
+                    widget: widget)
+                : Padding(
+                    padding: isHideName
+                        ? const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 3)
+                        : const EdgeInsets.only(
+                            left: 16, right: 16, top: 10, bottom: 4),
+                    child: Column(
+                      crossAxisAlignment: isMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: isMe
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isMe && !isHideName) ...[
+                              _buildMessageAvatar(),
+                              const SizedBox(width: 10),
+                            ],
+
+                            // 用于让连续消息对齐
+                            if (!isMe && isHideName)
+                              SizedBox(
+                                width: avatarRadius * 2 + 10,
+                              ),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: isMe
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  if (!isHideName) _buildMessageUserName(),
+
+                                  if (thinkContent.isNotEmpty)
+                                    //思考过程块
+                                    ThinkWidget(
+                                        isThinking: isThinking,
+                                        thinkContent: thinkContent),
+                                  // 主消息气泡
+                                  _buildMessageBubbleBody(afterThink),
+                                  SizedBox(height: 8.0),
+                                  widget.buildBottomButtons(
+                                      widget.isSelected, message),
+                                ],
+                              ),
+                            ),
+
+                            if (isMe && !isHideName) ...[
+                              const SizedBox(width: 10),
+                              _buildMessageAvatar(),
+                            ],
+                            if (isMe && isHideName)
+                              SizedBox(
+                                width: avatarRadius * 2 + 10,
+                              ),
                           ],
+                        ),
+                      ],
+                    ),
+                  ),
+      );
+      if (message.isHidden) {
+        return Opacity(
+          opacity: 0.5,
+          child: gestureDetector,
+        );
+      }
 
-                          // 用于让连续消息对齐
-                          if (!isMe && isHideName)
-                            SizedBox(
-                              width: avatarRadius * 2 + 10,
-                            ),
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: isMe
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                if (!isHideName) _buildMessageUserName(),
-
-                                if (thinkContent.isNotEmpty)
-                                  //思考过程块
-                                  ThinkWidget(
-                                      isThinking: isThinking,
-                                      thinkContent: thinkContent),
-                                // 主消息气泡
-                                _buildMessageBubbleBody(afterThink),
-                                SizedBox(height: 8.0),
-                                widget.buildBottomButtons(
-                                    widget.isSelected, message),
-                              ],
-                            ),
-                          ),
-
-                          if (isMe && !isHideName) ...[
-                            const SizedBox(width: 10),
-                            _buildMessageAvatar(),
-                          ],
-                          if (isMe && isHideName)
-                            SizedBox(
-                              width: avatarRadius * 2 + 10,
-                            ),
-                        ],
+      if (message.isPinned) {
+        return Stack(
+          children: [
+            // 橙色高亮背景和左侧亮橙色竖线
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.18),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 4,
+                      // margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
                       ),
-                    ],
+                    ),
                   ),
                 ),
-        ));
+              ),
+            ),
+            gestureDetector,
+          ],
+        );
+      }
+
+      return gestureDetector;
+    });
+  }
+}
+
+class SummaryMessageBubble extends StatefulWidget {
+  const SummaryMessageBubble({
+    super.key,
+    required this.context,
+    required this.isLoading,
+    required this.message,
+    required this.displaySetting,
+    required this.widget,
+  });
+
+  final BuildContext context;
+  final bool isLoading;
+  final MessageModel message;
+  final ChatDisplaySettingModel displaySetting;
+  final MessageBubble widget;
+
+  @override
+  State<SummaryMessageBubble> createState() => _SummaryMessageBubbleState();
+}
+
+class _SummaryMessageBubbleState extends State<SummaryMessageBubble> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textColor = colors.onSurfaceVariant;
+    final summaryText = widget.message.content.replaceAll('\n', ' ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainer,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.outlineVariant, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                widget.isLoading
+                    ? SpinKitWave(
+                        itemCount: 3,
+                        size: 14,
+                        color: colors.primary,
+                      )
+                    : Icon(Icons.summarize, color: colors.primary, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _expanded
+                      ? MarkdownBody(
+                          data: widget.message.content,
+                          softLineBreak: true,
+                          shrinkWrap: true,
+                          styleSheet: MarkdownStyleSheet(
+                            // p: TextStyle(color: colors.outline),
+                            textScaler: TextScaler.linear(
+                                widget.displaySetting.ContentFontScale),
+                            horizontalRuleDecoration: BoxDecoration(
+                              border: Border.all(
+                                  width: 1, color: colors.outlineVariant),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          summaryText,
+                          textScaler: TextScaler.linear(
+                              widget.displaySetting.ContentFontScale),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _expanded = !_expanded;
+                    });
+                  },
+                  child: Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    color: colors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 8),
+          widget.widget
+              .buildBottomButtons(widget.widget.isSelected, widget.message)
+        ],
+      ),
+    );
   }
 }

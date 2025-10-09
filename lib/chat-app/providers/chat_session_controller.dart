@@ -46,6 +46,7 @@ class ChatSessionController extends SessionController {
 
   late Rx<ChatAIState> _aiState;
   Aihandler _autoTitleHandler = Aihandler();
+  Aihandler _summaryHandler = Aihandler();
 
   Rx<NewMessageEvent?> newMessageEvent = Rx(null);
 
@@ -276,7 +277,7 @@ class ChatSessionController extends SessionController {
           content: text,
           senderId: chat.user.id,
           time: DateTime.now(),
-          type: chat.user.messageStyle,
+          style: chat.user.messageStyle,
           role: MessageRole.user,
           alternativeContent: [null],
           resPath: selectedPath);
@@ -363,8 +364,42 @@ class ChatSessionController extends SessionController {
     await saveChat();
   }
 
-  Future<void> _handleAIResult(String content, int senderID,
-      {MessageModel? existedMessage}) async {
+  Future<void> doLocalSummary() async {
+    final setting = VaultSettingController.of().summarySetting.value;
+    await for (var content in _getResponse(
+      overrideOption: setting.summaryOption,
+      overrideAssistant: CharacterController.of
+          .getCharacterById(CharacterController.SUMMARY_CHARACTER_ID),
+    )) {
+      // 隐藏所有
+      for (final msg in chat.messages) {
+        msg.visbility = MessageVisbility.hidden;
+      }
+
+      _handleAIResult(content, CharacterController.SUMMARY_CHARACTER_ID,
+          overrideRole: MessageRole.user);
+    }
+  }
+
+  Future<String> doSummaryBackground() async {
+    final setting = VaultSettingController.of().summarySetting.value;
+    var summary = "";
+    await for (var content in _getResponseInBackground(
+      _summaryHandler,
+      overrideOption: setting.summaryOption,
+    )) {
+      summary += content;
+    }
+
+    return summary;
+  }
+
+  void stopSummaryInBackground() {
+    _summaryHandler.interrupt();
+  }
+
+  Future<void> _handleAIResult(String content, int assistantID,
+      {MessageModel? existedMessage, MessageRole? overrideRole}) async {
     List<String?> existedContent = [null];
     if (existedMessage != null) {
       int firstNull = existedMessage.alternativeContent.indexOf(null);
@@ -376,9 +411,10 @@ class ChatSessionController extends SessionController {
     final AIMessage = MessageModel(
       id: DateTime.now().microsecondsSinceEpoch,
       content: content,
-      senderId: senderID,
+      senderId: assistantID,
       time: DateTime.now(),
-      role: MessageRole.assistant,
+      role: overrideRole ?? MessageRole.assistant,
+      style: aiState.style,
       alternativeContent: existedContent,
     );
     await addMessage(chatId: chat.id, message: AIMessage);
@@ -392,9 +428,10 @@ class ChatSessionController extends SessionController {
   /// 在当前聊天上下文下生成AI回复
   /// [overrideOption] 若设为空，则使用聊天设置的Option
   /// [overrideAssistant] 若设为空，则使用聊天设置的AI角色生成回复
-  Stream<String> _getResponse(
-      {ChatOptionModel? overrideOption,
-      CharacterModel? overrideAssistant = null}) async* {
+  Stream<String> _getResponse({
+    ChatOptionModel? overrideOption,
+    CharacterModel? overrideAssistant = null,
+  }) async* {
     late List<LLMMessage> messages;
 
     messages = Promptbuilder(chat, overrideOption)
@@ -403,13 +440,18 @@ class ChatSessionController extends SessionController {
     final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);
 
+    final assistantId = overrideAssistant == null
+        ? (chat.assistantId ?? -1)
+        : overrideAssistant.id;
+    final assistant = overrideAssistant == null
+        ? CharacterController.of.getCharacterById(chat.assistantId ?? -1)
+        : overrideAssistant;
     setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
         GenerateState: "正在激活世界书...",
-        currentAssistant: overrideAssistant == null
-            ? (chat.assistantId ?? -1)
-            : overrideAssistant.id));
+        style: assistant.messageStyle,
+        currentAssistant: assistantId));
 
     await for (String token in aiState.aihandler.requestTokenStream(options)) {
       final oldState = aiState;

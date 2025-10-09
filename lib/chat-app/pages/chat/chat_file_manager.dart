@@ -69,6 +69,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       _currentDirectory = widget.directory;
     }
 
+    ever(ChatController.of.fileCreateEvent, (fc) {
+      //print('触发创建事件');
+      _loadFiles();
+    });
+
     _loadFiles();
   }
 
@@ -88,7 +93,9 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     }
   }
 
+  // TODO:似乎重复调用
   Future<void> _loadFiles() async {
+    print('刷新文件夹');
     final List<FileSystemEntity> filteredEntities = [];
     try {
       if (!_currentDirectory.existsSync()) {
@@ -520,7 +527,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                   final chat = await ChatController.of
                       .createQuickChat(_currentDirectory.path);
                   _openChat(chat.file.path);
-                  _loadFiles();
+                  // TODO:DELETE THIS _loadFiles();
                 },
               ),
             ],
@@ -538,7 +545,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       final chat = await ChatController.of
           .createChatFromCharacter(char, _currentDirectory.path);
       _openChat(chat.file.path);
-      _loadFiles();
+      // TODO:DELETE THIS _loadFiles();
     }
   }
 
@@ -548,7 +555,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         context: context);
     if (chat != null) {
       _openChat(chat.file.path);
-      _loadFiles();
     }
   }
 

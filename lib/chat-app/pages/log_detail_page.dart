@@ -8,7 +8,6 @@ import 'package:flutter_json_view/flutter_json_view.dart'; // 引入JSON视图�
 class LogDetailPage extends StatelessWidget {
   final LogEntry logEntry;
 
-  
   const LogDetailPage({Key? key, required this.logEntry}) : super(key: key);
 
   // 辅助函数，根据日志级别获取颜色
@@ -26,11 +25,11 @@ class LogDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color logColor = _getLogColor(logEntry.level);
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(logEntry.title ?? '日志详情', style: TextStyle(color: logColor)),
-        backgroundColor: Colors.grey[50], // 轻微背景色
+        title:
+            Text(logEntry.title ?? '日志详情', style: TextStyle(color: logColor)),
         elevation: 0, // 无阴影
         iconTheme: IconThemeData(color: logColor), // 返回按钮颜色
       ),
@@ -43,7 +42,8 @@ class LogDetailPage extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: logColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -79,14 +79,14 @@ class LogDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             // 根据日志类型显示内容
-            _buildLogContent(logEntry,context),
+            _buildLogContent(logEntry, context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLogContent(LogEntry logEntry,BuildContext context) {
+  Widget _buildLogContent(LogEntry logEntry, BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     if (logEntry.type == LogType.json) {
       try {
@@ -101,8 +101,16 @@ class LogDetailPage extends StatelessWidget {
             stringStyle: TextStyle(color: colors.onSurface),
             intStyle: TextStyle(color: colors.tertiary),
             boolStyle: TextStyle(color: colors.error),
-            closeIcon: Icon(Icons.arrow_drop_up,color: colors.primary,size: 18,),
-            openIcon: Icon(Icons.arrow_drop_down,color: colors.primary,size: 18,),
+            closeIcon: Icon(
+              Icons.arrow_drop_up,
+              color: colors.primary,
+              size: 18,
+            ),
+            openIcon: Icon(
+              Icons.arrow_drop_down,
+              color: colors.primary,
+              size: 18,
+            ),
           ),
         );
       } catch (e) {

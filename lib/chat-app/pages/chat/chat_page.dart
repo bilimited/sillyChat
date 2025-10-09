@@ -34,6 +34,8 @@ import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
 import '../../widgets/chat/character_wheel.dart';
 
+import 'package:path/path.dart' as p;
+
 class ChatPage extends StatefulWidget {
   // 从搜索界面跳转到聊天时，跳转的目标位置
   final ChatSessionController sessionController;
@@ -331,6 +333,14 @@ class _ChatPageState extends State<ChatPage> {
                   sessionController.updateMessage(message.time, message);
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.call_split),
+                title: const Text('从这里创建分支'),
+                onTap: () {
+                  _createBranchFrom(message);
+                  Navigator.pop(context);
+                },
+              ),
             ],
           ),
         ),
@@ -476,7 +486,6 @@ class _ChatPageState extends State<ChatPage> {
               _selectedMessage?.time == message.time ? null : message;
         });
       },
-      isNarration: isNarration,
       index: index,
       onLongPress: () => _startMultiSelect(message),
       buildBottomButtons: _buildMessageButtonGroup,
@@ -554,6 +563,65 @@ class _ChatPageState extends State<ChatPage> {
 
       sessionController.onSendMessage(text, selectedPath);
     }
+  }
+
+  void _copyThisChat() async {
+    final newChat =
+        chat.copyWith(isCopyFile: false, messages: [], name: chat.name + '-副本');
+    // 简单的复制聊天方法
+    final fp =
+        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
+    ChatController.of.currentChat.value = ChatSessionController(fp);
+  }
+
+  void _createBranchFrom(MessageModel fromWhere) async {
+    // 获取fromWhere在messages中的下标
+    final index = chat.messages.indexOf(fromWhere);
+    // 截取fromWhere之前的所有消息（包括fromWhere本身）
+    final branchMessages = chat.messages.sublist(0, index + 1);
+    final newChat = chat.copyWith(
+        isCopyFile: false, messages: branchMessages, name: chat.name + '的分支');
+    // 简单的复制聊天方法
+    final fp =
+        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
+    ChatController.of.currentChat.value = ChatSessionController(fp);
+  }
+
+  void _summaryInNewChat() async {
+    final colors = Theme.of(context).colorScheme;
+    // 显示加载对话框
+    Get.dialog(
+      AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text('正在生成总结...', style: TextStyle(color: colors.outline)),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
+    final content = await sessionController.doSummaryBackground();
+
+    Navigator.pop(context);
+    if (content.isEmpty) {
+      return;
+    }
+    final newChat =
+        chat.copyWith(isCopyFile: false, name: chat.name + '-总结', messages: [
+      MessageModel(
+          id: DateTime.now().microsecondsSinceEpoch,
+          content: content,
+          senderId: -2,
+          time: DateTime.now(),
+          alternativeContent: [null],
+          style: MessageStyle.summary),
+    ]);
+    // 简单的复制聊天方法
+    final fp =
+        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
+    ChatController.of.currentChat.value = ChatSessionController(fp);
   }
 
   void _startMultiSelect(MessageModel firstSelectedMessage) {
@@ -832,14 +900,14 @@ class _ChatPageState extends State<ChatPage> {
                                     .aiState.isGenerating
                                 ? _buildMessageBubble(
                                     MessageModel(
-                                      id: -9999,
-                                      content:
-                                          sessionController.aiState.LLMBuffer,
-                                      senderId: sessionController
-                                          .aiState.currentAssistant,
-                                      time: DateTime.now(),
-                                      alternativeContent: [null],
-                                    ),
+                                        id: -9999,
+                                        content:
+                                            sessionController.aiState.LLMBuffer,
+                                        senderId: sessionController
+                                            .aiState.currentAssistant,
+                                        time: DateTime.now(),
+                                        alternativeContent: [null],
+                                        style: sessionController.aiState.style),
                                     messages.length == 0 ? null : messages[0])
                                 : const SizedBox.shrink());
                           } else {
@@ -873,7 +941,7 @@ class _ChatPageState extends State<ChatPage> {
                                             ? messages[i + 1]
                                             : null,
                                         index: i,
-                                        isNarration: message.type ==
+                                        isNarration: message.style ==
                                             MessageStyle.narration);
                                   }),
                                 )
@@ -1111,30 +1179,76 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMoreVertButton() {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert),
-      onSelected: (value) {
+      onSelected: (value) async {
         // 处理菜单项点击
-        if (value == 'reading') {
+        if (value == 'local_summary') {
           // 执行操作1
-        } else if (value == 'option2') {
+          sessionController.doLocalSummary();
+        } else if (value == 'summary_in_new_chat') {
           // 执行操作2
+          _summaryInNewChat();
+        } else if (value == 'global_summary') {
+          //final content = await sessionController.doSummaryBackground();
+        } else if (value == 'new_chat') {
+          _copyThisChat();
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'local_summary',
+          child: Row(
+            children: [
+              Icon(
+                Icons.summarize,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              SizedBox(width: 12),
+              Text('在聊天中总结'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'summary_in_new_chat',
+          child: Row(
+            children: [
+              Icon(
+                Icons.chat_bubble_outline,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              SizedBox(width: 12),
+              Text('总结并开启新聊天'),
+            ],
+          ),
+        ),
         // PopupMenuItem<String>(
-        //   value: 'reading',
+        //   value: 'global_summary',
         //   child: Row(
         //     children: [
-        //       Icon(Icons.book),
-        //       SizedBox(
-        //         width: 8,
+        //       Icon(
+        //         Icons.book,
+        //         color: Theme.of(context).iconTheme.color,
+        //         size: 22,
         //       ),
-        //       Text('阅读模式'),
+        //       SizedBox(width: 12),
+        //       Text('总结并插入世界书'),
         //     ],
         //   ),
         // ),
         PopupMenuItem<String>(
-          value: 'small_summary',
-          child: Text('执行总结'),
+          value: 'new_chat',
+          child: Row(
+            children: [
+              Icon(
+                Icons.add_comment,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              SizedBox(width: 12),
+              Text('开启新话题'),
+            ],
+          ),
         ),
       ],
     );
@@ -1187,11 +1301,6 @@ class _ChatPageState extends State<ChatPage> {
           setState(() => _selectedMessage = null);
         }
       },
-      // onHorizontalDragEnd: (details) {
-      //   if (details.primaryVelocity! < 0) {
-      //     Get.to(() => EditChatPage(session: sessionController));
-      //   }
-      // },
       child: Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: colors.surface,
