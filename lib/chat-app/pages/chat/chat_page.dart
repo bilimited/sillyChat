@@ -324,6 +324,14 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.call_split),
+                title: const Text('从这里创建分支'),
+                onTap: () {
+                  Get.back();
+                  _createBranchFrom(message);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.delete_forever),
                 title: const Text('删除备选条目'),
                 onTap: () {
@@ -331,14 +339,6 @@ class _ChatPageState extends State<ChatPage> {
                   message.alternativeContent.clear();
                   message.alternativeContent.add(null);
                   sessionController.updateMessage(message.time, message);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.call_split),
-                title: const Text('从这里创建分支'),
-                onTap: () {
-                  _createBranchFrom(message);
-                  Navigator.pop(context);
                 },
               ),
             ],
@@ -498,7 +498,7 @@ class _ChatPageState extends State<ChatPage> {
         ? Column(
             children: [
               SizedBox(
-                height: 64,
+                height: 104,
               ),
               messageBubble,
             ],
@@ -603,8 +603,12 @@ class _ChatPageState extends State<ChatPage> {
       barrierDismissible: false,
     );
     final content = await sessionController.doSummaryBackground();
+    if (SillyChatApp.isDesktop()) {
+      Navigator.pop(context);
+    } else {
+      Get.back();
+    }
 
-    Navigator.pop(context);
     if (content.isEmpty) {
       return;
     }
@@ -1118,7 +1122,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.5,
-                        child: sessionController.isGeneratingTitle
+                        child: sessionController.isGeneratingTitle.value
                             ? Row(
                                 children: [
                                   Padding(
@@ -1131,7 +1135,8 @@ class _ChatPageState extends State<ChatPage> {
                                   ),
                                   Text(
                                     '正在生成标题...',
-                                    style: TextStyle(color: colors.outline),
+                                    style: TextStyle(
+                                        color: colors.outline, fontSize: 19),
                                   ),
                                 ],
                               )
@@ -1191,9 +1196,25 @@ class _ChatPageState extends State<ChatPage> {
           //final content = await sessionController.doSummaryBackground();
         } else if (value == 'new_chat') {
           _copyThisChat();
+        } else if (value == 'auto_title') {
+          sessionController.generateTitle();
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'auto_title',
+          child: Row(
+            children: [
+              Icon(
+                Icons.title,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              SizedBox(width: 12),
+              Text('生成标题'),
+            ],
+          ),
+        ),
         PopupMenuItem<String>(
           value: 'local_summary',
           child: Row(
@@ -1401,13 +1422,12 @@ class _ChatPageState extends State<ChatPage> {
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )
-                  : SafeArea(
-                      child: Container(
+                  : Container(
                       key: const ValueKey('ChatScreen'),
                       child: isDesktop
                           ? _buildDesktop(context)
                           : _buildMobile(context),
-                    )),
+                    ),
             )));
   }
 }

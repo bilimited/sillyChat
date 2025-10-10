@@ -364,8 +364,12 @@ class _BottomInputAreaState extends State<BottomInputArea> {
         Row(
           children: [
             Expanded(
-              child:
-                  finalInputArea, // Use the final wrapped or unwrapped widget
+              child: SillyChatApp.isDesktop()
+                  ? finalInputArea
+                  : SafeArea(
+                      top: false,
+                      child:
+                          finalInputArea), // Use the final wrapped or unwrapped widget
             ),
           ],
         ),

@@ -32,7 +32,7 @@ class ChatSessionController extends SessionController {
 
   bool get isGenerating => aiState.isGenerating;
 
-  bool isGeneratingTitle = false;
+  RxBool isGeneratingTitle = false.obs;
 
   int backGroundTasks = 0; // 后台正在执行的任务数量（如生成标题等）
 
@@ -350,7 +350,7 @@ class ChatSessionController extends SessionController {
   }
 
   Future<void> generateTitle() async {
-    isGeneratingTitle = true;
+    isGeneratingTitle.value = true;
     String title = "";
     await for (String token in _getResponseInBackground(_autoTitleHandler,
         overrideOption:
@@ -359,7 +359,7 @@ class ChatSessionController extends SessionController {
     }
     chat.name = title;
     _chat.refresh();
-    isGeneratingTitle = false;
+    isGeneratingTitle.value = false;
 
     await saveChat();
   }
