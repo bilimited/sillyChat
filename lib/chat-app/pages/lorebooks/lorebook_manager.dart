@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STLorebookImporter.dart';
+import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
@@ -138,6 +142,25 @@ class LoreBookManagerPage extends StatelessWidget {
             },
             icon: Icon(Icons.menu)),
         title: const Text('世界书'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                FileImporter(
+                    introduction:
+                        '请注意:本应用仍在测试阶段，未兼容SillyTavern的部分功能，导入后部分字段可能会丢失。因此，部分复杂世界书行为可能与在 SillyTavern 中的表现有所不同。',
+                    paramList: [],
+                    allowedExtensions: ['json'],
+                    onImport: (fileName, content, params, path) {
+                      final loreBook = STLorebookImporter.fromJson(
+                          json.decode(content),
+                          fileName: fileName);
+                      if (loreBook != null) {
+                        LoreBookController.of.addLorebook(loreBook);
+                      }
+                    }).pickAndProcessFile(context);
+              },
+              icon: Icon(Icons.download))
+        ],
       ),
       body: Obx(() {
         final lorebooks = controller.lorebooks;
