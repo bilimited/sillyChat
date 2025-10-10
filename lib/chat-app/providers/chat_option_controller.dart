@@ -32,8 +32,8 @@ class ChatOptionController extends GetxController {
         if (jsonData is List) {
           // 老数据格式，迁移为新格式
           jsonList = jsonData;
-          // 保存为新格式
-          await saveChatOptions();
+          // (先不)保存为新格式
+          // await saveChatOptions();
         } else if (jsonData is Map && jsonData['chatOptions'] is List) {
           jsonList = jsonData['chatOptions'];
         } else {
@@ -44,6 +44,7 @@ class ChatOptionController extends GetxController {
             jsonList.map((json) => ChatOptionModel.fromJson(json)).toList();
       }
     } catch (e) {
+      Get.snackbar("加载聊天预设数据失败", "$e");
       print('加载聊天选项数据失败: $e');
     }
   }
@@ -59,6 +60,7 @@ class ChatOptionController extends GetxController {
       });
       await file.writeAsString(jsonString);
     } catch (e) {
+      Get.snackbar("保存聊天预设数据失败", "$e");
       print('保存聊天选项数据失败: $e');
     }
   }
