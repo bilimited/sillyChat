@@ -53,7 +53,7 @@ class Openaiservicehandler extends Servicehandler {
         return [];
       }
     } on DioException catch (e) {
-      Get.snackbar('获取模型列表失败', ' ${e.message}');
+      Get.snackbar('获取模型列表失败', ' $e');
       return [];
     } catch (e) {
       Get.snackbar('获取模型列表失败', '$e');
@@ -144,6 +144,9 @@ class Openaiservicehandler extends Servicehandler {
     aihandler.onGenerateStateChange('正在生成...');
     if (options.isStreaming) {
       await for (var chunk in aihandler.parseSseStream(rs, (json) {
+        if ((json['choices'] is List) && (json['choices'] as List).isEmpty) {
+          return '';
+        }
         final delta = json['choices'][0]['delta'] as Map<String, dynamic>?;
         if (delta == null) return '';
 

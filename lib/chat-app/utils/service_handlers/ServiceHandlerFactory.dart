@@ -69,7 +69,13 @@ class Servicehandlerfactory {
         "gpt-4o",
       ]);
 
-  static Servicehandler getHandler(ServiceProvider service) {
+  static Servicehandler getHandler(ServiceProvider service,
+      {String? customURL}) {
+    if (service == ServiceProvider.custom_openai_compatible &&
+        customURL != null) {
+      return Openaiservicehandler(
+          baseUrl: customURL, name: '自定义', defaultModelList: []);
+    }
     return providers[service] ?? defaultHandler;
   }
 }

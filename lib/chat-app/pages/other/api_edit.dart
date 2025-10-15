@@ -246,7 +246,8 @@ class _ApiEditPageState extends State<ApiEditPage> {
                             isFetchingModelList = true;
                           });
                           final list = await Servicehandlerfactory.getHandler(
-                                  _selectedProvider)
+                                  _selectedProvider,
+                                  customURL: _urlController.text)
                               .fetchModelList(_apiKeyController.text);
                           if (list.isNotEmpty) {
                             SillyChatApp.snackbar(
