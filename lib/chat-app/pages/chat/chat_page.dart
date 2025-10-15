@@ -494,7 +494,7 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     // 防遮挡设计
-    return message == chat.messages.first
+    return chat.messages.isEmpty || message == chat.messages.first
         ? Column(
             children: [
               SizedBox(
