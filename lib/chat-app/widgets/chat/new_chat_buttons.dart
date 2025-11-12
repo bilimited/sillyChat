@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:path/path.dart' as p;
 
 /// NewChatButtons 组件
@@ -74,12 +77,14 @@ class TemplateList extends StatelessWidget {
         .indexed
         .map((meta) => ChatTemplate(
             id: meta.$1.toString(),
-            title: p.basenameWithoutExtension(meta.$2.name)))
+            title: p.basenameWithoutExtension(meta.$2.name),
+            meta: meta.$2))
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FutureBuilder<List<ChatTemplate>>(
       future: fetchTemplates(),
       builder: (context, snapshot) {
@@ -93,28 +98,40 @@ class TemplateList extends StatelessWidget {
         if (templates.isEmpty) {
           return const Center(child: Text('暂无模板'));
         }
-        // 使用普通垂直列表展示模板，适合放在 Column 中
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          itemCount: templates.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final t = templates[index];
-            return ListTile(
-              dense: true,
-              leading: const Icon(Icons.description_outlined),
-              title: Text(t.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                if (onTemplateSelected != null) onTemplateSelected!(t);
-                debugPrint('选中模板: ${t.title}');
-              },
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            );
-          },
+        // 限制列表最大高度，内容过高时内部滚动
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            // 最大高度可按需调整或替换为 MediaQuery.of(context).size.height * 0.4
+            maxHeight: 220,
+          ),
+          child: ListView.builder(
+            // 允许 ListView 根据内容缩小，但不会超过上面的 maxHeight
+            shrinkWrap: true,
+            // 取消 NeverScrollableScrollPhysics，以便内容超出时可以滚动
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 48),
+            itemCount: templates.length,
+            itemBuilder: (context, index) {
+              final t = templates[index];
+              return ListTile(
+                // dense: true,
+                leading: t.meta!.mode == ChatMode.group
+                    ? StackAvatar(
+                        avatarUrls:
+                            t.meta!.characters.map((c) => c.avatar).toList(),
+                        avatarSize: 32,
+                      )
+                    : AvatarImage.round(t.meta!.assistant.avatar, 16),
+                title: Text(
+                  t.title,
+                ),
+                onTap: () {
+                  if (onTemplateSelected != null) onTemplateSelected!(t);
+                  debugPrint('选中模板: ${t.title}');
+                },
+              );
+            },
+          ),
         );
       },
     );

@@ -41,7 +41,7 @@ class ChatListItem extends StatelessWidget {
     }
   }
 
-  ChatMetaModel? get chat => ChatController.of.chatIndex[path];
+  ChatMetaModel? get chat => ChatController.of.getIndex(path);
 
   bool get isQuickChat => chat?.assistant.isDefaultAssistant ?? true;
 

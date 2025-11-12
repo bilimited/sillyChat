@@ -167,10 +167,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     }
   }
 
-  /// 默认的文件列表项显示样式
+  /// 默认的文件列表项显示样式（文件夹）
   Widget _defaultItemBuilder(BuildContext context, FileSystemEntity entity,
       bool isSelected, VoidCallback onTap) {
     final isDirectory = entity is Directory;
+    final isTemplateDirectory = path.basename(entity.path) == 'templates';
     int fileCount = -1;
     if (isDirectory) {
       fileCount = entity.listSync().length;
@@ -181,13 +182,20 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
 
     return ListTile(
       leading: isDirectory
-          ? Icon(
-              Icons.folder,
-              color: iconColor,
-            )
+          ? isTemplateDirectory
+              ? Icon(
+                  Icons.grid_view,
+                  color: iconColor,
+                )
+              : Icon(
+                  Icons.folder,
+                  color: iconColor,
+                )
           : null,
       title: Text(
-        path.basename(entity.path).replaceAll('.chat', ''),
+        isTemplateDirectory
+            ? '模板文件夹'
+            : path.basename(entity.path).replaceAll('.chat', ''),
         style: TextStyle(color: textColor),
       ),
       subtitle: Text(
@@ -392,7 +400,15 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
     } else {
       actions.add(IconButton(
+        icon: const Icon(Icons.folder_copy),
+        tooltip: "添加文件夹",
+        onPressed: () {
+          _showCreateFolderDialog();
+        },
+      ));
+      actions.add(IconButton(
         icon: const Icon(Icons.search),
+        tooltip: "搜索",
         onPressed: () {
           customNavigate(
               SearchPage(
@@ -478,8 +494,12 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           ),
         const SizedBox(height: 16),
         FloatingActionButton(
-          onPressed: () => _showCreateDialog(),
-          child: const Icon(Icons.add),
+          onPressed: () async {
+            final chat =
+                await ChatController.of.createQuickChat(_currentDirectory.path);
+            _openChat(chat.file.path);
+          },
+          child: const Icon(Icons.chat),
           heroTag: 'add',
         ),
       ],

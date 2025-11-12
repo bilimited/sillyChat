@@ -13,6 +13,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/session_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
@@ -184,6 +185,13 @@ class ChatSessionController extends SessionController {
     } else {
       Get.snackbar('聊天${file.path}保存失败.', '聊天文件不存在');
     }
+  }
+
+  void useChatTemplate(ChatModel chat) {
+    chat.needAutoTitle =
+        VaultSettingController.of().autoTitleSetting.value.enabled;
+    this._chat.value = chat;
+    saveChat();
   }
 
   /// 在指定聊天中添加消息

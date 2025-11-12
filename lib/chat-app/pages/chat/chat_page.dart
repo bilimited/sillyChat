@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -5,9 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
-import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
-import 'package:flutter_example/chat-app/pages/ContentGenerator.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
@@ -16,13 +15,11 @@ import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.da
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
-import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/message_webview.dart';
@@ -1421,6 +1418,14 @@ class _ChatPageState extends State<ChatPage> {
           ),
           NewChatButtons(
             onSelectRole: selectCharacter,
+            onTemplateSelected: (value) {
+              final meta = value.meta!;
+              final file = File(meta.path);
+              final chat =
+                  ChatModel.fromJson(json.decode(file.readAsStringSync()));
+              chat.file = sessionController.file;
+              sessionController.useChatTemplate(chat);
+            },
           ),
         ],
       ),

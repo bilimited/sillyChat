@@ -105,6 +105,7 @@ class ChatMetaModel {
     List<int>? characterIds,
     int? assistant,
     ChatMode? mode,
+    String? path,
   }) {
     return ChatMetaModel(
       id: id ?? this.id,
@@ -115,6 +116,6 @@ class ChatMetaModel {
       characterIds: characterIds ?? this.characterIds,
       mode: mode ?? this.mode,
       assistantId: assistant ?? this.assistantId,
-    );
+    )..path = path ?? this.path;
   }
 }

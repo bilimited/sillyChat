@@ -168,7 +168,7 @@ class ChatController extends GetxController {
 
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
-    chatIndex[path] = chatMeta;
+    chatIndex[p.normalize(path)] = chatMeta;
     //chatIndex.assign(path, chatMeta);
     await saveChatIndex();
   }
@@ -187,13 +187,13 @@ class ChatController extends GetxController {
         if (entity is File && Fileutils.isChatFile(entity.path)) {
           final filePath = entity.path;
 
-          if (chatIndex[entity.path] == null) {
+          if (getIndex(entity.path) == null) {
             final meta = await buildIndex(path);
             if (meta != null) {
               metas.add(meta);
             }
           } else {
-            metas.add(chatIndex[entity.path]!);
+            metas.add(getIndex(entity.path)!);
           }
         }
       }
@@ -203,8 +203,14 @@ class ChatController extends GetxController {
     return metas;
   }
 
+  ChatMetaModel? getIndex(String _path) {
+    final meta = chatIndex[p.normalize(_path)];
+    return meta?.copyWith(path: p.normalize(_path));
+  }
+
   // 构建一条聊天索引，用于在初次加载一个聊天时使用
-  Future<ChatMetaModel?> buildIndex(String path) async {
+  Future<ChatMetaModel?> buildIndex(String _path) async {
+    final path = p.normalize(_path);
     try {
       final file = File(path);
       final content = await file.readAsString();
@@ -220,7 +226,8 @@ class ChatController extends GetxController {
   }
 
   // 新增：删除聊天元数据
-  Future<void> deleteChatMetaByPath(String path) async {
+  Future<void> deleteChatMetaByPath(String _path) async {
+    final path = p.normalize(_path);
     chatIndex.remove(path);
     await saveChatIndex();
   }
