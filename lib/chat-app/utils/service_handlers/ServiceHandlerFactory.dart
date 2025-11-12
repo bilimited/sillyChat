@@ -58,6 +58,14 @@ class Servicehandlerfactory {
           "gemini-1.5-pro",
           "gemini-1.0-pro"
         ]),
+    ServiceProvider.kimi: Openaiservicehandler(
+        baseUrl: 'https://api.moonshot.cn/v1',
+        name: 'Kimi',
+        defaultModelList: 
+      [
+        
+      ]
+    )
   };
 
   static const defaultHandler = Openaiservicehandler(

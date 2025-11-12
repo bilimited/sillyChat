@@ -31,6 +31,10 @@ class ChatModel {
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
   List<int> characterIds = [];
   Map<String, String> chatVars = {};
+
+  // meta中的字段：
+  // readonly:是否为只读（归档）
+  Map<String, dynamic> metaData = {};
   Map<String, bool> activitedLorebookItems = {}; // 手动激活的LorebookItem
 
   bool needAutoTitle = false; // 是否需要自动生成标题
@@ -158,6 +162,7 @@ class ChatModel {
       ..chatVars = (json['chatVars'] as Map<String, dynamic>?)
               ?.map((key, value) => MapEntry(key, value.toString())) ??
           {}
+      ..metaData = (json['meta'] as Map<String, dynamic>?) ?? {}
       ..activitedLorebookItems =
           (json['activitedLorebookItems'] as Map<String, dynamic>?)
                   ?.map((key, value) => MapEntry(key, value == true)) ??
@@ -185,6 +190,7 @@ class ChatModel {
         'chatVars': chatVars,
         'activitedLorebookItems': activitedLorebookItems,
         'needAutoTitle': needAutoTitle,
+        'meta': metaData,
       };
 
   ChatModel copyWith(
@@ -206,6 +212,7 @@ class ChatModel {
       List<String>? tags,
       List<BookMarkModel>? bookmarks,
       Map<String, String>? chatVars,
+      Map<String, String>? metaData,
       Map<String, bool>? activitedLorebookItems,
       bool? needAutoTitle}) {
     final chat = ChatModel(
@@ -227,6 +234,7 @@ class ChatModel {
       ..tags = tags ?? this.tags
       ..characterIds = characterIds ?? this.characterIds
       ..chatVars = chatVars ?? this.chatVars
+      ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
           activitedLorebookItems ?? this.activitedLorebookItems;
     if (isCopyFile) chat.file = this.file;
@@ -251,6 +259,7 @@ class ChatModel {
       List<String>? tags,
       List<BookMarkModel>? bookmarks,
       Map<String, String>? chatVars,
+      Map<String, String>? metaData,
       Map<String, bool>? activitedLorebookItems,
       bool? needAutoTitle}) {
     return ChatModel(
@@ -272,6 +281,7 @@ class ChatModel {
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
       ..characterIds = characterIds ?? [...this.characterIds]
       ..chatVars = chatVars ?? this.chatVars
+      ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
           activitedLorebookItems ?? this.activitedLorebookItems;
   }

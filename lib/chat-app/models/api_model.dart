@@ -5,6 +5,7 @@ enum ServiceProvider {
   openai,
   deepseek,
   siliconflow,
+  kimi,
   google; // 若有多个google的API，会优先使用第一个的key。
 
   String toJson() => name;

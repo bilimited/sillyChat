@@ -1198,6 +1198,8 @@ class _ChatPageState extends State<ChatPage> {
           _copyThisChat();
         } else if (value == 'auto_title') {
           sessionController.generateTitle();
+        } else if (value == 'ai_help_answer') {
+          sessionController.simulateUserMessage();
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -1244,7 +1246,7 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         // PopupMenuItem<String>(
-        //   value: 'global_summary',
+        //   value: 'ai_help_answer',
         //   child: Row(
         //     children: [
         //       Icon(
@@ -1253,7 +1255,7 @@ class _ChatPageState extends State<ChatPage> {
         //         size: 22,
         //       ),
         //       SizedBox(width: 12),
-        //       Text('总结并插入世界书'),
+        //       Text('AI帮答'),
         //     ],
         //   ),
         // ),

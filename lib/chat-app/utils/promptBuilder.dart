@@ -75,8 +75,8 @@ class Promptbuilder {
         // 合并消息列表：在一切消息前添加名称
         if (requestOptions.isMergeMessageList) {
           return LLMMessage(
-              content: promptSetting.groupFormatter
-                  .replaceAll('<message>', content),
+              content:
+                  promptSetting.groupFormatter.replaceAll('<message>', content),
               role: msg.senderId == (sender?.id ?? chat.assistantId)
                   ? "assistant"
                   : "user",
@@ -92,9 +92,11 @@ class Promptbuilder {
           // 不合并消息列表，群聊模式
         } else {
           return LLMMessage(
-              content: msg.senderId == sender.id
-                  ? content
-                  : promptSetting.groupFormatter
+              content:
+                  // msg.senderId == sender.id
+                  //     ? content
+                  //     :
+                  promptSetting.groupFormatter
                       .replaceAll(
                           '<char>',
                           characterController

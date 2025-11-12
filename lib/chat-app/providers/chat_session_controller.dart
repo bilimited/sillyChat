@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
+import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -306,6 +307,28 @@ class ChatSessionController extends SessionController {
       overrideAssistant: assistant,
     )) {
       _handleAIResult(content, assistant.id);
+    }
+  }
+
+  // AI帮答
+  Future<void> simulateUserMessage() async {
+    await for (var content in _getResponse(
+      overrideOption: ChatOptionModel(
+          id: -1,
+          name: 'AI帮答预设',
+          requestOptions: LLMRequestOptions(messages: []),
+          prompts: [
+            PromptModel.chatHistoryPlaceholder(),
+            PromptModel(
+                id: 2,
+                content: '请帮{{user}}生成一条消息。\n{{user}}:',
+                role: 'user',
+                name: 'name')
+          ],
+          regex: []),
+      overrideAssistant: chat.user,
+    )) {
+      _handleAIResult(content, chat.user.id);
     }
   }
 
