@@ -12,6 +12,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/FileUtils.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
@@ -170,6 +171,36 @@ class ChatController extends GetxController {
     chatIndex[path] = chatMeta;
     //chatIndex.assign(path, chatMeta);
     await saveChatIndex();
+  }
+
+  Future<List<ChatMetaModel>> getAllChatTemplate() async {
+    final directory = await Get.find<SettingController>().getVaultPath();
+    final path = p.join(directory, 'chats', 'templates');
+    List<ChatMetaModel> metas = [];
+
+    try {
+      final dir = Directory(path);
+      if (!await dir.exists()) return [];
+
+      await for (final entity
+          in dir.list(recursive: true, followLinks: false)) {
+        if (entity is File && Fileutils.isChatFile(entity.path)) {
+          final filePath = entity.path;
+
+          if (chatIndex[entity.path] == null) {
+            final meta = await buildIndex(path);
+            if (meta != null) {
+              metas.add(meta);
+            }
+          } else {
+            metas.add(chatIndex[entity.path]!);
+          }
+        }
+      }
+    } catch (e) {
+      print('扫描模板目录失败: $e');
+    }
+    return metas;
   }
 
   // 构建一条聊天索引，用于在初次加载一个聊天时使用
