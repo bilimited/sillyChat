@@ -27,9 +27,9 @@ abstract class Servicehandler {
       Aihandler aihandler, LLMRequestOptions options, ApiModel api);
 
   // 将中间消息格式转换为服务商专用数据格式
-  dynamic parseMessage(LLMMessage message);
+  Future<dynamic> parseMessage(LLMMessage message);
 
-  Map<String, dynamic> getRequestBody(LLMRequestOptions options);
+  Future<Map<String, dynamic>> getRequestBody(LLMRequestOptions options);
 
   // 消息预处理（在合并消息之前执行）
   List<LLMMessage> processMessage(List<LLMMessage> messages) {

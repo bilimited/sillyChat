@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:dio/dio.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 
 class Openaiservicehandler extends Servicehandler {
@@ -62,7 +64,64 @@ class Openaiservicehandler extends Servicehandler {
   }
 
   @override
-  parseMessage(LLMMessage message) {
+  parseMessage(LLMMessage message) async {
+    if (message.fileDirs.isNotEmpty) {
+      // 先单独计算所有 image_url（压缩并 base64 编码），然后再构建返回内容
+      final List<dynamic> imageContents = [];
+      for (final path in message.fileDirs) {
+        // try {
+        //   final bytes = await FlutterImageCompress.compressWithFile(
+        //     path,
+        //     quality: 85,
+        //     format: CompressFormat.jpeg,
+        //   );
+        //   if (bytes != null) {
+        //     imageContents.add({
+        //       "type": "image_url",
+        //       "image_url": base64Encode(bytes),
+        //     });
+        //   }
+        // } catch (e) {
+        //   // 这里可以改为更合适的日志记录
+        //   print('Error compressing/reading file $path: $e');
+        // }
+
+        final file = File(path);
+
+        final bytes = await file.readAsBytes();
+        final ext = path.split('.').last.toLowerCase();
+        String mimeType;
+        if (ext == 'png') {
+          mimeType = 'image/png';
+        } else if (ext == 'jpg' || ext == 'jpeg') {
+          mimeType = 'image/jpeg';
+        } else if (ext == 'gif') {
+          mimeType = 'image/gif';
+        } else if (ext == 'webp') {
+          mimeType = 'image/webp';
+        } else if (ext == 'bmp') {
+          mimeType = 'image/bmp';
+        } else {
+          mimeType = 'application/octet-stream';
+        }
+        final base64Data = base64Encode(bytes);
+        imageContents.add({
+          "type": "image_url",
+          "image_url": "data:$mimeType;base64,$base64Data"
+        });
+      }
+
+      return {
+        "role": message.role,
+        "content": [
+          {
+            "type": "text",
+            "text": message.content,
+          },
+          ...imageContents,
+        ],
+      };
+    }
     return {
       "role": message.role,
       "content": message.content,
@@ -70,9 +129,12 @@ class Openaiservicehandler extends Servicehandler {
   }
 
   @override
-  Map<String, dynamic> getRequestBody(LLMRequestOptions options) {
+  Future<Map<String, dynamic>> getRequestBody(LLMRequestOptions options) async {
+    final List<dynamic> messages =
+        await Future.wait(options.messages.map((msg) => parseMessage(msg)));
+
     return {
-      'messages': options.messages.map((msg) => parseMessage(msg)).toList(),
+      'messages': messages,
       'max_tokens': options.maxTokens,
       'temperature': options.temperature,
       'top_p': options.topP,
@@ -84,13 +146,12 @@ class Openaiservicehandler extends Servicehandler {
   @override
   Stream<String> request(
       Aihandler aihandler, LLMRequestOptions options, ApiModel api) async* {
-    if (options.isStreaming) {
-      aihandler.onGenerateStateChange('正在建立连接...');
-    } else {
-      aihandler.onGenerateStateChange('正在等待回应...');
-    }
+    aihandler.onGenerateStateChange('正在准备...');
+
+    final requestBody = await getRequestBody(options);
+
     LogController.log(
-      json.encode(getRequestBody(options)),
+      json.encode(requestBody),
       LogLevel.info,
       title: 'OpenAI请求',
       type: LogType.json,
@@ -104,9 +165,15 @@ class Openaiservicehandler extends Servicehandler {
     // 构建请求数据
     Map<String, dynamic> requestData = {
       'model': model,
-      ...getRequestBody(options),
+      ...requestBody,
       'stream': options.isStreaming,
     };
+
+    if (options.isStreaming) {
+      aihandler.onGenerateStateChange('正在建立连接...');
+    } else {
+      aihandler.onGenerateStateChange('正在等待回应...');
+    }
 
     // 如果API配置了requestBody，尝试解析并合并到请求数据中
     if (api.requestBody != null && api.requestBody!.isNotEmpty) {

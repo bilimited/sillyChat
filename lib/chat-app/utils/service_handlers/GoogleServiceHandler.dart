@@ -75,7 +75,7 @@ class Googleservicehandler extends Servicehandler {
   }
 
   @override
-  parseMessage(LLMMessage message) {
+  parseMessage(LLMMessage message) async {
     final effectiveRole = (message.role == 'assistant') ? 'model' : 'user';
     return {
       "role": effectiveRole,
@@ -119,9 +119,12 @@ class Googleservicehandler extends Servicehandler {
   }
 
   @override
-  Map<String, dynamic> getRequestBody(LLMRequestOptions options) {
+  getRequestBody(LLMRequestOptions options) async {
+    final List<dynamic> messages =
+        await Future.wait(options.messages.map((msg) => parseMessage(msg)));
+
     return {
-      "contents": options.messages.map((msg) => parseMessage(msg)).toList(),
+      "contents": messages,
       "generationConfig": {
         "temperature": options.temperature,
         "maxOutputTokens": options.maxTokens,
