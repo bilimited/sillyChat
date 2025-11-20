@@ -188,7 +188,7 @@ class ChatController extends GetxController {
           final filePath = entity.path;
 
           if (getIndex(entity.path) == null) {
-            final meta = await buildIndex(path);
+            final meta = await buildIndex(entity.path);
             if (meta != null) {
               metas.add(meta);
             }
@@ -221,6 +221,7 @@ class ChatController extends GetxController {
       saveChatIndex();
       return chatIndex[path];
     } catch (e) {
+      rethrow;
       return null;
     }
   }

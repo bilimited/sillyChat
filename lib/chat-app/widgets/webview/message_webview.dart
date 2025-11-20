@@ -17,8 +17,8 @@ class MessageWebview extends StatefulWidget {
 class _MessageWebviewState extends State<MessageWebview> {
   late InAppWebViewController _webViewController;
 
-  late WebSessionController _sessionController =
-      Get.put(WebSessionController(webViewController: _webViewController));
+  // late WebSessionController _sessionController =
+  //     Get.put(WebSessionController(webViewController: _webViewController));
 
   String get _htmlContent {
     final content = widget.content.trim();
@@ -41,7 +41,7 @@ class _MessageWebviewState extends State<MessageWebview> {
         onWebViewCreated: (controller) {
           _webViewController = controller;
 
-          _sessionController.onWebViewCreated(controller);
+          //_sessionController.onWebViewCreated(controller);
         },
         onConsoleMessage: (controller, consoleMessage) {
           print(consoleMessage);

@@ -36,4 +36,15 @@ class ChatAIState {
         aihandler: this.aihandler,
         style: style ?? this.style);
   }
+
+  toJson() {
+    return {
+      "id": id,
+      "LLMBuffer": LLMBuffer,
+      "GenerateState": GenerateState,
+      "isGenerating": isGenerating,
+      "style": style.index,
+      "currentAssistant": currentAssistant,
+    };
+  }
 }

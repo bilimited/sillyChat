@@ -22,6 +22,7 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
+import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
 import 'package:flutter_example/chat-app/widgets/webview/message_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -91,6 +92,8 @@ class _ChatPageState extends State<ChatPage> {
   bool get isNewChat => chat.id == -1;
   // 在创建新聊天中是否可以发送消息。userId延迟初始化。
   bool get canCreateNewChat => chat.assistantId != null;
+
+  bool get useWebview => false;
 
   List<LorebookItemModel> get manualItems {
     final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
@@ -871,102 +874,105 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildWebviewMessageList() {
+    return ChatWebview(session: widget.sessionController);
+  }
+
+  Widget _buildFlutterMessageList() {
+    final colors = Theme.of(context).colorScheme;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: 0.0,
+        maxHeight: double.infinity,
+      ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Stack(
+          children: [
+            Obx(() {
+              //final messages = chat.messages.reversed.toList();
+              final messages = chat.messages.reversed.toList();
+              // 聊天正文
+              return ScrollablePositionedList.builder(
+                  reverse: true,
+                  // TODO:页面原地刷新时  ScrollerController报错
+                  // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
+                  //itemScrollController: _scrollController,
+                  itemCount: messages.length + 1,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      //正在（新）生成的Message，永远位于底部
+                      return Obx(() => sessionController.aiState.isGenerating
+                          ? _buildMessageBubble(
+                              MessageModel(
+                                  id: -9999,
+                                  content: sessionController.aiState.LLMBuffer,
+                                  senderId: sessionController
+                                      .aiState.currentAssistant,
+                                  time: DateTime.now(),
+                                  alternativeContent: [null],
+                                  style: sessionController.aiState.style),
+                              messages.length == 0 ? null : messages[0])
+                          : const SizedBox.shrink());
+                    } else {
+                      return Row(
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOutCubic,
+                            width: _isMultiSelecting ? 36 : 0,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: _isMultiSelecting
+                                ? Icon(
+                                    color: colors.secondary,
+                                    _selectedMessages
+                                            .contains(messages[index - 1])
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    size: 20,
+                                  )
+                                : SizedBox.shrink(),
+                          ),
+                          Expanded(
+                            child: Builder(builder: (context) {
+                              final i = index - 1;
+
+                              final message = messages[i];
+                              return _buildMessageBubble(
+                                  message,
+                                  i < messages.length - 1
+                                      ? messages[i + 1]
+                                      : null,
+                                  index: i,
+                                  isNarration:
+                                      message.style == MessageStyle.narration);
+                            }),
+                          )
+                        ],
+                      );
+                    }
+                  }
+                  //},
+                  );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
   // 消息正文+输入框
   Widget _buildMainContent() {
-    final colors = Theme.of(context).colorScheme;
     return Column(
       children: [
         Expanded(
           child: chat.messages.isEmpty
               ? _buildNewChatScreen()
-              : ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: 0.0,
-                    maxHeight: double.infinity,
-                  ),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Stack(
-                      children: [
-                        Obx(() {
-                          //final messages = chat.messages.reversed.toList();
-                          final messages = chat.messages.reversed.toList();
-                          // 聊天正文
-                          return ScrollablePositionedList.builder(
-                              reverse: true,
-                              // TODO:页面原地刷新时  ScrollerController报错
-                              // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
-                              //itemScrollController: _scrollController,
-                              itemCount: messages.length + 1,
-                              shrinkWrap: true,
-                              itemBuilder: (context, index) {
-                                if (index == 0) {
-                                  //正在（新）生成的Message，永远位于底部
-                                  return Obx(() =>
-                                      sessionController.aiState.isGenerating
-                                          ? _buildMessageBubble(
-                                              MessageModel(
-                                                  id: -9999,
-                                                  content: sessionController
-                                                      .aiState.LLMBuffer,
-                                                  senderId: sessionController
-                                                      .aiState.currentAssistant,
-                                                  time: DateTime.now(),
-                                                  alternativeContent: [null],
-                                                  style: sessionController
-                                                      .aiState.style),
-                                              messages.length == 0
-                                                  ? null
-                                                  : messages[0])
-                                          : const SizedBox.shrink());
-                                } else {
-                                  return Row(
-                                    children: [
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        curve: Curves.easeOutCubic,
-                                        width: _isMultiSelecting ? 36 : 0,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0),
-                                        child: _isMultiSelecting
-                                            ? Icon(
-                                                color: colors.secondary,
-                                                _selectedMessages.contains(
-                                                        messages[index - 1])
-                                                    ? Icons.check_circle
-                                                    : Icons
-                                                        .radio_button_unchecked,
-                                                size: 20,
-                                              )
-                                            : SizedBox.shrink(),
-                                      ),
-                                      Expanded(
-                                        child: Builder(builder: (context) {
-                                          final i = index - 1;
-
-                                          final message = messages[i];
-                                          return _buildMessageBubble(
-                                              message,
-                                              i < messages.length - 1
-                                                  ? messages[i + 1]
-                                                  : null,
-                                              index: i,
-                                              isNarration: message.style ==
-                                                  MessageStyle.narration);
-                                        }),
-                                      )
-                                    ],
-                                  );
-                                }
-                              }
-                              //},
-                              );
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
+              : useWebview
+                  ? _buildWebviewMessageList()
+                  : _buildFlutterMessageList(),
         ),
 
         // 输入框
@@ -1406,8 +1412,9 @@ class _ChatPageState extends State<ChatPage> {
     };
 
     return Padding(
-      padding: EdgeInsetsGeometry.only(top: 100, left: 30, right: 30),
+      padding: EdgeInsetsGeometry.only(bottom: 30, left: 30, right: 30),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           InkWell(
             child: AvatarImage.round(chat.assistant.avatar, 30),
@@ -1444,8 +1451,6 @@ class _ChatPageState extends State<ChatPage> {
             });
             return;
           }
-          // ChatController.of.pageController.animateToPage(0,
-          //     duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
         },
         child: Obx(() => AnimatedSwitcher(
               // 1. 设置动画的持续时间
@@ -1460,10 +1465,7 @@ class _ChatPageState extends State<ChatPage> {
                 );
               },
 
-              // 3. 这里的 child 会根据条件动态改变
               child: sessionController.isChatLoading
-                  // 关键：为每个状态的根 Widget 提供一个唯一的 Key
-                  // AnimatedSwitcher 通过比较 Key 来确定 child 是否已更改。
                   ? Container(
                       key: const ValueKey('LoadScreen'),
                       child: !sessionController.isChatUninitialized

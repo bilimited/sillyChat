@@ -29,20 +29,7 @@ class NewChatButtons extends StatelessWidget {
           child: const Text('选择角色'),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: const [
-            Expanded(
-              child: Divider(thickness: 1),
-            ),
-            SizedBox(width: 8),
-            Text('或 使用模板', style: TextStyle(fontSize: 14)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Divider(thickness: 1),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
+
         // 模板列表占位组件（普通列表样式）
         TemplateList(
           onTemplateSelected: onTemplateSelected,
@@ -96,7 +83,7 @@ class TemplateList extends StatelessWidget {
         }
         final templates = snapshot.data ?? [];
         if (templates.isEmpty) {
-          return const Center(child: Text('暂无模板'));
+          return SizedBox.shrink(); //const Center(child: Text('暂无模板'));
         }
         // 限制列表最大高度，内容过高时内部滚动
         return ConstrainedBox(

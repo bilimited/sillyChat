@@ -13,8 +13,8 @@ import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/session_controller.dart';
-import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
@@ -66,6 +66,9 @@ class ChatSessionController extends SessionController {
   bool isChatUninitialized = false;
 
   final String chatPath;
+
+  Function(ChatModel) _onChatUpdate = (cm) {};
+  Worker? _aiStateListener;
 
   /**
    * [chatPath] : 聊天文件的完整路径
@@ -175,6 +178,7 @@ class ChatSessionController extends SessionController {
   }
 
   Future<void> saveChat() async {
+    _onChatUpdate(chat);
     if (await file.exists()) {
       final String contents = json.encode(chat.toJson());
       await file.writeAsString(contents);
@@ -192,6 +196,31 @@ class ChatSessionController extends SessionController {
         VaultSettingController.of().autoTitleSetting.value.enabled;
     this._chat.value = chat;
     saveChat();
+  }
+
+  void bindWebController(WebSessionController controller) {
+    const int? maxMessages = 10;
+
+    _aiStateListener = ever(_aiState, (state) {
+      controller.onStateChange(state);
+    });
+
+    _onChatUpdate = (chat) {
+      if (maxMessages != null && chat.messages.length > maxMessages) {
+        controller.onChatChange(chat.copyWith(
+            messages:
+                chat.messages.sublist(chat.messages.length - maxMessages)));
+      } else {
+        controller.onChatChange(chat);
+      }
+    };
+  }
+
+  void closeWebController() {
+    if (_aiStateListener != null) {
+      _aiStateListener!.dispose();
+    }
+    _onChatUpdate = (chat) {};
   }
 
   /// 在指定聊天中添加消息
