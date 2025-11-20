@@ -1406,6 +1406,16 @@ class _ChatPageState extends State<ChatPage> {
           context: context);
       if (char != null) {
         chat.assistantId = char.id;
+        if (char.firstMessage != null && char.firstMessage!.isNotEmpty) {
+          sessionController.addMessage(
+              message: MessageModel(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  content: char.firstMessage!,
+                  senderId: char.id,
+                  time: DateTime.now(),
+                  alternativeContent: [null]));
+        }
+
         _updateChat();
         sessionController.reflesh();
       }

@@ -227,8 +227,7 @@ class ChatSessionController extends SessionController {
   /// [LastMessage] :用于设置聊天"最近消息"的内容
   /// [useRegex] :添加消息前是否先进行正则替换
   Future<void> addMessage(
-      {required int chatId,
-      required MessageModel message,
+      {required MessageModel message,
       String? lastMessage = null,
       bool useRegex = true}) async {
     if (useRegex) {
@@ -320,7 +319,7 @@ class ChatSessionController extends SessionController {
           alternativeContent: [null],
           resPath: selectedPath);
 
-      await addMessage(chatId: chat.id, message: message);
+      await addMessage(message: message);
 
       if (chat.mode == ChatMode.group) {
         return;
@@ -477,7 +476,7 @@ class ChatSessionController extends SessionController {
       style: aiState.style,
       alternativeContent: existedContent,
     );
-    await addMessage(chatId: chat.id, message: AIMessage);
+    await addMessage(message: AIMessage);
 
     // 答复生成完成后需要判断是否销毁Controller
     if (!isViewActive) {
