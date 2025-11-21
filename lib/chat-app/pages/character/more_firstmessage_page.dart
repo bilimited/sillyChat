@@ -5,7 +5,8 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 class MoreFirstMessagePage extends StatefulWidget {
   final CharacterModel character;
 
-  const MoreFirstMessagePage({Key? key, required this.character}) : super(key: key);
+  const MoreFirstMessagePage({Key? key, required this.character})
+      : super(key: key);
 
   @override
   _MoreFirstMessagePageState createState() => _MoreFirstMessagePageState();
@@ -40,49 +41,48 @@ class _MoreFirstMessagePageState extends State<MoreFirstMessagePage> {
 
   void _saveChanges() {
     widget.character.moreFirstMessage = List<String>.from(messages);
-    Get.back(); // 返回上一页
+    //Get.back(); // 返回上一页
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('更多首条消息'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveChanges,
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: messages.length,
-        itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            child: ListTile(
-              title: TextFormField(
-                initialValue: messages[index],
-                decoration: InputDecoration(
-                  labelText: '消息 ${index + 1}',
-                  labelStyle: TextStyle(color: theme.primaryColor),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        _saveChanges();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('更多开场白'),
+        ),
+        body: ListView.builder(
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: ListTile(
+                title: TextFormField(
+                  initialValue: messages[index],
+                  decoration: InputDecoration(
+                    labelText: '消息 ${index + 1}',
+                    labelStyle: TextStyle(color: theme.primaryColor),
+                  ),
+                  onChanged: (value) => _updateMessage(index, value),
                 ),
-                onChanged: (value) => _updateMessage(index, value),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete, color: theme.colorScheme.error),
+                  onPressed: () => _deleteMessage(index),
+                ),
               ),
-              trailing: IconButton(
-                icon: Icon(Icons.delete, color: theme.colorScheme.error),
-                onPressed: () => _deleteMessage(index),
-              ),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addMessage,
-        child: const Icon(Icons.add),
-        backgroundColor: theme.primaryColor,
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addMessage,
+          child: const Icon(Icons.add),
+          backgroundColor: theme.primaryColor,
+        ),
       ),
     );
   }

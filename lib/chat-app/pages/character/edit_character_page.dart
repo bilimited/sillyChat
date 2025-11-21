@@ -126,6 +126,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       firstMessage: _firstMessageController.text,
       memories: _memories,
     )
+      ..moreFirstMessage = _character?.moreFirstMessage ?? []
       ..backgroundImage = _backgroundPath
       ..brief = _briefController.text
       ..relations = _character?.relations ?? {}
@@ -168,8 +169,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     } else {
       await _characterController.addCharacter(character);
     }
-
-    //Get.back();
   }
 
   Future<void> _deleteCharacter() async {
@@ -327,7 +326,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ExpandableTextField(
                   controller: _firstMessageController,
                   decoration: InputDecoration(
-                    labelText: '首句台词(可选)',
+                    labelText: '开场白(可选)',
                   ),
                   extraActions: [
                     if (_character != null)

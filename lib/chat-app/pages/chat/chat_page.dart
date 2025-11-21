@@ -1413,7 +1413,7 @@ class _ChatPageState extends State<ChatPage> {
                   content: char.firstMessage!,
                   senderId: char.id,
                   time: DateTime.now(),
-                  alternativeContent: [null]));
+                  alternativeContent: [null, ...char.moreFirstMessage]));
         }
 
         _updateChat();
@@ -1469,10 +1469,7 @@ class _ChatPageState extends State<ChatPage> {
               // 2. 提供一个 transitionBuilder 来自定义动画效果 (可选，但推荐)
               transitionBuilder: (Widget child, Animation<double> animation) {
                 // 使用 FadeTransition 实现淡入淡出效果
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
+                return FadeTransition(opacity: animation, child: child);
               },
 
               child: sessionController.isChatLoading
