@@ -823,7 +823,7 @@ class _ChatPageState extends State<ChatPage> {
                     topToolBar: [
                       ToggleChip(
                           icon: Icons.chat,
-                          text: '群聊模式',
+                          text: '手动模式',
                           initialValue: chat.mode == ChatMode.group,
                           onToggle: (value) {
                             setState(() {

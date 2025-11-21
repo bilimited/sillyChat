@@ -33,7 +33,7 @@ class _ThinkWidgetState extends State<ThinkWidget> {
     const double fontSize = 13.0;
     const double lineHeight = 1.5;
     // 4行的大致高度
-    const double collapsedHeight = fontSize * lineHeight * 4;
+    const double collapsedHeight = fontSize * lineHeight * 5;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -165,7 +165,7 @@ class _ThinkWidgetState extends State<ThinkWidget> {
             reverse: true,
             physics: const NeverScrollableScrollPhysics(),
             child: Text(
-              widget.thinkContent.trim(),
+              widget.thinkContent.trim().replaceAll('\n\n', '\n'),
               style: TextStyle(
                 fontSize: fontSize,
                 height: lineHeight,

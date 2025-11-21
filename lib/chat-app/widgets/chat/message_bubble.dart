@@ -500,6 +500,24 @@ class _MessageBubbleState extends State<MessageBubble> {
                   ),
                   textScaler:
                       TextScaler.linear(displaySetting.ContentFontScale),
+                  blockquoteDecoration: BoxDecoration(
+                    color: isMe
+                        ? colors.primary.withOpacity(0.06)
+                        : colors.surfaceVariant.withOpacity(0.04),
+                    border: Border(
+                      left: BorderSide(
+                        color: isMe
+                            ? colors.primary
+                            : colors.primary.withOpacity(0.8),
+                        width: 4,
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  blockquote: TextStyle(
+                    color: isMe ? colors.onPrimary : colors.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
                 builders: isMe
                     ? {}
