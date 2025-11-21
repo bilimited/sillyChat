@@ -17,9 +17,9 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   late TextEditingController nameController;
   late TextEditingController contentController;
   late TextEditingController keywordsController;
-  late TextEditingController activationDepthController;
-  late TextEditingController priorityController;
-  late TextEditingController positionIdController;
+  late TextEditingController activationDepthController; // 激活深度 (高级)
+  late TextEditingController priorityController; // 顺序
+  late TextEditingController positionIdController; // 插入位置深度
   late ActivationType activationType;
   late MatchingLogic logic;
   late bool isActive;
@@ -27,6 +27,9 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
   late String position;
   final _formKey = GlobalKey<FormState>();
   late List<FocusNode> _focusNodes;
+
+  // 控制高级设置展开状态
+  bool _isAdvancedExpanded = false;
 
   @override
   void initState() {
@@ -46,6 +49,8 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
     logic = item?.logic ?? MatchingLogic.or;
     isActive = item?.isActive ?? true;
     position = item?.position ?? 'before_char';
+
+    // 焦点管理，用于失焦保存
     _focusNodes = List.generate(8, (_) => FocusNode());
     for (var node in _focusNodes) {
       node.addListener(() {
@@ -54,6 +59,22 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
         }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // 页面退出时强制保存一次，确保数据同步
+    //save();
+    nameController.dispose();
+    contentController.dispose();
+    keywordsController.dispose();
+    activationDepthController.dispose();
+    priorityController.dispose();
+    positionIdController.dispose();
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
   }
 
   void save() {
@@ -78,166 +99,205 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
     widget.onSave?.call(item);
   }
 
-  void saveAndBack() {
-    save();
-    Navigator.of(context).pop();
-  }
-
-  @override
-  void dispose() {
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    // 检查是否需要显示位置深度输入框
+    final bool showPositionDepth = position.startsWith('@D');
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('编辑世界书条目'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            tooltip: '保存',
-            onPressed: saveAndBack,
-          ),
-        ],
+        title: const Text('编辑条目'),
+        // 移除了保存按钮，依赖自动保存
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
+            // 第一行：名称
             TextField(
               controller: nameController,
               focusNode: _focusNodes[0],
               decoration: const InputDecoration(
                 labelText: '条目名称',
-                prefixIcon: Icon(Icons.label),
+                prefixIcon: Icon(Icons.label_outline),
               ),
             ),
-            const SizedBox(height: 16),
-            ExpandableTextField(
-              controller: contentController,
-              focusNode: _focusNodes[1],
-              minLines: 4,
-              maxLines: 10,
-              decoration: const InputDecoration(
-                labelText: '内容',
-                prefixIcon: Icon(Icons.notes),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: keywordsController,
-              focusNode: _focusNodes[2],
-              decoration: const InputDecoration(
-                labelText: '关键词（逗号分隔）',
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // 第二行：位置设置 (位置、顺序、深度)
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<ActivationType>(
-                    value: activationType,
-                    focusNode: _focusNodes[3],
-                    decoration: const InputDecoration(
-                      labelText: '激活条件',
-                    ),
-                    items: ActivationType.values.map((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(_activationTypeLabel(e)),
-                      );
-                    }).toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => activationType = v);
+                  flex: 3,
+                  child: CustomOptionInputWidget(
+                    initialValue: position,
+                    labelText: '位置',
+                    options: [
+                      {'display': '角色前', 'value': 'before_char'},
+                      {'display': '角色后', 'value': 'after_char'},
+                      {'display': '示例前', 'value': 'before_em'},
+                      {'display': '示例后', 'value': 'after_em'},
+                      {'display': '@D 👤', 'value': '@Duser'},
+                      {'display': '@D 🤖', 'value': '@Dassistant'},
+                      {'display': '@D ⚙', 'value': '@Dsystem'},
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => position = value);
+                        save();
+                      }
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: DropdownButtonFormField<MatchingLogic>(
-                    value: logic,
-                    focusNode: _focusNodes[4],
-                    decoration: const InputDecoration(
-                      labelText: '匹配逻辑',
-                    ),
-                    items: MatchingLogic.values.map((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(_logicLabel(e)),
-                      );
-                    }).toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => logic = v);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: activationDepthController,
-                    focusNode: _focusNodes[5],
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '激活深度(填0使用世界书设置)',
-                      prefixIcon: Icon(Icons.layers),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
+                  flex: 2,
                   child: TextField(
                     controller: priorityController,
                     focusNode: _focusNodes[6],
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '顺序',
-                      prefixIcon: Icon(Icons.star),
+                      prefixIcon: Icon(Icons.sort, size: 18),
                     ),
                   ),
                 ),
+                if (showPositionDepth) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: positionIdController,
+                      focusNode: _focusNodes[7],
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: '深度',
+                        prefixIcon: Icon(Icons.layers, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 16),
-            CustomOptionInputWidget(
-              initialValue: position,
-              labelText: '插入位置',
-              options: [
-                {'display': '角色定义前', 'value': 'before_char'},
-                {'display': '角色定义后', 'value': 'after_char'},
-                {'display': '对话示例前', 'value': 'before_em'},
-                {'display': '对话示例后', 'value': 'after_em'},
-                {'display': '@D 👤', 'value': '@Duser'},
-                {'display': '@D 🤖', 'value': '@Dassistant'},
-                {'display': '@D ⚙', 'value': '@Dsystem'},
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => position = value);
-                  save();
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            if (position.startsWith('@D'))
-              TextField(
-                controller: positionIdController,
-                focusNode: _focusNodes[7],
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '深度',
-                  prefixIcon: Icon(Icons.layers),
-                ),
+            const SizedBox(height: 12),
+
+            // 第三行：内容 (占据主要空间)
+            ExpandableTextField(
+              controller: contentController,
+              focusNode: _focusNodes[1],
+              minLines: 10, // 增大高度
+              maxLines: null,
+              decoration: const InputDecoration(
+                labelText: '内容',
+                hintText: '输入世界书内容...',
+                alignLabelWithHint: true,
+
+                filled: true,
+                // fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3), // 可选：轻微背景色
               ),
+            ),
+            const SizedBox(height: 12),
+
+            // 第四行：高级设置 (折叠面板)
+            Theme(
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                title: const Text('高级设置', style: TextStyle(fontSize: 14)),
+                leading: const Icon(Icons.settings),
+                tilePadding: EdgeInsets.zero,
+                initiallyExpanded: _isAdvancedExpanded,
+                onExpansionChanged: (val) =>
+                    setState(() => _isAdvancedExpanded = val),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 20.0),
+                    child: Column(
+                      children: [
+                        // 关键词
+                        TextField(
+                          controller: keywordsController,
+                          focusNode: _focusNodes[2],
+                          minLines: 1,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: '关键词（逗号分隔）',
+                            prefixIcon: Icon(Icons.vpn_key),
+                            helperText: '主要用于关键词激活',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 激活类型与逻辑
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<ActivationType>(
+                                value: activationType,
+                                focusNode: _focusNodes[3],
+                                decoration: const InputDecoration(
+                                  labelText: '激活条件',
+                                ),
+                                items: ActivationType.values.map((e) {
+                                  return DropdownMenuItem(
+                                    value: e,
+                                    child: Text(
+                                      _activationTypeLabel(e),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (v) {
+                                  if (v != null)
+                                    setState(() => activationType = v);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: DropdownButtonFormField<MatchingLogic>(
+                                value: logic,
+                                focusNode: _focusNodes[4],
+                                decoration: const InputDecoration(
+                                  labelText: '匹配逻辑',
+                                ),
+                                items: MatchingLogic.values.map((e) {
+                                  return DropdownMenuItem(
+                                    value: e,
+                                    child: Text(
+                                      _logicLabel(e),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (v) {
+                                  if (v != null) setState(() => logic = v);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 扫描深度 (区别于位置深度)
+                        TextField(
+                          controller: activationDepthController,
+                          focusNode: _focusNodes[5],
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: '扫描深度 (上下文扫描范围)',
+                            prefixIcon: Icon(Icons.radar),
+                            helperText: '填0则使用全局设置',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -248,22 +308,22 @@ class _LoreBookItemEditorPageState extends State<LoreBookItemEditorPage> {
 String _activationTypeLabel(ActivationType type) {
   switch (type) {
     case ActivationType.always:
-      return '总是激活';
+      return '总是';
     case ActivationType.keywords:
-      return '关键词激活';
+      return '关键词';
     case ActivationType.rag:
-      return 'RAG激活(未实现)';
+      return 'RAG';
     case ActivationType.manual:
-      return '手动激活';
+      return '手动';
   }
 }
 
 String _logicLabel(MatchingLogic logic) {
   switch (logic) {
     case MatchingLogic.and:
-      return 'AND(全部包含)';
+      return 'AND (全含)';
     case MatchingLogic.or:
-      return 'OR(任一包含)';
+      return 'OR (任一)';
     case MatchingLogic.regex:
       return '正则';
   }

@@ -19,14 +19,18 @@ class LoreBookEditorPage extends StatefulWidget {
 
 class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   late TextEditingController nameController;
-  late TextEditingController scanDepthController;
-  late TextEditingController maxTokenController;
+  late TextEditingController searchController; // 新增搜索控制器
   late List<LorebookItemModel> items;
   late int id;
-  final _formKey = GlobalKey<FormState>();
+
+  // 简单的元数据控制器，如果需要更多设置（如scanDepth），建议放入右上角菜单或折叠面板，保持界面整洁
+  // 这里为了保持原有逻辑，暂存数据，但界面上仅展示核心的名称
+  int scanDepth = 3;
+  int maxToken = 2048;
+
   late FocusNode nameFocusNode;
-  late FocusNode scanDepthFocusNode;
-  late FocusNode maxTokenFocusNode;
+
+  String searchText = '';
 
   @override
   void initState() {
@@ -34,28 +38,26 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
     final lorebook = widget.lorebook;
     id = lorebook?.id ?? DateTime.now().millisecondsSinceEpoch;
     nameController = TextEditingController(text: lorebook?.name ?? '');
-    scanDepthController =
-        TextEditingController(text: (lorebook?.scanDepth ?? 3).toString());
-    maxTokenController =
-        TextEditingController(text: (lorebook?.maxToken ?? 2048).toString());
+    searchController = TextEditingController();
+
+    scanDepth = lorebook?.scanDepth ?? 3;
+    maxToken = lorebook?.maxToken ?? 2048;
+
     items = lorebook?.items.map((e) => e.copyWith()).toList() ?? [];
+
     nameFocusNode = FocusNode();
-    scanDepthFocusNode = FocusNode();
-    maxTokenFocusNode = FocusNode();
-    for (var node in [nameFocusNode, scanDepthFocusNode, maxTokenFocusNode]) {
-      node.addListener(() {
-        if (!node.hasFocus) {
-          saveLorebook();
-        }
-      });
-    }
+    nameFocusNode.addListener(() {
+      if (!nameFocusNode.hasFocus) {
+        saveLorebook();
+      }
+    });
   }
 
   @override
   void dispose() {
     nameFocusNode.dispose();
-    scanDepthFocusNode.dispose();
-    maxTokenFocusNode.dispose();
+    searchController.dispose();
+    nameController.dispose();
     super.dispose();
   }
 
@@ -65,8 +67,8 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
       id: id,
       name: nameController.text.trim(),
       items: items,
-      scanDepth: int.tryParse(scanDepthController.text) ?? 3,
-      maxToken: int.tryParse(maxTokenController.text) ?? 2048,
+      scanDepth: scanDepth,
+      maxToken: maxToken,
     );
     if (widget.isNew) {
       await controller.addLorebook(lorebook);
@@ -82,69 +84,64 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
 
   void addItem() {
     setState(() {
+      // 新条目插入到顶部还是底部？通常底部，或者顶部以便编辑。这里默认底部。
       items.add(LorebookItemModel(
         id: DateTime.now().millisecondsSinceEpoch,
         name: '新条目',
         content: '',
       ));
+      searchController.clear();
+      searchText = '';
     });
-
     saveLorebook();
   }
 
-  void copyItem(int index) {
-    LoreBookController.of.lorebookItemClipboard.value = items[index];
-    SillyChatApp.snackbar(context, '条目"${items[index].name}"已复制到剪贴板');
+  void copyItem(LorebookItemModel item) {
+    LoreBookController.of.lorebookItemClipboard.value = item;
+    SillyChatApp.snackbar(context, '条目"${item.name}"已复制');
   }
 
   void pasteItem() {
     final item = LoreBookController.of.lorebookItemClipboard.value;
-    if (item == null) {
-      return;
-    }
+    if (item == null) return;
+
     setState(() {
       items.add(item.copyWith(
         id: DateTime.now().millisecondsSinceEpoch,
-        name: item.name,
+        name: '${item.name} (副本)',
       ));
+      searchController.clear();
+      searchText = '';
     });
-
     saveLorebook();
-
+    // 粘贴后清空剪贴板可根据需求决定，这里不清空方便连续粘贴
     LoreBookController.of.lorebookItemClipboard.value = null;
   }
 
   void deleteItem(int index) {
-    // 添加二次确认
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('确认删除'),
-          content: const Text('确定要删除此条目吗？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                deleteItemConfirmed(index);
-              },
-              child: const Text('删除'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定要删除 "${items[index].name}" 吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                items.removeAt(index);
+                saveLorebook();
+              });
+            },
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
-  }
-
-  void deleteItemConfirmed(int index) {
-    setState(() {
-      items.removeAt(index);
-      saveLorebook();
-    });
   }
 
   void toggleItemActive(int index, bool value) {
@@ -154,247 +151,283 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
     });
   }
 
-  void reorderItems(int oldIndex, int newIndex) {
+  // --- 排序操作 ---
+
+  void moveItem(int index, int newIndex) {
+    if (newIndex < 0 || newIndex >= items.length) return;
     setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
-      final item = items.removeAt(oldIndex);
+      final item = items.removeAt(index);
       items.insert(newIndex, item);
+      saveLorebook();
     });
   }
+
+  void moveToTop(int index) {
+    if (index == 0) return;
+    moveItem(index, 0);
+  }
+
+  void moveUp(int index) {
+    moveItem(index, index - 1);
+  }
+
+  void moveDown(int index) {
+    moveItem(index, index + 1);
+  }
+
+  // --- 构建 UI ---
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // 过滤列表
+    // 注意：当处于搜索模式时，操作的是过滤后的视图，但修改必须映射回原始 items 列表。
+    // 简单起见，搜索模式下禁用排序功能，只允许编辑和删除。
+    final bool isSearching = searchText.trim().isNotEmpty;
+    final List<int> filteredIndices = [];
+    for (int i = 0; i < items.length; i++) {
+      if (!isSearching ||
+          items[i].name.toLowerCase().contains(searchText.toLowerCase())) {
+        filteredIndices.add(i);
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('编辑世界书'),
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            tooltip: '保存',
             onPressed: saveLorebookAndBack,
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton.extended(
-      //   onPressed: addItem,
-      //   icon: const Icon(Icons.add),
-      //   label: const Text('添加条目'),
-      // ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // 基本信息
-              Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: nameController,
-                        focusNode: nameFocusNode,
-                        decoration: const InputDecoration(
-                          labelText: '世界书名称',
-                          prefixIcon: Icon(Icons.book),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: scanDepthController,
-                              focusNode: scanDepthFocusNode,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: '激活深度',
-                                prefixIcon: Icon(Icons.layers),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: maxTokenController,
-                              focusNode: maxTokenFocusNode,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: '最大Token',
-                                prefixIcon: Icon(Icons.memory),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+      body: Column(
+        children: [
+          // 顶部紧凑的设置区域
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: theme.colorScheme.surface,
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  focusNode: nameFocusNode,
+                  decoration: const InputDecoration(
+                    labelText: '世界书名称',
+                    // isDense: true,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
                 ),
-              ),
-              // 条目列表
-              Text(
-                '条目列表',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                onReorder: reorderItems,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return Card(
-                    key: ValueKey(item.id),
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    child: ListTile(
-                      dense: true,
-                      title: Text(
-                        item.name,
-                        style: theme.textTheme.bodyLarge,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        item.content,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey),
-                      ),
-                      trailing: Wrap(
-                        spacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 30, // Example width
-                            height: 20, // Example height
-                            child: Transform.scale(
-                              scale:
-                                  0.7, // Scale down to fit within the SizedBox
-                              child: Switch(
-                                value: item.isActive,
-                                onChanged: (v) => toggleItemActive(index, v),
-                                activeColor: theme.colorScheme.primary,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                const SizedBox(height: 8),
+                TextField(
+                  controller: searchController,
+                  decoration: const InputDecoration(
+                    hintText: '搜索条目...',
+                    prefixIcon: Icon(Icons.search),
+                    // isDense: true,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      searchText = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // 列表区域
+          Expanded(
+            child: filteredIndices.isEmpty
+                ? Center(
+                    child: Text(
+                      items.isEmpty ? '暂无条目' : '未找到匹配条目',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: filteredIndices.length,
+                    separatorBuilder: (c, i) => const Divider(height: 1),
+                    itemBuilder: (context, displayIndex) {
+                      final actualIndex = filteredIndices[displayIndex];
+                      final item = items[actualIndex];
+
+                      return InkWell(
+                        onTap: () {
+                          customNavigate(
+                              LoreBookItemEditorPage(
+                                item: item,
+                                onSave: (newItem) {
+                                  setState(() {
+                                    items[actualIndex] = newItem;
+                                    saveLorebook();
+                                  });
+                                },
                               ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          DropdownButton<ActivationType>(
-                            value: item.activationType,
-                            onChanged: (v) => {
-                              if (v != null)
-                                setState(() {
-                                  items[index] =
-                                      item.copyWith(activationType: v);
-                                  saveLorebook();
-                                })
-                            },
-                            items: ActivationType.values.map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(
-                                  _activationTypeLabel(type),
-                                  style: TextStyle(fontSize: 13),
+                              context: context);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              // 激活开关
+                              SizedBox(
+                                height: 24,
+                                child: Transform.scale(
+                                  scale: 0.8,
+                                  child: Switch(
+                                    value: item.isActive,
+                                    onChanged: (v) =>
+                                        toggleItemActive(actualIndex, v),
+                                  ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 20),
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'copy',
-                                child: Row(
-                                  children: const [
-                                    Icon(Icons.copy, size: 18),
-                                    SizedBox(width: 8),
-                                    Text('复制'),
+                              ),
+                              const SizedBox(width: 12),
+                              // 内容信息
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      item.name.isEmpty ? "无标题" : item.name,
+                                      style: theme.textTheme.bodyLarge,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      item.content.replaceAll('\n', ' '),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(color: Colors.grey),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ],
                                 ),
                               ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: const [
-                                    Icon(Icons.delete,
-                                        color: Colors.red, size: 18),
-                                    SizedBox(width: 8),
-                                    Text('删除',
-                                        style: TextStyle(color: Colors.red)),
-                                  ],
-                                ),
+                              // 菜单按钮
+                              PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert,
+                                    color: Colors.grey),
+                                onSelected: (value) {
+                                  switch (value) {
+                                    case 'top':
+                                      moveToTop(actualIndex);
+                                      break;
+                                    case 'up':
+                                      moveUp(actualIndex);
+                                      break;
+                                    case 'down':
+                                      moveDown(actualIndex);
+                                      break;
+                                    case 'copy':
+                                      copyItem(item);
+                                      break;
+                                    case 'delete':
+                                      deleteItem(actualIndex);
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (context) {
+                                  // 搜索状态下禁用排序选项，防止索引混乱
+                                  return [
+                                    if (!isSearching) ...[
+                                      const PopupMenuItem(
+                                        value: 'top',
+                                        child: ListTile(
+                                          leading:
+                                              Icon(Icons.vertical_align_top),
+                                          title: Text('置顶'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'up',
+                                        child: ListTile(
+                                          leading: Icon(Icons.arrow_upward),
+                                          title: Text('上移'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'down',
+                                        child: ListTile(
+                                          leading: Icon(Icons.arrow_downward),
+                                          title: Text('下移'),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
+                                        ),
+                                      ),
+                                      const PopupMenuDivider(),
+                                    ],
+                                    const PopupMenuItem(
+                                      value: 'copy',
+                                      child: ListTile(
+                                        leading: Icon(Icons.copy),
+                                        title: Text('复制'),
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: ListTile(
+                                        leading: Icon(Icons.delete,
+                                            color: Colors.red),
+                                        title: Text('删除',
+                                            style:
+                                                TextStyle(color: Colors.red)),
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
+                                      ),
+                                    ),
+                                  ];
+                                },
                               ),
                             ],
-                            onSelected: (value) {
-                              if (value == 'delete') {
-                                deleteItem(index);
-                              } else if (value == 'copy') {
-                                copyItem(index);
-                              }
-                            },
                           ),
-                        ],
-                      ),
-                      onTap: () {
-                        // 可跳转到条目详细编辑页
-                        customNavigate(
-                            LoreBookItemEditorPage(
-                              item: items[index],
-                              onSave: (item) {
-                                setState(() {
-                                  items[index] = item;
-                                  saveLorebook();
-                                });
-                              },
-                            ),
-                            context: context);
-                      },
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              ElevatedButton.icon(
-                  onPressed: addItem,
-                  icon: Icon(Icons.add),
-                  label: Text('新条目')),
-              const SizedBox(
-                height: 10,
-              ),
-              Obx(() =>
-                  LoreBookController.of.lorebookItemClipboard.value != null
-                      ? ElevatedButton.icon(
-                          onPressed: pasteItem,
-                          icon: Icon(Icons.paste),
-                          label: Text('粘贴条目'))
-                      : SizedBox.shrink()),
-              const SizedBox(height: 80),
-            ],
+                        ),
+                      );
+                    },
+                  ),
           ),
-        ),
+        ],
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Obx(() {
+            final hasClipboard =
+                LoreBookController.of.lorebookItemClipboard.value != null;
+            if (!hasClipboard) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: FloatingActionButton.small(
+                heroTag: 'paste_fab',
+                onPressed: pasteItem,
+                tooltip: '粘贴条目',
+                child: const Icon(Icons.paste),
+              ),
+            );
+          }),
+          FloatingActionButton(
+            heroTag: 'add_fab',
+            onPressed: addItem,
+            tooltip: '新条目',
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
-  }
-}
-
-String _activationTypeLabel(ActivationType type) {
-  switch (type) {
-    case ActivationType.always:
-      return '🔵总是';
-    case ActivationType.keywords:
-      return '🟢关键词';
-    case ActivationType.rag:
-      return '⛓️RAG';
-    case ActivationType.manual:
-      return '✋手动';
   }
 }

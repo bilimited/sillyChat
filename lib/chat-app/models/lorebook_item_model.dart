@@ -48,7 +48,7 @@ class LorebookItemModel {
       required this.name,
       required this.content,
       this.keywords = '',
-      this.activationType = ActivationType.keywords,
+      this.activationType = ActivationType.always,
       this.activationDepth = 0, // 默认回溯0条消息
       this.priority = 0, // 默认优先级
       this.logic = MatchingLogic.or,
