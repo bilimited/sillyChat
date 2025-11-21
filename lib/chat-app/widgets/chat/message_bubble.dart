@@ -26,7 +26,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class QuotedTextSyntax extends md.InlineSyntax {
-  QuotedTextSyntax() : super(r'"([^"]*)"');
+  QuotedTextSyntax() : super(r'[“"”]([^"“”]*)["“”]');
 
   @override
   bool onMatch(md.InlineParser parser, Match match) {
