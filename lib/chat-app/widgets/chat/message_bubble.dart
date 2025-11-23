@@ -15,6 +15,7 @@ import 'package:flutter_example/chat-app/utils/markdown/latex_block_syntax.dart'
 import 'package:flutter_example/chat-app/utils/markdown/latex_element_builder.dart';
 import 'package:flutter_example/chat-app/utils/markdown/latex_inline_syntax.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/chat/custom_codeblock_widget.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -145,6 +146,68 @@ class FontColorBuilder extends MarkdownElementBuilder {
       );
     }
     return null;
+  }
+}
+
+class CodeBlockBuilder extends MarkdownElementBuilder {
+  @override
+  void visitElementBefore(md.Element element) {
+    if (element.tag != 'pre') return;
+
+    // 1. 提取原始代码内容和语言
+    // 我们必须在 Before 阶段做这件事，因为稍后我们要清空 children
+    String codeText = '';
+    String language = '';
+
+    if (element.children != null && element.children!.isNotEmpty) {
+      // FencedCodeBlock 通常结构是 <pre><code class="language-dart">...</code></pre>
+      for (var child in element.children!) {
+        if (child is md.Element && child.tag == 'code') {
+          codeText = child.textContent;
+          // 提取语言
+          final classAttribute = child.attributes['class'];
+          if (classAttribute != null &&
+              classAttribute.startsWith('language-')) {
+            language = classAttribute.substring('language-'.length);
+          }
+        } else if (child is md.Text) {
+          // 某些特殊情况下可能有直接文本
+          codeText += child.text;
+        }
+      }
+    } else {
+      codeText = element.textContent;
+    }
+
+    // 2. 将提取的数据暂存到 element 的 attributes 中
+    // 这样在 visitElementAfter 中就能获取到了
+    element.attributes['__custom_code__'] = codeText.trimRight();
+    element.attributes['__custom_lang__'] = language;
+
+    // 3. ★ 关键修复步骤 ★
+    // 清空子元素。这样 flutter_markdown 就不会去遍历它们，
+    // 就不会把代码文本添加到 _inlines 缓冲区中。
+    // 当执行到 visitElementAfter 时，_inlines 也就保持为空，从而通过断言检测。
+    element.children?.clear();
+  }
+
+  @override
+  Widget? visitElementAfterWithContext(
+    BuildContext context,
+    md.Element element,
+    TextStyle? preferredStyle,
+    TextStyle? parentStyle,
+  ) {
+    if (element.tag != 'pre') return null;
+
+    // 4. 从 attributes 中取出我们在 Before 阶段保存的数据
+    final codeText = element.attributes['__custom_code__'] ?? '';
+    final language = element.attributes['__custom_lang__'] ?? '';
+
+    return CustomCodeBlockWidget(
+      code: codeText,
+      language: language,
+    );
   }
 }
 
@@ -525,6 +588,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                         'quotedText': QuotedTextBuilder(
                             TextScaler.linear(displaySetting.ContentFontScale)),
                         'font': FontColorBuilder(),
+                        'pre': CodeBlockBuilder(),
+
                         // 'latex': LatexElementBuilder(
                         //   // textStyle: const TextStyle(color: Colors.blue),
                         //   textScaleFactor: 1.2,
@@ -536,10 +601,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                   const md.UnorderedListWithCheckboxSyntax(),
                   const md.OrderedListWithCheckboxSyntax(),
                   const md.FootnoteDefSyntax(),
+                  //const md.HtmlBlockSyntax(),
                   LatexBlockSyntax()
                 ], [
                   QuotedTextSyntax(),
-                  HtmlTagSyntax(),
+                  //HtmlTagSyntax(),
                   LatexInlineSyntax()
                 ]),
                 softLineBreak: true,

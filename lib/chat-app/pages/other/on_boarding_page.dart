@@ -114,57 +114,62 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       return;
     }
 
-    final vault = Get.find<VaultSettingController>();
-    final characters = Get.find<CharacterController>();
+    try {
+      final vault = Get.find<VaultSettingController>();
+      final characters = Get.find<CharacterController>();
 
-    final CharacterModel user = CharacterModel(
-        id: 0,
-        remark: '你',
-        roleName: _nameController.text,
-        avatar: _avatarImage?.path ?? '',
-        category: '默认',
-        brief: _introController.text);
+      final CharacterModel user = CharacterModel(
+          id: 0,
+          remark: '你',
+          roleName: _nameController.text,
+          avatar: _avatarImage?.path ?? '',
+          category: '默认',
+          brief: _introController.text);
 
-    characters.addCharacter(user);
+      characters.addCharacter(user);
 
-    if (!_isCustomModel) {
-      final _selectedServiceProvider =
-          ServiceProvider.findProviderByModelName(_selectedModel!);
+      if (!_isCustomModel) {
+        final _selectedServiceProvider =
+            ServiceProvider.findProviderByModelName(_selectedModel!);
 
-      final ApiModel api = ApiModel(
-          id: DateTime.now().microsecondsSinceEpoch,
-          apiKey: _apiKeyController.text,
-          displayName: _selectedModel!,
-          modelName: _selectedModel!,
-          url: ServiceProvider.providerData[_selectedServiceProvider]
-                  ?['defaultUrl'] ??
-              'Error',
-          provider: _selectedServiceProvider);
+        final ApiModel api = ApiModel(
+            id: DateTime.now().microsecondsSinceEpoch,
+            apiKey: _apiKeyController.text,
+            displayName: _selectedModel!,
+            modelName: _selectedModel!,
+            url: ServiceProvider.providerData[_selectedServiceProvider]
+                    ?['defaultUrl'] ??
+                'Error',
+            provider: _selectedServiceProvider);
 
-      vault.addApi(api);
-      vault.defaultApi.value = api.id;
-    }
-
-    vault.isShowOnBoardPage.value = false;
-
-    if (_presetFile != null && _presetFile!.path != null) {
-      //导入预设：自动使用第一个api
-      File(_presetFile!.path!).readAsString().then((content) {
-        STConfigImporter.fromJson(json.decode(content), _presetFile!.name);
-      });
-    } else {
-      // 不导入预设：创建一个空预设，使用第一个Api
-      ChatOptionController.of().addChatOption(ChatOptionModel.roleplay());
-    }
-
-    if (_characterCardImage != null) {
-      final decoded =
-          await STCharacterImporter.readPNGExts(_characterCardImage!);
-      final char = await STCharacterImporter.fromJson(json.decode(decoded),
-          _characterCardImage.toString(), _characterCardImage!.path);
-      if (char != null) {
-        characters.addCharacter(char);
+        await vault.addApi(api);
+        vault.defaultApi.value = api.id;
       }
+
+      vault.isShowOnBoardPage.value = false;
+
+      if (_presetFile != null && _presetFile!.path != null) {
+        //导入预设：自动使用第一个api
+        final content = await File(_presetFile!.path!).readAsString();
+        STConfigImporter.fromJson(json.decode(content), _presetFile!.name);
+      } else {
+        // 不导入预设：创建一个空预设，使用第一个Api
+        await ChatOptionController.of()
+            .addChatOption(ChatOptionModel.roleplay());
+      }
+
+      if (_characterCardImage != null) {
+        final decoded =
+            await STCharacterImporter.readPNGExts(_characterCardImage!);
+        final char = await STCharacterImporter.fromJson(json.decode(decoded),
+            _characterCardImage.toString(), _characterCardImage!.path);
+        if (char != null) {
+          await characters.addCharacter(char);
+        }
+      }
+      await vault.saveSettings();
+    } catch (e) {
+      Get.snackbar("初始化时出现问题", '$e');
     }
   }
 

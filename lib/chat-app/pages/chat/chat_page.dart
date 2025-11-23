@@ -318,15 +318,6 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.web),
-                title: const Text('预览Html代码'),
-                onTap: () async {
-                  Get.to(() => MessageWebview(content: message.content));
-                  // customNavigate(MessageWebview(content: message.content),
-                  //     context: context);
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.call_split),
                 title: const Text('从这里创建分支'),
                 onTap: () {
