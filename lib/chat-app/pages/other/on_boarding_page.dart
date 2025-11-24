@@ -208,9 +208,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.secondary,
-                    width: 2,
-                  ),
+                      color: Theme.of(context).colorScheme.secondary, width: 2),
                 ),
                 child: CircleAvatar(
                   radius: 50,

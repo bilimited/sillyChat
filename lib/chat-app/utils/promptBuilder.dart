@@ -117,6 +117,7 @@ class Promptbuilder {
   List<LLMMessage> getLLMMessageList({CharacterModel? sender}) {
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
+
     final options = chatOption?.requestOptions ?? chat.requestOptions;
     final prompts = chatOption?.prompts ?? chat.prompts;
 
@@ -165,13 +166,17 @@ class Promptbuilder {
     final STVars = chat.chatVars; //<String, String>{};
 
     /// Step 3 宏和用户消息插入PM
-    final promptsAfterFormat = promptsAfterInsertLore
-        .map((prompt) => prompt.copyWith(
-            content: Promptformatter.formatPrompt(prompt.content, chat,
-                sender: sender, userMessage: userMessage, STVaribles: STVars)))
-        .toList();
+    final promptsAfterFormat = promptSetting.isFormatMainContent
+        ? promptsAfterInsertLore
+        : promptsAfterInsertLore
+            .map((prompt) => prompt.copyWith(
+                content: Promptformatter.formatPrompt(prompt.content, chat,
+                    sender: sender,
+                    userMessage: userMessage,
+                    STVaribles: STVars)))
+            .toList();
 
-    print(STVars.toString());
+    // print(STVars.toString());
     final promptsNotEmpty = promptsAfterFormat
         .where((msg) => !(msg.content.isBlank ?? false))
         .toList();
@@ -204,8 +209,18 @@ class Promptbuilder {
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
 
+    final llmMessagesAfterFormat = promptSetting.isFormatMainContent
+        ? llmMessages
+            .map((prompt) => prompt.copyWith(
+                content: Promptformatter.formatPrompt(prompt.content, chat,
+                    sender: sender,
+                    userMessage: userMessage,
+                    STVaribles: STVars)))
+            .toList()
+        : llmMessages;
+
     return _mergeLLMMessages(
-        llmMessages, api?.provider == ServiceProvider.google);
+        llmMessagesAfterFormat, api?.provider == ServiceProvider.google);
   }
 
   /// 排序并插入”聊天中“Prompt

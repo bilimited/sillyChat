@@ -9,6 +9,9 @@ class PromptSettingModel {
   // 群聊中添加在每条消息开头
   String groupFormatter = "<char>:<message>";
 
+  // 是否格式化正文
+  bool isFormatMainContent = false;
+
   PromptSettingModel();
 
   // JSON序列化
@@ -17,6 +20,7 @@ class PromptSettingModel {
       'continuePrompt': continuePrompt,
       'interAssistantUserSeparator': interAssistantUserSeparator,
       'groupFormatter': groupFormatter,
+      'isFormatMainContent': isFormatMainContent,
     };
   }
 
@@ -26,6 +30,7 @@ class PromptSettingModel {
       ..continuePrompt = json['continuePrompt'] ?? "继续"
       ..interAssistantUserSeparator =
           json['interAssistantUserSeparator'] ?? "继续"
+      ..isFormatMainContent = json['isFormatMainContent'] ?? false
       ..groupFormatter = json['groupFormatter'] ?? "<char>:<message>";
   }
 
@@ -33,11 +38,13 @@ class PromptSettingModel {
     String? continuePrompt,
     String? interAssistantUserSeparator,
     String? groupFormatter,
+    bool? isFormatMainContent,
   }) {
     return PromptSettingModel()
       ..continuePrompt = continuePrompt ?? this.continuePrompt
       ..interAssistantUserSeparator =
           interAssistantUserSeparator ?? this.interAssistantUserSeparator
-      ..groupFormatter = groupFormatter ?? this.groupFormatter;
+      ..groupFormatter = groupFormatter ?? this.groupFormatter
+      ..isFormatMainContent = isFormatMainContent ?? this.isFormatMainContent;
   }
 }

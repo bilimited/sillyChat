@@ -22,6 +22,22 @@ class PromptFormatSettingsPage extends StatelessWidget {
         () => ListView(
           padding: const EdgeInsets.all(16.0),
           children: <Widget>[
+            // 开关：是否格式化主内容
+            SwitchListTile(
+              title: const Text('格式化正文和世界书'),
+              subtitle: const Text('是否替换世界书和正文中的{{user}}等。'),
+              value: settings.value.isFormatMainContent,
+              onChanged: (bool value) {
+                // 使用Rx的update以确保Obx能感知到变化并刷新UI
+                settings.update((s) {
+                  if (s != null) s.isFormatMainContent = value;
+                });
+                // 立即保存设置
+                controller.saveSettings();
+              },
+            ),
+            const Divider(height: 32),
+
             //构建“连续输出提示词”的编辑区域
             _buildPromptSection(
               context: context,
