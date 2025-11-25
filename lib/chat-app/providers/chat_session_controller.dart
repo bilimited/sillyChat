@@ -214,6 +214,7 @@ class ChatSessionController extends SessionController {
         controller.onChatChange(chat);
       }
     };
+    //_onChatUpdate(chat);
   }
 
   void closeWebController() {

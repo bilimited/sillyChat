@@ -129,7 +129,7 @@ class CharacterModel {
     }
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool smallJson = false}) {
     return {
       'id': id,
       'name': remark,
@@ -139,7 +139,15 @@ class CharacterModel {
       'backgroundImage': backgroundImage,
       'category': category,
       'brief': brief,
-      'archive': archive, // 添加archive字段
+
+      'archive': archive,
+      'backups': backups != null
+          ? backups!.map((e) => e.toJson()).toList()
+          : null, // 添加isBackup字段
+      'firstMessage': firstMessage, // 添加firstMessage字段
+      'moreFirstMessage': moreFirstMessage, // 添加moreFirstMessage字段
+
+      // 添加archive字段
       'relations': relations.map((key, value) => MapEntry(key.toString(), {
             'targetId': value.targetId,
             'type': value.type,
@@ -147,12 +155,7 @@ class CharacterModel {
           })),
       'messageStyle':
           messageStyle.toString().split('.').last, // 序列化messageStyle
-      'backups': backups != null
-          ? backups!.map((e) => e.toJson()).toList()
-          : null, // 添加isBackup字段
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
-      'firstMessage': firstMessage, // 添加firstMessage字段
-      'moreFirstMessage': moreFirstMessage, // 添加moreFirstMessage字段
       'bindOption': bindOptionId, // 添加bindOption字段
       'memories': memories.map((mem) => mem.toJson()).toList(), // 添加memories字段
     };

@@ -155,7 +155,7 @@ class Googleservicehandler extends Servicehandler {
         "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:generateContent?key=${api.apiKey}";
 
     final dioInstance = aihandler.dioInstance;
-    final requestBody = getRequestBody(options);
+    final requestBody = await getRequestBody(options);
     LogController.log(json.encode(requestBody), LogLevel.info,
         type: LogType.json, title: 'Gemini请求');
     if (options.isStreaming) {

@@ -53,6 +53,7 @@ class BreadcrumbNavigation extends StatelessWidget {
 
     // 使用 ListView 或 SingleChildScrollView 来防止内容溢出
     return SingleChildScrollView(
+      reverse: true,
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,

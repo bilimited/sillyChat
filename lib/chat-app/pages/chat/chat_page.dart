@@ -23,7 +23,6 @@ import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
-import 'package:flutter_example/chat-app/widgets/webview/message_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
@@ -866,7 +865,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildWebviewMessageList() {
-    return ChatWebview(session: widget.sessionController);
+    return ChatWebview(
+      session: widget.sessionController,
+    );
   }
 
   Widget _buildFlutterMessageList() {

@@ -43,7 +43,7 @@ class AvatarImage extends StatelessWidget {
   }) : super(key: key);
 
   /// 异步获取图片文件的完整路径。
-  String getPath(String filename) {
+  static String getPath(String filename) {
     return '${SettingController.of.getImagePathSync()}/${p.basename(filename)}';
   }
 

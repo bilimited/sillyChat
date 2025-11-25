@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chat Interface</title>
+    <style>
+        /* --- 基础设置 (保持不变) --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 聊天容器 --- */
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+        #chat-container::-webkit-scrollbar { width: 0; height: 0; }
+
+        /* --- 消息行布局 --- */
+        .msg-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+        }
+        .msg-row.user { flex-direction: row-reverse; }
+
+        /* --- 头像样式 --- */
+        .avatar-container {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #e0e0e0;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* --- 消息内容区域 --- */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+        }
+
+        /* 昵称 */
+        .nickname {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .msg-row.user .nickname { text-align: right; }
+        .msg-row.assistant .nickname { text-align: left; }
+
+        /* 气泡 */
+        .bubble {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap; 
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        /* 气泡内 HTML 样式 */
+        .bubble img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 5px 0; }
+        .bubble p { margin: 0 0 5px 0; }
+        .bubble p:last-child { margin-bottom: 0; }
+        .bubble pre { background: #f4f4f4; padding: 8px; border-radius: 4px; overflow-x: auto; }
+        .bubble code { font-family: monospace; background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 3px; }
+
+        .msg-row.assistant .bubble {
+            background-color: #ffffff;
+            color: #333;
+            border-top-left-radius: 2px;
+        }
+        .msg-row.user .bubble {
+            background-color: #95ec69;
+            color: #000;
+            border-top-right-radius: 2px;
+        }
+
+        /* 光标动画 */
+        .cursor {
+            display: inline-block; width: 2px; height: 15px;
+            background-color: #333; vertical-align: middle;
+            margin-left: 2px; animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* 占位符 */
+        .avatar-placeholder {
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12px; color: #fff; background-color: #ccc;
+        }
+        
+        [v-cloak] { display: none; }
+    </style>
+    <!-- 引入 Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+    <div id="app" v-cloak>
+        <div id="chat-container" ref="chatRef" @scroll="handleScroll">
+            
+            <!-- 历史消息层 -->
+            <div 
+                v-for="(msg, index) in messages" 
+                :key="index" 
+                class="msg-row" 
+                :class="msg.role"
+            >
+                <!-- 头像部分 -->
+                <div class="avatar-container">
+                    <img 
+                        v-if="getAvatarUrl(msg.role)" 
+                        :src="getAvatarUrl(msg.role)" 
+                        class="avatar" 
+                        @error="handleImgError"
+                    >
+                    <div v-else class="avatar avatar-placeholder">
+                        {{ getName(msg.role)[0] || (msg.role === 'user' ? 'U' : 'A') }}
+                    </div>
+                </div>
+
+                <!-- 内容部分 -->
+                <div class="content-container">
+                    <div class="nickname">{{ getName(msg.role) }}</div>
+                    <!-- 使用 v-html 渲染 HTML 内容 -->
+                    <div class="bubble" v-html="msg.content"></div>
+                </div>
+            </div>
+
+            <!-- 缓冲层 (流式输出) -->
+            <div v-if="isStreaming" class="msg-row assistant">
+                <div class="avatar-container">
+                    <img 
+                        v-if="assistant.avatar" 
+                        :src="processAvatarUrl(assistant.avatar)" 
+                        class="avatar" 
+                        @error="handleImgError"
+                    >
+                    <div v-else class="avatar avatar-placeholder">
+                        {{ assistant.name[0] || 'A' }}
+                    </div>
+                </div>
+                <div class="content-container">
+                    <div class="nickname">{{ assistant.name }}</div>
+                    <div class="bubble">
+                        <span v-html="streamingBuffer"></span><span class="cursor"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // --- 状态定义 ---
+                const chatRef = ref(null);
+                const chatId = ref(null);
+                const autoScroll = ref(true);
+                
+                // 角色信息
+                const assistant = reactive({ name: 'Assistant', avatar: '' });
+                const user = reactive({ name: '我', avatar: '' });
+                
+                // 消息数据
+                const messages = ref([]);
+                
+                // 流式状态
+                const isStreaming = ref(false);
+                const streamingBuffer = ref('');
+
+                // --- 工具方法 ---
+                const processAvatarUrl = (path) => {
+                    if (!path) return '';
+                    if (path.startsWith('http')) return path;
+                    let rawPath = path;
+                    if (rawPath[0] !== '/') { rawPath = '/' + rawPath; }
+                    return `imgs:///${rawPath}`;
+                };
+
+                const getAvatarUrl = (role) => {
+                    const path = role === 'user' ? user.avatar : assistant.avatar;
+                    return processAvatarUrl(path);
+                };
+
+                const getName = (role) => {
+                    return role === 'user' ? user.name : assistant.name;
+                };
+
+                const handleImgError = (e) => {
+                    e.target.style.display = 'none';
+                };
+
+                // --- 滚动控制 ---
+                const handleScroll = () => {
+                    const el = chatRef.value;
+                    if (!el) return;
+                    const { scrollTop, scrollHeight, clientHeight } = el;
+                    // 阈值设为 50px
+                    autoScroll.value = (scrollHeight - scrollTop - clientHeight) < 50;
+                };
+
+                const scrollToBottom = () => {
+                    if (autoScroll.value && chatRef.value) {
+                        nextTick(() => {
+                            chatRef.value.scrollTop = chatRef.value.scrollHeight;
+                        });
+                    }
+                };
+
+                // --- 核心业务逻辑 ---
+                
+                // 对应 window.onChatChange
+                const updateChat = (newChat) => {
+                    if (!newChat) return;
+                    const chatData = typeof newChat === 'string' ? JSON.parse(newChat) : newChat;
+
+                    // 更新助手信息
+                    assistant.name = chatData.name || 'Assistant';
+                    assistant.avatar = chatData.avatar || '';
+
+                    // ID 变化，重置状态
+                    if (chatId.value !== chatData.id) {
+                        messages.value = [];
+                        chatId.value = chatData.id;
+                        streamingBuffer.value = '';
+                        isStreaming.value = false;
+                        autoScroll.value = true;
+                    }
+
+                    const newMessages = chatData.messages || [];
+
+                    // Vue 的响应式更新策略：
+                    // 如果长度差异大，直接替换 (覆盖历史)
+                    // 如果只是新增，push 进去 (追加)
+                    // 如果长度一样但最后一条变了，更新最后一条 (流式转正修正)
+                    
+                    if (newMessages.length > messages.value.length) {
+                        // 追加模式
+                        const startIdx = messages.value.length;
+                        for (let i = startIdx; i < newMessages.length; i++) {
+                            messages.value.push(newMessages[i]);
+                        }
+                    } else if (newMessages.length < messages.value.length) {
+                        // 异常或清空情况，直接重置
+                        messages.value = newMessages;
+                    } else {
+                        // 长度相等，检查最后一条内容是否变化
+                        if (newMessages.length > 0) {
+                            const lastIdx = newMessages.length - 1;
+                            if (messages.value[lastIdx].content !== newMessages[lastIdx].content) {
+                                messages.value[lastIdx].content = newMessages[lastIdx].content;
+                            }
+                        }
+                    }
+                    
+                    scrollToBottom();
+                };
+
+                // 对应 window.onStateChange
+                const updateState = (newState) => {
+                    if (!newState) return;
+                    const sData = typeof newState === 'string' ? JSON.parse(newState) : newState;
+
+                    if (sData.isGenerating && sData.LLMBuffer) {
+                        isStreaming.value = true;
+                        streamingBuffer.value = sData.LLMBuffer;
+                        scrollToBottom();
+                    } else {
+                        isStreaming.value = false;
+                        streamingBuffer.value = '';
+                    }
+                };
+
+                // --- 初始化 ---
+                onMounted(() => {
+                    // 暴露给全局 window 对象，供 Flutter 调用
+                    window.onChatChange = updateChat;
+                    window.onStateChange = updateState;
+
+                    // 原生事件绑定
+                    window.addEventListener("flutterInAppWebViewPlatformReady", function(event) {
+                        if (window.flutter_inappwebview) {
+                            window.flutter_inappwebview.callHandler('fetchChat');
+                            window.flutter_inappwebview.callHandler('fetchAllCharacters').then(res => {
+                                // 如果有处理逻辑可写在这里
+                            });
+                        }
+                    });
+                });
+
+                return {
+                    chatRef,
+                    messages,
+                    assistant,
+                    user,
+                    isStreaming,
+                    streamingBuffer,
+                    handleScroll,
+                    processAvatarUrl,
+                    getAvatarUrl,
+                    getName,
+                    handleImgError
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
