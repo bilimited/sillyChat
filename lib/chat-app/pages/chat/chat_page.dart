@@ -867,6 +867,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildWebviewMessageList() {
     return ChatWebview(
       session: widget.sessionController,
+      onMessageEmit: (args) {},
     );
   }
 

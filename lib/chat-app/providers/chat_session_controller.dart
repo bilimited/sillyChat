@@ -67,8 +67,8 @@ class ChatSessionController extends SessionController {
 
   final String chatPath;
 
-  Function(ChatModel) _onChatUpdate = (cm) {};
-  Worker? _aiStateListener;
+  Function(ChatModel) onChatUpdate = (cm) {};
+  Worker? aiStateListener;
 
   /**
    * [chatPath] : 聊天文件的完整路径
@@ -178,7 +178,7 @@ class ChatSessionController extends SessionController {
   }
 
   Future<void> saveChat() async {
-    _onChatUpdate(chat);
+    onChatUpdate(chat);
     if (await file.exists()) {
       final String contents = json.encode(chat.toJson());
       await file.writeAsString(contents);
@@ -201,11 +201,11 @@ class ChatSessionController extends SessionController {
   void bindWebController(WebSessionController controller) {
     const int? maxMessages = 10;
 
-    _aiStateListener = ever(_aiState, (state) {
+    aiStateListener = ever(_aiState, (state) {
       controller.onStateChange(state);
     });
 
-    _onChatUpdate = (chat) {
+    onChatUpdate = (chat) {
       if (maxMessages != null && chat.messages.length > maxMessages) {
         controller.onChatChange(chat.copyWith(
             messages:
@@ -218,10 +218,10 @@ class ChatSessionController extends SessionController {
   }
 
   void closeWebController() {
-    if (_aiStateListener != null) {
-      _aiStateListener!.dispose();
+    if (aiStateListener != null) {
+      aiStateListener!.dispose();
     }
-    _onChatUpdate = (chat) {};
+    onChatUpdate = (chat) {};
   }
 
   /// 在指定聊天中添加消息
