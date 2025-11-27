@@ -53,7 +53,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     if (widget.characterId != null) {
       _character = _characterController.getCharacterById(widget.characterId!);
     }
@@ -136,30 +136,30 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..bindOptionId = _bindOption;
   }
 
-  void _applyBackup(CharacterModel backup) {
-    setState(() {
-      _nickNameController.text = backup.roleName;
-      _nameController.text = backup.remark;
-      _descriptionController.text = backup.description ?? '';
-      _categoryController.text = backup.category;
-      _briefController.text = backup.brief ?? '';
-      _archiveController.text = backup.archive;
-      _firstMessageController.text = backup.firstMessage ?? '';
+  // void _applyBackup(CharacterModel backup) {
+  //   setState(() {
+  //     _nickNameController.text = backup.roleName;
+  //     _nameController.text = backup.remark;
+  //     _descriptionController.text = backup.description ?? '';
+  //     _categoryController.text = backup.category;
+  //     _briefController.text = backup.brief ?? '';
+  //     _archiveController.text = backup.archive;
+  //     _firstMessageController.text = backup.firstMessage ?? '';
 
-      // 头像和背景不拷贝
-      //_avatarPath = backup.avatar;
-      //_backgroundPath = backup.backgroundImage;
+  //     // 头像和背景不拷贝
+  //     //_avatarPath = backup.avatar;
+  //     //_backgroundPath = backup.backgroundImage;
 
-      // 关系：深拷贝
-      Map<int, Relation> newRelations = {};
-      for (var relation in backup.relations.values) {
-        newRelations[relation.targetId] = relation.copy();
-      }
-      _character!.relations = Map.from(newRelations);
+  //     // 关系：深拷贝
+  //     Map<int, Relation> newRelations = {};
+  //     for (var relation in backup.relations.values) {
+  //       newRelations[relation.targetId] = relation.copy();
+  //     }
+  //     _character!.relations = Map.from(newRelations);
 
-      _character!.messageStyle = backup.messageStyle;
-    });
-  }
+  //     _character!.messageStyle = backup.messageStyle;
+  //   });
+  // }
 
   Future<void> _save() async {
     final character = _saveCharacter();
@@ -316,7 +316,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ExpandableTextField(
                   controller: _briefController,
                   decoration: const InputDecoration(
-                    labelText: '简略介绍',
+                    labelText: '简略介绍(可选)',
                   ),
                   minLines: 2,
                   maxLines: 4,
@@ -357,25 +357,25 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ),
                 const SizedBox(height: 10), // 间隔
                 // 生成角色介绍按钮
-                ElevatedButton(
-                  onPressed: () async {
-                    final char = _saveCharacter();
-                    if (char == null) {
-                      Get.snackbar("错误", "字段填写存在问题!");
-                      return;
-                    }
-                    final result = await customNavigate<String>(
-                        GenCharacterPromptPage(character: char),
-                        context: context);
+                // ElevatedButton(
+                //   onPressed: () async {
+                //     final char = _saveCharacter();
+                //     if (char == null) {
+                //       Get.snackbar("错误", "字段填写存在问题!");
+                //       return;
+                //     }
+                //     final result = await customNavigate<String>(
+                //         GenCharacterPromptPage(character: char),
+                //         context: context);
 
-                    if (result != null) {
-                      setState(() {
-                        _archiveController.text = result;
-                      });
-                    }
-                  },
-                  child: const Text("生成角色介绍"),
-                ),
+                //     if (result != null) {
+                //       setState(() {
+                //         _archiveController.text = result;
+                //       });
+                //     }
+                //   },
+                //   child: const Text("生成角色介绍"),
+                // ),
               ],
             ),
           ),
@@ -526,162 +526,162 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '备份管理',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ReorderableListView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      final backups = _character?.backups ?? [];
-                      if (oldIndex < newIndex) newIndex -= 1;
-                      final item = backups.removeAt(oldIndex);
-                      backups.insert(newIndex, item);
-                      _character?.backups = List<CharacterModel>.from(backups);
-                    });
-                  },
-                  children: [
-                    for (int i = 0; i < (_character?.backups?.length ?? 0); i++)
-                      ListTile(
-                        key: ValueKey('backup_$i'),
-                        title: Text(
-                          '${_character!.backups![i].roleName}-${_character!.backups![i].remark}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.upload),
-                              tooltip: '应用',
-                              onPressed: () async {
-                                final confirmed = await Get.dialog<bool>(
-                                  AlertDialog(
-                                    title: const Text('确认应用备份'),
-                                    content: const Text('确定要应用此备份吗？当前内容将被覆盖。'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Get.back(result: false),
-                                        child: const Text('取消'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Get.back(result: true),
-                                        child: const Text('确定'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) {
-                                  final backup = _character!.backups![i];
-                                  _applyBackup(backup);
-                                  _tabController.index = 0;
-                                }
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.download),
-                              tooltip: '覆盖',
-                              onPressed: () async {
-                                final confirmed = await Get.dialog<bool>(
-                                  AlertDialog(
-                                    title: const Text('确认覆盖备份'),
-                                    content: const Text('确定要用当前内容覆盖此备份吗？'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Get.back(result: false),
-                                        child: const Text('取消'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Get.back(result: true),
-                                        child: const Text('确定'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) {
-                                  setState(() {
-                                    final backup = _saveCharacter();
+        // Card(
+        //   child: Padding(
+        //     padding: const EdgeInsets.all(16),
+        //     child: Column(
+        //       crossAxisAlignment: CrossAxisAlignment.start,
+        //       children: [
+        //         const Text(
+        //           '备份管理',
+        //           style: TextStyle(
+        //             fontSize: 16,
+        //             fontWeight: FontWeight.w500,
+        //           ),
+        //         ),
+        //         const SizedBox(height: 16),
+        //         ReorderableListView(
+        //           shrinkWrap: true,
+        //           physics: const NeverScrollableScrollPhysics(),
+        //           onReorder: (oldIndex, newIndex) {
+        //             setState(() {
+        //               final backups = _character?.backups ?? [];
+        //               if (oldIndex < newIndex) newIndex -= 1;
+        //               final item = backups.removeAt(oldIndex);
+        //               backups.insert(newIndex, item);
+        //               _character?.backups = List<CharacterModel>.from(backups);
+        //             });
+        //           },
+        //           children: [
+        //             for (int i = 0; i < (_character?.backups?.length ?? 0); i++)
+        //               ListTile(
+        //                 key: ValueKey('backup_$i'),
+        //                 title: Text(
+        //                   '${_character!.backups![i].roleName}-${_character!.backups![i].remark}',
+        //                   overflow: TextOverflow.ellipsis,
+        //                 ),
+        //                 trailing: Row(
+        //                   mainAxisSize: MainAxisSize.min,
+        //                   children: [
+        //                     IconButton(
+        //                       icon: const Icon(Icons.upload),
+        //                       tooltip: '应用',
+        //                       onPressed: () async {
+        //                         final confirmed = await Get.dialog<bool>(
+        //                           AlertDialog(
+        //                             title: const Text('确认应用备份'),
+        //                             content: const Text('确定要应用此备份吗？当前内容将被覆盖。'),
+        //                             actions: [
+        //                               TextButton(
+        //                                 onPressed: () =>
+        //                                     Get.back(result: false),
+        //                                 child: const Text('取消'),
+        //                               ),
+        //                               TextButton(
+        //                                 onPressed: () => Get.back(result: true),
+        //                                 child: const Text('确定'),
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         );
+        //                         if (confirmed == true) {
+        //                           final backup = _character!.backups![i];
+        //                           _applyBackup(backup);
+        //                           _tabController.index = 0;
+        //                         }
+        //                       },
+        //                     ),
+        //                     IconButton(
+        //                       icon: const Icon(Icons.download),
+        //                       tooltip: '覆盖',
+        //                       onPressed: () async {
+        //                         final confirmed = await Get.dialog<bool>(
+        //                           AlertDialog(
+        //                             title: const Text('确认覆盖备份'),
+        //                             content: const Text('确定要用当前内容覆盖此备份吗？'),
+        //                             actions: [
+        //                               TextButton(
+        //                                 onPressed: () =>
+        //                                     Get.back(result: false),
+        //                                 child: const Text('取消'),
+        //                               ),
+        //                               TextButton(
+        //                                 onPressed: () => Get.back(result: true),
+        //                                 child: const Text('确定'),
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         );
+        //                         if (confirmed == true) {
+        //                           setState(() {
+        //                             final backup = _saveCharacter();
 
-                                    if (backup != null) {
-                                      backup.backups = null;
-                                      _character!.backups![i] = backup;
-                                    }
-                                  });
-                                }
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              tooltip: '删除',
-                              onPressed: () async {
-                                final confirmed = await Get.dialog<bool>(
-                                  AlertDialog(
-                                    title: const Text('确认删除备份'),
-                                    content: const Text('确定要删除此备份吗？'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Get.back(result: false),
-                                        child: const Text('取消'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Get.back(result: true),
-                                        child: const Text('确定'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) {
-                                  setState(() {
-                                    _character!.backups!.removeAt(i);
-                                  });
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('添加备份'),
-                    onPressed: () {
-                      setState(() {
-                        final backup = _saveCharacter();
+        //                             if (backup != null) {
+        //                               backup.backups = null;
+        //                               _character!.backups![i] = backup;
+        //                             }
+        //                           });
+        //                         }
+        //                       },
+        //                     ),
+        //                     IconButton(
+        //                       icon: const Icon(Icons.delete),
+        //                       tooltip: '删除',
+        //                       onPressed: () async {
+        //                         final confirmed = await Get.dialog<bool>(
+        //                           AlertDialog(
+        //                             title: const Text('确认删除备份'),
+        //                             content: const Text('确定要删除此备份吗？'),
+        //                             actions: [
+        //                               TextButton(
+        //                                 onPressed: () =>
+        //                                     Get.back(result: false),
+        //                                 child: const Text('取消'),
+        //                               ),
+        //                               TextButton(
+        //                                 onPressed: () => Get.back(result: true),
+        //                                 child: const Text('确定'),
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         );
+        //                         if (confirmed == true) {
+        //                           setState(() {
+        //                             _character!.backups!.removeAt(i);
+        //                           });
+        //                         }
+        //                       },
+        //                     ),
+        //                   ],
+        //                 ),
+        //               ),
+        //           ],
+        //         ),
+        //         const SizedBox(height: 12),
+        //         Align(
+        //           alignment: Alignment.centerLeft,
+        //           child: ElevatedButton.icon(
+        //             icon: const Icon(Icons.add),
+        //             label: const Text('添加备份'),
+        //             onPressed: () {
+        //               setState(() {
+        //                 final backup = _saveCharacter();
 
-                        if (backup != null) {
-                          // 备份不能被备份
-                          backup.backups = null;
-                          _character?.backups ??= [];
-                          _character!.backups!.add(backup.copyWith());
-                        }
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
+        //                 if (backup != null) {
+        //                   // 备份不能被备份
+        //                   backup.backups = null;
+        //                   _character?.backups ??= [];
+        //                   _character!.backups!.add(backup.copyWith());
+        //                 }
+        //               });
+        //             },
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
+        // const SizedBox(height: 16),
         Card(
           // 角色绑定的世界书管理
           child: Padding(
@@ -877,7 +877,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     tabs: const [
                       Tab(text: '基本信息'),
                       Tab(text: '其他设置'),
-                      Tab(text: '编辑记忆'),
+                      // Tab(text: '编辑记忆'),
                     ],
                   ),
             actions: isEditPlayer
@@ -902,7 +902,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     children: [
                       _buildBasicInfoTab(),
                       _buildSettingsTab(),
-                      _buildMemoryTab()
+                      // _buildMemoryTab()
                     ],
                   ),
           ),
