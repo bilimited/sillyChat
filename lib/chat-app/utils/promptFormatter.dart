@@ -17,11 +17,11 @@ abstract class Promptformatter {
         ? characterController.me
         : characterController.getCharacterById(chat.userId!);
     prompt = prompt.replaceAll(
-        RegExp(r'\{\{user\}\}|<user>', caseSensitive: false), user.roleName);
-    prompt = prompt.replaceAll('<userbrief>', user.brief ?? '');
-    prompt = prompt.replaceAll('<description>', chat.description ?? '');
+        RegExp(r'\{\{user\}\}', caseSensitive: false), user.roleName);
+    prompt = prompt.replaceAll('{{userbrief}}', user.brief ?? '');
+    prompt = prompt.replaceAll('{{description}}', chat.description ?? '');
     prompt = prompt.replaceAll(
-        RegExp(r'\{\{lastuserMessage\}\}|<lastUserMessage>|\{\{lastmessage\}\}',
+        RegExp(r'\{\{lastuserMessage\}\}|\{\{lastmessage\}\}',
             caseSensitive: false),
         userMessage); // 兼容酒馆
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
@@ -38,20 +38,19 @@ abstract class Promptformatter {
   static String BuildCharacterSystemPrompt(
       String prompt, CharacterModel character) {
     prompt = prompt.replaceAll(
-        RegExp(r'\{\{char\}\}|<char>', caseSensitive: false),
-        character.roleName);
-    prompt = prompt.replaceAll('<brief>', character.brief ?? "");
-    prompt = prompt.replaceAll('<archive>', character.archive);
+        RegExp(r'\{\{char\}\}', caseSensitive: false), character.roleName);
+    prompt = prompt.replaceAll('{{brief}}', character.brief ?? "");
+    prompt = prompt.replaceAll('{{archive}}', character.archive);
 
     return prompt;
   }
 
   static String injectCharacterLore(
       String prompt, ChatModel chat, CharacterModel sender) {
-    if (prompt.contains(RegExp(r'<recent-characters:\d+>'))) {
+    if (prompt.contains(RegExp(r'{{recent-characters:\d+}}'))) {
       CharacterController characterController = Get.find();
 
-      final match = RegExp(r'<recent-characters:(\d+)>').firstMatch(prompt);
+      final match = RegExp(r'{{recent-characters:(\d+)}}').firstMatch(prompt);
       if (match != null) {
         final count = int.parse(match.group(1)!);
         // Get characters who sent messages
@@ -95,7 +94,7 @@ abstract class Promptformatter {
     CharacterController character_controller,
     ChatModel chat,
   ) {
-    if (prompt.contains("<relations>")) {
+    if (prompt.contains("{{relations}}")) {
       var relationsText = "";
       var relatedCharacters = Map<int, dynamic>.from(character.relations)
         ..removeWhere((key, value) => !chat.characterIds.contains(key))
@@ -116,7 +115,7 @@ ${typeText} ${brief}
       }
 
       prompt = prompt.replaceAll(
-          '<relations>', relationsText == "" ? "无人物关系。" : relationsText);
+          '{{relations}}', relationsText == "" ? "无人物关系。" : relationsText);
     }
     return prompt;
   }

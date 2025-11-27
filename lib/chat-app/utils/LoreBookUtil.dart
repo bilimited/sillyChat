@@ -88,7 +88,7 @@ class Lorebookutil {
     // 替换prompts中的<lore position>
     return prompts.map((prompt) {
       String newContent = prompt.content.replaceAllMapped(
-        RegExp(r'<lore\s+([^\s>]+)(?:\s+default=(.*?))?>'),
+        RegExp(r'{{lore\s+([^\s>]+)(?:\s+default=(.*?))?}}'),
         (match) {
           String pos = match.group(1) ?? '';
           String? defaultValue = match.group(2);

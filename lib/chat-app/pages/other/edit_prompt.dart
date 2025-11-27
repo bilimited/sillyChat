@@ -240,35 +240,35 @@ class _EditPromptPageState extends State<EditPromptPage> {
                     defaultRegexPatternStyles: false,
                     regexPatternStyles: [
                       RegexPatternTextStyle(
-                        regexPattern: r'<char>|{{char}}|<brief>',
+                        regexPattern: r'{{char}}|{{brief}}',
                         textStyle: const TextStyle(
                             color: Colors.orange, fontWeight: FontWeight.bold),
                       ),
                       RegexPatternTextStyle(
-                        regexPattern: r'<user>|{{user}}',
+                        regexPattern: r'{{user}}',
                         textStyle: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold),
                       ),
                       RegexPatternTextStyle(
-                        regexPattern: r'<userbrief>',
-                        textStyle: const TextStyle(
-                            color: Colors.green, fontWeight: FontWeight.bold),
-                      ),
-                      RegexPatternTextStyle(
-                        regexPattern:
-                            r'\{\{lastuserMessage\}\}|<lastUserMessage>|\{\{lastmessage\}\}',
+                        regexPattern: r'{{userbrief}}',
                         textStyle: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold),
                       ),
                       RegexPatternTextStyle(
                         regexPattern:
-                            r'<archive>|<description>|<relations>|<recent-characters:\d+>',
+                            r'\{\{lastuserMessage\}\}|\{\{lastmessage\}\}',
+                        textStyle: const TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                      RegexPatternTextStyle(
+                        regexPattern:
+                            r'{{archive}}|{{description}}|{{relations}}|{{recent-characters:\d+}}',
                         textStyle: const TextStyle(
                             color: Colors.blueAccent,
                             fontWeight: FontWeight.bold),
                       ),
                       RegexPatternTextStyle(
-                        regexPattern: r'<lore .*?>',
+                        regexPattern: r'{{lore .*?}}',
                         textStyle: const TextStyle(
                             color: Colors.purpleAccent,
                             fontWeight: FontWeight.bold),
@@ -293,10 +293,6 @@ class _EditPromptPageState extends State<EditPromptPage> {
                             color: Colors.lightBlue,
                             fontWeight: FontWeight.bold,
                             fontStyle: FontStyle.italic),
-                      ),
-                      RegexPatternTextStyle(
-                        regexPattern: r'<[^>]*>',
-                        textStyle: const TextStyle(color: Colors.red),
                       ),
                       RegexPatternTextStyle(
                         regexPattern: r'\{\{[^}]*\}\}',

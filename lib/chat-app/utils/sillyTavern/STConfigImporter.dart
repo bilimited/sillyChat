@@ -51,32 +51,32 @@ abstract class STConfigImporter {
             case 'dialogueExamples':
               {
                 content =
-                    "<lore before_em>\n<dialogueExamples>\n<lore after_em>";
+                    "{{lore before_em}}\n{{dialogueExamples}}\n{{lore after_em}}";
                 break;
               }
             case 'chatHistory':
               {
-                content = "<messageList>";
+                content = "{{messageList}}";
                 break;
               }
             case 'worldInfoAfter':
               {
-                content = "<lore after_char>";
+                content = "{{lore after_char}}";
                 break;
               }
             case 'worldInfoBefore':
               {
-                content = "<lore before_char>";
+                content = "{{lore before_char}}";
                 break;
               }
             case 'charDescription':
               {
                 content = """
-名称:<char>
-<archive>
+名称:{{char}}
+{{archive}}
 
 ## 人物关系
-<relations> 
+{{relations}} 
 """;
                 break;
               }
@@ -88,16 +88,16 @@ abstract class STConfigImporter {
             case 'scenario':
               {
                 content =
-                    ((json['scenario_format'] ?? '<description>') as String)
-                        .replaceAll('{{scenario}}', '<description>');
+                    ((json['scenario_format'] ?? '{{description}}') as String)
+                        .replaceAll('{{scenario}}', '{{description}}');
                 break;
               }
             case 'personaDescription': // 用户角色描述
               {
-                content = ((json['personality_format'] ?? '<user>:<userbrief>')
-                        as String)
-                    .replaceAll('{{char}}', '<user>')
-                    .replaceAll('{{personality}}', '<userbrief>');
+                content = ((json['personality_format'] ??
+                        '{{user}}:{{userbrief}}') as String)
+                    .replaceAll('{{char}}', '{{user}}')
+                    .replaceAll('{{personality}}', '{{userbrief}}');
                 break;
               }
           }

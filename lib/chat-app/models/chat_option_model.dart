@@ -93,37 +93,37 @@ class ChatOptionModel {
   factory ChatOptionModel.roleplay({String? name}) {
     int id = DateTime.now().microsecondsSinceEpoch;
     const String bilimitedComments = "作者注释：\n"
-        "<lore xxx default=xxx>代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到<lore x ...> 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
-        "<user>代表用户的名称，<char>代表发言角色的名称,<archive>代表发言角色的详细介绍，<description>为当前聊天的作者注释。\n"
-        "<relations>代表发言角色的关联人物列表。只有出现在群成员中，且与该角色有关联的角色会被插入到此处。\n"
-        "<recent-characters:x>处会插入最近x条消息中提到，且没有出现在人物关系列表内的角色简介。\n"
+        "{{lore xxx default=xxx}}代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到{{lore x ...}} 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
+        "{{user}}代表用户的名称，{{char}}代表发言角色的名称,{{archive}}代表发言角色的详细介绍，{{description}}为当前聊天的作者注释。\n"
+        "{{relations}}代表发言角色的关联人物列表。只有出现在群成员中，且与该角色有关联的角色会被插入到此处。\n"
+        "{{recent-characters:x}}处会插入最近x条消息中提到，且没有出现在人物关系列表内的角色简介。\n"
         "在发送请求时，会自动去除空白的Prompt。";
-    const String userDefine = "<lore before_char>\n"
+    const String userDefine = "{{lore before_char}}\n"
         """
 # 角色定义
-名称：<char>
-你是<char>，将扮演以下介绍中的角色。
+名称：{{char}}
+你是{{char}}，将扮演以下介绍中的角色。
 ## 介绍
-<archive>
+{{archive}}
 
 ## 人物关系
-<relations>
+{{relations}}
 
 ## 其他角色
-<recent-characters:5>
+{{recent-characters:5}}
 
 ## 其他设定
-<lore after_char>
+{{lore after_char}}
 
-<lore before_em>
+{{lore before_em}}
 
-<description>
+{{description}}
 
-<lore after_em>
+{{lore after_em}}
 
 # 用户设定
-我是<user>。
-<userbrief>
+我是{{user}}。
+{{userbrief}}
 现在，我将开始与你聊天。
 """;
 
@@ -142,7 +142,7 @@ class ChatOptionModel {
               id: id, content: userDefine, role: 'system', name: '角色定义'),
           PromptModel(
               id: id + 1,
-              content: '<messageList>',
+              content: '{{messageList}}',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -162,13 +162,13 @@ class ChatOptionModel {
         prompts: [
           PromptModel(
               id: id,
-              content: '<archive>',
+              content: '{{archive}}',
               role: 'system',
               name: '角色定义',
               isChatHistory: true),
           PromptModel(
               id: id,
-              content: '<messageList>',
+              content: '{{messageList}}',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -188,7 +188,7 @@ class ChatOptionModel {
         prompts: [
           PromptModel(
               id: id,
-              content: '<messageList>',
+              content: '{{messageList}}',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -207,7 +207,7 @@ class ChatOptionModel {
         prompts: [
           PromptModel(
               id: id,
-              content: '<messageList>',
+              content: '{{messageList}}',
               role: 'user',
               name: '消息列表',
               isChatHistory: true),

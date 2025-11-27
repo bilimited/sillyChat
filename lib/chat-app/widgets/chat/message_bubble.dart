@@ -292,7 +292,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               // iOS 图标的 smoothing 大约是 0.6
               radius: SmoothBorderRadius(
                 cornerRadius: displaySetting.AvatarBorderRadius, // 圆角大小
-                cornerSmoothing: 0.6, // 0.0 是普通圆角，1.0 是最平滑的超椭圆
+                cornerSmoothing: 1, // 0.0 是普通圆角，1.0 是最平滑的超椭圆
               ),
               // borderRadius:
               //     BorderRadius.circular(displaySetting.AvatarBorderRadius),
