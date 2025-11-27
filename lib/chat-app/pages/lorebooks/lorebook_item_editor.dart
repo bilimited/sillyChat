@@ -311,8 +311,8 @@ String _activationTypeLabel(ActivationType type) {
       return '总是';
     case ActivationType.keywords:
       return '关键词';
-    case ActivationType.rag:
-      return 'RAG';
+    // case ActivationType.rag:
+    //   return 'RAG';
     case ActivationType.manual:
       return '手动';
   }

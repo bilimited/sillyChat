@@ -302,56 +302,47 @@ class _ApiEditPageState extends State<ApiEditPage> {
             SizedBox(
               height: 32,
             ),
-            ExpansionPanelList(
-              expansionCallback: (int index, bool isExpanded) {
+            ExpansionTile(
+              title: const Text('高级设置'),
+              initiallyExpanded: _isPanelExpanded,
+              onExpansionChanged: (expanded) {
                 setState(() {
-                  _isPanelExpanded = !_isPanelExpanded;
+                  _isPanelExpanded = expanded;
                 });
               },
               children: [
-                ExpansionPanel(
-                  headerBuilder: (context, isExpanded) {
-                    return ListTile(
-                      title: Text('高级设置'),
-                    );
-                  },
-                  isExpanded: _isPanelExpanded,
-                  body: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _displayNameController,
-                          decoration: const InputDecoration(
-                            labelText: '显示名称(选填)',
-                          ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _displayNameController,
+                        decoration: const InputDecoration(
+                          labelText: '显示名称(选填)',
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _remarksController,
-                          decoration: const InputDecoration(
-                            labelText: '备注(选填)',
-                          ),
-                          maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _remarksController,
+                        decoration: const InputDecoration(
+                          labelText: '备注(选填)',
                         ),
-                        SizedBox(
-                          height: 16,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _requestBodyController,
+                        decoration: const InputDecoration(
+                          labelText: '请求附加内容(选填)',
+                          hintText:
+                              '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
+                          helperText: '支持Python风格的True/False/None，会自动转换为JSON格式',
                         ),
-                        TextFormField(
-                          controller: _requestBodyController,
-                          decoration: const InputDecoration(
-                            labelText: '请求附加内容(选填)',
-                            hintText:
-                                '在发送API请求时附加的内容，支持JSON格式或Python风格语法\n例如: {"chat_template_kwargs": {"thinking": True}}',
-                            helperText:
-                                '支持Python风格的True/False/None，会自动转换为JSON格式',
-                          ),
-                          maxLines: 5,
-                          keyboardType: TextInputType.multiline,
-                        ),
-                      ],
-                    ),
+                        maxLines: 5,
+                        keyboardType: TextInputType.multiline,
+                      ),
+                    ],
                   ),
                 ),
               ],

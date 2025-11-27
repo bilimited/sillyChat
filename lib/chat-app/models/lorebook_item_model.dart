@@ -160,7 +160,7 @@ class LorebookItemModel {
 enum ActivationType {
   always, // 总是激活，不推荐用于大量信息
   keywords, // 通过关键词匹配激活
-  rag, // 通过语义相似性（RAG）激活
+  // rag, // 通过语义相似性（RAG）激活
   manual, // 手动激活/停用（可能用于特殊场景或调试）
 }
 
