@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 
 // 定义一个新的搜索结果数据结构
@@ -235,24 +236,27 @@ class _SearchPageState extends State<SearchPage> {
                           }
 
                           return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage:
-                                  ImageUtils.getProvider(character.avatar),
-                            ),
-                            title: titleWidget,
-                            subtitle: Text(
-                              chat.name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            // 5. 移除书签逻辑，只保留 Pin
-                            trailing: msg.isPinned
-                                ? const Icon(Icons.push_pin,
-                                    color: Colors.orange)
-                                : null,
-                            onTap: () =>
-                                widget.onMessageTap(result.path, msg, chat),
-                          );
+                              leading: CircleAvatar(
+                                backgroundImage:
+                                    ImageUtils.getProvider(character.avatar),
+                              ),
+                              title: titleWidget,
+                              subtitle: Text(
+                                chat.name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              // 5. 移除书签逻辑，只保留 Pin
+                              trailing: msg.isPinned
+                                  ? const Icon(Icons.push_pin,
+                                      color: Colors.orange)
+                                  : null,
+                              onTap: () {
+                                widget.onMessageTap(result.path, msg, chat);
+                                if (!SillyChatApp.isDesktop()) {
+                                  Get.back();
+                                }
+                              });
                         },
                       ),
           ),
