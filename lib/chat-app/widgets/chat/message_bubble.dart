@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:figma_squircle/figma_squircle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
@@ -150,6 +151,11 @@ class FontColorBuilder extends MarkdownElementBuilder {
 }
 
 class CodeBlockBuilder extends MarkdownElementBuilder {
+  final TextScaler textScaler;
+
+  // 在构造函数中接收 context
+  CodeBlockBuilder(this.textScaler);
+
   @override
   void visitElementBefore(md.Element element) {
     if (element.tag != 'pre') return;
@@ -207,6 +213,7 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     return CustomCodeBlockWidget(
       code: codeText,
       language: language,
+      textScaler: textScaler,
     );
   }
 }
@@ -280,9 +287,15 @@ class _MessageBubbleState extends State<MessageBubble> {
         case AvatarStyle.circle:
           return AvatarImage.round(character.avatar, avatarRadius);
         case AvatarStyle.rounded:
-          return ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(displaySetting.AvatarBorderRadius),
+          return ClipSmoothRect(
+              // 这里可以精确控制平滑度 (Smoothing)
+              // iOS 图标的 smoothing 大约是 0.6
+              radius: SmoothBorderRadius(
+                cornerRadius: displaySetting.AvatarBorderRadius, // 圆角大小
+                cornerSmoothing: 0.6, // 0.0 是普通圆角，1.0 是最平滑的超椭圆
+              ),
+              // borderRadius:
+              //     BorderRadius.circular(displaySetting.AvatarBorderRadius),
               child: AvatarImage(
                 fileName: character.avatar,
                 width: avatarRadius * 2,
@@ -588,7 +601,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                         'quotedText': QuotedTextBuilder(
                             TextScaler.linear(displaySetting.ContentFontScale)),
                         'font': FontColorBuilder(),
-                        'pre': CodeBlockBuilder(),
+                        'pre': CodeBlockBuilder(
+                            TextScaler.linear(displaySetting.ContentFontScale)),
 
                         // 'latex': LatexElementBuilder(
                         //   // textStyle: const TextStyle(color: Colors.blue),

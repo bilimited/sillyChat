@@ -309,12 +309,13 @@ class _ContactsPageState extends State<ContactsPage> {
       ),
       trailing: _isSortingMode
           ? const Icon(Icons.drag_handle) // 排序模式下显示拖拽图标
-          : IconButton(
-              onPressed: () {
-                customNavigate(PersonalPage(character: contact),
-                    context: context);
-              },
-              icon: Icon(Icons.chevron_right)),
+          : null,
+      // IconButton(
+      //   onPressed: () {
+      //     customNavigate(PersonalPage(character: contact),
+      //         context: context);
+      //   },
+      //   icon: Icon(Icons.chevron_right)),
       title: Text(contact.roleName),
       subtitle: contact.brief != null
           ? Text(

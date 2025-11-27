@@ -6,11 +6,13 @@ import 'package:get/get.dart';
 class CustomCodeBlockWidget extends StatefulWidget {
   final String code;
   final String language;
+  final TextScaler textScaler;
 
   const CustomCodeBlockWidget({
     super.key,
     required this.code,
     required this.language,
+    required this.textScaler,
   });
 
   @override
@@ -124,10 +126,12 @@ class _CustomCodeBlockWidgetState extends State<CustomCodeBlockWidget> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             child: SelectableText(
+              textScaler: widget.textScaler,
               widget.code,
               style: TextStyle(
                 fontFamily: 'monospace', // 确保使用等宽字体
-                fontSize: 14,
+
+                fontSize: 12,
                 color: isDark ? Colors.grey[300] : Colors.grey[900],
                 height: 1.5,
               ),
