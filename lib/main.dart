@@ -142,7 +142,7 @@ class SillyChatApp extends StatelessWidget {
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
     if (kDebugMode) {
-      return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+      return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }

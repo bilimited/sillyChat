@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
@@ -369,15 +370,9 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
             ],
           )),
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.transparent,
       // 使用 AppBar
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              widget.scaffoldKey?.currentState?.openDrawer();
-            },
-            icon: Icon(Icons.menu)),
-        // AppBar 标题区域放置搜索框
+      appBar: InnerAppBar(
         title: Container(
           height: 40, // 设置一个合适的高度
           decoration: BoxDecoration(
@@ -432,10 +427,6 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
           const SizedBox(width: 8), // 右边距
         ],
-        // 可以根据需要调整 AppBar 的背景色等
-        backgroundColor: theme.appBarTheme.backgroundColor ??
-            theme.colorScheme.surface, // 使用主题色或默认surface色
-        elevation: theme.appBarTheme.elevation ?? 0, // 控制阴影
       ),
       body: Obx(() {
         // 根据是否为排序模式来决定显示哪个视图

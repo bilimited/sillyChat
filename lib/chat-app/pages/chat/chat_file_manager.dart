@@ -12,6 +12,8 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
+import 'package:flutter_example/chat-app/widgets/custom_bottom_bar.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
@@ -250,6 +252,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   }
 
   void _openChat(String path) {
+    // Close Drawer
+    if (!SillyChatApp.isDesktop()) {
+      Get.back();
+    }
     ChatController.of.currentChat.value = ChatSessionController(path);
     if (ChatController.of.pageController.hasClients) {
       ChatController.of.pageController.animateToPage(1,
@@ -283,6 +289,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         }
       },
       child: Scaffold(
+        // bottomNavigationBar: CustomBottomBar(
+        //   centerButton: SizedBox.shrink(),
+        // ),
+        backgroundColor: Colors.transparent,
         appBar: _buildAppBar(),
         body: _buildFileList(),
         floatingActionButton:
@@ -291,10 +301,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     );
   }
 
-  AppBar _buildAppBar() {
+  PreferredSizeWidget _buildAppBar() {
     final theme = Theme.of(context);
     if (_isMultiSelectMode) {
-      return AppBar(
+      return InnerAppBar(
         title: Text(
           '${_selectedFiles.length} 已选择',
           style: theme.textTheme.titleSmall,
@@ -311,7 +321,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         actions: _buildAppBarActions(),
       );
     } else {
-      return AppBar(
+      return InnerAppBar(
         leading: widget.leading,
         actions: [...widget.actions, ..._buildAppBarActions()],
         title: BreadcrumbNavigation(
@@ -941,30 +951,26 @@ class _ChatManagePageState extends State<ChatManagePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: FutureBuilder<Directory>(
-          future: SettingController.of
-              .getVaultPath()
-              .then((path) => Directory('$path/chats')),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              if (snapshot.hasData) {
-                return FileManagerWidget(
-                  leading: IconButton(
-                      onPressed: () {
-                        widget.scaffoldKey?.currentState?.openDrawer();
-                      },
-                      icon: Icon(Icons.menu)),
-                  directory: snapshot.data!,
-                );
-              }
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ));
+    return FutureBuilder<Directory>(
+      future: SettingController.of.getChatDirectory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.hasData) {
+            return FileManagerWidget(
+              // leading: IconButton(
+              //     onPressed: () {
+              //       widget.scaffoldKey?.currentState?.openDrawer();
+              //     },
+              //     icon: Icon(Icons.menu)),
+              directory: snapshot.data!,
+            );
+          }
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
   }
 }

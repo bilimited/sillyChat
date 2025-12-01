@@ -28,15 +28,16 @@ class SettingController extends GetxController {
   void onInit() async {
     super.onInit();
     await loadGlobalSettings();
+    vaultPath = await getVaultPath();
   }
 
   Future<bool> isExternalStorageDirectoryExists() async {
-    return !SillyChatApp.isDesktop();
+    return Platform.isAndroid; //!SillyChatApp.isDesktop();
   }
 
   Future<String> getVaultPath() async {
     late Directory root;
-    if (SillyChatApp.isDesktop()) {
+    if (!await isExternalStorageDirectoryExists()) {
       root = await getApplicationDocumentsDirectory();
     } else {
       root = await getExternalStorageDirectory() ??
@@ -62,12 +63,24 @@ class SettingController extends GetxController {
     return '${await getVaultPath()}/chats';
   }
 
+  Future<Directory> getChatDirectory() async {
+    return Directory('${await getVaultPath()}/chats');
+  }
+
   Future<String> getImagePath() async {
     return '${await getVaultPath()}/.imgs';
   }
 
   String getImagePathSync() {
     return '${vaultPath}/.imgs';
+  }
+
+  String getChatPathSync() {
+    return '${vaultPath}/chats';
+  }
+
+  Directory getChatDirectorySync() {
+    return Directory('${vaultPath}/chats');
   }
 
   String getRemoteVaultPath() {

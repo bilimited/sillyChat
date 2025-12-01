@@ -15,11 +15,6 @@ class ApiManagerPage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              scaffoldKey?.currentState?.openDrawer();
-            },
-            icon: Icon(Icons.menu)),
         title: Text("API"),
       ),
       body: Obx(

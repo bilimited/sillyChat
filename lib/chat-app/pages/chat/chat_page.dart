@@ -41,8 +41,13 @@ class ChatPage extends StatefulWidget {
   final ChatSessionController sessionController;
   final MessageModel? initialPosition;
 
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+
   const ChatPage(
-      {Key? key, required this.sessionController, this.initialPosition})
+      {Key? key,
+      required this.sessionController,
+      this.initialPosition,
+      this.scaffoldKey})
       : super(key: key);
 
   @override
@@ -1091,100 +1096,95 @@ class _ChatPageState extends State<ChatPage> {
 
   PreferredSizeWidget? _buildAppBar() {
     final colors = Theme.of(context).colorScheme;
-    return isNewChat
-        ? AppBar(
-            backgroundColor: isDesktop ? colors.surfaceContainerHigh : null,
-            actions: [],
-          )
-        : AppBar(
-            flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  color: Colors.transparent, // 必须是透明的
-                ),
-              ),
-            ),
-            leading: _isMultiSelecting
-                ? IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _isMultiSelecting = false;
-                        _selectedMessages = [];
-                      });
-                    },
-                    icon: Icon(Icons.arrow_back))
-                : null,
-            toolbarHeight: isDesktop ? 66 : null,
-            scrolledUnderElevation: isDesktop ? 0 : 0,
-            backgroundColor: Colors
-                .transparent, //isDesktop ? colors.surfaceContainerHigh : null,
+    return AppBar(
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            color: Colors.transparent, // 必须是透明的
+          ),
+        ),
+      ),
+      leading: _isMultiSelecting
+          ? IconButton(
+              onPressed: () {
+                setState(() {
+                  _isMultiSelecting = false;
+                  _selectedMessages = [];
+                });
+              },
+              icon: Icon(Icons.arrow_back))
+          : _buildDrawerButton(),
+      toolbarHeight: isDesktop ? 66 : null,
+      scrolledUnderElevation: isDesktop ? 0 : 0,
+      backgroundColor:
+          Colors.transparent, //isDesktop ? colors.surfaceContainerHigh : null,
 
-            title: Obx(
-              () => Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.5,
-                        child: sessionController.isGeneratingTitle.value
-                            ? Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: SpinKitWave(
-                                      itemCount: 3,
-                                      color: colors.onSurface,
-                                      size: 16.0,
-                                    ),
-                                  ),
-                                  Text(
-                                    '正在生成标题...',
-                                    style: TextStyle(
-                                        color: colors.outline, fontSize: 19),
-                                  ),
-                                ],
-                              )
-                            : Text(
-                                chat.name,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 19),
+      title: Obx(
+        () => Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  child: sessionController.isGeneratingTitle.value
+                      ? Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: SpinKitWave(
+                                itemCount: 3,
+                                color: colors.onSurface,
+                                size: 16.0,
                               ),
-                      ),
-                      Text(
-                        "${chat.characterIds.length}位成员",
-                        style: TextStyle(fontSize: 12, color: colors.outline),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              _buildMoreVertButton(),
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  customNavigate(
-                      ManageMessagePage(
-                        chat: chat,
-                        chatSessionController: sessionController,
-                      ),
-                      context: context);
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.settings,
+                            ),
+                            Text(
+                              '正在生成标题...',
+                              style: TextStyle(
+                                  color: colors.outline, fontSize: 19),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          chat.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 19),
+                        ),
                 ),
-                onPressed: () {
-                  customNavigate(EditChatPage(session: sessionController),
-                      context: context);
-                },
-              ),
-            ],
-          );
+                Text(
+                  "${chat.characterIds.length}位成员",
+                  style: TextStyle(fontSize: 12, color: colors.outline),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        _buildMoreVertButton(),
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            customNavigate(
+                ManageMessagePage(
+                  chat: chat,
+                  chatSessionController: sessionController,
+                ),
+                context: context);
+          },
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.settings,
+          ),
+          onPressed: () {
+            customNavigate(EditChatPage(session: sessionController),
+                context: context);
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildMoreVertButton() {
@@ -1381,13 +1381,24 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildDrawerButton() {
+    return IconButton(
+        onPressed: () {
+          widget.scaffoldKey?.currentState?.openDrawer();
+        },
+        icon: Icon(Icons.menu));
+  }
+
   Widget _buildEmptyScreen() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('未选择会话，请在左侧聊天窗口选择一个会话'), // 显示的文本 [3, 6]
-        ],
+    return Scaffold(
+      appBar: AppBar(leading: _buildDrawerButton()),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text('未选择会话，请在左侧聊天窗口选择一个会话'), // 显示的文本 [3, 6]
+          ],
+        ),
       ),
     );
   }

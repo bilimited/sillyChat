@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -19,13 +20,13 @@ class _SearchResult {
 
 class SearchPage extends StatefulWidget {
   // 1. 修改输入参数：从 List<ChatModel> 变为 String searchPath
-  final String searchPath;
+  final String? searchPath;
   final void Function(String, MessageModel, ChatModel) onMessageTap;
   final bool isdesktop;
 
   const SearchPage({
     Key? key,
-    required this.searchPath, // 必须提供搜索路径
+    this.searchPath, // 必须提供搜索路径
     required this.onMessageTap,
     this.isdesktop = false,
   }) : super(key: key);
@@ -77,7 +78,8 @@ class _SearchPageState extends State<SearchPage> {
       _totalMessagesScanned = 0;
     });
 
-    final directory = Directory(widget.searchPath);
+    final directory =
+        Directory(widget.searchPath ?? SettingController.of.getChatPathSync());
     if (!await directory.exists()) {
       // 路径不存在的错误处理
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STMarcoProcesser.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 abstract class Promptformatter {
   static String formatPrompt(String content, ChatModel chat,
@@ -16,8 +17,13 @@ abstract class Promptformatter {
     var user = chat.userId == null
         ? characterController.me
         : characterController.getCharacterById(chat.userId!);
+    var time = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
     prompt = prompt.replaceAll(
         RegExp(r'\{\{user\}\}', caseSensitive: false), user.roleName);
+    prompt =
+        prompt.replaceAll(RegExp(r'\{\{time\}\}', caseSensitive: false), time);
+
     prompt = prompt.replaceAll('{{userbrief}}', user.brief ?? '');
     prompt = prompt.replaceAll('{{description}}', chat.description ?? '');
     prompt = prompt.replaceAll(

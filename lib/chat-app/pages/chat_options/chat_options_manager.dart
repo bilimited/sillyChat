@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
 import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_option_controller.dart';
 import '../../models/chat_option_model.dart';
@@ -53,6 +54,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
     final temperature = option.requestOptions.temperature;
     final colors = Theme.of(context).colorScheme;
     return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: InkWell(
         onTap: () {
           customNavigate(
@@ -173,12 +175,8 @@ class ChatOptionsManagerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              scaffoldKey?.currentState?.openDrawer();
-            },
-            icon: Icon(Icons.menu)),
+      backgroundColor: Colors.transparent,
+      appBar: InnerAppBar(
         title: const Text('对话预设'),
         actions: [
           IconButton(

@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STLorebookImporter.dart';
 import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
@@ -50,6 +51,7 @@ class LoreBookManagerPage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Card(
+      color: colors.surfaceContainerHigh,
       shape: isGlobal
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -57,64 +59,69 @@ class LoreBookManagerPage extends StatelessWidget {
             )
           : null,
       clipBehavior: Clip.antiAlias, // 使 InkWell 的水波纹效果保持在圆角内
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8.0,
-                      // runSpacing: 4.0,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isGlobal) _buildInfoChip('全局激活', colors.primary),
-                        if (itemCount > 0)
-                          _buildInfoChip('已启用 $activatedCount/$itemCount',
-                              colors.secondary),
-                        // if (activatedCount > 0)
-                        //   _buildInfoChip(
-                        //       '已激活: $activatedCount', colors.tertiary),
+                        Text(
+                          name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8.0,
+                          // runSpacing: 4.0,
+                          children: [
+                            if (isGlobal)
+                              _buildInfoChip('全局激活', colors.primary),
+                            if (itemCount > 0)
+                              _buildInfoChip('已启用 $activatedCount/$itemCount',
+                                  colors.secondary),
+                            // if (activatedCount > 0)
+                            //   _buildInfoChip(
+                            //       '已激活: $activatedCount', colors.tertiary),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              // const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      isGlobal ? Icons.language : Icons.language_outlined,
-                      color: isGlobal
-                          ? Colors.amber
-                          : Theme.of(context).colorScheme.outline,
-                    ),
-                    tooltip: isGlobal ? '取消全局激活' : '全局激活',
-                    onPressed: onStarPressed,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red,
-                    tooltip: '删除',
-                    onPressed: onDeletePressed,
+                  // const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          isGlobal ? Icons.language : Icons.language_outlined,
+                          color: isGlobal
+                              ? Colors.amber
+                              : Theme.of(context).colorScheme.outline,
+                        ),
+                        tooltip: isGlobal ? '取消全局激活' : '全局激活',
+                        onPressed: onStarPressed,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        color: Colors.red,
+                        tooltip: '删除',
+                        onPressed: onDeletePressed,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -135,12 +142,8 @@ class LoreBookManagerPage extends StatelessWidget {
         },
         child: const Icon(Icons.add),
       ),
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              scaffoldKey?.currentState?.openDrawer();
-            },
-            icon: Icon(Icons.menu)),
+      backgroundColor: Colors.transparent,
+      appBar: InnerAppBar(
         title: const Text('世界书'),
         actions: [
           IconButton(

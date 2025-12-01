@@ -45,6 +45,8 @@ class ChatListItem extends StatelessWidget {
 
   bool get isQuickChat => chat?.assistant.isDefaultAssistant ?? true;
 
+  bool get selected => ChatController.of.currentChat.value?.chatPath == path;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,6 +60,11 @@ class ChatListItem extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Obx(() => Container(
+            decoration: selected
+                ? BoxDecoration(
+                    border: Border.all(
+                        color: theme.colorScheme.secondary, width: 1))
+                : null,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
