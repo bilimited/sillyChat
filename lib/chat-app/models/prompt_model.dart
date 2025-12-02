@@ -1,4 +1,3 @@
-
 class PromptModel {
   int id;
   String content;
@@ -30,10 +29,9 @@ class PromptModel {
   })  : this.createDate = createDate ?? DateTime.now(),
         this.updateDate = updateDate ?? DateTime.now();
 
-
   PromptModel.chatHistoryPlaceholder()
       : id = 0,
-        content = '<messageList>',
+        content = 'messageList',
         role = '',
         name = '消息列表',
         isEnable = true,
@@ -51,7 +49,8 @@ class PromptModel {
         isEnable = true,
         createDate = DateTime.now(),
         updateDate = DateTime.now(),
-        isChatHistory = false,priority = 100,
+        isChatHistory = false,
+        priority = 100,
         depth = 4;
 
   PromptModel.fromJson(Map<String, dynamic> json)
@@ -65,8 +64,7 @@ class PromptModel {
         priority = json['priority'] ?? 100,
         depth = json['depth'] ?? 4,
         isInChat = json['isInChat'] ?? false,
-        isChatHistory = json['isMessageList'] ?? false
-        ;
+        isChatHistory = json['isMessageList'] ?? false;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -79,7 +77,7 @@ class PromptModel {
         'priority': priority,
         'depth': depth,
         'isInChat': isInChat,
-        'isMessageList' : isChatHistory
+        'isMessageList': isChatHistory
       };
 
   PromptModel copy() {
@@ -94,8 +92,7 @@ class PromptModel {
       isChatHistory: isChatHistory,
       depth: depth,
       priority: priority,
-    )
-      ..isEnable = isEnable;
+    )..isEnable = isEnable;
   }
 
   PromptModel copyWith({

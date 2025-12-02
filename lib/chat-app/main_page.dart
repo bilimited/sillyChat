@@ -348,6 +348,7 @@ class _MainPageState extends State<MainPage> {
                                 padding:
                                     const EdgeInsets.only(left: LEFT_WIDTH),
                                 child: Container(
+                                  color: colors.surfaceContainer,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: ClipRRect(

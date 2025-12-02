@@ -40,7 +40,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
 
   DateTime? _lastPressedBackAt; // 实现再按一次退出
 
-  static const double _drawerWidthScaler = 1.0;
+  static const double _drawerWidthScaler = 1;
 
   @override
   void dispose() {
@@ -110,40 +110,50 @@ class _MainPageMobileState extends State<MainPageMobile> {
       key: _scaffoldKey,
       drawer: Drawer(
         width: screenWidth * _drawerWidthScaler,
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // const SizedBox(height: 20),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 等间距分布
-              children: [
-                _buildTopIconBtn(Icons.home, 0),
-                _buildTopIconBtn(Icons.people, 1),
-                _buildTopIconBtn(Icons.dashboard, 2),
-                _buildTopIconBtn(Icons.book, 3),
-              ],
-            ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 等间距分布
+                children: [
+                  _buildTopIconBtn(Icons.home, 0),
+                  _buildTopIconBtn(Icons.people, 1),
+                  _buildTopIconBtn(Icons.dashboard, 2),
+                  _buildTopIconBtn(Icons.book, 3),
+                ],
+              ),
 
-            const Divider(thickness: 1),
+              const Divider(thickness: 1),
 
-            Expanded(
-              child: _drawerContents[_currentIndex],
-            ),
+              Expanded(
+                child: _drawerContents[_currentIndex],
+              ),
 
-            const Divider(thickness: 1),
+              const Divider(thickness: 1),
 
-            CustomBottomBar(
-              centerButton: SizedBox.shrink(),
-            ),
-            //_buildDrawerBottom(),
-            // 底部安全距离
-            // const SizedBox(height: 20),
-          ],
+              CustomBottomBar(
+                centerButton: SizedBox.shrink(),
+              ),
+              //_buildDrawerBottom(),
+              // 底部安全距离
+              // const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
       body: PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, result) async {
+            if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+              _scaffoldKey.currentState?.closeDrawer();
+              return;
+            }
+
+            if (ChatController.of.isMultiSelecting.value) {
+              return;
+            }
             final now = DateTime.now();
             if (_lastPressedBackAt == null ||
                 now.difference(_lastPressedBackAt!) >

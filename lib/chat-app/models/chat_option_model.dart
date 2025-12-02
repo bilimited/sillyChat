@@ -142,7 +142,7 @@ class ChatOptionModel {
               id: id, content: userDefine, role: 'system', name: '角色定义'),
           PromptModel(
               id: id + 1,
-              content: '{{messageList}}',
+              content: 'messageList',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -168,7 +168,7 @@ class ChatOptionModel {
               isChatHistory: true),
           PromptModel(
               id: id,
-              content: '{{messageList}}',
+              content: 'messageList',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -188,7 +188,7 @@ class ChatOptionModel {
         prompts: [
           PromptModel(
               id: id,
-              content: '{{messageList}}',
+              content: 'messageList',
               role: 'system',
               name: '消息列表',
               isChatHistory: true),
@@ -207,7 +207,7 @@ class ChatOptionModel {
         prompts: [
           PromptModel(
               id: id,
-              content: '{{messageList}}',
+              content: 'messageList',
               role: 'user',
               name: '消息列表',
               isChatHistory: true),

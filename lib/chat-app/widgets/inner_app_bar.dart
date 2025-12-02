@@ -5,7 +5,7 @@ class InnerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final Widget? leading;
 
-  static const double height = 40.0; // 默认是 56.0，这里设为 40
+  static const double height = 48.0; // 默认是 56.0，这里设为 40
   static const double iconSize = 20.0; // 默认是 24.0
   static const double titleSize = 16.0; // 默认是 20.0
 

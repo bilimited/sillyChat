@@ -39,6 +39,8 @@ class ChatController extends GetxController {
 
   final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
 
+  final RxBool isMultiSelecting = false.obs;
+
   List<MessageModel> get messageToPaste {
     final now = DateTime.now();
     final messagesToPaste = messageClipboard.reversed

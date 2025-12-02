@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
@@ -114,6 +115,7 @@ class SillyChatApp extends StatelessWidget {
   static void snackbar(BuildContext context, String message,
       {Duration duration = const Duration(milliseconds: 1500),
       SnackBarAction? action}) {
+    //BotToast.showSimpleNotification(title: message, duration: duration);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -142,7 +144,7 @@ class SillyChatApp extends StatelessWidget {
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
     if (kDebugMode) {
-      return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+      return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }

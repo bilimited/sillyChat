@@ -178,7 +178,7 @@ class Promptbuilder {
 
     // print(STVars.toString());
     final promptsNotEmpty = promptsAfterFormat
-        .where((msg) => !(msg.content.isBlank ?? false))
+        .where((msg) => !(msg.content.isBlank ?? false) || msg.isChatHistory)
         .toList();
 
     /// Step 3.5 单独提取"聊天中"Prompt

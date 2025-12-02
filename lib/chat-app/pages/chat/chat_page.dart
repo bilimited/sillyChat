@@ -82,7 +82,11 @@ class _ChatPageState extends State<ChatPage> {
 
   // 添加选中消息状态
   MessageModel? _selectedMessage;
-  bool _isMultiSelecting = false;
+  bool get _isMultiSelecting => _chatController.isMultiSelecting.value; //false;
+  set _isMultiSelecting(val) {
+    _chatController.isMultiSelecting.value = val;
+  }
+
   // 被选中的消息（多选）
   List<MessageModel> _selectedMessages = [];
 

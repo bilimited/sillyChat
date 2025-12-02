@@ -21,45 +21,41 @@ class CustomBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 使用 Stack 允许中央按钮可以覆盖在底部栏的上方或浮动
-    return BottomAppBar(
-      height: 64,
-      color: Colors.transparent,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          // 左侧按钮
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              IconButton(
-                icon: Icon(SettingController.of.isDarkMode.value
-                    ? Icons.dark_mode
-                    : Icons.light_mode),
-                onPressed: () {
-                  SettingController.of.toggleDarkMode();
-                },
-                tooltip: '切换主题',
-              ),
-              IconButton(
-                icon: const Icon(Icons.api),
-                onPressed: () {
-                  customNavigate(ApiManagerPage(), context: context);
-                },
-                tooltip: 'API',
-              ),
-              // 右侧按钮 (注意：在中心按钮位置留空，所以这里只放两个)
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  customNavigate(SettingPage(), context: context);
-                },
-                tooltip: '设置',
-              ),
-            ],
-          ),
-          centerButton
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        // 左侧按钮
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            IconButton(
+              icon: Icon(SettingController.of.isDarkMode.value
+                  ? Icons.dark_mode
+                  : Icons.light_mode),
+              onPressed: () {
+                SettingController.of.toggleDarkMode();
+              },
+              tooltip: '切换主题',
+            ),
+            IconButton(
+              icon: const Icon(Icons.api),
+              onPressed: () {
+                customNavigate(ApiManagerPage(), context: context);
+              },
+              tooltip: 'API',
+            ),
+            // 右侧按钮 (注意：在中心按钮位置留空，所以这里只放两个)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                customNavigate(SettingPage(), context: context);
+              },
+              tooltip: '设置',
+            ),
+          ],
+        ),
+        centerButton
+      ],
     );
   }
 }

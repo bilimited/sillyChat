@@ -56,7 +56,7 @@ abstract class STConfigImporter {
               }
             case 'chatHistory':
               {
-                content = "{{messageList}}";
+                content = "messageList";
                 break;
               }
             case 'worldInfoAfter':
