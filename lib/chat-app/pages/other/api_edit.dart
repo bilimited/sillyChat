@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:flutter_example/chat-app/widgets/option_input.dart';
 import 'package:flutter_example/main.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import '../../models/api_model.dart';
 
@@ -33,8 +34,11 @@ class _ApiEditPageState extends State<ApiEditPage> {
 
   bool _isPanelExpanded = false;
   bool isFetchingModelList = false;
+  bool isFetchingBalance = false;
   bool isTesting = false;
   bool? isTestSuccess = null; // null 代表未测试
+
+  String? balanceResult = null;
 
   @override
   void initState() {
@@ -168,6 +172,20 @@ class _ApiEditPageState extends State<ApiEditPage> {
               },
             ),
             const SizedBox(height: 16),
+            Obx(() => CustomOptionInputWidget.fromStringOptions(
+                  options: modelList,
+                  labelText: "模型名称",
+                  initialValue: modelName,
+                  onChanged: (value) {
+                    final oldval = modelName;
+                    modelName = value;
+                    if (_displayNameController.text.isEmpty ||
+                        _displayNameController.text == oldval) {
+                      _displayNameController.text = value;
+                    }
+                  },
+                )),
+            const SizedBox(height: 16),
             TextFormField(
               style: TextStyle(
                   fontFamily: 'monospace', fontWeight: FontWeight.bold),
@@ -185,20 +203,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
               },
             ),
             const SizedBox(height: 16),
-            Obx(() => CustomOptionInputWidget.fromStringOptions(
-                  options: modelList,
-                  labelText: "模型名称",
-                  initialValue: modelName,
-                  onChanged: (value) {
-                    final oldval = modelName;
-                    modelName = value;
-                    if (_displayNameController.text.isEmpty ||
-                        _displayNameController.text == oldval) {
-                      _displayNameController.text = value;
-                    }
-                  },
-                )),
-            const SizedBox(height: 16),
             if (_selectedProvider.defaultUrl.isEmpty)
               TextFormField(
                 controller: _urlController,
@@ -214,18 +218,18 @@ class _ApiEditPageState extends State<ApiEditPage> {
               ),
             Row(
               children: [
-                if (widget.api != null) ...[
-                  const SizedBox(height: 16),
-                  TextButton(
-                      onPressed: () {
-                        VaultSettingController.of().defaultApi.value =
-                            widget.api!.id;
-                        VaultSettingController.of().saveSettings();
-                        SillyChatApp.snackbar(context, '设置成功!');
-                      },
-                      child: Text('设为默认')),
-                ],
-                const SizedBox(height: 16),
+                // if (widget.api != null) ...[
+                //   const SizedBox(height: 16),
+                //   TextButton(
+                //       onPressed: () {
+                //         VaultSettingController.of().defaultApi.value =
+                //             widget.api!.id;
+                //         VaultSettingController.of().saveSettings();
+                //         SillyChatApp.snackbar(context, '设置成功!');
+                //       },
+                //       child: Text('设为默认')),
+                // ],
+                // const SizedBox(height: 16),
                 isFetchingModelList
                     ? ElevatedButton.icon(
                         onPressed: null,
@@ -297,11 +301,74 @@ class _ApiEditPageState extends State<ApiEditPage> {
                                 : Text('连接失败...',
                                     style: TextStyle(color: Colors.red)),
                       ),
+
+                if (Servicehandlerfactory.getHandler(_selectedProvider)
+                    .canFetchBalance) ...[
+                  const SizedBox(height: 16),
+                  isFetchingBalance
+                      ? ElevatedButton.icon(
+                          onPressed: null,
+                          icon: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          label: Text('正在查询...'),
+                        )
+                      : TextButton(
+                          onPressed: () async {
+                            if (_apiKeyController.text.isEmpty) {
+                              SillyChatApp.snackbarErr(context, '请先填写apiKey!');
+                              return;
+                            }
+                            setState(() {
+                              isFetchingBalance = true;
+                            });
+                            final res = await Servicehandlerfactory.getHandler(
+                                    _selectedProvider,
+                                    customURL: _urlController.text)
+                                .fetchBalance(_apiKeyController.text);
+
+                            setState(() {
+                              balanceResult = res;
+                              isFetchingBalance = false;
+                            });
+                          },
+                          child: Text('查询余额')),
+                ],
               ],
             ),
             SizedBox(
               height: 32,
             ),
+            if (balanceResult != null) ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '余额查询结果',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      // 需要在文件头部添加: import 'package:flutter_markdown/flutter_markdown.dart';
+                      MarkdownBody(
+                        data: balanceResult ?? '',
+                        selectable: true,
+                        styleSheet:
+                            MarkdownStyleSheet.fromTheme(Theme.of(context)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 32,
+              ),
+            ],
             ExpansionTile(
               title: const Text('高级设置'),
               initiallyExpanded: _isPanelExpanded,
@@ -347,19 +414,6 @@ class _ApiEditPageState extends State<ApiEditPage> {
                 ),
               ],
             ),
-            // ElevatedButton.icon(
-            //     onPressed: () {
-            //       Aihandler.testConnectivity(
-            //           _urlController.text
-            //               .replaceAll('/v1/chat/completions', '')
-            //               .replaceAll('/chat/completions', ''),
-            //           (isSuccess, message) {
-            //         Get.snackbar(isSuccess ? '成功' : '失败', message,
-            //             snackPosition: SnackPosition.BOTTOM,
-            //             colorText: isSuccess ? Colors.green : Colors.red);
-            //       });
-            //     },
-            //     label: Text('测试连通性'))
           ],
         ),
       ),

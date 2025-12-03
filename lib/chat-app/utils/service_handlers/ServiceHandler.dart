@@ -14,6 +14,8 @@ abstract class Servicehandler {
     required this.defaultModelList,
   });
 
+  bool get canFetchBalance => false;
+
   // TODO:模型自定义API选项
 
   // 获取模型列表
@@ -34,5 +36,9 @@ abstract class Servicehandler {
   // 消息预处理（在合并消息之前执行）
   List<LLMMessage> processMessage(List<LLMMessage> messages) {
     return messages;
+  }
+
+  Future<String> fetchBalance(String apiKey) async {
+    return "查询余额方法未实现!";
   }
 }

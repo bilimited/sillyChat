@@ -38,7 +38,7 @@ class CustomBottomBar extends StatelessWidget {
               tooltip: '切换主题',
             ),
             IconButton(
-              icon: const Icon(Icons.api),
+              icon: const Icon(Icons.power),
               onPressed: () {
                 customNavigate(ApiManagerPage(), context: context);
               },

@@ -1,5 +1,7 @@
 import 'package:flutter_example/chat-app/models/api_model.dart';
+import 'package:flutter_example/chat-app/utils/service_handlers/DeepSeekServiceHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/GoogleServiceHandler.dart';
+import 'package:flutter_example/chat-app/utils/service_handlers/KimiServiceHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/OpenAIServiceHandler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 
@@ -13,17 +15,7 @@ class Servicehandlerfactory {
           "gpt-4",
           "gpt-4o",
         ]),
-    ServiceProvider.deepseek: Openaiservicehandler(
-        baseUrl: 'https://api.deepseek.com',
-        name: 'deepSeek',
-        defaultModelList: [
-          'deepseek-chat',
-          'deepseek-reasoner',
-          'DeepSeek-V3-0324',
-          'DeepSeek-R1-0528',
-          'DeepSeek-V3',
-          'DeepSeek-R1'
-        ]),
+    ServiceProvider.deepseek: Deepseekservicehandler(),
     ServiceProvider.siliconflow: Openaiservicehandler(
         baseUrl: 'https://api.siliconflow.cn/v1',
         name: '硅基流动',
@@ -58,14 +50,7 @@ class Servicehandlerfactory {
           "gemini-1.5-pro",
           "gemini-1.0-pro"
         ]),
-    ServiceProvider.kimi: Openaiservicehandler(
-        baseUrl: 'https://api.moonshot.cn/v1',
-        name: 'Kimi',
-        defaultModelList: 
-      [
-        
-      ]
-    )
+    ServiceProvider.kimi: Kimiservicehandler(),
   };
 
   static const defaultHandler = Openaiservicehandler(

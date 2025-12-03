@@ -90,15 +90,6 @@ class _MainPageMobileState extends State<MainPageMobile> {
     );
   }
 
-  Widget _buildDrawerBottom() {
-    return Padding(
-      padding: EdgeInsetsGeometry.all(8),
-      child: Row(
-        children: [IconButton(onPressed: () {}, icon: Icon(Icons.settings))],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
