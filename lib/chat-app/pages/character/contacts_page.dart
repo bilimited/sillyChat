@@ -4,9 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
-import 'package:flutter_example/chat-app/pages/character/personal_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
@@ -252,9 +250,6 @@ class _ContactsPageState extends State<ContactsPage> {
 
 // 这是一个新的辅助方法，用于显示新增角色的对话框
   void _showAddCharacterDialog(BuildContext context) {
-    // 获取当前主题，以便对话框样式与应用保持一致
-    final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {

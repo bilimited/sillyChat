@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/pages/character/gen_character_prompt.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
@@ -9,7 +8,6 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
-import 'package:flutter_example/chat-app/widgets/character/memory_editor.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -762,12 +760,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         )
       ],
-    );
-  }
-
-  Widget _buildMemoryTab() {
-    return MemoryEditor(
-      memories: _character?.memories ?? [],
     );
   }
 

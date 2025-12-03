@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 
 class MoreFirstMessagePage extends StatefulWidget {

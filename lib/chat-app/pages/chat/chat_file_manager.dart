@@ -12,7 +12,6 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
-import 'package:flutter_example/chat-app/widgets/custom_bottom_bar.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';

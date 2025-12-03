@@ -12,7 +12,6 @@ import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
-import 'package:flutter_example/chat-app/providers/session_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
@@ -24,7 +23,7 @@ import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
-class ChatSessionController extends SessionController {
+class ChatSessionController extends GetxController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
   late TextEditingController commandController;
