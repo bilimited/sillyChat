@@ -250,47 +250,7 @@ class _ContactsPageState extends State<ContactsPage> {
 
 // 这是一个新的辅助方法，用于显示新增角色的对话框
   void _showAddCharacterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('新增角色'),
-          // 使用 Column 来垂直排列选项
-          content: Column(
-            mainAxisSize: MainAxisSize.min, // 让 Column 根据内容自适应高度
-            children: <Widget>[
-              // 选项1: 创建空角色
-              ListTile(
-                leading: const Icon(Icons.person_add),
-                title: const Text('创建空角色'),
-                onTap: () {
-                  Navigator.of(dialogContext).pop(); // 首先关闭对话框
-                  customNavigate(const EditCharacterPage(), context: context);
-                },
-              ),
-              // 选项2: 从ST导入
-              ListTile(
-                leading: const Icon(Icons.file_upload),
-                title: const Text('从ST导入角色卡'),
-                onTap: () {
-                  Navigator.of(dialogContext).pop(); // 关闭对话框
-                  _importCharCard();
-                },
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            // 提供一个取消按钮
-            TextButton(
-              child: const Text('取消'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // 点击取消时关闭对话框
-              },
-            ),
-          ],
-        );
-      },
-    );
+    customNavigate(const EditCharacterPage(), context: context);
   }
 
   ListTile _contractWidget(BuildContext context, CharacterModel contact) {
@@ -410,6 +370,7 @@ class _ContactsPageState extends State<ContactsPage> {
         // AppBar 操作区域放置按钮
         actions: [
           // 排序模式切换按钮
+
           IconButton(
             icon: Icon(_isSortingMode ? Icons.check : Icons.sort,
                 color: theme.colorScheme.onSurface),
@@ -420,6 +381,14 @@ class _ContactsPageState extends State<ContactsPage> {
             },
             tooltip: _isSortingMode ? '完成排序' : '进入排序', // 添加提示
           ),
+          IconButton(
+            icon: Icon(Icons.download, color: theme.colorScheme.onSurface),
+            onPressed: () {
+              _importCharCard();
+            },
+            tooltip: '导入角色卡', // 添加提示
+          ),
+
           const SizedBox(width: 8), // 右边距
         ],
       ),
