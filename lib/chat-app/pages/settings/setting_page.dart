@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/auto_title_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/summary_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/vault_manager.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
@@ -22,6 +27,7 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late CharacterController _characterController = CharacterController.of;
   final SettingController _settingController = Get.find();
   final VaultSettingController _vaultSettingController = Get.find();
   final webDav = WebDavUtil();
@@ -163,11 +169,73 @@ class _SettingPageState extends State<SettingPage>
     await webDav.downloadAllData(context);
   }
 
+  void _showCharacterSelectDialog() async {
+    CharacterModel? character = await customNavigate<CharacterModel>(
+        CharacterSelector(),
+        context: context);
+    if (character != null) {
+      _vaultSettingController.myId.value = character.id;
+      await _vaultSettingController.saveSettings();
+    }
+  }
+
   Widget _buildGeneralTab() {
     return ListView(
       key: _pageKey, // Apply the key here
       padding: const EdgeInsets.all(16.0),
       children: [
+        Card(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Column(children: [
+              Obx(() => ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading:
+                        AvatarImage.round(_characterController.me.avatar, 20),
+                    onTap: () {
+                      _showCharacterSelectDialog();
+                    },
+                    title: Text(
+                      _characterController.me.roleName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '切换主控角色',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios,
+                        size: 16, color: Colors.grey[400]),
+                  )),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.cabin,
+                    color: Theme.of(context).colorScheme.secondary),
+                onTap: () {
+                  customNavigate(VaultManagerPage(), context: context);
+                },
+                title: Text(
+                  '仓库管理',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '在不同仓库中独立管理应用数据',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+            ])),
+
         // Theme Toggle
         Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0),

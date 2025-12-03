@@ -41,6 +41,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
   DateTime? _lastPressedBackAt; // 实现再按一次退出
 
   static const double _drawerWidthScaler = 1;
+  static const double _maxDrawerWidth = 500;
 
   @override
   void dispose() {
@@ -90,6 +91,11 @@ class _MainPageMobileState extends State<MainPageMobile> {
     );
   }
 
+  // WTF 为什么min也要我定义？
+  double myMin(double n1, double n2) {
+    return n1 > n2 ? n2 : n1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -100,7 +106,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
-        width: screenWidth * _drawerWidthScaler,
+        width: myMin(_maxDrawerWidth, screenWidth * _drawerWidthScaler),
         child: SafeArea(
           child: Column(
             children: [
@@ -109,7 +115,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 等间距分布
                 children: [
-                  _buildTopIconBtn(Icons.home, 0),
+                  _buildTopIconBtn(Icons.chat_bubble, 0),
                   _buildTopIconBtn(Icons.people, 1),
                   _buildTopIconBtn(Icons.dashboard, 2),
                   _buildTopIconBtn(Icons.book, 3),
