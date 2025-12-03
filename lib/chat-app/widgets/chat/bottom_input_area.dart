@@ -74,8 +74,14 @@ class BottomInputArea extends StatefulWidget {
 class _BottomInputAreaState extends State<BottomInputArea> {
   TextEditingController get messageController =>
       widget.sessionController.inputController; //TextEditingController();
+
+  TextEditingController get commandController =>
+      widget.sessionController.commandController;
+
   final FocusNode _focusNode = FocusNode(); // 1. 创建 FocusNode
   bool _isFocused = false; // 跟踪焦点状态
+
+  bool _isDirectorPanelExpanded = false;
 
   bool get isGroupMode => widget.mode == ChatMode.group;
   bool get isAutoMode => widget.mode == ChatMode.auto;
@@ -138,6 +144,81 @@ class _BottomInputAreaState extends State<BottomInputArea> {
     });
   }
 
+  Widget _buildDirectorModePanel() {
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  // focusNode: _focusNode, // 6. 将 FocusNode 附加到 TextField
+                  controller: commandController,
+                  onChanged: (text) {
+                    // 每次输入都触发 rebuild，确保 suffixIcon 最新
+                    setState(() {});
+                  },
+                  decoration: InputDecoration(
+                    isDense: true,
+                    // labelText: "在这里输入附加指令",
+                    hintText: "在这里输入附加指令",
+                    hintStyle: TextStyle(color: colors.outlineVariant),
+
+                    suffixIcon: commandController.text.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              commandController.text = "";
+                              setState(() {});
+                            },
+                            icon: Icon(Icons.close))
+                        : IconButton(
+                            onPressed: () {}, icon: Icon(Icons.history)),
+                  ),
+                  minLines: 1,
+                  maxLines: 3,
+                  // onSubmitted is removed to allow custom handling via Actions.
+                ),
+              ),
+              SizedBox(
+                width: 6,
+              ),
+              IconButton(
+                  onPressed: () {
+                    widget.sessionController.isCommandPinned.value =
+                        !widget.sessionController.isCommandPinned.value;
+                  },
+                  icon: Obx(() => widget.sessionController.isCommandPinned.value
+                      ? Icon(
+                          Icons.push_pin,
+                          color: colors.primaryFixed,
+                        )
+                      : Icon(Icons.push_pin_outlined)))
+            ],
+          ),
+          SizedBox(
+            height: 8,
+          ),
+          Wrap(
+            runSpacing: 4,
+            direction: Axis.horizontal,
+            children: widget.topToolBar,
+          ),
+
+          Divider(
+            height: 24,
+          ),
+          // Divider(
+          //   height: 16,
+          // ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -161,6 +242,14 @@ class _BottomInputAreaState extends State<BottomInputArea> {
           ),
           child: Column(
             children: [
+              AnimatedSize(
+                duration: Durations.medium1,
+                curve: Curves.easeOut,
+                child: _isDirectorPanelExpanded
+                    ? _buildDirectorModePanel()
+                    : SizedBox.shrink(),
+              ),
+
               // Input field
               TextField(
                 focusNode: _focusNode, // 6. 将 FocusNode 附加到 TextField
@@ -179,6 +268,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                 maxLines: 8,
                 // onSubmitted is removed to allow custom handling via Actions.
               ),
+
               // Toolbar and action buttons row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -189,7 +279,19 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [...widget.toolBar],
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.tune,
+                                color: _isDirectorPanelExpanded
+                                    ? colors.primaryFixed
+                                    : colors.outline),
+                            onPressed: () {
+                              setState(() => _isDirectorPanelExpanded =
+                                  !_isDirectorPanelExpanded);
+                            },
+                          ),
+                          ...widget.toolBar
+                        ],
                       ),
                     ),
 
@@ -350,16 +452,16 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               ),
             ),
           ),
-        SingleChildScrollView(
-          // 设置滚动方向为水平方向
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: widget.topToolBar,
-          ),
-        ),
-        SizedBox(
-          height: 12,
-        ),
+        // SingleChildScrollView(
+        //   // 设置滚动方向为水平方向
+        //   scrollDirection: Axis.horizontal,
+        //   child: Row(
+        //     children: widget.topToolBar,
+        //   ),
+        // ),
+        // SizedBox(
+        //   height: 12,
+        // ),
         // Input field and actions card
         Row(
           children: [

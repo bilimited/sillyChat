@@ -112,9 +112,10 @@ class Promptbuilder {
   }
 
   /// 史诗抽象超长代码
-  /// sender!=null ,则为群聊模式
-  /// TODO:重构，将所有与服务商有关的操作分离到ServiceProvider中
-  List<LLMMessage> getLLMMessageList({CharacterModel? sender}) {
+  /// [sender] sender!=null ,则为群聊模式
+  /// [extraContent] 在消息列表末尾追加内容，优先级最高
+  List<LLMMessage> getLLMMessageList(
+      {CharacterModel? sender, LLMMessage? extraContent}) {
     PromptSettingModel promptSetting =
         Get.find<VaultSettingController>().promptSettingModel.value;
 
@@ -208,6 +209,10 @@ class Promptbuilder {
       }
       return [LLMMessage.fromPromptModel(prompt)];
     }).toList();
+
+    if (extraContent != null) {
+      llmMessages.add(extraContent);
+    }
 
     final llmMessagesAfterFormat = promptSetting.isFormatMainContent
         ? llmMessages

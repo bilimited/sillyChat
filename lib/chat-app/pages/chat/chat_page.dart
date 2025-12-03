@@ -837,7 +837,7 @@ class _ChatPageState extends State<ChatPage> {
                           }),
                       ...manualItems.map((item) {
                         return ToggleChip(
-                            icon: Icons.book,
+                            // icon: Icons.book,
                             text: item.name,
                             initialValue: item.isActive,
                             onToggle: (val) {

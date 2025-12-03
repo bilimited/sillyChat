@@ -19,6 +19,8 @@ class RegexModel {
   int depthMin = 0;
   int depthMax = -1; // 作用范围，-1代表无限
 
+  List<int>? scopeCharacter = [];
+
   RegexModel({
     required this.id,
     required this.name,

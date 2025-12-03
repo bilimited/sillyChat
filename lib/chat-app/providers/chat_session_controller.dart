@@ -26,6 +26,7 @@ import 'package:get/get.dart';
 class ChatSessionController extends SessionController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
+  late TextEditingController commandController;
 
   RxBool isLoading = false.obs;
 
@@ -35,6 +36,7 @@ class ChatSessionController extends SessionController {
   bool get isGenerating => aiState.isGenerating;
 
   RxBool isGeneratingTitle = false.obs;
+  RxBool isCommandPinned = false.obs; // 附加指令是否常驻
 
   int backGroundTasks = 0; // 后台正在执行的任务数量（如生成标题等）
 
@@ -75,6 +77,7 @@ class ChatSessionController extends SessionController {
    */
   ChatSessionController(this.chatPath) {
     this.inputController = TextEditingController();
+    this.commandController = TextEditingController();
   }
 
   factory ChatSessionController.uninitialized() {
@@ -128,6 +131,7 @@ class ChatSessionController extends SessionController {
   void onClose() {
     super.onClose();
     inputController.dispose();
+    commandController.dispose();
   }
 
   void reflesh() {
@@ -138,6 +142,7 @@ class ChatSessionController extends SessionController {
   bool get canDestory {
     return !_aiState.value.isGenerating &&
         inputController.text.isEmpty &&
+        commandController.text.isEmpty &&
         backGroundTasks == 0;
   }
 
@@ -494,8 +499,17 @@ class ChatSessionController extends SessionController {
   }) async* {
     late List<LLMMessage> messages;
 
-    messages = Promptbuilder(chat, overrideOption)
-        .getLLMMessageList(sender: overrideAssistant);
+    // 附加指令
+    final extraContent = commandController.text.isNotEmpty
+        ? LLMMessage(content: commandController.text, role: 'user')
+        : null;
+
+    if (!isCommandPinned.value) {
+      commandController.text = "";
+    }
+
+    messages = Promptbuilder(chat, overrideOption).getLLMMessageList(
+        sender: overrideAssistant, extraContent: extraContent);
 
     final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);
