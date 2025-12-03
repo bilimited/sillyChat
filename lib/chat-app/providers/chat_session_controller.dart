@@ -20,6 +20,7 @@ import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:flutter_example/main.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
@@ -100,6 +101,12 @@ class ChatSessionController extends GetxController {
     if (tag.isNotEmpty) {
       VaultSettingController.of().historyModel.value.addToChatHistory(tag);
       ChatController.of.openedChat[tag] = this;
+    }
+
+    File f = File(chatPath);
+    if (!f.existsSync()) {
+      // TODO:加个提示
+      isChatUninitialized = true;
     }
 
     ever(ChatController.of.fileDeleteEvent, (fe) {
