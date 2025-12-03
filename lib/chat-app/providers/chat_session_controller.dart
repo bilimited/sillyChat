@@ -542,11 +542,11 @@ class ChatSessionController extends GetxController {
         ? LLMMessage(content: commandController.text, role: 'user')
         : null;
 
-    if (!isCommandPinned.value) {
-      commandController.text = "";
-    }
     if (commandController.text.isNotEmpty) {
       HistoryCommandPicker.addCommandToHistory(commandController.text);
+    }
+    if (!isCommandPinned.value) {
+      commandController.text = "";
     }
 
     messages = Promptbuilder(chat, overrideOption).getLLMMessageList(
