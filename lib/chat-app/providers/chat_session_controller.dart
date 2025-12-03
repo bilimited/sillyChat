@@ -16,6 +16,7 @@ import 'package:flutter_example/chat-app/providers/session_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
+import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -506,6 +507,9 @@ class ChatSessionController extends SessionController {
 
     if (!isCommandPinned.value) {
       commandController.text = "";
+    }
+    if (commandController.text.isNotEmpty) {
+      HistoryCommandPicker.addCommandToHistory(commandController.text);
     }
 
     messages = Promptbuilder(chat, overrideOption).getLLMMessageList(

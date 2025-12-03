@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -146,6 +147,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
   Widget _buildDirectorModePanel() {
     final colors = Theme.of(context).colorScheme;
+    final h = VaultSettingController.of().historyModel.value.commandHistory;
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -176,7 +178,14 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             },
                             icon: Icon(Icons.close))
                         : IconButton(
-                            onPressed: () {}, icon: Icon(Icons.history)),
+                            onPressed: () async {
+                              final command = await HistoryCommandPicker
+                                  .showHistoryCommandPicker(context);
+                              if (command != null) {
+                                commandController.text = command;
+                              }
+                            },
+                            icon: Icon(Icons.history)),
                   ),
                   minLines: 1,
                   maxLines: 3,

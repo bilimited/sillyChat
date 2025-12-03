@@ -1,5 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/history_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/auto_title_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
@@ -34,6 +35,8 @@ class VaultSettingController extends GetxController {
   final RxBool isShowOnBoardPage = false.obs;
 
   late Rx<PromptSettingModel> promptSettingModel = PromptSettingModel().obs;
+
+  late Rx<HistoryModel> historyModel = HistoryModel().obs;
 
   Rx<ThemeData> themeLight = ThemeData().obs;
 
@@ -111,6 +114,10 @@ class VaultSettingController extends GetxController {
           summarySetting.value =
               SummarySettingModel.fromJson(jsonMap['summarySetting']);
         }
+
+        if (jsonMap['history'] != null) {
+          historyModel.value = HistoryModel.fromJson(jsonMap['history']);
+        }
       } else {
         // 文件不存在：证明初次启动
         isShowOnBoardPage.value = true;
@@ -150,6 +157,7 @@ class VaultSettingController extends GetxController {
         'promptSettingModel': promptSettingModel.toJson(),
         'autoTileSetting': autoTitleSetting.toJson(),
         'summarySetting': summarySetting.toJson(),
+        'history': historyModel.toJson(),
       };
 
       final String jsonString = json.encode(jsonMap);
