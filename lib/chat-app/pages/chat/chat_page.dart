@@ -15,6 +15,7 @@ import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.da
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
@@ -119,6 +120,8 @@ class _ChatPageState extends State<ChatPage> {
 
   // 正在重试的消息在消息列表中的位置（0代表新生成的消息,1代表最后一条消息）
   int generatingMessagePosition = 0;
+
+  Future<List<String>>? simulateUserFuture;
 
   @override
   void setState(VoidCallback fn) {
@@ -851,9 +854,31 @@ class _ChatPageState extends State<ChatPage> {
                     toolBar: [
                       if (isGroupMode && !isGenerating)
                         IconButton(
+                          tooltip: '选择群聊角色',
                           icon: Icon(Icons.group, color: colors.outline),
                           onPressed: () {
                             setState(() => _showWheel = !_showWheel);
+                          },
+                        ),
+                      if (!isGroupMode && !isGenerating)
+                        IconButton(
+                          tooltip: 'AI帮答',
+                          icon: Icon(Icons.quickreply_rounded,
+                              color: colors.outline),
+                          onPressed: () async {
+                            if (simulateUserFuture == null) {
+                              simulateUserFuture =
+                                  sessionController.simulateUserMessage();
+                            }
+
+                            final result =
+                                await SimulateUserHelper.showAIAssistDialog(
+                                    context: context,
+                                    simulateUserMessage: simulateUserFuture!);
+                            if (result != null) {
+                              sessionController.inputController.text = result;
+                              simulateUserFuture = null;
+                            }
                           },
                         ),
                       // IconButton(

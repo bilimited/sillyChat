@@ -353,25 +353,47 @@ class ChatSessionController extends GetxController {
   }
 
   // AI帮答
-  Future<void> simulateUserMessage() async {
-    await for (var content in _getResponse(
-      overrideOption: ChatOptionModel(
-          id: -1,
-          name: 'AI帮答预设',
-          requestOptions: LLMRequestOptions(messages: []),
-          prompts: [
-            PromptModel.chatHistoryPlaceholder(),
-            PromptModel(
-                id: 2,
-                content: '请帮{{user}}生成一条消息。\n{{user}}:',
-                role: 'user',
-                name: 'name')
-          ],
-          regex: []),
-      overrideAssistant: chat.user,
-    )) {
-      _handleAIResult(content, chat.user.id);
+  Future<List<String>> simulateUserMessage() async {
+    final simUserOption = ChatOptionModel(
+        id: -1,
+        name: 'AI帮答预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel.chatHistoryPlaceholder(),
+          PromptModel(
+              id: 2,
+              content: '''请结合历史聊天记录，根据上下文以及{{user}}的对话风格，帮{{user}}生成3条不同的预选消息。
+你应该直接输出所有的预选消息，消息之间用换行分隔，每一行只包含消息的内容。
+                  ''',
+              role: 'user',
+              name: 'name')
+        ],
+        regex: []);
+
+    final messages = Promptbuilder(chat, simUserOption)
+        .getLLMMessageList(sender: CharacterModel.empty());
+
+    final reqOptions = chat.requestOptions;
+    LLMRequestOptions options = reqOptions.copyWith(messages: messages);
+
+    String result = "";
+    await for (String token in aiState.aihandler.requestTokenStream(options)) {
+      result += token;
     }
+    print(result);
+    final lines = result
+        .split('\n')
+        .map((line) {
+          String l = line.trim();
+          // remove unordered list markers like "- ", "* ", "+ "
+          l = l.replaceFirst(RegExp(r'^[-+*]\s*'), '');
+          // remove ordered list markers like "1. " or "1) "
+          l = l.replaceFirst(RegExp(r'^\d+[\.\)]\s*'), '');
+          return l;
+        })
+        .where((l) => l.isNotEmpty)
+        .toList();
+    return lines;
   }
 
   // 重新发送ai请求（会自动追加在最新的AI回复后面。若无最新AI回复且为群聊模式，则不可用）

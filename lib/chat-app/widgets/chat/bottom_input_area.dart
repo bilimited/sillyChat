@@ -290,6 +290,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            tooltip: '导演模式',
                             icon: Icon(Icons.tune,
                                 color: _isDirectorPanelExpanded
                                     ? colors.primaryFixed

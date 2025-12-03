@@ -219,6 +219,15 @@ class CharacterModel {
     return char;
   }
 
+  factory CharacterModel.empty() {
+    return CharacterModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        remark: 'remark',
+        roleName: 'roleName',
+        avatar: 'avatar',
+        category: 'category');
+  }
+
   CharacterModel copyWith({
     int? id,
     String? remark,
