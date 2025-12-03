@@ -256,10 +256,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       Get.back();
     }
     ChatController.of.currentChat.value = ChatSessionController(path);
-    if (ChatController.of.pageController.hasClients) {
-      ChatController.of.pageController.animateToPage(1,
-          duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
-    }
   }
 
   @override

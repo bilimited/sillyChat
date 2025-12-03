@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
@@ -361,6 +362,108 @@ class _ChatPageState extends State<ChatPage> {
           message: message,
         ),
         context: context);
+  }
+
+  /// 显示“选择最近聊天”弹窗
+  ///
+  /// [context]：BuildContext
+  /// [chatIdToName]：将聊天ID（String）转换为显示名称（String）的函数
+  ///
+  /// 返回用户选择的聊天ID（String?），若取消则返回 null
+  Future<String?> _showRecentChatPicker(
+    BuildContext context,
+    String Function(String chatId) chatIdToName,
+  ) async {
+    final chatIds = VaultSettingController.of()
+        .historyModel
+        .value
+        .chatHistory; // List<String>
+
+    if (chatIds.isEmpty) {
+      return await showModalBottomSheet<String?>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text('选择最近聊天', style: TextStyle(fontWeight: FontWeight.bold)),
+                Divider(height: 16),
+                Text('暂无最近聊天记录'),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final items = <Widget>[];
+
+    // // 添加标题
+    // items.add(const ListTile(
+    //   title: Text('🕒 最近聊天'),
+    //   enabled: false,
+    //   dense: true,
+    // ));
+
+    // 按顺序显示（chatHistory 通常最新在前，若需反转请调整）
+    for (final chatId in chatIds) {
+      final displayName = chatIdToName(chatId);
+      items.add(
+        ListTile(
+          title: Text(displayName),
+          subtitle: Text(chatId,
+              // textDirection: TextDirection.rtl,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          onTap: () {
+            Navigator.of(context).pop(chatId);
+          },
+        ),
+      );
+    }
+
+    return await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: SizedBox(
+            height: 500,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Text('🕒 最近聊天',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: items,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // 选择消息时的底部操作菜单
@@ -1123,6 +1226,13 @@ class _ChatPageState extends State<ChatPage> {
           curve: Curves.easeInOut);
   }
 
+  Future<void> _showOpenedChatList() async {
+    // 已打开的聊天
+    ChatController.of.openedChat.keys.toList();
+    // 最近打开的聊天
+    VaultSettingController.of().historyModel.value.chatHistory;
+  }
+
   PreferredSizeWidget? _buildAppBar() {
     final colors = Theme.of(context).colorScheme;
     return AppBar(
@@ -1165,20 +1275,21 @@ class _ChatPageState extends State<ChatPage> {
                               child: SpinKitWave(
                                 itemCount: 3,
                                 color: colors.onSurface,
-                                size: 16.0,
+                                size: 15.0,
                               ),
                             ),
                             Text(
                               '正在生成标题...',
                               style: TextStyle(
-                                  color: colors.outline, fontSize: 19),
+                                  color: colors.outline, fontSize: 16),
                             ),
                           ],
                         )
                       : Text(
                           chat.name,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 19),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
                 Text(
@@ -1187,11 +1298,32 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
+            // IconButton(
+            //     iconSize: 22,
+            //     onPressed: () {
+            //       sessionController.isLock.value =
+            //           !sessionController.isLock.value;
+            //     },
+            //     icon: Icon(sessionController.isLock.value
+            //         ? Icons.lock
+            //         : Icons.lock_open))
           ],
         ),
       ),
       actions: [
         _buildMoreVertButton(),
+        IconButton(
+            onPressed: () async {
+              final path = await _showRecentChatPicker(context, (id) {
+                return ChatController.of.getIndex(id)?.name ?? '未知聊天';
+              });
+
+              if (path != null && path.isNotEmpty) {
+                ChatController.of.currentChat.value =
+                    ChatSessionController(path);
+              }
+            },
+            icon: Icon(Icons.history)),
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {

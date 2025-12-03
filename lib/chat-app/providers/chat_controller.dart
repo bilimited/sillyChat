@@ -61,6 +61,10 @@ class ChatController extends GetxController {
   final RxMap<String, ChatMetaModel> chatIndex = <String, ChatMetaModel>{}.obs;
   final String chatIndexFileName = 'chat_index.json';
 
+  // 已打开的聊天
+  final RxMap<String, ChatSessionController?> openedChat =
+      <String, ChatSessionController>{}.obs;
+
   bool get atFirstPage => pageController.page == 0;
   bool get atSecondPage => pageController.page == 1;
 

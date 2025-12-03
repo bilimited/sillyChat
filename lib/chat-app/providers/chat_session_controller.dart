@@ -37,6 +37,7 @@ class ChatSessionController extends GetxController {
 
   RxBool isGeneratingTitle = false.obs;
   RxBool isCommandPinned = false.obs; // 附加指令是否常驻
+  RxBool isLock = false.obs; // 是否锁定当前聊天（用于"多窗口"）
 
   int backGroundTasks = 0; // 后台正在执行的任务数量（如生成标题等）
 
@@ -65,6 +66,7 @@ class ChatSessionController extends GetxController {
   ChatModel get chat => _chat.value;
   File get file => _chat.value.file;
   bool get isChatLoading => chat.id == -1;
+  String get tag => chatPath;
   bool isChatUninitialized = false;
 
   final String chatPath;
@@ -95,6 +97,11 @@ class ChatSessionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    if (tag.isNotEmpty) {
+      VaultSettingController.of().historyModel.value.addToChatHistory(tag);
+      ChatController.of.openedChat[tag] = this;
+    }
+
     ever(ChatController.of.fileDeleteEvent, (fe) {
       if (fe == null) {
         return;
@@ -130,6 +137,7 @@ class ChatSessionController extends GetxController {
   @override
   void onClose() {
     super.onClose();
+    ChatController.of.openedChat.remove(tag);
     inputController.dispose();
     commandController.dispose();
   }
@@ -143,7 +151,8 @@ class ChatSessionController extends GetxController {
     return !_aiState.value.isGenerating &&
         inputController.text.isEmpty &&
         commandController.text.isEmpty &&
-        backGroundTasks == 0;
+        backGroundTasks == 0 &&
+        !isLock.value;
   }
 
   // 手动关闭此聊天，使其不能再打开。
