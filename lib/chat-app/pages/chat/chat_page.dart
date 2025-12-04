@@ -23,9 +23,11 @@ import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
+import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
+import 'package:flutter_example/chat-app/widgets/webview/statusbar_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
@@ -959,7 +961,27 @@ class _ChatPageState extends State<ChatPage> {
                               item.isActive = val;
                               LoreBookController.of.saveLorebooks();
                             });
-                      })
+                      }),
+                      ToggleChip(
+                          icon: Icons.tune,
+                          text: '',
+                          initialValue: false,
+                          asButton: true,
+                          onToggle: (value) {
+                            final global = Get.find<LoreBookController>()
+                                .globalActivitedLoreBooks;
+                            final chars = chat.characters
+                                .expand((char) => char.loreBooks)
+                                .toList();
+                            customNavigate(
+                                LoreBookActivator(
+                                    chatSessionController: sessionController,
+                                    lorebooks: [
+                                      ...{...global, ...chars}
+                                    ],
+                                    chat: chat),
+                                context: context);
+                          }),
                     ],
                     havaBackgroundImage: chat.assistant.backgroundImage != null,
                     // TOOL BAR
@@ -1491,6 +1513,18 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildStatusBar() {
+    return Positioned(
+        top: 64,
+        left: 0,
+        right: 0,
+        child: Column(
+          children: [
+            StatusbarWebview(chatSessionController: sessionController)
+          ],
+        ));
+  }
+
   Widget _buildMobile(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
@@ -1512,6 +1546,7 @@ class _ChatPageState extends State<ChatPage> {
               if (chat.backgroundOrCharBackground != null)
                 _buildBackgroundImage(),
               _buildMainContent(),
+              //_buildStatusBar(),
               _buildCharacterWheelOverlay(),
               _buildFloatingButtonOverlay(),
             ],

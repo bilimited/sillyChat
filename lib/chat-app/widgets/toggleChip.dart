@@ -22,11 +22,14 @@ class ToggleChip extends StatefulWidget {
   /// 状态切换时的回调函数，返回新的状态值。
   final ValueChanged<bool> onToggle;
 
+  final bool asButton;
+
   const ToggleChip({
     super.key,
     this.icon,
     required this.text,
     this.initialValue = false,
+    this.asButton = false,
     required this.onToggle,
   });
 
@@ -44,9 +47,12 @@ class _ToggleChipState extends State<ToggleChip> {
   }
 
   void _handleTap() {
-    setState(() {
-      _isSelected = !_isSelected;
-    });
+    if (!widget.asButton) {
+      setState(() {
+        _isSelected = !_isSelected;
+      });
+    }
+
     widget.onToggle(_isSelected);
   }
 
@@ -80,7 +86,7 @@ class _ToggleChipState extends State<ToggleChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null) ...[
+              if (widget.icon != null)
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   transitionBuilder: (child, animation) =>
@@ -92,8 +98,8 @@ class _ToggleChipState extends State<ToggleChip> {
                     size: 16.0,
                   ),
                 ),
+              if (!(widget.icon == null || widget.text.isEmpty))
                 const SizedBox(width: 8.0),
-              ],
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
