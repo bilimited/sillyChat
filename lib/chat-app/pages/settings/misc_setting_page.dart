@@ -5,8 +5,8 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 
-class AutoTitleSettingsPage extends StatelessWidget {
-  const AutoTitleSettingsPage({super.key});
+class MiscSettingsPage extends StatelessWidget {
+  const MiscSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,22 +14,29 @@ class AutoTitleSettingsPage extends StatelessWidget {
     final VaultSettingController controller =
         Get.find<VaultSettingController>();
     // 获取响应式的自动标题设置模型
-    final settings = controller.autoTitleSetting;
+    final settings = controller.miscSetting;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('自动标题设置'),
+        title: const Text('杂项设置'),
       ),
       body: Obx(
         // 使用Obx包裹，以确保在模型对象本身被替换时UI能正确刷新
         () => ListView(
           padding: const EdgeInsets.all(16.0),
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+              child: Text(
+                '自动标题设置',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
             // 构建“启用自动生成标题”的开关
             SwitchListTile(
               title: const Text('启用自动生成标题'),
               subtitle: const Text('在合适的时机，自动为对话生成标题。'),
-              value: settings.value.enabled,
+              value: settings.value.autoTitle_enabled,
               onChanged: (bool value) {
                 // 使用copyWith创建一个新的模型实例来更新状态，这对于GetX的响应式更新更可靠
                 settings.value = settings.value.copyWith(enabled: value);
@@ -44,10 +51,10 @@ class AutoTitleSettingsPage extends StatelessWidget {
               onTap: () {
                 customNavigate(
                     EditChatOptionPage(
-                      option: settings.value.option,
+                      option: settings.value.autotitleOption,
                       onSave: (newOption) {
                         settings.value =
-                            settings.value.copyWith(option: newOption);
+                            settings.value.copyWith(autotitleOption: newOption);
                         controller.saveSettings();
                       },
                     ),
@@ -60,7 +67,7 @@ class AutoTitleSettingsPage extends StatelessWidget {
               context: context,
               title: '生成标题的楼层',
               description: '在对话进行到第几层时，开始生成标题',
-              initialValue: settings.value.level,
+              initialValue: settings.value.autoTitle_level,
               onChanged: (value) {
                 // 实时更新模型在内存中的值
                 settings.value = settings.value.copyWith(level: value);
@@ -71,6 +78,57 @@ class AutoTitleSettingsPage extends StatelessWidget {
               },
             ),
             const Divider(height: 32),
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+              child: Text(
+                '生成摘要设置',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+
+            ListTile(
+              title: const Text('使用的预设'),
+              subtitle: const Text('生成摘要时使用的对话预设'),
+              trailing: Icon(Icons.arrow_right),
+              onTap: () {
+                customNavigate(
+                    EditChatOptionPage(
+                      option: settings.value.summaryOption,
+                      onSave: (newOption) {
+                        settings.value =
+                            settings.value.copyWith(summaryOption: newOption);
+                        controller.saveSettings();
+                      },
+                    ),
+                    context: context);
+              },
+            ),
+            const Divider(height: 32),
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+              child: Text(
+                'AI帮答设置',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+
+            ListTile(
+              title: const Text('使用的预设'),
+              subtitle: const Text('生成AI帮答时使用的对话预设'),
+              trailing: Icon(Icons.arrow_right),
+              onTap: () {
+                customNavigate(
+                    EditChatOptionPage(
+                      option: settings.value.simulateUserOption,
+                      onSave: (newOption) {
+                        settings.value = settings.value
+                            .copyWith(simulateUserOption: newOption);
+                        controller.saveSettings();
+                      },
+                    ),
+                    context: context);
+              },
+            ),
           ],
         ),
       ),

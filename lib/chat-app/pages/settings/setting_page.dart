@@ -4,9 +4,8 @@ import 'package:flutter_example/chat-app/pages/character/character_selector.dart
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
-import 'package:flutter_example/chat-app/pages/settings/auto_title_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/misc_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
-import 'package:flutter_example/chat-app/pages/settings/summary_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -292,43 +291,20 @@ class _SettingPageState extends State<SettingPage>
               ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.title,
+                leading: Icon(Icons.miscellaneous_services,
                     color: Theme.of(context).colorScheme.secondary),
                 onTap: () {
-                  customNavigate(AutoTitleSettingsPage(), context: context);
+                  customNavigate(MiscSettingsPage(), context: context);
                 },
                 title: Text(
-                  '自动标题设置',
+                  '杂项设置',
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                  '编辑自动生成标题的相关设置',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.summarize,
-                    color: Theme.of(context).colorScheme.secondary),
-                onTap: () {
-                  customNavigate(SummarySettingsPage(), context: context);
-                },
-                title: Text(
-                  '摘要设置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '生成对话摘要&记忆系统的相关设置',
+                  '编辑自动生成标题、生成摘要和AI帮答的相关设置',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 trailing: Icon(Icons.arrow_forward_ios,

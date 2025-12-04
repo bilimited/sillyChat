@@ -126,7 +126,7 @@ class ChatSessionController extends GetxController {
       print('收到新消息...${ev.message.content}');
       if (ev.chat.needAutoTitle &&
           ev.chat.messages.length >=
-              VaultSettingController.of().autoTitleSetting.value.level) {
+              VaultSettingController.of().miscSetting.value.autoTitle_level) {
         ev.chat.needAutoTitle = false;
         generateTitle();
       }
@@ -214,7 +214,7 @@ class ChatSessionController extends GetxController {
 
   void useChatTemplate(ChatModel chat) {
     chat.needAutoTitle =
-        VaultSettingController.of().autoTitleSetting.value.enabled;
+        VaultSettingController.of().miscSetting.value.autoTitle_enabled;
     this._chat.value = chat;
     saveChat();
   }
@@ -370,21 +370,8 @@ class ChatSessionController extends GetxController {
 
   // AI帮答
   Future<List<String>> simulateUserMessage() async {
-    final simUserOption = ChatOptionModel(
-        id: -1,
-        name: 'AI帮答预设',
-        requestOptions: LLMRequestOptions(messages: []),
-        prompts: [
-          PromptModel.chatHistoryPlaceholder(),
-          PromptModel(
-              id: 2,
-              content: '''请结合历史聊天记录，根据上下文以及{{user}}的对话风格，帮{{user}}生成3条不同的预选消息。
-你应该直接输出所有的预选消息，消息之间用换行分隔，每一行只包含消息的内容。
-                  ''',
-              role: 'user',
-              name: 'name')
-        ],
-        regex: []);
+    final simUserOption =
+        VaultSettingController.of().miscSetting.value.simulateUserOption;
 
     final messages = Promptbuilder(chat, simUserOption)
         .getLLMMessageList(sender: CharacterModel.empty());
@@ -457,7 +444,7 @@ class ChatSessionController extends GetxController {
     String title = "";
     await for (String token in _getResponseInBackground(_autoTitleHandler,
         overrideOption:
-            VaultSettingController.of().autoTitleSetting.value.option)) {
+            VaultSettingController.of().miscSetting.value.autotitleOption)) {
       title += token;
     }
     chat.name = title;
@@ -468,7 +455,7 @@ class ChatSessionController extends GetxController {
   }
 
   Future<void> doLocalSummary() async {
-    final setting = VaultSettingController.of().summarySetting.value;
+    final setting = VaultSettingController.of().miscSetting.value;
     await for (var content in _getResponse(
       overrideOption: setting.summaryOption,
       overrideAssistant: CharacterController.of
@@ -485,7 +472,7 @@ class ChatSessionController extends GetxController {
   }
 
   Future<String> doSummaryBackground() async {
-    final setting = VaultSettingController.of().summarySetting.value;
+    final setting = VaultSettingController.of().miscSetting.value;
     var summary = "";
     await for (var content in _getResponseInBackground(
       _summaryHandler,

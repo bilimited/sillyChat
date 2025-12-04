@@ -250,7 +250,7 @@ class ChatController extends GetxController {
         await createUniqueFile(originalPath: fullPath, recursive: true);
 
     chat.needAutoTitle =
-        VaultSettingController.of().autoTitleSetting.value.enabled;
+        VaultSettingController.of().miscSetting.value.autoTitle_enabled;
     final String contents = json.encode(chat.toJson());
     chat.file = file;
 

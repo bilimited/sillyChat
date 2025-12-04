@@ -2,10 +2,9 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/history_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
-import 'package:flutter_example/chat-app/models/settings/auto_title_setting_model.dart';
+import 'package:flutter_example/chat-app/models/settings/misc_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
-import 'package:flutter_example/chat-app/models/settings/summary_setting_model.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
@@ -27,10 +26,13 @@ class VaultSettingController extends GetxController {
   final RxInt myId = 0.obs;
   late Rx<ChatDisplaySettingModel> displaySettingModel =
       ChatDisplaySettingModel().obs;
-  late Rx<AutoTitleSettingModel> autoTitleSetting = AutoTitleSettingModel(
-          enabled: false, level: 1, option: AutoTitleSettingModel.defaultOption)
+  late Rx<MiscSettingModel> miscSetting = MiscSettingModel(
+          autoTitle_enabled: false,
+          autoTitle_level: 1,
+          autotitleOption: MiscSettingModel.defaultAutoTitleOption,
+          summaryOption: MiscSettingModel.defaultSummaryOption,
+          simulateUserOption: MiscSettingModel.defaultSimulateUserOption)
       .obs;
-  late Rx<SummarySettingModel> summarySetting = SummarySettingModel.empty().obs;
 
   final RxBool isShowOnBoardPage = false.obs;
 
@@ -106,13 +108,8 @@ class VaultSettingController extends GetxController {
         defaultApi.value = jsonMap['defaultApi'] ?? -1;
 
         if (jsonMap['autoTileSetting'] != null) {
-          autoTitleSetting.value =
-              AutoTitleSettingModel.fromJson(jsonMap['autoTileSetting']);
-        }
-
-        if (jsonMap['summarySetting'] != null) {
-          summarySetting.value =
-              SummarySettingModel.fromJson(jsonMap['summarySetting']);
+          miscSetting.value =
+              MiscSettingModel.fromJson(jsonMap['autoTileSetting']);
         }
 
         if (jsonMap['history'] != null) {
@@ -155,8 +152,7 @@ class VaultSettingController extends GetxController {
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
         'promptSettingModel': promptSettingModel.toJson(),
-        'autoTileSetting': autoTitleSetting.toJson(),
-        'summarySetting': summarySetting.toJson(),
+        'autoTileSetting': miscSetting.toJson(),
         'history': historyModel.toJson(),
       };
 
