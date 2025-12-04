@@ -41,6 +41,36 @@ class LorebookModel {
     )..metaData.addAll(json['metaData'] ?? {});
   }
 
+  factory LorebookModel.emptyWorldBook() {
+    return LorebookModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: '空白世界书',
+        items: [],
+        scanDepth: 4,
+        maxToken: 8000,
+        type: LorebookType.world);
+  }
+
+  factory LorebookModel.emptyCharacterBook() {
+    return LorebookModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: '空白角色书',
+        items: [],
+        scanDepth: 4,
+        maxToken: 8000,
+        type: LorebookType.character);
+  }
+
+  factory LorebookModel.emptyMemoryBook() {
+    return LorebookModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: '空白记忆书',
+        items: [],
+        scanDepth: 4,
+        maxToken: 8000,
+        type: LorebookType.memory);
+  }
+
   // toJson
   Map<String, dynamic> toJson() {
     return {

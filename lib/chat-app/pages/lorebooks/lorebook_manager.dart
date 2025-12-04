@@ -150,6 +150,26 @@ class LoreBookManagerPage extends StatelessWidget {
     );
   }
 
+  void addNewLoreBook() async {
+    //final newId = DateTime.now().millisecondsSinceEpoch;
+    late LorebookModel lb;
+    switch (_selectedType.value) {
+      case LorebookType.world:
+        lb = LorebookModel.emptyWorldBook();
+        break;
+      case LorebookType.character:
+        lb = LorebookModel.emptyCharacterBook();
+        break;
+      case LorebookType.memory:
+        lb = LorebookModel.emptyMemoryBook();
+        break;
+      // default:
+      //   lb = LorebookModel.emptyWorldBook();
+      //   break;
+    }
+    await controller.addLorebook(lb);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,17 +224,7 @@ class LoreBookManagerPage extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final newId = DateTime.now().millisecondsSinceEpoch;
-          await controller.addLorebook(LorebookModel(
-            id: newId,
-            name: '新${_getTypeLabel(_selectedType.value)}书',
-            items: [],
-            scanDepth: 3,
-            maxToken: 2048,
-            type: _selectedType.value, // 创建时使用当前 Tab 的类型
-          ));
-        },
+        onPressed: addNewLoreBook,
         child: const Icon(Icons.add),
       ),
       body: Obx(() {

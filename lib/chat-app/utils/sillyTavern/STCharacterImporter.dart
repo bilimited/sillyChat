@@ -109,8 +109,9 @@ abstract class STCharacterImporter {
       final characterBook = data['character_book'];
 
       try {
-        LorebookModel? lorebookModel =
-            STLorebookImporter.fromJson(characterBook);
+        LorebookModel? lorebookModel = STLorebookImporter.fromJson(
+            characterBook,
+            type: LorebookType.character);
         if (lorebookModel != null) {
           Get.find<LoreBookController>().addLorebook(lorebookModel);
           char.lorebookIds.add(lorebookModel.id);

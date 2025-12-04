@@ -567,9 +567,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                             },
                             child: ListTile(
                               onTap: () {
+                                final lb = LoreBookController.of
+                                    .getLorebookById(lorebook?.id ?? -1);
+                                //TODO: LoreBookEditorPage不应该传入lorebook，会导致未更新。
                                 customNavigate(
                                     LoreBookEditorPage(
-                                      lorebook: lorebook,
+                                      lorebook: lb,
                                     ),
                                     context: context);
                               },
@@ -594,47 +597,70 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                       }).toList(),
                     ),
                   const SizedBox(height: 16),
-                  TextButton.icon(
-                      onPressed: () {
-                        if (_character == null) {
-                          return;
-                        }
-                        final lorebooks = _lorebookController.lorebooks
-                            .where((lorebook) =>
-                                lorebook.type == LorebookType.character)
-                            .where((lorebook) =>
-                                !_character!.lorebookIds.contains(lorebook.id))
-                            .toList();
+                  Row(
+                    children: [
+                      TextButton.icon(
+                          onPressed: () {
+                            if (_character == null) {
+                              return;
+                            }
+                            final lorebooks = _lorebookController.lorebooks
+                                .where((lorebook) =>
+                                    lorebook.type == LorebookType.character)
+                                .where((lorebook) => !_character!.lorebookIds
+                                    .contains(lorebook.id))
+                                .toList();
 
-                        // 显示一个弹窗，从中选择一个世界书
-                        Get.dialog(
-                          AlertDialog(
-                            title: const Text('选择世界书'),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: lorebooks.length,
-                                itemBuilder: (context, index) {
-                                  final lorebook = lorebooks[index];
-                                  return ListTile(
-                                    title: Text(lorebook.name),
-                                    onTap: () {
-                                      setState(() {
-                                        _character?.lorebookIds
-                                            .add(lorebook.id);
-                                      });
-                                      Get.back();
+                            // 显示一个弹窗，从中选择一个世界书
+                            Get.dialog(
+                              AlertDialog(
+                                title: const Text('选择世界书'),
+                                content: SizedBox(
+                                  width: double.maxFinite,
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: lorebooks.length,
+                                    itemBuilder: (context, index) {
+                                      final lorebook = lorebooks[index];
+                                      return ListTile(
+                                        title: Text(lorebook.name),
+                                        onTap: () {
+                                          setState(() {
+                                            _character?.lorebookIds
+                                                .add(lorebook.id);
+                                          });
+                                          Get.back();
+                                        },
+                                      );
                                     },
-                                  );
-                                },
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
-                      label: const Text('绑定世界书'),
-                      icon: const Icon(Icons.link)),
+                            );
+                          },
+                          label: const Text('绑定角色书'),
+                          icon: const Icon(Icons.link)),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      TextButton.icon(
+                          onPressed: () {
+                            final lb = LorebookModel.emptyCharacterBook();
+                            LoreBookController.of.addLorebook(lb);
+                            setState(() {
+                              _character!.lorebookIds.add(lb.id);
+                            });
+
+                            customNavigate(
+                                LoreBookEditorPage(
+                                  lorebook: lb,
+                                ),
+                                context: context);
+                          },
+                          label: const Text('添加角色书'),
+                          icon: const Icon(Icons.add)),
+                    ],
+                  ),
                 ],
               ),
             ),

@@ -24,13 +24,14 @@ abstract class STLorebookImporter {
   }
 
   static LorebookModel? fromJson(Map<String, dynamic> json,
-      {String? fileName}) {
+      {String? fileName, LorebookType type = LorebookType.world}) {
     LorebookModel lorebook = LorebookModel(
         id: DateTime.now().microsecondsSinceEpoch,
         name: json['name'] ?? fileName ?? "名称未知的世界书",
         items: [],
         scanDepth: 4,
-        maxToken: 99999);
+        maxToken: 99999,
+        type: type);
 
     List<dynamic> entries;
     if (json['entries'] is List) {
