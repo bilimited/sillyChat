@@ -21,6 +21,7 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   late TextEditingController nameController;
   late TextEditingController searchController; // 新增搜索控制器
   late List<LorebookItemModel> items;
+  late LorebookType _selectedType;
   late int id;
 
   // 简单的元数据控制器，如果需要更多设置（如scanDepth），建议放入右上角菜单或折叠面板，保持界面整洁
@@ -44,6 +45,7 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
     maxToken = lorebook?.maxToken ?? 2048;
 
     items = lorebook?.items.map((e) => e.copyWith()).toList() ?? [];
+    _selectedType = lorebook?.type ?? LorebookType.world;
 
     nameFocusNode = FocusNode();
     nameFocusNode.addListener(() {
@@ -64,12 +66,12 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
   Future<void> saveLorebook() async {
     final controller = Get.find<LoreBookController>();
     final lorebook = LorebookModel(
-      id: id,
-      name: nameController.text.trim(),
-      items: items,
-      scanDepth: scanDepth,
-      maxToken: maxToken,
-    );
+        id: id,
+        name: nameController.text.trim(),
+        items: items,
+        scanDepth: scanDepth,
+        maxToken: maxToken,
+        type: _selectedType);
     if (widget.isNew) {
       await controller.addLorebook(lorebook);
     } else {
@@ -198,9 +200,36 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
         title: const Text('编辑世界书'),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: saveLorebookAndBack,
+          PopupMenuButton<LorebookType>(
+            icon: const Icon(Icons.swap_vert),
+            tooltip: '转换类型',
+            onSelected: (type) {
+              setState(() {
+                _selectedType = type;
+              });
+              saveLorebook();
+              // 简单提示
+              final map = {
+                LorebookType.world: '世界书',
+                LorebookType.character: '角色书',
+                LorebookType.memory: '记忆书',
+              };
+              SillyChatApp.snackbar(context, '已转换为${map[type] ?? '未知类型'}');
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: LorebookType.world,
+                child: Text('转换为世界书'),
+              ),
+              const PopupMenuItem(
+                value: LorebookType.character,
+                child: Text('转换为角色书'),
+              ),
+              const PopupMenuItem(
+                value: LorebookType.memory,
+                child: Text('转换为记忆书'),
+              ),
+            ],
           ),
         ],
       ),

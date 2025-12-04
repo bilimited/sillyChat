@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
+import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -524,241 +526,119 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 16),
-        // Card(
-        //   child: Padding(
-        //     padding: const EdgeInsets.all(16),
-        //     child: Column(
-        //       crossAxisAlignment: CrossAxisAlignment.start,
-        //       children: [
-        //         const Text(
-        //           '备份管理',
-        //           style: TextStyle(
-        //             fontSize: 16,
-        //             fontWeight: FontWeight.w500,
-        //           ),
-        //         ),
-        //         const SizedBox(height: 16),
-        //         ReorderableListView(
-        //           shrinkWrap: true,
-        //           physics: const NeverScrollableScrollPhysics(),
-        //           onReorder: (oldIndex, newIndex) {
-        //             setState(() {
-        //               final backups = _character?.backups ?? [];
-        //               if (oldIndex < newIndex) newIndex -= 1;
-        //               final item = backups.removeAt(oldIndex);
-        //               backups.insert(newIndex, item);
-        //               _character?.backups = List<CharacterModel>.from(backups);
-        //             });
-        //           },
-        //           children: [
-        //             for (int i = 0; i < (_character?.backups?.length ?? 0); i++)
-        //               ListTile(
-        //                 key: ValueKey('backup_$i'),
-        //                 title: Text(
-        //                   '${_character!.backups![i].roleName}-${_character!.backups![i].remark}',
-        //                   overflow: TextOverflow.ellipsis,
-        //                 ),
-        //                 trailing: Row(
-        //                   mainAxisSize: MainAxisSize.min,
-        //                   children: [
-        //                     IconButton(
-        //                       icon: const Icon(Icons.upload),
-        //                       tooltip: '应用',
-        //                       onPressed: () async {
-        //                         final confirmed = await Get.dialog<bool>(
-        //                           AlertDialog(
-        //                             title: const Text('确认应用备份'),
-        //                             content: const Text('确定要应用此备份吗？当前内容将被覆盖。'),
-        //                             actions: [
-        //                               TextButton(
-        //                                 onPressed: () =>
-        //                                     Get.back(result: false),
-        //                                 child: const Text('取消'),
-        //                               ),
-        //                               TextButton(
-        //                                 onPressed: () => Get.back(result: true),
-        //                                 child: const Text('确定'),
-        //                               ),
-        //                             ],
-        //                           ),
-        //                         );
-        //                         if (confirmed == true) {
-        //                           final backup = _character!.backups![i];
-        //                           _applyBackup(backup);
-        //                           _tabController.index = 0;
-        //                         }
-        //                       },
-        //                     ),
-        //                     IconButton(
-        //                       icon: const Icon(Icons.download),
-        //                       tooltip: '覆盖',
-        //                       onPressed: () async {
-        //                         final confirmed = await Get.dialog<bool>(
-        //                           AlertDialog(
-        //                             title: const Text('确认覆盖备份'),
-        //                             content: const Text('确定要用当前内容覆盖此备份吗？'),
-        //                             actions: [
-        //                               TextButton(
-        //                                 onPressed: () =>
-        //                                     Get.back(result: false),
-        //                                 child: const Text('取消'),
-        //                               ),
-        //                               TextButton(
-        //                                 onPressed: () => Get.back(result: true),
-        //                                 child: const Text('确定'),
-        //                               ),
-        //                             ],
-        //                           ),
-        //                         );
-        //                         if (confirmed == true) {
-        //                           setState(() {
-        //                             final backup = _saveCharacter();
-
-        //                             if (backup != null) {
-        //                               backup.backups = null;
-        //                               _character!.backups![i] = backup;
-        //                             }
-        //                           });
-        //                         }
-        //                       },
-        //                     ),
-        //                     IconButton(
-        //                       icon: const Icon(Icons.delete),
-        //                       tooltip: '删除',
-        //                       onPressed: () async {
-        //                         final confirmed = await Get.dialog<bool>(
-        //                           AlertDialog(
-        //                             title: const Text('确认删除备份'),
-        //                             content: const Text('确定要删除此备份吗？'),
-        //                             actions: [
-        //                               TextButton(
-        //                                 onPressed: () =>
-        //                                     Get.back(result: false),
-        //                                 child: const Text('取消'),
-        //                               ),
-        //                               TextButton(
-        //                                 onPressed: () => Get.back(result: true),
-        //                                 child: const Text('确定'),
-        //                               ),
-        //                             ],
-        //                           ),
-        //                         );
-        //                         if (confirmed == true) {
-        //                           setState(() {
-        //                             _character!.backups!.removeAt(i);
-        //                           });
-        //                         }
-        //                       },
-        //                     ),
-        //                   ],
-        //                 ),
-        //               ),
-        //           ],
-        //         ),
-        //         const SizedBox(height: 12),
-        //         Align(
-        //           alignment: Alignment.centerLeft,
-        //           child: ElevatedButton.icon(
-        //             icon: const Icon(Icons.add),
-        //             label: const Text('添加备份'),
-        //             onPressed: () {
-        //               setState(() {
-        //                 final backup = _saveCharacter();
-
-        //                 if (backup != null) {
-        //                   // 备份不能被备份
-        //                   backup.backups = null;
-        //                   _character?.backups ??= [];
-        //                   _character!.backups!.add(backup.copyWith());
-        //                 }
-        //               });
-        //             },
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
-        // const SizedBox(height: 16),
-        Card(
-          // 角色绑定的世界书管理
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '世界书绑定',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (_character != null && _character!.lorebookIds.isEmpty)
-                  const SizedBox(
-                    height: 40,
-                    child: Center(
-                      child: Text(
-                        '当前角色未绑定任何世界书',
-                        style: TextStyle(color: Colors.grey),
-                      ),
+        if (_character != null)
+          Card(
+            // 角色绑定的世界书管理
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '世界书绑定',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
-                  )
-                else if (_character != null &&
-                    _character!.lorebookIds.isNotEmpty)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _character!.lorebookIds.map((id) {
-                      final lorebook =
-                          _lorebookController.getLorebookById(id); // 获取绑定的世界书
-                      return Chip(
-                        label: Text(lorebook?.name ?? '未知世界书'),
-                        onDeleted: () {
-                          setState(() {
-                            _character!.lorebookIds.remove(id);
-                          });
-                        },
-                      );
-                    }).toList(),
                   ),
-                const SizedBox(height: 16),
-                TextButton.icon(
-                    onPressed: () {
-                      // 显示一个弹窗，从中选择一个世界书
-                      Get.dialog(
-                        AlertDialog(
-                          title: const Text('选择世界书'),
-                          content: SizedBox(
-                            width: double.maxFinite,
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: _lorebookController.lorebooks.length,
-                              itemBuilder: (context, index) {
-                                final lorebook =
-                                    _lorebookController.lorebooks[index];
-                                return ListTile(
-                                  title: Text(lorebook.name),
-                                  onTap: () {
-                                    setState(() {
-                                      _character?.lorebookIds.add(lorebook.id);
-                                    });
-                                    Get.back();
-                                  },
-                                );
+                  const SizedBox(height: 16),
+                  if (_character != null && _character!.lorebookIds.isEmpty)
+                    const SizedBox(
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          '当前角色未绑定任何世界书',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    )
+                  else if (_character != null &&
+                      _character!.lorebookIds.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: _character!.lorebookIds.map((id) {
+                        final lorebook =
+                            _lorebookController.getLorebookById(id);
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          child: InkWell(
+                            onTap: () {
+                              if (lorebook != null) {}
+                            },
+                            child: ListTile(
+                              onTap: () {
+                                customNavigate(
+                                    LoreBookEditorPage(
+                                      lorebook: lorebook,
+                                    ),
+                                    context: context);
                               },
+                              title: Text(lorebook?.name ?? '未知世界书'),
+                              subtitle: Text(
+                                // TODO: 改成总Token，
+                                "共${lorebook?.items?.length ?? '未知'}条",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.link_off),
+                                onPressed: () {
+                                  setState(() {
+                                    _character!.lorebookIds.remove(id);
+                                  });
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                    label: const Text('绑定世界书'),
-                    icon: const Icon(Icons.link)),
-              ],
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                      onPressed: () {
+                        if (_character == null) {
+                          return;
+                        }
+                        final lorebooks = _lorebookController.lorebooks
+                            .where((lorebook) =>
+                                lorebook.type == LorebookType.character)
+                            .where((lorebook) =>
+                                !_character!.lorebookIds.contains(lorebook.id))
+                            .toList();
+
+                        // 显示一个弹窗，从中选择一个世界书
+                        Get.dialog(
+                          AlertDialog(
+                            title: const Text('选择世界书'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: lorebooks.length,
+                                itemBuilder: (context, index) {
+                                  final lorebook = lorebooks[index];
+                                  return ListTile(
+                                    title: Text(lorebook.name),
+                                    onTap: () {
+                                      setState(() {
+                                        _character?.lorebookIds
+                                            .add(lorebook.id);
+                                      });
+                                      Get.back();
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      label: const Text('绑定世界书'),
+                      icon: const Icon(Icons.link)),
+                ],
+              ),
             ),
-          ),
-        )
+          )
       ],
     );
   }

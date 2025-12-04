@@ -1,12 +1,20 @@
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 
-class LorebookModel {
+enum LorebookType {
+  world, // 全局世界书
+  character, // 角色书
+  memory, // 记忆书
+}
 
+class LorebookModel {
   final int id;
   final String name;
   final List<LorebookItemModel> items;
   final int scanDepth;
   final int maxToken;
+
+  final LorebookType type;
+  final Map<String, dynamic> metaData = {};
 
   LorebookModel({
     required this.id,
@@ -14,6 +22,7 @@ class LorebookModel {
     required this.items,
     required this.scanDepth,
     required this.maxToken,
+    this.type = LorebookType.world,
   });
 
   // fromJson
@@ -26,7 +35,10 @@ class LorebookModel {
           .toList(),
       scanDepth: json['scanDepth'] as int,
       maxToken: json['maxToken'] as int,
-    );
+      type: LorebookType.values.firstWhere(
+          (e) => e.toString().split('.').last == json['type'],
+          orElse: () => LorebookType.world),
+    )..metaData.addAll(json['metaData'] ?? {});
   }
 
   // toJson
@@ -37,6 +49,8 @@ class LorebookModel {
       'items': items.map((e) => e.toJson()).toList(),
       'scanDepth': scanDepth,
       'maxToken': maxToken,
+      'metaData': metaData,
+      'type': type.toString().split('.').last,
     };
   }
 
@@ -47,6 +61,8 @@ class LorebookModel {
     List<LorebookItemModel>? items,
     int? scanDepth,
     int? maxToken,
+    Map<String, dynamic>? metaData,
+    LorebookType? type,
   }) {
     return LorebookModel(
       id: id ?? this.id,
@@ -54,9 +70,7 @@ class LorebookModel {
       items: items ?? List<LorebookItemModel>.from(this.items),
       scanDepth: scanDepth ?? this.scanDepth,
       maxToken: maxToken ?? this.maxToken,
-    );
+      type: type ?? this.type,
+    )..metaData.addAll(metaData ?? this.metaData);
   }
-
-
-
 }
