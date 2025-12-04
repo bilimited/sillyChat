@@ -15,6 +15,7 @@ import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
@@ -132,6 +133,14 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!SettingController.of.checkVersion()) {
+        SillyChatApp.showChangelogDialog(context: context);
+        SettingController.of.updateVersion();
+      }
+    });
+
     _registerController(widget.sessionController);
     // if (chat.mode != null) {
     //   mode = chat.mode!;

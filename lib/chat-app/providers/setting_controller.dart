@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/main.dart';
@@ -18,6 +19,9 @@ class SettingController extends GetxController {
   static String webdav_url = '';
   static String webdav_password = '';
   static String webdav_username = '';
+
+  // 应用上次打开的版本
+  static String last_version = "";
 
   static RxMap<ServiceProvider, List<String>> cachedModelList =
       <ServiceProvider, List<String>>{}.obs;
@@ -100,6 +104,7 @@ class SettingController extends GetxController {
         final String contents = await file.readAsString();
         final Map<String, dynamic> settings = json.decode(contents);
         currectValutName = settings['currectVaultName'] ?? '';
+        last_version = settings['lastVersion'] ?? '';
       }
     } catch (e) {
       print('加载全局设置失败: $e');
@@ -120,6 +125,7 @@ class SettingController extends GetxController {
         webdav_password = settings['webdav_password'] ?? '';
         isDarkMode.value = settings['isDarkMode'] ?? false;
         currectValutName = settings['currectVaultName'] ?? '';
+        last_version = settings['lastVersion'] ?? '';
 
         cachedModelList.value = (jsonDecode(settings['cachedModelList'] ?? '')
                 as Map<String, dynamic>)
@@ -146,7 +152,8 @@ class SettingController extends GetxController {
         'webdav_username': webdav_username,
         'webdav_password': webdav_password,
         'cachedModelList': jsonEncode(
-            cachedModelList.map((key, value) => MapEntry(key.toJson(), value)))
+            cachedModelList.map((key, value) => MapEntry(key.toJson(), value))),
+        'lastVersion': SillyChatApp.getVersion()
       };
 
       final String jsonString = json.encode(settings);
@@ -154,6 +161,21 @@ class SettingController extends GetxController {
     } catch (e) {
       print('保存全局设置失败: $e');
     }
+  }
+
+  /**
+   * 检查版本是否已经升级
+   */
+  bool checkVersion() {
+    if (!Constants.SHOW_CHANGE_LOG) {
+      return true;
+    }
+    return last_version.startsWith('v1.17');
+  }
+
+  void updateVersion() {
+    last_version = SillyChatApp.getVersion();
+    saveGlobalSettings();
   }
 
   // 修改toggleDarkMode方法

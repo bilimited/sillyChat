@@ -9,6 +9,7 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
@@ -167,6 +168,8 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
         }
       }
       await vault.saveSettings();
+
+      SettingController.of.updateVersion();
     } catch (e) {
       Get.snackbar("初始化时出现问题", '$e');
     }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
 import 'package:flutter_example/chat-app/mobile_main_page.dart';
 import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/test.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -108,6 +110,50 @@ class SillyChatApp extends StatelessWidget {
 
   static String getVersion() {
     return "v${packageInfo.version}";
+  }
+
+  static void showChangelogDialog({
+    required BuildContext context,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('更新日志'),
+          content: SizedBox(
+            width: double.maxFinite, // 确保宽度撑满
+            height: 400,
+            child: SingleChildScrollView(
+              child: Markdown(
+                data: Constants.CHANGE_LOG,
+                shrinkWrap: true,
+                physics:
+                    const NeverScrollableScrollPhysics(), // 禁用 Markdown 内部滚动，由外层 ScrollView 控制
+                // 可选：自定义样式
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(fontSize: 14),
+                  h1: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                  h2: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                  h3: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  // 其他样式可按需调整
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// 用于显示单行提示消息。显示错误信息请使用Get.snackbar。
