@@ -17,6 +17,7 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
+import 'package:flutter_example/chat-app/utils/chat/token_calc.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -41,6 +42,7 @@ class ChatSessionController extends GetxController {
   RxBool isGeneratingTitle = false.obs;
   RxBool isCommandPinned = false.obs; // 附加指令是否常驻
   RxBool isLock = false.obs; // 是否锁定当前聊天（用于"多窗口"）
+  RxInt cachedTokens = 0.obs;
 
   int backGroundTasks = 0; // 后台正在执行的任务数量（如生成标题等）
 
@@ -198,6 +200,7 @@ class ChatSessionController extends GetxController {
     }
 
     isLoading.value = false;
+    updateTokens();
   }
 
   Future<void> saveChat() async {
@@ -209,6 +212,10 @@ class ChatSessionController extends GetxController {
       await ChatController.of
           .updateChatMeta(file.path, ChatMetaModel.fromChatModel(chat));
       print('save Chat');
+
+      // 异步执行Token计算
+      // TODO:添加防抖
+      updateTokens();
     } else {
       Get.snackbar('聊天${file.path}保存失败.', '聊天文件不存在');
     }
@@ -238,6 +245,17 @@ class ChatSessionController extends GetxController {
       }
     };
     //_onChatUpdate(chat);
+  }
+
+  Future<void> updateTokens() async {
+    final messages =
+        Promptbuilder(chat, chat.assistant.bindOption).getLLMMessageList();
+    String allContent = "";
+    messages.forEach((m) {
+      allContent += m.content;
+    });
+
+    cachedTokens.value = TokenCalc.estimateTokens(allContent);
   }
 
   void closeWebController() {
