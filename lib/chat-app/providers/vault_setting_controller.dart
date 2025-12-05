@@ -31,7 +31,8 @@ class VaultSettingController extends GetxController {
           autoTitle_level: 1,
           autotitleOption: MiscSettingModel.defaultAutoTitleOption,
           summaryOption: MiscSettingModel.defaultSummaryOption,
-          simulateUserOption: MiscSettingModel.defaultSimulateUserOption)
+          simulateUserOption: MiscSettingModel.defaultSimulateUserOption,
+          genMemOption: MiscSettingModel.defaultGenMemOption)
       .obs;
 
   final RxBool isShowOnBoardPage = false.obs;

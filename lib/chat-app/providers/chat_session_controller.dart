@@ -457,7 +457,7 @@ class ChatSessionController extends GetxController {
   }
 
   // 获取上下文中涉及的所有的角色（不是“聊天成员”）。
-  List<int> _getAllCharactersInContext() {
+  List<int> getAllCharactersInContext() {
     Set<int> chars = Set();
     chat.messages.forEach((msg) {
       chars.add(msg.senderId);
@@ -481,18 +481,21 @@ class ChatSessionController extends GetxController {
     }
   }
 
-  Future<void> genenateMemory() async {
+  Future<String> genenateMemory() async {
     final summary = await genMemoryBackground();
 
-    _getAllCharactersInContext()
-        .where((char) => char != Constants.USER_ID)
-        .forEach((char) {
+    final allChars =
+        getAllCharactersInContext().where((char) => char != Constants.USER_ID);
+
+    allChars.forEach((char) {
       MemoryUtils.tryAddMemoryToCharacter(char, summary);
     });
 
     for (final msg in chat.messages) {
       msg.visbility = MessageVisbility.hidden;
     }
+
+    return summary;
   }
 
   Future<String> genMemoryBackground() async {
@@ -500,7 +503,7 @@ class ChatSessionController extends GetxController {
     var summary = "";
     await for (var content in _getResponseInBackground(
       _summaryHandler,
-      overrideOption: setting.summaryOption,
+      overrideOption: setting.genMemOption,
     )) {
       summary += content;
     }

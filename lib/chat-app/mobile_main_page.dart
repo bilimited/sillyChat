@@ -115,10 +115,21 @@ class _MainPageMobileState extends State<MainPageMobile> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 等间距分布
                 children: [
-                  _buildTopIconBtn(Icons.chat_bubble, 0),
-                  _buildTopIconBtn(Icons.people, 1),
-                  _buildTopIconBtn(Icons.dashboard, 2),
-                  _buildTopIconBtn(Icons.book, 3),
+                  _buildTopIconBtn(
+                      _currentIndex == 0
+                          ? Icons.chat_bubble
+                          : Icons.chat_bubble_outline,
+                      0),
+                  _buildTopIconBtn(
+                      _currentIndex == 1 ? Icons.people : Icons.people_outline,
+                      1),
+                  _buildTopIconBtn(
+                      _currentIndex == 2
+                          ? Icons.dashboard
+                          : Icons.dashboard_outlined,
+                      2),
+                  _buildTopIconBtn(
+                      _currentIndex == 3 ? Icons.book : Icons.book_outlined, 3),
                 ],
               ),
 

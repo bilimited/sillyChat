@@ -72,6 +72,7 @@ class CharacterModel {
   int? memoryBookId; // 记忆书ID
   LorebookModel? get memoryBook =>
       LoreBookController.of.getLorebookById(memoryBookId ?? -1);
+  bool get canGenMemory => memoryBook != null;
 
   int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
 

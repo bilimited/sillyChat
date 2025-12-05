@@ -8,16 +8,17 @@ class MiscSettingModel {
   final ChatOptionModel autotitleOption; // 生成标题使用的预设
 
   final ChatOptionModel summaryOption;
+  final ChatOptionModel genMemOption;
 
   final ChatOptionModel simulateUserOption;
 
-  MiscSettingModel({
-    required this.autoTitle_enabled,
-    required this.autoTitle_level,
-    required this.autotitleOption,
-    required this.summaryOption,
-    required this.simulateUserOption,
-  });
+  MiscSettingModel(
+      {required this.autoTitle_enabled,
+      required this.autoTitle_level,
+      required this.autotitleOption,
+      required this.summaryOption,
+      required this.simulateUserOption,
+      required this.genMemOption});
 
   toJson() {
     return {
@@ -26,22 +27,27 @@ class MiscSettingModel {
       'autoTitleOption': autotitleOption.toJson(),
       'summaryOption': summaryOption.toJson(),
       'simulateUserOption': simulateUserOption.toJson(),
+      'genMemOption': genMemOption.toJson()
     };
   }
 
   factory MiscSettingModel.fromJson(Map<String, dynamic> json) {
     return MiscSettingModel(
-        autoTitle_enabled: json['autoTitle_enabled'] ?? false,
-        autoTitle_level: json['autoTitle_level'] ?? 1,
-        autotitleOption: json['autoTitleOption'] != null
-            ? ChatOptionModel.fromJson(json['autoTitleOption'])
-            : defaultAutoTitleOption,
-        summaryOption: json['summaryOption'] != null
-            ? ChatOptionModel.fromJson(json['summaryOption'])
-            : defaultSummaryOption,
-        simulateUserOption: json['simulateUserOption'] != null
-            ? ChatOptionModel.fromJson(json['simulateUserOption'])
-            : defaultSimulateUserOption);
+      autoTitle_enabled: json['autoTitle_enabled'] ?? false,
+      autoTitle_level: json['autoTitle_level'] ?? 1,
+      autotitleOption: json['autoTitleOption'] != null
+          ? ChatOptionModel.fromJson(json['autoTitleOption'])
+          : defaultAutoTitleOption,
+      summaryOption: json['summaryOption'] != null
+          ? ChatOptionModel.fromJson(json['summaryOption'])
+          : defaultSummaryOption,
+      simulateUserOption: json['simulateUserOption'] != null
+          ? ChatOptionModel.fromJson(json['simulateUserOption'])
+          : defaultSimulateUserOption,
+      genMemOption: json['genMemOption'] != null
+          ? ChatOptionModel.fromJson(json['genMemOption'])
+          : defaultGenMemOption,
+    );
   }
 
   MiscSettingModel copyWith({
@@ -50,14 +56,15 @@ class MiscSettingModel {
     ChatOptionModel? autotitleOption,
     ChatOptionModel? summaryOption,
     ChatOptionModel? simulateUserOption,
+    ChatOptionModel? genMemOption,
   }) {
     return MiscSettingModel(
-      autoTitle_enabled: enabled ?? this.autoTitle_enabled,
-      autoTitle_level: level ?? this.autoTitle_level,
-      autotitleOption: autotitleOption ?? this.autotitleOption,
-      summaryOption: summaryOption ?? this.summaryOption,
-      simulateUserOption: simulateUserOption ?? this.simulateUserOption,
-    );
+        autoTitle_enabled: enabled ?? this.autoTitle_enabled,
+        autoTitle_level: level ?? this.autoTitle_level,
+        autotitleOption: autotitleOption ?? this.autotitleOption,
+        summaryOption: summaryOption ?? this.summaryOption,
+        simulateUserOption: simulateUserOption ?? this.simulateUserOption,
+        genMemOption: genMemOption ?? this.genMemOption);
   }
 
   static ChatOptionModel get defaultAutoTitleOption {
@@ -94,7 +101,8 @@ class MiscSettingModel {
           PromptModel.chatHistoryPlaceholder(),
           PromptModel(
               id: DateTime.now().microsecondsSinceEpoch,
-              content: '''Request:请将之前发生的事进行总结，按时间或逻辑顺序保留关键信息，省略冗余描述。''',
+              content:
+                  '''Request:请将之前发生的事进行总结，按时间或逻辑顺序保留关键信息，省略冗余描述。请直接输出总结内容。''',
               role: 'user',
               name: '总结指令')
         ],
@@ -114,7 +122,25 @@ class MiscSettingModel {
 你应该直接输出所有的预选消息，消息之间用换行分隔，每一行只包含消息的内容。
                   ''',
               role: 'user',
-              name: 'name')
+              name: '指令')
+        ],
+        regex: []);
+  }
+
+  static ChatOptionModel get defaultGenMemOption {
+    return ChatOptionModel(
+        id: 0,
+        name: '生成记忆',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel.chatHistoryPlaceholder(),
+          PromptModel(
+              id: 2,
+              content:
+                  '''Request:请将之前发生的事进行总结，按时间或逻辑顺序保留关键信息，省略冗余描述。输出格式为：第一行是"{{time}}"，第二行是总结内容，第三行是空行。
+现在直接输出总结。''',
+              role: 'user',
+              name: '指令')
         ],
         regex: []);
   }

@@ -262,7 +262,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
                       ),
                       RegexPatternTextStyle(
                         regexPattern:
-                            r'{{archive}}|{{description}}|{{relations}}|{{recent-characters:\d+}}',
+                            r'{{archive}}|{{description}}|{{relations}}|{{recent-characters:\d+}}|{{time}}',
                         textStyle: const TextStyle(
                             color: Colors.blueAccent,
                             fontWeight: FontWeight.bold),

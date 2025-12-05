@@ -43,7 +43,6 @@ class MiscSettingsPage extends StatelessWidget {
                 controller.saveSettings(); // 保存设置
               },
             ),
-            const Divider(height: 32),
             ListTile(
               title: const Text('使用的预设'),
               subtitle: const Text('生成标题时使用的对话预设'),
@@ -87,7 +86,7 @@ class MiscSettingsPage extends StatelessWidget {
             ),
 
             ListTile(
-              title: const Text('使用的预设'),
+              title: const Text('摘要预设'),
               subtitle: const Text('生成摘要时使用的对话预设'),
               trailing: Icon(Icons.arrow_right),
               onTap: () {
@@ -97,6 +96,23 @@ class MiscSettingsPage extends StatelessWidget {
                       onSave: (newOption) {
                         settings.value =
                             settings.value.copyWith(summaryOption: newOption);
+                        controller.saveSettings();
+                      },
+                    ),
+                    context: context);
+              },
+            ),
+            ListTile(
+              title: const Text('生成记忆预设'),
+              subtitle: const Text('生成记忆时使用的对话预设'),
+              trailing: Icon(Icons.arrow_right),
+              onTap: () {
+                customNavigate(
+                    EditChatOptionPage(
+                      option: settings.value.genMemOption,
+                      onSave: (newOption) {
+                        settings.value =
+                            settings.value.copyWith(genMemOption: newOption);
                         controller.saveSettings();
                       },
                     ),

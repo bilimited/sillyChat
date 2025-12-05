@@ -6,7 +6,7 @@ class Constants {
 
 此外，旧版本中的自动标题设置和摘要生成设置也会被重置。
 """;
-  static const SHOW_CHANGE_LOG = true;
+  static const SHOW_CHANGE_LOG = false;
 
   // TODO:替换所有的硬编码chat
   static const CHAT_FOLDER_NAME = 'chat';

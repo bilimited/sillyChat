@@ -707,6 +707,15 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _genMemory() async {
+    if (sessionController
+        .getAllCharactersInContext()
+        .map((char) => CharacterController.of.getCharacterById(char))
+        .where((char) => char.canGenMemory)
+        .isEmpty) {
+      SillyChatApp.snackbar(context, "没有可以用于生成记忆的角色，请先给角色添加记忆库");
+      return;
+    }
+
     final colors = Theme.of(context).colorScheme;
     Get.dialog(
       AlertDialog(
@@ -714,18 +723,20 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
-            Text('正在生成总结...', style: TextStyle(color: colors.outline)),
+            Text('正在生成记忆...', style: TextStyle(color: colors.outline)),
           ],
         ),
       ),
       barrierDismissible: false,
     );
+
     await sessionController.genenateMemory();
     if (SillyChatApp.isDesktop()) {
       Navigator.pop(context);
     } else {
       Get.back();
     }
+    setState(() {});
   }
 
   void _startMultiSelect(MessageModel firstSelectedMessage) {
