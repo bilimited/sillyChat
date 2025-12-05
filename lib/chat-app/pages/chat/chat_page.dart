@@ -272,57 +272,57 @@ class _ChatPageState extends State<ChatPage> {
                   },
                 ),
               ],
-              ListTile(
-                leading: message.bookmark != null
-                    ? const Icon(Icons.bookmark)
-                    : const Icon(Icons.bookmark_add),
-                title: message.bookmark != null
-                    ? Text(message.bookmark!)
-                    : const Text('设为书签'),
-                onTap: () {
-                  Get.back();
-                  Get.dialog(
-                    AlertDialog(
-                      title: const Text('编辑书签'),
-                      content: TextFormField(
-                        initialValue: message.bookmark ?? '',
-                        decoration: const InputDecoration(
-                          hintText: '输入书签内容',
-                        ),
-                        onChanged: (value) {
-                          message.bookmark = value;
-                        },
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text('取消'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            if ((message.bookmark ?? '').isNotEmpty) {
-                              sessionController.updateMessage(
-                                  message.time, message);
-                            }
-                            Get.back();
-                          },
-                          child: const Text('提交'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            message.bookmark = null;
-                            sessionController.updateMessage(
-                                message.time, message);
-                            Get.back();
-                          },
-                          child: const Text('删除'),
-                        ),
-                      ],
-                    ),
-                  );
-                  _updateChat();
-                },
-              ),
+              // ListTile(
+              //   leading: message.bookmark != null
+              //       ? const Icon(Icons.bookmark)
+              //       : const Icon(Icons.bookmark_add),
+              //   title: message.bookmark != null
+              //       ? Text(message.bookmark!)
+              //       : const Text('设为书签'),
+              //   onTap: () {
+              //     Get.back();
+              //     Get.dialog(
+              //       AlertDialog(
+              //         title: const Text('编辑书签'),
+              //         content: TextFormField(
+              //           initialValue: message.bookmark ?? '',
+              //           decoration: const InputDecoration(
+              //             hintText: '输入书签内容',
+              //           ),
+              //           onChanged: (value) {
+              //             message.bookmark = value;
+              //           },
+              //         ),
+              //         actions: [
+              //           TextButton(
+              //             onPressed: () => Get.back(),
+              //             child: const Text('取消'),
+              //           ),
+              //           TextButton(
+              //             onPressed: () {
+              //               if ((message.bookmark ?? '').isNotEmpty) {
+              //                 sessionController.updateMessage(
+              //                     message.time, message);
+              //               }
+              //               Get.back();
+              //             },
+              //             child: const Text('提交'),
+              //           ),
+              //           TextButton(
+              //             onPressed: () {
+              //               message.bookmark = null;
+              //               sessionController.updateMessage(
+              //                   message.time, message);
+              //               Get.back();
+              //             },
+              //             child: const Text('删除'),
+              //           ),
+              //         ],
+              //       ),
+              //     );
+              //     _updateChat();
+              //   },
+              // ),
               ListTile(
                 leading: const Icon(Icons.image),
                 title: const Text('添加图片'),
@@ -706,9 +706,8 @@ class _ChatPageState extends State<ChatPage> {
     ChatController.of.currentChat.value = ChatSessionController(fp);
   }
 
-  void _summaryInNewChat() async {
+  void _genMemory() async {
     final colors = Theme.of(context).colorScheme;
-    // 显示加载对话框
     Get.dialog(
       AlertDialog(
         content: Row(
@@ -721,30 +720,12 @@ class _ChatPageState extends State<ChatPage> {
       ),
       barrierDismissible: false,
     );
-    final content = await sessionController.doSummaryBackground();
+    await sessionController.genenateMemory();
     if (SillyChatApp.isDesktop()) {
       Navigator.pop(context);
     } else {
       Get.back();
     }
-
-    if (content.isEmpty) {
-      return;
-    }
-    final newChat =
-        chat.copyWith(isCopyFile: false, name: chat.name + '-总结', messages: [
-      MessageModel(
-          id: DateTime.now().microsecondsSinceEpoch,
-          content: content,
-          senderId: -2,
-          time: DateTime.now(),
-          alternativeContent: [null],
-          style: MessageStyle.summary),
-    ]);
-    // 简单的复制聊天方法
-    final fp =
-        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
-    ChatController.of.currentChat.value = ChatSessionController(fp);
   }
 
   void _startMultiSelect(MessageModel firstSelectedMessage) {
@@ -1387,11 +1368,8 @@ class _ChatPageState extends State<ChatPage> {
         if (value == 'local_summary') {
           // 执行操作1
           sessionController.doLocalSummary();
-        } else if (value == 'summary_in_new_chat') {
-          // 执行操作2
-          _summaryInNewChat();
-        } else if (value == 'global_summary') {
-          //final content = await sessionController.doSummaryBackground();
+        } else if (value == 'gen_memory') {
+          _genMemory();
         } else if (value == 'new_chat') {
           _copyThisChat();
         } else if (value == 'auto_title') {
@@ -1425,52 +1403,53 @@ class _ChatPageState extends State<ChatPage> {
                 size: 22,
               ),
               SizedBox(width: 12),
-              Text('在聊天中总结'),
+              Text('聊天内总结'),
             ],
           ),
         ),
         PopupMenuItem<String>(
-          value: 'summary_in_new_chat',
+          value: 'gen_memory',
           child: Row(
             children: [
               Icon(
-                Icons.chat_bubble_outline,
+                Icons.memory,
                 color: Theme.of(context).iconTheme.color,
                 size: 22,
               ),
               SizedBox(width: 12),
-              Text('总结并开启新聊天'),
+              Text('生成记忆'),
             ],
           ),
         ),
         // PopupMenuItem<String>(
-        //   value: 'ai_help_answer',
+        //   value: 'summary_in_new_chat',
         //   child: Row(
         //     children: [
         //       Icon(
-        //         Icons.book,
+        //         Icons.chat_bubble_outline,
         //         color: Theme.of(context).iconTheme.color,
         //         size: 22,
         //       ),
         //       SizedBox(width: 12),
-        //       Text('AI帮答'),
+        //       Text('总结并开启新聊天'),
         //     ],
         //   ),
         // ),
-        PopupMenuItem<String>(
-          value: 'new_chat',
-          child: Row(
-            children: [
-              Icon(
-                Icons.add_comment,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              SizedBox(width: 12),
-              Text('开启新话题'),
-            ],
-          ),
-        ),
+
+        // PopupMenuItem<String>(
+        //   value: 'new_chat',
+        //   child: Row(
+        //     children: [
+        //       Icon(
+        //         Icons.add_comment,
+        //         color: Theme.of(context).iconTheme.color,
+        //         size: 22,
+        //       ),
+        //       SizedBox(width: 12),
+        //       Text('开启新话题'),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }

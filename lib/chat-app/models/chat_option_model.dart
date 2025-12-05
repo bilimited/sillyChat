@@ -124,7 +124,11 @@ class ChatOptionModel {
 # 用户设定
 我是{{user}}。
 {{userbrief}}
-现在，我将开始与你聊天。
+
+# 聊天回忆
+{{lore memory}}
+
+# 对话正文
 """;
 
     return ChatOptionModel(

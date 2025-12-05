@@ -44,7 +44,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   String? _avatarPath;
   String? _backgroundPath;
-  List<CharacterMemory> _memories = [];
 
   CharacterModel? _character;
   bool get isEditMode => widget.characterId != null;
@@ -80,7 +79,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             .getCharacterById(widget.characterId!)
             .bindOptionId
         : null;
-    _memories = _character?.memories ?? [];
 
     if (!ChatOptionController.of()
         .chatOptions
@@ -124,7 +122,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           _categoryController.text.isEmpty ? "默认" : _categoryController.text,
       lorebookIds: _character?.lorebookIds ?? [],
       firstMessage: _firstMessageController.text,
-      memories: _memories,
     )
       ..moreFirstMessage = _character?.moreFirstMessage ?? []
       ..backgroundImage = _backgroundPath
@@ -132,34 +129,9 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..relations = _character?.relations ?? {}
       ..archive = _archiveController.text
       ..messageStyle = _character?.messageStyle ?? MessageStyle.common
-      ..backups = _character?.backups ?? []
-      ..bindOptionId = _bindOption;
+      ..bindOptionId = _bindOption
+      ..memoryBookId = _character?.memoryBookId;
   }
-
-  // void _applyBackup(CharacterModel backup) {
-  //   setState(() {
-  //     _nickNameController.text = backup.roleName;
-  //     _nameController.text = backup.remark;
-  //     _descriptionController.text = backup.description ?? '';
-  //     _categoryController.text = backup.category;
-  //     _briefController.text = backup.brief ?? '';
-  //     _archiveController.text = backup.archive;
-  //     _firstMessageController.text = backup.firstMessage ?? '';
-
-  //     // 头像和背景不拷贝
-  //     //_avatarPath = backup.avatar;
-  //     //_backgroundPath = backup.backgroundImage;
-
-  //     // 关系：深拷贝
-  //     Map<int, Relation> newRelations = {};
-  //     for (var relation in backup.relations.values) {
-  //       newRelations[relation.targetId] = relation.copy();
-  //     }
-  //     _character!.relations = Map.from(newRelations);
-
-  //     _character!.messageStyle = backup.messageStyle;
-  //   });
-  // }
 
   Future<void> _save() async {
     final character = _saveCharacter();
@@ -417,6 +389,250 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     );
   }
 
+  List<Widget> _buildMemoryAndLorebookCard() {
+    return [
+      Card(
+        // 角色绑定的世界书管理
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '世界书绑定',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_character != null && _character!.lorebookIds.isEmpty)
+                const SizedBox(
+                  height: 40,
+                  child: Center(
+                    child: Text(
+                      '当前角色未绑定任何世界书',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                )
+              else if (_character != null && _character!.lorebookIds.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _character!.lorebookIds.map((id) {
+                    final lorebook = _lorebookController.getLorebookById(id);
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: InkWell(
+                        onTap: () {
+                          if (lorebook != null) {}
+                        },
+                        child: ListTile(
+                          onTap: () {
+                            final lb = LoreBookController.of
+                                .getLorebookById(lorebook?.id ?? -1);
+                            //TODO: LoreBookEditorPage不应该传入lorebook，会导致未更新。
+                            customNavigate(
+                                LoreBookEditorPage(
+                                  lorebook: lb,
+                                ),
+                                context: context);
+                          },
+                          title: Text(lorebook?.name ?? '未知世界书'),
+                          subtitle: Text(
+                            // TODO: 改成总Token，
+                            "共${lorebook?.items?.length ?? '未知'}条",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.link_off),
+                            onPressed: () {
+                              setState(() {
+                                _character!.lorebookIds.remove(id);
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  TextButton.icon(
+                      onPressed: () {
+                        if (_character == null) {
+                          return;
+                        }
+                        final lorebooks = _lorebookController.lorebooks
+                            .where((lorebook) =>
+                                lorebook.type == LorebookType.character)
+                            .where((lorebook) =>
+                                !_character!.lorebookIds.contains(lorebook.id))
+                            .toList();
+
+                        // 显示一个弹窗，从中选择一个世界书
+                        Get.dialog(
+                          AlertDialog(
+                            title: const Text('选择世界书'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: lorebooks.length,
+                                itemBuilder: (context, index) {
+                                  final lorebook = lorebooks[index];
+                                  return ListTile(
+                                    title: Text(lorebook.name),
+                                    onTap: () {
+                                      setState(() {
+                                        _character?.lorebookIds
+                                            .add(lorebook.id);
+                                      });
+                                      Get.back();
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      label: const Text('绑定角色书'),
+                      icon: const Icon(Icons.link)),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  TextButton.icon(
+                      onPressed: () {
+                        final lb = LorebookModel.emptyCharacterBook();
+                        LoreBookController.of.addLorebook(lb);
+                        setState(() {
+                          _character!.lorebookIds.add(lb.id);
+                        });
+
+                        customNavigate(
+                            LoreBookEditorPage(
+                              lorebook: lb,
+                            ),
+                            context: context);
+                      },
+                      label: const Text('添加角色书'),
+                      icon: const Icon(Icons.add)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Builder(builder: (context) {
+        final memory = _character!.memoryBook;
+        return Card(
+          child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '记忆',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (memory == null) ...[
+                    const SizedBox(
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          '当前角色未启用记忆',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        final lb = LorebookModel.emptyMemoryBook()
+                            .copyWith(name: "${_character!.roleName}的记忆");
+                        LoreBookController.of.addLorebook(lb);
+                        setState(() {
+                          _character!.memoryBookId = lb.id;
+                        });
+
+                        customNavigate(
+                            LoreBookEditorPage(
+                              lorebook: lb,
+                            ),
+                            context: context);
+                      },
+                      label: Text('添加记忆'),
+                      icon: Icon(Icons.add),
+                    )
+                  ] else
+                    Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: InkWell(
+                        child: ListTile(
+                          onTap: () {
+                            final lb = LoreBookController.of
+                                .getLorebookById(memory?.id ?? -1);
+                            customNavigate(
+                                LoreBookEditorPage(
+                                  lorebook: lb,
+                                ),
+                                context: context);
+                          },
+                          title: Text(memory?.name ?? '未知世界书'),
+                          subtitle: Text(
+                            // TODO: 改成总Token，
+                            "共${memory?.items?.length ?? '未知'}条",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () async {
+                              final confirmed = await Get.dialog<bool>(
+                                AlertDialog(
+                                  title: const Text('确认删除'),
+                                  content:
+                                      const Text('确定要删除记忆本并清除记忆吗？此操作无法撤销。'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Get.back(result: false),
+                                      child: const Text('取消'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Get.back(result: true),
+                                      child: const Text('确定'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirmed == true) {
+                                setState(() {
+                                  LoreBookController.of.deleteLorebook(
+                                      _character!.memoryBookId!);
+                                  _character!.memoryBookId = null;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                ],
+              )),
+        );
+      })
+    ];
+  }
+
   Widget _buildSettingsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -526,145 +742,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 16),
-        if (_character != null)
-          Card(
-            // 角色绑定的世界书管理
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '世界书绑定',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_character != null && _character!.lorebookIds.isEmpty)
-                    const SizedBox(
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          '当前角色未绑定任何世界书',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  else if (_character != null &&
-                      _character!.lorebookIds.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _character!.lorebookIds.map((id) {
-                        final lorebook =
-                            _lorebookController.getLorebookById(id);
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          child: InkWell(
-                            onTap: () {
-                              if (lorebook != null) {}
-                            },
-                            child: ListTile(
-                              onTap: () {
-                                final lb = LoreBookController.of
-                                    .getLorebookById(lorebook?.id ?? -1);
-                                //TODO: LoreBookEditorPage不应该传入lorebook，会导致未更新。
-                                customNavigate(
-                                    LoreBookEditorPage(
-                                      lorebook: lb,
-                                    ),
-                                    context: context);
-                              },
-                              title: Text(lorebook?.name ?? '未知世界书'),
-                              subtitle: Text(
-                                // TODO: 改成总Token，
-                                "共${lorebook?.items?.length ?? '未知'}条",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.link_off),
-                                onPressed: () {
-                                  setState(() {
-                                    _character!.lorebookIds.remove(id);
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      TextButton.icon(
-                          onPressed: () {
-                            if (_character == null) {
-                              return;
-                            }
-                            final lorebooks = _lorebookController.lorebooks
-                                .where((lorebook) =>
-                                    lorebook.type == LorebookType.character)
-                                .where((lorebook) => !_character!.lorebookIds
-                                    .contains(lorebook.id))
-                                .toList();
-
-                            // 显示一个弹窗，从中选择一个世界书
-                            Get.dialog(
-                              AlertDialog(
-                                title: const Text('选择世界书'),
-                                content: SizedBox(
-                                  width: double.maxFinite,
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: lorebooks.length,
-                                    itemBuilder: (context, index) {
-                                      final lorebook = lorebooks[index];
-                                      return ListTile(
-                                        title: Text(lorebook.name),
-                                        onTap: () {
-                                          setState(() {
-                                            _character?.lorebookIds
-                                                .add(lorebook.id);
-                                          });
-                                          Get.back();
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          label: const Text('绑定角色书'),
-                          icon: const Icon(Icons.link)),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      TextButton.icon(
-                          onPressed: () {
-                            final lb = LorebookModel.emptyCharacterBook();
-                            LoreBookController.of.addLorebook(lb);
-                            setState(() {
-                              _character!.lorebookIds.add(lb.id);
-                            });
-
-                            customNavigate(
-                                LoreBookEditorPage(
-                                  lorebook: lb,
-                                ),
-                                context: context);
-                          },
-                          label: const Text('添加角色书'),
-                          icon: const Icon(Icons.add)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          )
+        if (_character != null) ..._buildMemoryAndLorebookCard()
       ],
     );
   }

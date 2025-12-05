@@ -27,27 +27,6 @@ class Relation {
   }
 }
 
-class CharacterMemory {
-  DateTime time;
-  String content;
-
-  CharacterMemory({required this.time, required this.content});
-
-  toJson() {
-    return {
-      'time': time.toIso8601String(),
-      'content': content,
-    };
-  }
-
-  factory CharacterMemory.fromJson(Map<String, dynamic> json) {
-    return CharacterMemory(
-      time: DateTime.parse(json['time']),
-      content: json['content'],
-    );
-  }
-}
-
 enum MessageStyle {
   common,
   narration,
@@ -78,12 +57,8 @@ class CharacterModel {
   String? firstMessage;
   List<String> moreFirstMessage = [];
 
-  List<CharacterMemory> memories = [];
-
   String category;
   Map<int, Relation> relations = {};
-
-  List<CharacterModel>? backups;
 
   List<int> lorebookIds = []; // 关联的世界书ID列表
   List<LorebookModel> get loreBooks {
@@ -93,6 +68,10 @@ class CharacterModel {
         .nonNulls
         .toList();
   }
+
+  int? memoryBookId; // 记忆书ID
+  LorebookModel? get memoryBook =>
+      LoreBookController.of.getLorebookById(memoryBookId ?? -1);
 
   int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
 
@@ -117,15 +96,10 @@ class CharacterModel {
       required this.category,
       this.messageStyle = MessageStyle.common,
       this.brief,
-      this.backups,
       List<int>? lorebookIds,
-      List<CharacterMemory>? memories,
       this.firstMessage}) {
     if (lorebookIds != null) {
       this.lorebookIds = lorebookIds;
-    }
-    if (memories != null) {
-      this.memories = memories;
     }
   }
 
@@ -141,9 +115,6 @@ class CharacterModel {
       'brief': brief,
 
       'archive': archive,
-      'backups': backups != null
-          ? backups!.map((e) => e.toJson()).toList()
-          : null, // 添加isBackup字段
       'firstMessage': firstMessage, // 添加firstMessage字段
       'moreFirstMessage': moreFirstMessage, // 添加moreFirstMessage字段
 
@@ -156,8 +127,8 @@ class CharacterModel {
       'messageStyle':
           messageStyle.toString().split('.').last, // 序列化messageStyle
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
+      'memoryBookId': memoryBookId, // 添加memoryBookId字段
       'bindOption': bindOptionId, // 添加bindOption字段
-      'memories': memories.map((mem) => mem.toJson()).toList(), // 添加memories字段
     };
   }
 
@@ -175,12 +146,9 @@ class CharacterModel {
               .toList() ??
           [],
       firstMessage: json['firstMessage'],
-      memories: json['memories'] != null
-          ? (json['memories'] as List<dynamic>)
-              .map((e) => CharacterMemory.fromJson(e))
-              .toList()
-          : [],
     );
+
+    char.memoryBookId = json['memoryBookId'];
 
     char.moreFirstMessage = (json['moreFirstMessage'] as List<dynamic>?)
             ?.map((e) => e as String)
@@ -210,10 +178,6 @@ class CharacterModel {
       orElse: () => MessageStyle.common,
     );
 
-    char.backups = (json['backups'] as List<dynamic>?)
-        ?.map((e) => CharacterModel.fromJson(e as Map<String, dynamic>))
-        .toList();
-
     char.bindOptionId = json['bindOption'];
 
     return char;
@@ -241,29 +205,25 @@ class CharacterModel {
     List<String>? moreFirstMessage,
     String? category,
     Map<int, Relation>? relations,
-    List<CharacterModel>? backups,
     List<int>? lorebookIds,
     MessageStyle? messageStyle,
     PackageValue<int?>? bindOption,
-    List<CharacterMemory>? memories,
+    int? memoryBookId,
   }) {
     var newChar = CharacterModel(
-        id: id ?? DateTime.now().millisecondsSinceEpoch,
-        remark: remark ?? this.remark,
-        roleName: roleName ?? this.roleName,
-        avatar: avatar ?? this.avatar,
-        description: description ?? this.description,
-        category: category ?? this.category,
-        brief: brief ?? this.brief,
-        messageStyle: messageStyle ?? this.messageStyle,
-        backups: backups ?? this.backups?.map((e) => e.copyWith()).toList(),
-        lorebookIds: lorebookIds != null
-            ? List<int>.from(lorebookIds)
-            : List<int>.from(this.lorebookIds),
-        firstMessage: firstMessage ?? this.firstMessage,
-        memories: memories != null
-            ? List<CharacterMemory>.from(memories)
-            : List<CharacterMemory>.from(this.memories));
+      id: id ?? DateTime.now().millisecondsSinceEpoch,
+      remark: remark ?? this.remark,
+      roleName: roleName ?? this.roleName,
+      avatar: avatar ?? this.avatar,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      brief: brief ?? this.brief,
+      messageStyle: messageStyle ?? this.messageStyle,
+      lorebookIds: lorebookIds != null
+          ? List<int>.from(lorebookIds)
+          : List<int>.from(this.lorebookIds),
+      firstMessage: firstMessage ?? this.firstMessage,
+    );
 
     newChar.moreFirstMessage = moreFirstMessage != null
         ? List<String>.from(moreFirstMessage)
@@ -286,6 +246,8 @@ class CharacterModel {
     } else {
       newChar.bindOptionId = this.bindOptionId;
     }
+
+    newChar.memoryBookId = memoryBookId ?? this.memoryBookId;
 
     return newChar;
   }

@@ -105,7 +105,7 @@ abstract class STCharacterImporter {
       ///
       /// 可能的问题：
       /// mes_example应该放在archive里还是CharacterModel的单独字段里？
-
+      ///
       final characterBook = data['character_book'];
 
       try {

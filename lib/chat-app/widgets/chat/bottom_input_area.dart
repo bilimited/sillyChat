@@ -203,7 +203,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                   icon: Obx(() => widget.sessionController.isCommandPinned.value
                       ? Icon(
                           Icons.push_pin,
-                          color: colors.primaryFixed,
+                          color: colors.primary,
                         )
                       : Icon(Icons.push_pin_outlined)))
             ],
@@ -293,7 +293,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             tooltip: '导演模式',
                             icon: Icon(Icons.tune,
                                 color: _isDirectorPanelExpanded
-                                    ? colors.primaryFixed
+                                    ? colors.primary
                                     : colors.outline),
                             onPressed: () {
                               setState(() => _isDirectorPanelExpanded =

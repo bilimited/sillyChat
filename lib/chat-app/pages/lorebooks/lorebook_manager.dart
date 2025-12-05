@@ -127,14 +127,15 @@ class LoreBookManagerPage extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      isGlobal ? Icons.star : Icons.star_border,
-                      color: isGlobal ? Colors.amber : colors.outline,
+                  if (loreBook.type == LorebookType.world)
+                    IconButton(
+                      icon: Icon(
+                        isGlobal ? Icons.star : Icons.star_border,
+                        color: isGlobal ? Colors.amber : colors.outline,
+                      ),
+                      tooltip: isGlobal ? '取消全局激活' : '全局激活',
+                      onPressed: onStarPressed,
                     ),
-                    tooltip: isGlobal ? '取消全局激活' : '全局激活',
-                    onPressed: onStarPressed,
-                  ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     color: colors.error,

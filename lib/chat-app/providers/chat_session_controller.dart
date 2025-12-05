@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart'
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/main.dart';
 import 'package:path/path.dart' as p;
@@ -454,6 +456,15 @@ class ChatSessionController extends GetxController {
     await saveChat();
   }
 
+  // 获取上下文中涉及的所有的角色（不是“聊天成员”）。
+  List<int> _getAllCharactersInContext() {
+    Set<int> chars = Set();
+    chat.messages.forEach((msg) {
+      chars.add(msg.senderId);
+    });
+    return chars.toList();
+  }
+
   Future<void> doLocalSummary() async {
     final setting = VaultSettingController.of().miscSetting.value;
     await for (var content in _getResponse(
@@ -465,13 +476,26 @@ class ChatSessionController extends GetxController {
       for (final msg in chat.messages) {
         msg.visbility = MessageVisbility.hidden;
       }
-
       _handleAIResult(content, CharacterController.SUMMARY_CHARACTER_ID,
           overrideRole: MessageRole.user);
     }
   }
 
-  Future<String> doSummaryBackground() async {
+  Future<void> genenateMemory() async {
+    final summary = await genMemoryBackground();
+
+    _getAllCharactersInContext()
+        .where((char) => char != Constants.USER_ID)
+        .forEach((char) {
+      MemoryUtils.tryAddMemoryToCharacter(char, summary);
+    });
+
+    for (final msg in chat.messages) {
+      msg.visbility = MessageVisbility.hidden;
+    }
+  }
+
+  Future<String> genMemoryBackground() async {
     final setting = VaultSettingController.of().miscSetting.value;
     var summary = "";
     await for (var content in _getResponseInBackground(
@@ -484,7 +508,7 @@ class ChatSessionController extends GetxController {
     return summary;
   }
 
-  void stopSummaryInBackground() {
+  void stopGenMemory() {
     _summaryHandler.interrupt();
   }
 
