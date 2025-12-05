@@ -1,5 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/history_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/misc_setting_model.dart';
@@ -167,8 +168,8 @@ class VaultSettingController extends GetxController {
   void updateTheme({String? fontName, String? themename}) {
     FlexScheme theme =
         schemeMap[themename ?? displaySettingModel.value.schemeName] ??
-            FlexScheme.sakura;
-    FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
+            Constants.DEFAULT_THEME;
+    //FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
     themeLight.value = SillyChatThemeBuilder.buildLight(
         theme, fontName ?? displaySettingModel.value.GlobalFont);
     themeNight.value = SillyChatThemeBuilder.buildNight(

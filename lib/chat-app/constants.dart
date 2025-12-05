@@ -1,3 +1,5 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+
 class Constants {
   static const CHANGE_LOG = """
 **警告：检测到你正从旧版本升级到1.17.x。SillyChat-1.17.0进行了一些破坏性更新。**
@@ -10,6 +12,9 @@ class Constants {
 
   // TODO:替换所有的硬编码chat
   static const CHAT_FOLDER_NAME = 'chat';
+
+  static const DEFAULT_THEME_NAME = "greyLaw";
+  static const DEFAULT_THEME = FlexScheme.greyLaw;
 
   static const USER_ID = 0;
 }

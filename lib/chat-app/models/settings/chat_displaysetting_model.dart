@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 
 enum AvatarStyle { circle, rounded, hidden }
 
@@ -9,7 +10,7 @@ class ChatDisplaySettingModel {
   MessageBubbleStyle messageBubbleStyle = MessageBubbleStyle.bubble;
 
   Color themeColor = Colors.blue;
-  String schemeName = "sakura";
+  String schemeName = Constants.DEFAULT_THEME_NAME;
 
   double ContentFontScale = 1;
   double AvatarSize = 25;
@@ -46,7 +47,7 @@ class ChatDisplaySettingModel {
     this.tryParseInlineHtml = true,
     this.AvatarSize = 25,
     this.themeColor = Colors.blue,
-    this.schemeName = "sakura",
+    this.schemeName = Constants.DEFAULT_THEME_NAME,
     this.AvatarBorderRadius = 8,
     this.MessageBubbleBorderRadius = 16,
     this.BackgroundImageBlur = 1.0,
@@ -95,7 +96,7 @@ class ChatDisplaySettingModel {
     AvatarBorderRadius = (json['AvatarBorderRadius'] ?? 8).toDouble();
     MessageBubbleBorderRadius =
         (json['MessageBubbleBorderRadius'] ?? 16).toDouble();
-    schemeName = json['schemeName'] ?? "sakura";
+    schemeName = json['schemeName'] ?? Constants.DEFAULT_THEME_NAME;
     tryParseInlineHtml = json['tryParseInlineHtml'] ?? true;
     BackgroundImageOpacity = (json['BackgroundImageOpacity'] ?? 1.0).toDouble();
     BackgroundImageBlur = (json['BackgroundImageBlur'] ?? 1.0).toDouble();
