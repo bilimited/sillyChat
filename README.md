@@ -16,8 +16,9 @@
 
 <img src="images/desktop2.gif" alt="桌面端预览" width="100%">
 <div style="display:flex">
-  <img src="images/mobile2.jpg" alt="安卓端预览" width="300px">
-  <img src="images/mobile3.jpg" alt="安卓端预览" width="300px">
+  <img src="images/mobile4.jpg" alt="安卓端预览" width="250px">
+  <img src="images/mobile5.jpg" alt="安卓端预览" width="250px">
+  <img src="images/mobile6.jpg" alt="安卓端预览" width="250px">
 </div>
 
 ---
@@ -25,17 +26,15 @@
 ## 主要功能
 
 - 📁	用文件夹管理聊天
-- 🎭	角色和用户人设
+- 🍻	导入酒馆的对话预设、角色卡、世界书和正则
 - 🕸️	角色关系网（待完善）
 - 👥	群聊功能（手动控制）
 - ✏️	编辑消息内容/类型/发送者，批量复制粘贴消息记录
 - 🧩  实用功能：AI帮答、生成标题、导演模式、生成总结
 - 🔍	聊天记录搜索
 - 🔑	支持openAI、Gemini、DeepSeek和自定义API，支持余额查询
-- 🍻	导入酒馆的对话预设、角色卡和正则
 - ☁️	webDav云同步数据
 - 🖼️	发送图片，支持Gemini多模态
-- 📚	世界书，支持关键词检索
 - 🎨	支持自定义聊天窗口样式、界面主题等
 
 ---
