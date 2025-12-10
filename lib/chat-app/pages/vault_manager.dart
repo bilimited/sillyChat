@@ -93,7 +93,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   }
 
   Future<void> _loadVaultFolders() async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await SettingController.of.getRootPath();
     final baseDir = '${directory.path}/SillyChat';
     final dir = Directory(baseDir);
 
@@ -144,7 +144,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   }
 
   Future<void> _createNewVault(String vaultName, bool copyCurrentVault) async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await SettingController.of.getRootPath();
     final baseDir = '${directory.path}/SillyChat';
     final newVaultPath = '$baseDir/$vaultName';
     final newVaultDir = Directory(newVaultPath);
@@ -245,7 +245,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   }
 
   Future<void> _deleteVault(String vaultName) async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await SettingController.of.getRootPath();
     final vaultPath = '${directory.path}/SillyChat/$vaultName';
     final vaultDir = Directory(vaultPath);
 
@@ -257,7 +257,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   }
 
   Future<void> _renameVault(String oldName, String newName) async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await SettingController.of.getRootPath();
     final baseDir = '${directory.path}/SillyChat';
     final oldPath = '$baseDir/$oldName';
     final newPath = '$baseDir/$newName';

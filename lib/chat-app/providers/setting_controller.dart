@@ -39,14 +39,17 @@ class SettingController extends GetxController {
     return Platform.isAndroid; //!SillyChatApp.isDesktop();
   }
 
-  Future<String> getVaultPath() async {
-    late Directory root;
+  Future<Directory> getRootPath() async {
     if (!await isExternalStorageDirectoryExists()) {
-      root = await getApplicationDocumentsDirectory();
+      return await getApplicationDocumentsDirectory();
     } else {
-      root = await getExternalStorageDirectory() ??
+      return await getExternalStorageDirectory() ??
           await getApplicationDocumentsDirectory();
     }
+  }
+
+  Future<String> getVaultPath() async {
+    Directory root = await getRootPath();
 
     if (currectValutName.isEmpty) {
       return '${root.path}/SillyChat';
