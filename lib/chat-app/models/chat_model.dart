@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_example/chat-app/models/character_model.dart';
@@ -167,6 +168,11 @@ class ChatModel {
           (json['activitedLorebookItems'] as Map<String, dynamic>?)
                   ?.map((key, value) => MapEntry(key, value == true)) ??
               {};
+  }
+
+  static Future<ChatModel> fromFile(File f) async {
+    final content = await f.readAsString();
+    return ChatModel.fromJson(json.decode(content));
   }
 
   Map<String, dynamic> toJson() => {

@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/misc_setting_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/other_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -423,27 +424,53 @@ class _SettingPageState extends State<SettingPage>
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: Icon(Icons.clear_all,
-                color: Theme.of(context).colorScheme.secondary),
-            title: Text(
-              '查看日志',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              '查看应用内运行日志（主要是API请求记录）',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            onTap: () {
-              customNavigate(LogPage(), context: context);
-            },
-            trailing: Icon(Icons.arrow_forward_ios,
-                size: 16, color: Colors.grey[400]),
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.clear_all,
+                    color: Theme.of(context).colorScheme.secondary),
+                title: Text(
+                  '查看日志',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '查看应用内运行日志（主要是API请求记录）',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: () {
+                  customNavigate(LogPage(), context: context);
+                },
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: Icon(Icons.more_horiz,
+                    color: Theme.of(context).colorScheme.secondary),
+                title: Text(
+                  '其他设置',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '乱七八糟的设置',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: () {
+                  customNavigate(OtherSettingsPage(), context: context);
+                },
+                trailing: Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey[400]),
+              ),
+            ],
           ),
         ),
       ],
