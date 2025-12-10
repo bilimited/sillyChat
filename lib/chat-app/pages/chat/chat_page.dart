@@ -964,7 +964,9 @@ class _ChatPageState extends State<ChatPage> {
                                 .globalActivitedLoreBooks;
                             final chars = chat.characters
                                 .expand((char) => char.loreBooks)
-                                .toList();
+                                .toSet();
+                            if (chat.assistantId != null)
+                              chars.addAll(chat.assistant!.loreBooks);
                             customNavigate(
                                 LoreBookActivator(
                                     chatSessionController: sessionController,

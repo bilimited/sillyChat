@@ -249,30 +249,6 @@ class _EditChatPageState extends State<EditChatPage>
                   const Divider(height: 1),
                   const SizedBox(height: 8), // 增加一些垂直间距
                   TextButton.icon(
-                    icon: Icon(Icons.book),
-                    label: Text('临时开/关世界书条目'),
-                    onPressed: () {
-                      final global = Get.find<LoreBookController>()
-                          .globalActivitedLoreBooks;
-                      final chars = widget.chat.characters
-                          .expand((char) => char.loreBooks)
-                          .toList();
-
-                      customNavigate(
-                          LoreBookActivator(
-                            chatSessionController: widget.session,
-                            lorebooks: [
-                              ...{...global, ...chars}
-                            ],
-                            chat: widget.chat,
-                          ),
-                          context: context);
-                    },
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  TextButton.icon(
                     icon: Icon(Icons.delete_sweep),
                     label: Text('清空聊天记录'),
                     style: TextButton.styleFrom(
