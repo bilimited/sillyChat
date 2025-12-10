@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/error_handler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:get/get.dart';
 
@@ -91,8 +92,7 @@ class Aihandler {
       onGenerateStateChange('生成已停止');
       if (dio.CancelToken.isCancel(e)) {
       } else {
-        Get.snackbar("发生错误", "$e", colorText: Colors.red);
-        LogController.log("发生错误:$e", LogLevel.error);
+        ErrorHandler.handleExpection(e, null);
       }
     } catch (e) {
       isError = true;
@@ -133,8 +133,7 @@ class Aihandler {
       onGenerateStateChange('生成已停止');
       if (dio.CancelToken.isCancel(e)) {
       } else {
-        Get.snackbar("发生错误", "$e", colorText: Colors.red);
-        LogController.log("发生错误:$e", LogLevel.error);
+        ErrorHandler.handleExpection(e, null);
       }
     } catch (e) {
       isError = true;

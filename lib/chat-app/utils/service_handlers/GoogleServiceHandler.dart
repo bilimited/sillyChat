@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/error_handler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
@@ -60,12 +61,9 @@ class Googleservicehandler extends Servicehandler {
         return [];
       }
     } on DioException catch (e) {
-      Get.snackbar(
-          '获取模型列表时出错', 'Failed to load model list. Status code: ${e.message}');
-      if (e.response != null) {
-        LogController.log(json.encode(e.response?.data), LogLevel.error,
-            title: '获取模型列表出错', type: LogType.json);
-      }
+      ErrorHandler.handleExpection(e, (data) {
+        return data["error"]?["message"] ?? "未知";
+      });
       return [];
     } catch (e) {
       // 处理其他任何意外错误
