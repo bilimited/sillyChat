@@ -904,64 +904,69 @@ class _SummaryMessageBubbleState extends State<SummaryMessageBubble> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colors.surfaceContainer,
+              color: colors.tertiaryContainer,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.outlineVariant, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.shadow.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                widget.isLoading
-                    ? SpinKitWave(
-                        itemCount: 3,
-                        size: 14,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        widget.isLoading
+                            ? SpinKitWave(
+                                itemCount: 3,
+                                size: 14,
+                                color: colors.primary,
+                              )
+                            : Icon(Icons.auto_awesome,
+                                color: colors.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          "AI摘要",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _expanded = !_expanded;
+                        });
+                      },
+                      child: Icon(
+                        _expanded ? Icons.expand_less : Icons.expand_more,
                         color: colors.primary,
-                      )
-                    : Icon(Icons.summarize, color: colors.primary, size: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _expanded
-                      ? MarkdownBody(
-                          data: widget.message.content,
-                          softLineBreak: true,
-                          shrinkWrap: true,
-                          styleSheet: MarkdownStyleSheet(
-                            // p: TextStyle(color: colors.outline),
-                            textScaler: TextScaler.linear(
-                                widget.displaySetting.ContentFontScale),
-                            horizontalRuleDecoration: BoxDecoration(
-                              border: Border.all(
-                                  width: 1, color: colors.outlineVariant),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          summaryText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _expanded
+                    ? MarkdownBody(
+                        data: widget.message.content,
+                        softLineBreak: true,
+                        shrinkWrap: true,
+                        styleSheet: MarkdownStyleSheet(
+                          // p: TextStyle(color: colors.outline),
                           textScaler: TextScaler.linear(
                               widget.displaySetting.ContentFontScale),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          horizontalRuleDecoration: BoxDecoration(
+                            border: Border.all(
+                                width: 1, color: colors.outlineVariant),
+                          ),
                         ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _expanded = !_expanded;
-                    });
-                  },
-                  child: Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: colors.primary,
-                  ),
-                ),
+                      )
+                    : Text(
+                        summaryText,
+                        textScaler: TextScaler.linear(
+                            widget.displaySetting.ContentFontScale),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
               ],
             ),
           ),
