@@ -2,7 +2,11 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/pages/log_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
+import 'package:flutter_example/chat-app/utils/json_util.dart';
 import 'package:get/get.dart';
 
 class ErrorHandler {
@@ -32,8 +36,13 @@ class ErrorHandler {
     "504": "网关超时 (Gateway Timeout)"
   };
 
-  static void handleExpection(DioException e, Function(dynamic)? handleDetail) {
+  static void handleDioExpection(
+      DioException e, Function(dynamic)? handleDetail,
+      {LLMRequestOptions? requestOptions}) {
     String message = "";
+    String longMessage = "";
+    LogEntry? entry;
+    String? dataJson;
 
     if (e.response == null) {
       message = "服务器没有返回任何结果!";
@@ -41,19 +50,96 @@ class ErrorHandler {
       int? code = e.response!.statusCode;
       String? detail = handleDetail != null
           ? handleDetail(e.response!.data).toString()
-          : null;
+          : tryHandleLLMError(e.response!.data);
       message = """错误码：${code ?? "未知"} - ${ERR_CODES[code.toString()] ?? "未知"}
 详细信息：${detail ?? "无"}
 """;
       try {
-        LogController.log(json.encode(e.response!.data), LogLevel.error,
-            title: "请求错误", type: LogType.json);
+        dataJson = JsonUtil.encode(e.response!.data);
       } catch (e) {
         // 放弃了...
       }
+
+      longMessage = """
+# 错误详情
+
+**HOST**:${e.requestOptions.uri.host}
+
+**状态码**:${e.response?.statusCode ?? '未知'}
+
+**提取的信息**：${message}
+
+---
+
+### 原始Data字段
+```
+${dataJson ?? '无'}
+```
+""";
+      if (requestOptions != null) {
+        final option = requestOptions.copyWith(messages: []);
+        longMessage += """
+
+---
+
+### 请求详情
+
+**模型名称**：${requestOptions.api?.modelName ?? '未知'}
+
+**消息数量**: ${requestOptions.messages.length}
+
+**请求数据（消息内容已隐藏）**
+```
+${JsonUtil.formatMap(option.toJson())}
+```
+
+""";
+      }
+
+      entry = LogController.log(longMessage, LogLevel.error,
+          title: "请求错误", type: LogType.text);
     }
 
-    Get.snackbar("请求错误", message, colorText: Colors.red);
-    LogController.log(message, LogLevel.error);
+    Get.dialog(
+      AlertDialog(
+        title: const Text("请求错误"),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            message,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+        actions: [
+          if (entry != null)
+            TextButton(
+              onPressed: () {
+                Get.to(() => LogDetailPage(logEntry: entry!));
+              },
+              child: const Text("打开日志"),
+            ),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("关闭"),
+          ),
+        ],
+      ),
+      barrierDismissible: true,
+    );
+
+    //LogController.log(message, LogLevel.error);
+  }
+
+  static String tryHandleLLMError(dynamic data) {
+    try {
+      if (data is Map) {
+        // gemini style
+        if (data["error"] != null) {
+          return data["error"]?["message"];
+        }
+      } else {
+        return "无法获取错误信息，请关闭流式传输后重试..";
+      }
+    } catch (e) {}
+    return "无法获取错误信息，请打开日志界面并将错误报告发给作者..";
   }
 }

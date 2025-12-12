@@ -2,8 +2,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
-import 'package:flutter_json_view/flutter_json_view.dart'; // 引入JSON视图库
+import 'package:flutter_example/main.dart';
+import 'package:flutter_json_view/flutter_json_view.dart';
+import 'package:flutter_markdown/flutter_markdown.dart'; // 引入JSON视图库
 
 class LogDetailPage extends StatelessWidget {
   final LogEntry logEntry;
@@ -32,6 +35,14 @@ class LogDetailPage extends StatelessWidget {
             Text(logEntry.title ?? '日志详情', style: TextStyle(color: logColor)),
         elevation: 0, // 无阴影
         iconTheme: IconThemeData(color: logColor), // 返回按钮颜色
+        actions: [
+          IconButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: logEntry.message));
+                SillyChatApp.snackbar(context, "复制成功!");
+              },
+              icon: Icon(Icons.copy))
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -69,6 +80,7 @@ class LogDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // 日志内容
+
             Text(
               '日志内容:',
               style: TextStyle(
@@ -121,10 +133,12 @@ class LogDetailPage extends StatelessWidget {
         );
       }
     } else {
-      return Text(
-        logEntry.message,
-        style: TextStyle(fontSize: 16, color: Colors.black87),
-      );
+      return MarkdownBody(data: logEntry.message);
+
+      // Text(
+      //   logEntry.message,
+      //   style: TextStyle(fontSize: 16, color: Colors.black87),
+      // );
     }
   }
 }

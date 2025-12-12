@@ -61,7 +61,7 @@ class Googleservicehandler extends Servicehandler {
         return [];
       }
     } on DioException catch (e) {
-      ErrorHandler.handleExpection(e, (data) {
+      ErrorHandler.handleDioExpection(e, (data) {
         return data["error"]?["message"] ?? "未知";
       });
       return [];

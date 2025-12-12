@@ -76,8 +76,10 @@ class Aihandler {
 
       await for (final token in handler.request(
           this,
-          LLMRequestOptions(
-              messages: [LLMMessage(content: '你好', role: 'user')]),
+          LLMRequestOptions(messages: [
+            LLMMessage(
+                content: '你好!收到这条信息后，请只回复一个"好"字，不要有任何多余的内容。', role: 'user')
+          ], isStreaming: false),
           ApiModel(
               id: -1,
               apiKey: apiKey,
@@ -92,7 +94,7 @@ class Aihandler {
       onGenerateStateChange('生成已停止');
       if (dio.CancelToken.isCancel(e)) {
       } else {
-        ErrorHandler.handleExpection(e, null);
+        ErrorHandler.handleDioExpection(e, null);
       }
     } catch (e) {
       isError = true;
@@ -133,7 +135,7 @@ class Aihandler {
       onGenerateStateChange('生成已停止');
       if (dio.CancelToken.isCancel(e)) {
       } else {
-        ErrorHandler.handleExpection(e, null);
+        ErrorHandler.handleDioExpection(e, null, requestOptions: options);
       }
     } catch (e) {
       isError = true;
