@@ -20,6 +20,7 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
+import 'package:flutter_example/chat-app/widgets/chat/character_executer.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
@@ -82,8 +83,6 @@ class _ChatPageState extends State<ChatPage> {
   // int chatId = 0;
   ChatModel get chat => sessionController.chat;
   ApiModel? get api => _settingController.getApiById(chat.requestOptions.apiId);
-
-  bool _showWheel = false;
 
   // 添加选中消息状态
   MessageModel? _selectedMessage;
@@ -373,6 +372,22 @@ class _ChatPageState extends State<ChatPage> {
           message: message,
         ),
         context: context);
+  }
+
+  void _showCharacterExecuter(BuildContext context) async {
+    return await showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return CharacterExecuter(onToggleMember: (char) {
+            sessionController
+                .onGroupMessage(CharacterController.of.getCharacterById(char));
+            VaultSettingController.of()
+                .historyModel
+                .value
+                .addToCharacterHistory(char);
+            Get.back();
+          });
+        });
   }
 
   /// 显示“选择最近聊天”弹窗
@@ -924,9 +939,6 @@ class _ChatPageState extends State<ChatPage> {
                     onRetryLastest: () {
                       sessionController.onRetry();
                     },
-                    onToggleGroupWheel: () {
-                      setState(() => _showWheel = !_showWheel);
-                    },
                     onUpdateChat: _updateChat,
                     topToolBar: [
                       ToggleChip(
@@ -985,7 +997,8 @@ class _ChatPageState extends State<ChatPage> {
                           tooltip: '选择群聊角色',
                           icon: Icon(Icons.group, color: colors.outline),
                           onPressed: () {
-                            setState(() => _showWheel = !_showWheel);
+                            _showCharacterExecuter(context);
+                            //setState(() => _showWheel = !_showWheel);
                           },
                         ),
                       if (!isGroupMode && !isGenerating)
@@ -1219,29 +1232,6 @@ class _ChatPageState extends State<ChatPage> {
         : SizedBox.shrink();
   }
 
-  Widget _buildCharacterWheelOverlay() {
-    return Positioned.fill(
-      child: SizeAnimatedWidget(
-          child: GestureDetector(
-            onTap: () => setState(() => _showWheel = false),
-            child: Container(
-              child: Center(
-                child: CharacterWheel(
-                  characters: chat.characterIds
-                      .map((id) => _characterController.getCharacterById(id))
-                      .toList(),
-                  onCharacterSelected: (character) {
-                    setState(() => _showWheel = false);
-                    sessionController.onGroupMessage(character);
-                  },
-                ),
-              ),
-            ),
-          ),
-          visible: _showWheel),
-    );
-  }
-
   void _scrollToMessage(MessageModel message) {
     final index = chat.messages.reversed.toList().indexOf(message);
     if (index >= 0 || index < chat.messages.length)
@@ -1249,13 +1239,6 @@ class _ChatPageState extends State<ChatPage> {
           index: index,
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut);
-  }
-
-  Future<void> _showOpenedChatList() async {
-    // 已打开的聊天
-    ChatController.of.openedChat.keys.toList();
-    // 最近打开的聊天
-    VaultSettingController.of().historyModel.value.chatHistory;
   }
 
   PreferredSizeWidget? _buildAppBar() {
@@ -1510,18 +1493,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildStatusBar() {
-    return Positioned(
-        top: 64,
-        left: 0,
-        right: 0,
-        child: Column(
-          children: [
-            StatusbarWebview(chatSessionController: sessionController)
-          ],
-        ));
-  }
-
   Widget _buildMobile(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
@@ -1544,7 +1515,6 @@ class _ChatPageState extends State<ChatPage> {
                 _buildBackgroundImage(),
               _buildMainContent(),
               //_buildStatusBar(),
-              _buildCharacterWheelOverlay(),
               _buildFloatingButtonOverlay(),
             ],
           ),
@@ -1564,7 +1534,6 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           if (chat.backgroundOrCharBackground != null) _buildBackgroundImage(),
           _buildMainContent(),
-          _buildCharacterWheelOverlay(),
           _buildFloatingButtonOverlay()
         ],
       ),

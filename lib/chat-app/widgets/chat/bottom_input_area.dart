@@ -34,7 +34,6 @@ class BottomInputArea extends StatefulWidget {
 
   final Function(String, List<String>) onSendMessage;
   final VoidCallback onRetryLastest;
-  final VoidCallback onToggleGroupWheel;
   final VoidCallback onUpdateChat;
 
   ChatModel get chat => sessionController.chat;
@@ -57,7 +56,6 @@ class BottomInputArea extends StatefulWidget {
     required this.sessionController,
     required this.onSendMessage,
     required this.onRetryLastest,
-    required this.onToggleGroupWheel,
     required this.onUpdateChat,
     this.toolBar = const [],
     this.topToolBar = const [],

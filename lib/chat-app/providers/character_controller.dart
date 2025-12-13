@@ -13,6 +13,18 @@ class CharacterController extends GetxController {
 
   final VaultSettingController _vaultSettingController = Get.find();
 
+  // 按category字段分组
+  Map<String, List<CharacterModel>> get groupedCharacters {
+    final Map<String, List<CharacterModel>> grouped = {};
+    for (var character in characters) {
+      if (!grouped.containsKey(character.category)) {
+        grouped[character.category] = [];
+      }
+      grouped[character.category]!.add(character);
+    }
+    return grouped;
+  }
+
   // 系统内建角色
   static final defaultCharacter = CharacterModel(
       id: -1,
