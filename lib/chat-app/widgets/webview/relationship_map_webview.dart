@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -21,16 +23,32 @@ class RelationshipMapWebview extends StatefulWidget {
 class _ChatWebviewState extends State<RelationshipMapWebview> {
   late InAppWebViewController _webViewController;
 
-  // late final webSessionController = WebSessionController(
-  //     webViewController: _webViewController,
-  //     chatSessionController: session,
-  //     onMessageEmit: widget.onMessageEmit);
+  Color generateLightRandomColor() {
+    final Random random = Random();
+
+    // 设置一个较高的下限，确保颜色是浅色的
+    const int minComponentValue = 80;
+    const int maxRange = 256 - minComponentValue; // 0 - 75 之间
+
+    // 在 [minComponentValue, 255] 之间随机生成 R、G、B
+    final int r = random.nextInt(maxRange) + minComponentValue;
+    final int g = random.nextInt(maxRange) + minComponentValue;
+    final int b = random.nextInt(maxRange) + minComponentValue;
+
+    return Color.fromARGB(255, r, g, b);
+  }
 
   List<dynamic> collectData() {
+    final cataList = collectCategories();
+    final cataIndex = <String, int>{
+      for (var i = 0; i < cataList.length; i++) (cataList[i]["name"]): i,
+    };
+
     return CharacterController.of.characters.map((char) {
       return {
         'name': char.roleName,
-        'symbol': "image://imgs:///${char.avatar}"
+        'symbol': "image://imgs:///${char.avatar}",
+        'category': cataIndex[char.category]
       };
     }).toList();
   }
@@ -52,17 +70,35 @@ class _ChatWebviewState extends State<RelationshipMapWebview> {
     final src = """
       const data = ${json.encode(collectData())}
       const edges = ${json.encode(collectList())}
-      window.init(data,edges,${Theme.of(context).brightness == Brightness.dark});
+      const categories = ${json.encode(collectCategories())}
+      window.init(data,edges,categories,${Theme.of(context).brightness == Brightness.dark});
     """;
     await controller.evaluateJavascript(source: src);
 
     print(src);
   }
 
+  List<dynamic> collectCategories() {
+    final categories_str =
+        CharacterController.of.characters.map((c) => c.category).toSet();
+
+    return categories_str.indexed.map((c) {
+      return {
+        "name": c.$2,
+        "itemStyle": {
+          "color":
+              "#${generateLightRandomColor().value32bit.toRadixString(16).padLeft(8, '0')}",
+        }
+      };
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text("预览关系网"),
+      ),
       body: Stack(
         children: [
           Positioned.fill(

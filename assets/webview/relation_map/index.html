@@ -19,7 +19,7 @@
     const myChart = echarts.init(chartDom);
 
 
-function init(data, edges, isDarkMode = false) {
+function init(data, edges, categories , isDarkMode = false) {
     // 根据 isDarkMode 设置颜色
     const nodeLabelColor = isDarkMode ? '#EEE' : '#333';       // 节点标签颜色
     const lineColor = isDarkMode ? '#AAA' : '#666';           // 连线颜色
@@ -29,12 +29,18 @@ function init(data, edges, isDarkMode = false) {
     const option = {
         // title: { text: '关系图谱示例', left: 'center', top: 20 },
         tooltip: {},
+        legend: {
+            data: categories.map(a => a.name),
+            textStyle: { color: nodeLabelColor },
+            bottom: 20
+        },
         series: [
             {
                 type: 'graph',
                 layout: 'force', // 力引导布局
                 data: data,
                 links: edges,
+                categories: categories,
 
                 // --- 节点样式 ---
                 symbolSize: 60, // 头像大小
@@ -45,6 +51,10 @@ function init(data, edges, isDarkMode = false) {
                     fontSize: 14,
                     fontWeight: 'bold',
                     color: nodeLabelColor // <-- 【修改】节点标签颜色
+                },
+                emphasis: {
+                    focus: 'adjacency', // 聚焦关系：当鼠标移到节点上，只显示相邻节点，其他变暗
+                    lineStyle: { width: 4 } // 高亮时线变粗
                 },
                 draggable: true, // 节点可拖拽
 
