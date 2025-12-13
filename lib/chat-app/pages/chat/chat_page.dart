@@ -381,10 +381,7 @@ class _ChatPageState extends State<ChatPage> {
           return CharacterExecuter(onToggleMember: (char) {
             sessionController
                 .onGroupMessage(CharacterController.of.getCharacterById(char));
-            VaultSettingController.of()
-                .historyModel
-                .value
-                .addToCharacterHistory(char);
+            VaultSettingController.of().addToCharacterHistory(char);
             Get.back();
           });
         });

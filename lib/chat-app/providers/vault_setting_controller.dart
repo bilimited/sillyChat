@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/misc_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
@@ -215,6 +216,30 @@ class VaultSettingController extends GetxController {
     } else {
       return api;
     }
+  }
+
+  void addToChatHistory(String chatId) {
+    final chatHistory = historyModel.value.chatHistory;
+    chatHistory.remove(chatId); // 去重
+    chatHistory.insert(0, chatId); // 插入到最前面
+    // 保留最多 50 条记录
+    if (chatHistory.length > 50) {
+      chatHistory.removeRange(50, chatHistory.length);
+    }
+
+    saveSettings();
+  }
+
+  void addToCharacterHistory(int charId) {
+    final characterHistory = historyModel.value.characterHistory;
+    characterHistory.remove(charId); // 去重
+    characterHistory.insert(0, charId); // 插入到最前面
+    // 保留最多 50 条记录
+    if (characterHistory.length > 5) {
+      characterHistory.removeRange(5, characterHistory.length);
+    }
+
+    saveSettings();
   }
 
   static VaultSettingController of() {

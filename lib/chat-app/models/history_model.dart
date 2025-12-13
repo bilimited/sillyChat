@@ -34,24 +34,6 @@ class HistoryModel {
     );
   }
 
-  void addToChatHistory(String chatId) {
-    chatHistory.remove(chatId); // 去重
-    chatHistory.insert(0, chatId); // 插入到最前面
-    // 保留最多 50 条记录
-    if (chatHistory.length > 50) {
-      chatHistory.removeRange(50, chatHistory.length);
-    }
-  }
-
-  void addToCharacterHistory(int charId) {
-    characterHistory.remove(charId); // 去重
-    characterHistory.insert(0, charId); // 插入到最前面
-    // 保留最多 50 条记录
-    if (characterHistory.length > 5) {
-      characterHistory.removeRange(5, characterHistory.length);
-    }
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'messageHistory': List<String>.from(messageHistory),

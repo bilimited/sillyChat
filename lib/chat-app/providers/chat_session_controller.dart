@@ -103,7 +103,7 @@ class ChatSessionController extends GetxController {
   void onInit() {
     super.onInit();
     if (tag.isNotEmpty) {
-      VaultSettingController.of().historyModel.value.addToChatHistory(tag);
+      VaultSettingController.of().addToChatHistory(tag);
       ChatController.of.openedChat[tag] = this;
     }
 
