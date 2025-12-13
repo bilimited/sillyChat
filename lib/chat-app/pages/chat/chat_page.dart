@@ -1297,15 +1297,10 @@ class _ChatPageState extends State<ChatPage> {
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
-                chat.mode == ChatMode.group
-                    ? Text(
-                        "${chat.characterIds.length}位成员",
-                        style: TextStyle(fontSize: 12, color: colors.outline),
-                      )
-                    : Text(
-                        "约 ${sessionController.cachedTokens} Tokens",
-                        style: TextStyle(fontSize: 12, color: colors.outline),
-                      ),
+                Text(
+                  "约 ${sessionController.cachedTokens} Tokens",
+                  style: TextStyle(fontSize: 12, color: colors.outline),
+                ),
               ],
             ),
             // IconButton(

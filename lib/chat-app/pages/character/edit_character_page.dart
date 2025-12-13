@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/pages/character/character_gallery.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
+import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
@@ -852,6 +854,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             actions: isEditPlayer
                 ? []
                 : [
+                    IconButton(
+                        onPressed: () {
+                          final galleryPath =
+                              "${SettingController.of.getImagePathSync()}/${widget.characterId}/";
+                          customNavigate(
+                              CharacterGalleryPage(path: galleryPath),
+                              context: context);
+                        },
+                        icon: const Icon(Icons.image)),
                     IconButton(
                         onPressed: _copyCharacter,
                         icon: const Icon(Icons.copy)),

@@ -97,7 +97,7 @@ class _ChatWebviewState extends State<RelationshipMapWebview> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("预览关系网"),
+        title: Text("人物关系图"),
       ),
       body: Stack(
         children: [

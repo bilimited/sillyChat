@@ -74,8 +74,11 @@ class OtherSettingsPage extends StatelessWidget {
         return -1;
       }
 
+      /**
+       * 开始删除图片（不包括画廊内容）
+       */
       await for (final entity
-          in imgDir.list(recursive: true, followLinks: false)) {
+          in imgDir.list(recursive: false, followLinks: false)) {
         if (entity is File) {
           final fname = p.basename(entity.path); //.toLowerCase();
           if (!all_filenames.contains(fname)) {
