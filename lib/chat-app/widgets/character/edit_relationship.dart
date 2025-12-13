@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
@@ -74,7 +75,7 @@ class _EditRelationshipState extends State<EditRelationship> {
         .toList();
 
     if (characters.isEmpty) {
-      Get.snackbar('没有可添加的角色', '',messageText: SizedBox.shrink());
+      Get.snackbar('没有可添加的角色', '', messageText: SizedBox.shrink());
       return;
     }
 
@@ -139,7 +140,7 @@ class _EditRelationshipState extends State<EditRelationship> {
       }
 
       Get.find<CharacterController>().updateCharacter(target);
-      Get.snackbar('关系同步成功', '',messageText: SizedBox.shrink());
+      SillyChatApp.snackbar(context, '关系同步成功');
     }
   }
 
@@ -240,7 +241,8 @@ class _EditRelationshipState extends State<EditRelationship> {
                                     buildIconTextButton(context,
                                         text: '同步关系',
                                         icon: Icons.sync_rounded,
-                                        onPressed: ()=>_syncRelation(entry.key))
+                                        onPressed: () =>
+                                            _syncRelation(entry.key))
                                   ],
                                 ),
                               ],

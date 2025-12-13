@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/webview/relationship_map_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -108,7 +109,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     }
   }
 
-  // 复制角色并返回
+  // 复制角色
   CharacterModel? _saveCharacter() {
     if (!_formKey.currentState!.validate()) return null; // TODO:字段校验不通过无提示
 
@@ -328,26 +329,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   maxLines: 16,
                 ),
                 const SizedBox(height: 10), // 间隔
-                // 生成角色介绍按钮
-                // ElevatedButton(
-                //   onPressed: () async {
-                //     final char = _saveCharacter();
-                //     if (char == null) {
-                //       Get.snackbar("错误", "字段填写存在问题!");
-                //       return;
-                //     }
-                //     final result = await customNavigate<String>(
-                //         GenCharacterPromptPage(character: char),
-                //         context: context);
-
-                //     if (result != null) {
-                //       setState(() {
-                //         _archiveController.text = result;
-                //       });
-                //     }
-                //   },
-                //   child: const Text("生成角色介绍"),
-                // ),
               ],
             ),
           ),
@@ -362,12 +343,24 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '人物关系',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '人物关系',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          _save();
+                          customNavigate(RelationshipMapWebview(),
+                              context: context);
+                        },
+                        icon: Icon(Icons.bubble_chart))
+                  ],
                 ),
                 const SizedBox(height: 16),
                 EditRelationship(

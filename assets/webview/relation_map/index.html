@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人物关系图</title>
+    <script src="./echarts.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0000; }
+        #chart-container { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="chart-container"></div>
+
+<script>
+    const chartDom = document.getElementById('chart-container');
+    const myChart = echarts.init(chartDom);
+
+
+function init(data, edges, isDarkMode = false) {
+    // 根据 isDarkMode 设置颜色
+    const nodeLabelColor = isDarkMode ? '#EEE' : '#333';       // 节点标签颜色
+    const lineColor = isDarkMode ? '#AAA' : '#666';           // 连线颜色
+    const edgeLabelColor = isDarkMode ? '#FFF' : '#000';      // 连线文字颜色
+    const edgeLabelBackground = isDarkMode ? '#333' : 'white'; // 连线文字背景
+
+    const option = {
+        // title: { text: '关系图谱示例', left: 'center', top: 20 },
+        tooltip: {},
+        series: [
+            {
+                type: 'graph',
+                layout: 'force', // 力引导布局
+                data: data,
+                links: edges,
+
+                // --- 节点样式 ---
+                symbolSize: 60, // 头像大小
+                roam: true,     // 支持缩放和平移
+                label: {
+                    show: true,
+                    position: 'bottom',
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    color: nodeLabelColor // <-- 【修改】节点标签颜色
+                },
+                draggable: true, // 节点可拖拽
+
+                // --- 连线样式 (Line Style) ---
+                lineStyle: {
+                    color: lineColor, // <-- 【修改】线条颜色
+                    width: 2,
+                    curveness: 0.1,
+                    opacity: 0.9
+                },
+
+                edgeLabel: {
+                    show: true,
+                    position: 'middle',
+                    formatter: '{c}',
+                    fontSize: 12,
+                    color: edgeLabelColor, // <-- 【修改】连线标签文字颜色
+                    backgroundColor: edgeLabelBackground, // <-- 【修改】连线标签背景
+                    padding: [3, 5],
+                    borderRadius: 4
+                },
+
+                // --- 箭头设置 ---
+                edgeSymbol: ['circle', 'arrow'],
+                edgeSymbolSize: [4, 8],
+
+                // --- 力学引擎配置 (控制节点距离) ---
+                force: {
+                    repulsion: 800,  // 斥力：越大节点分得越开
+                    edgeLength: 180  // 边长：连线的默认长度
+                }
+            }
+        ]
+    };
+
+    myChart.setOption(option);
+    window.addEventListener('resize', () => myChart.resize());
+}
+    
+</script>
+</body>
+</html>
