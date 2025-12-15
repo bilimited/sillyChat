@@ -50,7 +50,8 @@ abstract class Promptformatter {
 
     return prompt;
   }
-
+  
+  // 插入聊天中最近出现的角色信息
   static String injectCharacterLore(
       String prompt, ChatModel chat, CharacterModel sender) {
     if (prompt.contains(RegExp(r'{{recent-characters:\d+}}'))) {
@@ -93,6 +94,7 @@ abstract class Promptformatter {
     }
     return prompt;
   }
+
 
   static String BuildRelationsPrompt(
     String prompt,
