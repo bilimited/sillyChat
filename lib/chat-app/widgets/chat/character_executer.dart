@@ -45,9 +45,9 @@ class CharacterExecuter extends StatelessWidget {
               SizedBox(
                 width: avatarDiameter,
                 height: avatarDiameter,
-                child: ClipOval(
-                    child: AvatarImage.avatar(
-                        c.avatar, (avatarDiameter / 2).toInt())),
+                child: 
+                   AvatarImage.round(
+                        c.avatar, (avatarDiameter / 2)),
               ),
               const SizedBox(height: 6),
               Text(

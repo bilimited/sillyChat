@@ -24,7 +24,7 @@ class Openaiservicehandler extends Servicehandler {
 
     try {
       final Dio _dio = Dio();
-
+      
       // 1. 设置请求头
       final options = Options(
         headers: {

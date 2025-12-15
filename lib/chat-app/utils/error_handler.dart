@@ -136,6 +136,9 @@ ${JsonUtil.formatMap(option.toJson())}
         if (data["error"] != null) {
           return data["error"]?["message"];
         }
+        if(data["message"] != null){
+          return data["message"];
+        }
       } else {
         return "无法获取错误信息，请关闭流式传输后重试..";
       }

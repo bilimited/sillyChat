@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/main.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
@@ -116,6 +117,7 @@ class _ChatWebviewState extends State<RelationshipMapWebview> {
               initialFile: "assets/webview/relation_map/index.html",
               initialSettings: InAppWebViewSettings(
                 resourceCustomSchemes: ['imgs'],
+                transparentBackground: !SillyChatApp.isDesktop() // 诡异bug
               ),
               onLoadResourceWithCustomScheme: (controller, request) async {
                 if (request.url.scheme == 'imgs') {
