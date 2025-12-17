@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
@@ -17,6 +19,7 @@ import 'package:get/get.dart';
  */
 class Aihandler {
   static const bool enableSSE = true;
+  static int _activeTaskCount = 0;
 
   void Function(String newState) onGenerateStateChange = (newStat) {};
 
@@ -34,6 +37,33 @@ class Aihandler {
 
     cancelToken.cancel();
     onGenerateStateChange('生成已停止');
+  }
+
+  Future<void> onTaskStart() async {
+    isBusy = true;
+    _activeTaskCount++;
+
+    if (_activeTaskCount == 1) {
+      if (Platform.isAndroid) {
+        if (await FlutterBackground.hasPermissions) {
+          print("前台启动..");
+          await FlutterBackground.enableBackgroundExecution();
+        }
+      }
+    }
+  }
+
+  Future<void> onTaskEnd() async {
+    isBusy = false;
+    _activeTaskCount--;
+    if (_activeTaskCount < 0) _activeTaskCount = 0;
+
+    if (_activeTaskCount == 0) {
+      if (Platform.isAndroid) {
+        print("前台关闭..");
+        await FlutterBackground.disableBackgroundExecution();
+      }
+    }
   }
 
   void initDio() {
@@ -113,7 +143,8 @@ class Aihandler {
       if (isBusy) {
         return;
       } else {
-        isBusy = true;
+        //isBusy = true;
+        await onTaskStart();
       }
 
       final VaultSettingController settingController = Get.find();
@@ -141,8 +172,10 @@ class Aihandler {
       isError = true;
       Get.snackbar("发生错误", "$e", colorText: Colors.red);
       LogController.log("发生错误:$e", LogLevel.error);
+    } finally {
+      onTaskEnd();
     }
-    isBusy = false;
+    //isBusy = false;
   }
 
   /***

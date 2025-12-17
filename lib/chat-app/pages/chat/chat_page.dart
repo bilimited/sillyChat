@@ -423,13 +423,6 @@ class _ChatPageState extends State<ChatPage> {
 
     final items = <Widget>[];
 
-    // // 添加标题
-    // items.add(const ListTile(
-    //   title: Text('🕒 最近聊天'),
-    //   enabled: false,
-    //   dense: true,
-    // ));
-
     // 按顺序显示（chatHistory 通常最新在前，若需反转请调整）
     for (final chatId in chatIds) {
       final displayName = chatIdToName(chatId);
@@ -1303,15 +1296,6 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
-            // IconButton(
-            //     iconSize: 22,
-            //     onPressed: () {
-            //       sessionController.isLock.value =
-            //           !sessionController.isLock.value;
-            //     },
-            //     icon: Icon(sessionController.isLock.value
-            //         ? Icons.lock
-            //         : Icons.lock_open))
           ],
         ),
       ),

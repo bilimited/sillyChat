@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
 import 'package:flutter_example/chat-app/mobile_main_page.dart';
@@ -16,7 +17,8 @@ import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/test.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'
+    hide AndroidResource;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -46,12 +48,27 @@ void main() async {
   runApp(SillyChatApp());
   SettingController.loadInitialData();
 
+  if (Platform.isAndroid) {
+    initBackgroundService();
+  }
+
   PlatformDispatcher.instance.onError = (err, stack) {
     LogController.log("Dart错误:$err ", LogLevel.error);
     Get.snackbar('Dart错误', '$err');
 
     return false;
   };
+}
+
+Future<void> initBackgroundService() async {
+  final androidConfig = FlutterBackgroundAndroidConfig(
+    notificationTitle: "Silly Chat",
+    notificationText: "少女祈祷中...",
+    notificationImportance: AndroidNotificationImportance.normal,
+    notificationIcon: AndroidResource(
+        name: 'avatar.png', defType: 'drawable'), // 需要在 res/drawable 添加图标
+  );
+  await FlutterBackground.initialize(androidConfig: androidConfig);
 }
 
 class SillyChatApp extends StatelessWidget {
