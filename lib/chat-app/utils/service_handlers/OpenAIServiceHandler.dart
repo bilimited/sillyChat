@@ -24,7 +24,7 @@ class Openaiservicehandler extends Servicehandler {
 
     try {
       final Dio _dio = Dio();
-      
+
       // 1. 设置请求头
       final options = Options(
         headers: {
@@ -64,52 +64,53 @@ class Openaiservicehandler extends Servicehandler {
     }
   }
 
+  parseImage(String path) async {
+    // try {
+    //   final bytes = await FlutterImageCompress.compressWithFile(
+    //     path,
+    //     quality: 85,
+    //     format: CompressFormat.jpeg,
+    //   );
+    //   if (bytes != null) {
+    //     imageContents.add({
+    //       "type": "image_url",
+    //       "image_url": base64Encode(bytes),
+    //     });
+    //   }
+    // } catch (e) {
+    //   // 这里可以改为更合适的日志记录
+    //   print('Error compressing/reading file $path: $e');
+    // }
+    final file = File(path);
+
+    final bytes = await file.readAsBytes();
+    final ext = path.split('.').last.toLowerCase();
+    String mimeType;
+    if (ext == 'png') {
+      mimeType = 'image/png';
+    } else if (ext == 'jpg' || ext == 'jpeg') {
+      mimeType = 'image/jpeg';
+    } else if (ext == 'gif') {
+      mimeType = 'image/gif';
+    } else if (ext == 'webp') {
+      mimeType = 'image/webp';
+    } else if (ext == 'bmp') {
+      mimeType = 'image/bmp';
+    } else {
+      mimeType = 'application/octet-stream';
+    }
+    final base64Data = base64Encode(bytes);
+    return "data:$mimeType;base64,$base64Data";
+  }
+
   @override
   parseMessage(LLMMessage message) async {
     if (message.fileDirs.isNotEmpty) {
       // 先单独计算所有 image_url（压缩并 base64 编码），然后再构建返回内容
       final List<dynamic> imageContents = [];
       for (final path in message.fileDirs) {
-        // try {
-        //   final bytes = await FlutterImageCompress.compressWithFile(
-        //     path,
-        //     quality: 85,
-        //     format: CompressFormat.jpeg,
-        //   );
-        //   if (bytes != null) {
-        //     imageContents.add({
-        //       "type": "image_url",
-        //       "image_url": base64Encode(bytes),
-        //     });
-        //   }
-        // } catch (e) {
-        //   // 这里可以改为更合适的日志记录
-        //   print('Error compressing/reading file $path: $e');
-        // }
-
-        final file = File(path);
-
-        final bytes = await file.readAsBytes();
-        final ext = path.split('.').last.toLowerCase();
-        String mimeType;
-        if (ext == 'png') {
-          mimeType = 'image/png';
-        } else if (ext == 'jpg' || ext == 'jpeg') {
-          mimeType = 'image/jpeg';
-        } else if (ext == 'gif') {
-          mimeType = 'image/gif';
-        } else if (ext == 'webp') {
-          mimeType = 'image/webp';
-        } else if (ext == 'bmp') {
-          mimeType = 'image/bmp';
-        } else {
-          mimeType = 'application/octet-stream';
-        }
-        final base64Data = base64Encode(bytes);
-        imageContents.add({
-          "type": "image_url",
-          "image_url": "data:$mimeType;base64,$base64Data"
-        });
+        imageContents
+            .add({"type": "image_url", "image_url": await parseImage(path)});
       }
 
       return {
