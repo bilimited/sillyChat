@@ -737,7 +737,6 @@ class _ChatPageState extends State<ChatPage> {
       barrierDismissible: false,
     );
 
-    
     await sessionController.genenateMemory();
     SillyChatApp.snackbar(context, "记忆生成成功!");
     if (SillyChatApp.isDesktop()) {
@@ -1595,6 +1594,30 @@ class _ChatPageState extends State<ChatPage> {
             ),
             SizedBox(
               height: 8,
+            ),
+            Column(
+              children: [
+                ElevatedButton(
+                  onPressed: selectCharacter,
+                  child: const Text('选择角色'),
+                ),
+                if (ChatController.of.messageClipboard.isNotEmpty) ...[
+                  SizedBox(
+                    height: 12,
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final messagesToPaste = _chatController.messageToPaste;
+                      final msgList = chat.messages;
+
+                      msgList.addAll(messagesToPaste);
+                      await _updateChat();
+                      setState(() {});
+                    },
+                    child: const Text('粘贴消息'),
+                  ),
+                ]
+              ],
             ),
             NewChatButtons(
               onSelectRole: selectCharacter,

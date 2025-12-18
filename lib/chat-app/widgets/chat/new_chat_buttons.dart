@@ -24,10 +24,23 @@ class NewChatButtons extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        TextButton(
-          onPressed: onSelectRole ?? () => debugPrint('选择角色'),
-          child: const Text('选择角色'),
-        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        // ElevatedButton(
+        //   onPressed: onSelectRole ?? () => debugPrint('选择角色'),
+        //   child: const Text('选择角色'),
+        // ),
+
+        // if(ChatController.of.messageClipboard.isNotEmpty)
+        //         ...[SizedBox(width: 12,),ElevatedButton(
+        //   onPressed: onSelectRole ?? () => debugPrint('选择角色'),
+        //   child: const Text('粘贴消息'),
+        // ),]
+        // ],
+
+        // ),
+
         const SizedBox(height: 12),
 
         //模板列表占位组件（普通列表样式）
