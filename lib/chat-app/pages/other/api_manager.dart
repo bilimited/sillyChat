@@ -28,8 +28,14 @@ class ApiManagerPage extends StatelessWidget {
           },
           itemBuilder: (context, index) {
             final api = controller.apis[index];
-            return Card(
-              key: ValueKey(api.id),
+            return Obx(()=>Card(
+              
+              shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        side: VaultSettingController.of().defaultApi.value == api.id
+            ? BorderSide(width: 2, color: colors.primary)
+            : BorderSide.none,
+      ),
               child: InkWell(
                 onTap: () =>
                     customNavigate(ApiEditPage(api: api), context: context),
@@ -37,13 +43,13 @@ class ApiManagerPage extends StatelessWidget {
                   padding: EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      // 使用Expanded来让Column占据所有可用空间，从而将按钮推到末尾
+                      // 左侧文本信息
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Obx(
-                              () => Row(
+                            
+                              Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
@@ -53,27 +59,9 @@ class ApiManagerPage extends StatelessWidget {
                                   SizedBox(
                                     width: 8,
                                   ),
-                                  if (VaultSettingController.of()
-                                          .defaultApi
-                                          .value ==
-                                      api.id)
-                                    Card(
-                                      color: colors.secondaryContainer,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(4)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 2, horizontal: 6),
-                                        child: Text(
-                                          '默认',
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                    )
                                 ],
                               ),
-                            ),
+                            
                             Text(
                               '${api.modelName}',
                               style: TextStyle(
@@ -88,10 +76,33 @@ class ApiManagerPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // 这是新添加的弹出菜单按钮
+                      
+                      // --- 新增：模拟单选按钮 ---
+                      Obx(() {
+                        final isDefault =
+                            controller.defaultApi.value == api.id;
+                        return IconButton(
+                          onPressed: () {
+                            if (!isDefault) {
+                              controller.defaultApi.value = api.id;
+                              controller.saveSettings();
+                            }
+                          },
+                          icon: Icon(
+                            isDefault
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: isDefault
+                                ? colors.primary
+                                : colors.outline, // 选中用主色，未选中用轮廓色
+                          ),
+                          tooltip: '设为默认',
+                        );
+                      }),
+
+                      // 右侧更多菜单（保留了删除功能，也可以保留设为默认作为双重入口）
                       PopupMenuButton<String>(
                         onSelected: (value) {
-                          // 这里处理点击事件，'value'就是PopupMenuItem的value属性
                           if (value == 'set_default') {
                             VaultSettingController.of().defaultApi.value =
                                 api.id;
@@ -116,7 +127,7 @@ class ApiManagerPage extends StatelessWidget {
                   ),
                 ),
               ),
-            );
+            ),key: ValueKey(api.id),) ;
           },
         ),
       ),
