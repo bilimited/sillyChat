@@ -737,7 +737,9 @@ class _ChatPageState extends State<ChatPage> {
       barrierDismissible: false,
     );
 
+    
     await sessionController.genenateMemory();
+    SillyChatApp.snackbar(context, "记忆生成成功!");
     if (SillyChatApp.isDesktop()) {
       Navigator.pop(context);
     } else {

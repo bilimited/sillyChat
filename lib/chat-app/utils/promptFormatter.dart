@@ -116,7 +116,7 @@ abstract class Promptformatter {
             : "";
         var brief = entry.value.brief;
 
-        relationsText += """### ${anotherOne.roleName}
+        relationsText += """- ${anotherOne.roleName}
 ${anotherOne.brief}
 ${typeText} ${brief}
 """;

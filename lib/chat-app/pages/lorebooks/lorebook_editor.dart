@@ -86,11 +86,18 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
 
   void addItem() {
     setState(() {
+      String pos = "before_char";
+      if(_selectedType == LorebookType.character){
+        pos = "after_char";
+      }else if(_selectedType == LorebookType.memory){{
+        pos = "memory";
+      }}
       // 新条目插入到顶部还是底部？通常底部，或者顶部以便编辑。这里默认底部。
       items.add(LorebookItemModel(
         id: DateTime.now().millisecondsSinceEpoch,
         name: '新条目',
         content: '',
+        position: pos
       ));
       searchController.clear();
       searchText = '';

@@ -33,6 +33,7 @@ class Lorebookutil {
             .nonNulls
             .toList() ??
         [];
+    final charMem = sender?.memoryBook;
 
     // 去除重复世界书
     final Set<int> uniqueIds = {};
@@ -40,6 +41,8 @@ class Lorebookutil {
     for (var lorebook in [
       ...global,
       ...char,
+      if(charMem != null)
+        charMem
     ]) {
       if (!uniqueIds.contains(lorebook.id)) {
         uniqueIds.add(lorebook.id);
