@@ -4,16 +4,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/events.dart';
-import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/FileUtils.dart';
-import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 
@@ -228,7 +225,6 @@ class ChatController extends GetxController {
       return chatIndex[path];
     } catch (e) {
       rethrow;
-      return null;
     }
   }
 
@@ -265,54 +261,9 @@ class ChatController extends GetxController {
     return fullPath;
   }
 
-  Future<ChatModel> createChatFromCharacter(
-      CharacterModel char, String path) async {
-    final id = DateTime.now().microsecond;
-    ChatModel chatModel = ChatModel(
-        id: id,
-        name: '${char.roleName}',
-        avatar: char.avatar,
-        lastMessage: '聊天已创建',
-        time: DateTime.now().toString(),
-        assistantId: char.id,
-        messages: [],
-        chatOptionId:
-            Get.find<ChatOptionController>().chatOptions.elementAtOrNull(0)?.id)
-      ..characterIds = [char.id];
-
-    String formatMessage(String message) {
-      return Promptformatter.formatPrompt(message, chatModel);
-    }
-
-    if (char.firstMessage != null && !char.firstMessage!.isEmpty)
-      chatModel.messages.add(MessageModel(
-          id: DateTime.now().microsecondsSinceEpoch,
-          content: formatMessage(char.firstMessage!),
-          senderId: char.id,
-          time: DateTime.now(),
-          alternativeContent: [
-            null,
-            ...char.moreFirstMessage.map((msg) => formatMessage(msg))
-          ]));
-    await createChat(chatModel, path);
-
-    return chatModel;
-  }
-
   Future<ChatModel> createQuickChat(String path) async {
     final id = DateTime.now().microsecond;
-    ChatModel chatModel = ChatModel(
-        id: id,
-        name: '快速聊天',
-        avatar: '',
-        lastMessage: '聊天已创建',
-        time: DateTime.now().toString(),
-        assistantId: -1,
-        messages: [],
-        chatOptionId: Get.find<ChatOptionController>()
-            .chatOptions
-            .elementAtOrNull(0)
-            ?.id);
+    ChatModel chatModel = ChatModel.empty();
 
     await createChat(chatModel, path);
 

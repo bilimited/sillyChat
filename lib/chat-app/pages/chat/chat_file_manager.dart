@@ -1,10 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/models/character_model.dart';
-import 'package:flutter_example/chat-app/models/chat_model.dart';
-import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/chat/new_group_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -338,48 +334,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     }
   }
 
-  Widget _buildPathTitle() {
-    final theme = Theme.of(context);
-    String displayPath;
-
-    // 如果当前目录就是根目录，直接显示根目录的名称
-    if (_currentDirectory.path == widget.directory.path) {
-      displayPath = '全部聊天';
-    } else {
-      // 计算相对于根目录的路径
-      final String relativePath =
-          path.relative(_currentDirectory.path, from: widget.directory.path);
-
-      // 路径截断逻辑
-      const int maxPathLength = 35; // 定义一个合理的路径最大显示长度
-      if (relativePath.length > maxPathLength) {
-        final List<String> parts = path.split(relativePath);
-        final List<String> displayParts = [];
-        int currentLength = 0;
-
-        // 从后往前添加路径部分，直到长度超出限制
-        for (int i = parts.length - 1; i >= 0; i--) {
-          final part = parts[i];
-          if (currentLength + part.length > maxPathLength && i > 0) {
-            displayParts.insert(0, '...');
-            break;
-          }
-          displayParts.insert(0, part);
-          currentLength += part.length + 1; // +1 是为了路径分隔符
-        }
-        displayPath = path.joinAll(displayParts);
-      } else {
-        displayPath = relativePath;
-      }
-    }
-
-    return Text(
-      displayPath,
-      style: theme.textTheme.titleSmall, // 使用较小的字体尺寸
-      overflow: TextOverflow.ellipsis, // 以防万一，再次处理溢出
-    );
-  }
-
   // 多选时的Action
   List<Widget> _buildAppBarActions() {
     List<Widget> actions = [];
@@ -509,78 +463,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         ),
       ],
     );
-  }
-
-  void _showCreateDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('创建'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.create_new_folder),
-                title: const Text('新建文件夹'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showCreateFolderDialog();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.message),
-                title: const Text('新建聊天'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _createChat(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.group),
-                title: const Text('新建群聊'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _createGroupChat(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.quickreply),
-                title: const Text('快速开始'),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final chat = await ChatController.of
-                      .createQuickChat(_currentDirectory.path);
-                  _openChat(chat.file.path);
-                  // TODO:DELETE THIS _loadFiles();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _createChat(BuildContext context) async {
-    final char = await customNavigate<CharacterModel?>(CharacterSelector(),
-        context: context);
-
-    if (char != null) {
-      final chat = await ChatController.of
-          .createChatFromCharacter(char, _currentDirectory.path);
-      _openChat(chat.file.path);
-      // TODO:DELETE THIS _loadFiles();
-    }
-  }
-
-  Future<void> _createGroupChat(BuildContext context) async {
-    final chat = await customNavigate<ChatModel>(
-        NewChatPage(_currentDirectory.path),
-        context: context);
-    if (chat != null) {
-      _openChat(chat.file.path);
-    }
   }
 
   void _showCreateFolderDialog() {

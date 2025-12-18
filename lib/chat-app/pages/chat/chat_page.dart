@@ -13,10 +13,12 @@ import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
+import 'package:flutter_example/chat-app/pages/welcome_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
@@ -1308,8 +1310,7 @@ class _ChatPageState extends State<ChatPage> {
               });
 
               if (path != null && path.isNotEmpty) {
-                ChatController.of.currentChat.value =
-                    ChatSessionController(path);
+                GotoChat.byPath(path);
               }
             },
             icon: Icon(Icons.history)),
@@ -1539,14 +1540,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildEmptyScreen() {
     return Scaffold(
       appBar: AppBar(leading: _buildDrawerButton()),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('未选择会话，请在左侧聊天窗口选择一个会话'), // 显示的文本 [3, 6]
-          ],
-        ),
-      ),
+      body: WelcomePage(),
     );
   }
 
