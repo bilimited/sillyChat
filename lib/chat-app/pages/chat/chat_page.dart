@@ -1054,6 +1054,7 @@ class _ChatPageState extends State<ChatPage> {
               final messages = chat.messages.reversed.toList();
               // 聊天正文
               return ScrollablePositionedList.builder(
+                  itemScrollController: _scrollController,
                   reverse: true,
                   // TODO:页面原地刷新时  ScrollerController报错
                   // Failed assertion: line 264 pos 12: '_scrollableListState == null': is not true.
@@ -1230,7 +1231,8 @@ class _ChatPageState extends State<ChatPage> {
       _scrollController.scrollTo(
           index: index,
           duration: Duration(milliseconds: 500),
-          curve: Curves.easeInOut);
+          alignment: 0,
+          curve: Curves.easeOut);
   }
 
   PreferredSizeWidget? _buildAppBar() {
@@ -1321,6 +1323,9 @@ class _ChatPageState extends State<ChatPage> {
                 ManageMessagePage(
                   chat: chat,
                   chatSessionController: sessionController,
+                  onTapMessage: (message) {
+                    _scrollToMessage(message);
+                  },
                 ),
                 context: context);
           },

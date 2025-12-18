@@ -14,15 +14,16 @@ class ManageMessagePage extends StatefulWidget {
   final ChatModel chat;
   final ChatSessionController chatSessionController;
 
+  final Function(MessageModel message) onTapMessage;
+
   const ManageMessagePage(
-      {Key? key, required this.chat, required this.chatSessionController})
+      {Key? key, required this.chat, required this.chatSessionController,required this.onTapMessage})
       : super(key: key);
 
   @override
   State<ManageMessagePage> createState() => _ManageMessagePageState();
 }
 
-// TODO:添加高级搜索，如按角色搜索，范围搜索
 
 class _ManageMessagePageState extends State<ManageMessagePage> {
   final Map<int, bool> _expandedMessages = {};
@@ -457,11 +458,9 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                                 onTap: () {
                                   if (_isMultiSelecting) {
                                     _onMultiSelectMessage(message);
-                                  } else if (isLongText) {
-                                    setState(() {
-                                      _expandedMessages[messageKey] =
-                                          !isExpanded;
-                                    });
+                                  } else  {
+                                    widget.onTapMessage(message);
+                                    Navigator.pop(context);
                                   }
                                 },
                                 child: Padding(
@@ -487,7 +486,7 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                                         backgroundImage: ImageUtils.getProvider(
                                             character.avatar),
                                       ),
-                                      const SizedBox(width: 16),
+                                      const SizedBox(width: 24),
                                       Expanded(
                                         child: Row(
                                           crossAxisAlignment:
@@ -506,17 +505,30 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
                                             if (isLongText &&
                                                 !_isMultiSelecting)
                                               SizedBox(
-                                                width: 28,
-                                                child: Align(
-                                                  alignment:
-                                                      Alignment.centerRight,
-                                                  child: Icon(
-                                                    isExpanded
-                                                        ? Icons.expand_less
-                                                        : Icons.expand_more,
-                                                    color: theme
-                                                        .colorScheme.primary,
-                                                    size: 20,
+                                                width: 36,
+                                                height: 36,
+                                                child: InkWell(
+                                                                                  onTap: () {
+                                  if (_isMultiSelecting) {
+                                    _onMultiSelectMessage(message);
+                                  } else if (isLongText) {
+                                    setState(() {
+                                      _expandedMessages[messageKey] =
+                                          !isExpanded;
+                                    });
+                                  }
+                                },
+                                                  child: Align(
+                                                    alignment:
+                                                        Alignment.centerRight,
+                                                    child: Icon(
+                                                      isExpanded
+                                                          ? Icons.expand_less
+                                                          : Icons.expand_more,
+                                                      color: theme
+                                                          .colorScheme.primary,
+                                                      size: 20,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
