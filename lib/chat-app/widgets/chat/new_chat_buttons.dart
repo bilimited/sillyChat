@@ -30,7 +30,7 @@ class NewChatButtons extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // 模板列表占位组件（普通列表样式）
+        //模板列表占位组件（普通列表样式）
         TemplateList(
           onTemplateSelected: onTemplateSelected,
         ),
@@ -76,10 +76,7 @@ class TemplateList extends StatelessWidget {
       future: fetchTemplates(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 80,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          );
+          return const SizedBox.shrink();
         }
         final templates = snapshot.data ?? [];
         if (templates.isEmpty) {

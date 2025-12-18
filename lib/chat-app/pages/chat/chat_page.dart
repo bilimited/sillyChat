@@ -1566,30 +1566,42 @@ class _ChatPageState extends State<ChatPage> {
       }
     };
 
-    return Padding(
-      padding: EdgeInsetsGeometry.only(bottom: 30, left: 30, right: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          InkWell(
-            child: AvatarImage.round(chat.assistant.avatar, 30),
-            onTap: selectCharacter,
-          ),
-          SizedBox(
-            height: 8,
-          ),
-          NewChatButtons(
-            onSelectRole: selectCharacter,
-            onTemplateSelected: (value) {
-              final meta = value.meta!;
-              final file = File(meta.path);
-              final chat =
-                  ChatModel.fromJson(json.decode(file.readAsStringSync()));
-              chat.file = sessionController.file;
-              sessionController.useChatTemplate(chat);
-            },
-          ),
-        ],
+    return TweenAnimationBuilder<Offset>(
+      tween: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCirc,
+      builder: (context, offset, child) {
+        final opacity = (1 - (offset.dy / 0.2)).clamp(0.0, 1.0);
+        return FractionalTranslation(
+          translation: offset,
+          child: Opacity(opacity: opacity, child: child),
+        );
+      },
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 64, left: 30, right: 30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              child: AvatarImage.round(chat.assistant.avatar, 36),
+              onTap: selectCharacter,
+            ),
+            SizedBox(
+              height: 8,
+            ),
+            NewChatButtons(
+              onSelectRole: selectCharacter,
+              onTemplateSelected: (value) {
+                final meta = value.meta!;
+                final file = File(meta.path);
+                final chat =
+                    ChatModel.fromJson(json.decode(file.readAsStringSync()));
+                chat.file = sessionController.file;
+                sessionController.useChatTemplate(chat);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
