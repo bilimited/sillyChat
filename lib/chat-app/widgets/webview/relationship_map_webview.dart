@@ -117,7 +117,16 @@ class _ChatWebviewState extends State<RelationshipMapWebview> {
               initialFile: "assets/webview/relation_map/index.html",
               initialSettings: InAppWebViewSettings(
                 resourceCustomSchemes: ['imgs'],
-                transparentBackground: !SillyChatApp.isDesktop() // 诡异bug
+                transparentBackground: !SillyChatApp.isDesktop(), // 诡异bug
+                
+                    // 禁止 WebView 自带的缩放，完全把手势交给 JS 处理
+                supportZoom: false, 
+                // 禁止显示原生的缩放控件
+                displayZoomControls: false,
+                builtInZoomControls: false,
+                // 确保视口设置生效
+                useWideViewPort: true, 
+                loadWithOverviewMode: true,
               ),
               onLoadResourceWithCustomScheme: (controller, request) async {
                 if (request.url.scheme == 'imgs') {

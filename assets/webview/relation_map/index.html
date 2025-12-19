@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>人物关系图</title>
     <script src="./echarts.min.js"></script>
     <style>
@@ -37,6 +37,10 @@ function init(data, edges, categories , isDarkMode = false) {
         series: [
             {
                 type: 'graph',
+                scaleLimit: {
+                    min: 0.5, // 最小缩小到 0.5 倍
+                    max: 2    // 最大放大到 3 倍
+                },
                 layout: 'force', // 力引导布局
                 data: data,
                 links: edges,
