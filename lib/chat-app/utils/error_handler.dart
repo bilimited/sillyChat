@@ -45,7 +45,11 @@ class ErrorHandler {
     String? dataJson;
 
     if (e.response == null) {
-      message = "服务器没有返回任何结果!";
+
+      
+        message = "服务器没有返回任何结果!";
+      
+      
     } else {
       int? code = e.response!.statusCode;
       String? detail = handleDetail != null

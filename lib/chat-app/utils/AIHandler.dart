@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
+import 'package:dio/io.dart' show IOHttpClientAdapter;
 import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background/flutter_background.dart';
@@ -71,13 +72,15 @@ class Aihandler {
       print("正在创建新的Dio实例");
       //  一个连接最长保持4分钟，以加快Gemini响应速度
       // 注意：如果空闲时间过长某个中间网关可能会静默丢弃这个连接，导致一次连接超时
-      dioInstance = dio.Dio()
-        ..httpClientAdapter = Http2Adapter(ConnectionManager(
-          idleTimeout: Duration(minutes: 4),
-          onClientCreate: (uri, p1) {
-            print('[${DateTime.now()}] 监控: 正在为 $uri 建立一个新的 HTTP/2 连接...');
-          },
-        ));
+      dioInstance = dio.Dio();
+      dioInstance!.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          // 默认就是 true，这里写出来只是为了演示
+          client.idleTimeout = Duration(minutes: 4); // 可以在这里设置空闲保持时间
+          return client;
+        },
+      );
     }
   }
 
