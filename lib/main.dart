@@ -206,7 +206,7 @@ class SillyChatApp extends StatelessWidget {
   // 调试时可以在括号前面加!来切换成移动端模式，构建的时候记得切回去
   static bool isDesktop() {
     if (kDebugMode) {
-      return !(Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+      return (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     }
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }
@@ -219,6 +219,12 @@ class SillyChatApp extends StatelessWidget {
           darkTheme: vaultSettings.themeNight.value,
           themeMode:
               setting.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
+          builder: (context, child) {
+            return MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(0.95)),
+                child: child!);
+          },
           home: vaultSettings.isShowOnBoardPage.value
               ? OnBoardingPage()
               : isDesktop()

@@ -65,12 +65,11 @@ class ChatSessionController extends GetxController {
 
   void setAIState(ChatAIState newState) {
     _aiState.value = newState;
-    //Get.find<ChatController>().setAIState(file.path, newState);
   }
 
   ChatModel get chat => _chat.value;
   File? get file => _chat.value.file;
-  bool get isChatLoading => chat.id == -1;
+
   String get tag => chatPath;
   bool get isChatUninitialized => file == null;
 

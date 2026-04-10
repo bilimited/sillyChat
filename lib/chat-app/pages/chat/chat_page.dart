@@ -1651,10 +1651,10 @@ class _ChatPageState extends State<ChatPage> {
                 return FadeTransition(opacity: animation, child: child);
               },
 
-              child: sessionController.isChatLoading
+              child: sessionController.isChatUninitialized
                   ? Container(
                       key: const ValueKey('LoadScreen'),
-                      child: !sessionController.isChatUninitialized
+                      child: sessionController.isLoading.value
                           ? _buildLoadScreen()
                           : _buildEmptyScreen(),
                     )

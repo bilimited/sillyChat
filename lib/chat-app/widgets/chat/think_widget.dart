@@ -35,89 +35,92 @@ class _ThinkWidgetState extends State<ThinkWidget> {
     // 4行的大致高度
     const double collapsedHeight = fontSize * lineHeight * 3;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.only(left: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            color: colors.outline.withOpacity(0.5),
-            width: 2,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // --- 顶部标题栏 ---
-          Row(
-            children: [
-              if (widget.isThinking)
-                Row(
-                  children: [
-                    Text(
-                      "思考中",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.outline,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colors.outline,
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Text(
-                  "思考过程:",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.outline,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              const Spacer(), // 将按钮推到右侧（可选）
-              IconButton(
-                padding: const EdgeInsets.only(top: 2),
-                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                iconSize: 16,
-                // 使用旋转动画切换箭头方向
-                icon: AnimatedRotation(
-                  turns: _isExpanded ? 0.5 : 0.0, // 0.0 是向下，0.5 是向上（180度）
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: colors.outline,
-                  ),
-                ),
-                onPressed: _toggleExpanded,
-              ),
-            ],
-          ),
-
-          // --- 带有动画的内容区域 ---
-          // AnimatedSize 自动处理子组件高度变化时的过渡动画
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8),
-              // AnimatedSwitcher 处理两种显示模式（完整 vs 收起）之间的淡入淡出
-              child: _isExpanded
-                  ? _buildExpandedContent(colors, fontSize, lineHeight)
-                  : _buildCollapsedContent(
-                      colors, collapsedHeight, fontSize, lineHeight),
+    return InkWell(
+      onTap: _toggleExpanded,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.only(left: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: colors.outline.withOpacity(0.5),
+              width: 2,
             ),
           ),
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- 顶部标题栏 ---
+
+            Row(
+              children: [
+                if (widget.isThinking)
+                  Row(
+                    children: [
+                      Text(
+                        "思考中",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.outline,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.outline,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    "思考过程:",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.outline,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                const Spacer(), // 将按钮推到右侧（可选）
+                // IconButton(
+                //   visualDensity: VisualDensity(vertical: -4),
+                //   iconSize: 16,
+                //   // 使用旋转动画切换箭头方向
+                //   icon: AnimatedRotation(
+                //     turns: _isExpanded ? 0.5 : 0.0, // 0.0 是向下，0.5 是向上（180度）
+                //     duration: const Duration(milliseconds: 200),
+                //     child: Icon(
+                //       Icons.keyboard_arrow_down,
+                //       color: colors.outline,
+                //     ),
+                //   ),
+                //   onPressed: _toggleExpanded,
+                // ),
+              ],
+            ),
+
+            // --- 带有动画的内容区域 ---
+            // AnimatedSize 自动处理子组件高度变化时的过渡动画
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                // AnimatedSwitcher 处理两种显示模式（完整 vs 收起）之间的淡入淡出
+                child: _isExpanded
+                    ? _buildExpandedContent(colors, fontSize, lineHeight)
+                    : _buildCollapsedContent(
+                        colors, collapsedHeight, fontSize, lineHeight),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

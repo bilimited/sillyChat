@@ -125,6 +125,20 @@ flutter:
     - assets/webview/
     - assets/webview/relation_map/
 
+  fonts:
+    - family: LexendDeca  # 这是你在代码中引用的统一家族名称
+      fonts:
+        - asset: assets/fonts/LexendDeca-Light.ttf
+          weight: 300
+        - asset: assets/fonts/LexendDeca-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LexendDeca-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/LexendDeca-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LexendDeca-Black.ttf
+          weight: 900
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

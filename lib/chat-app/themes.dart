@@ -17,15 +17,20 @@ abstract final class SillyChatThemeBuilder {
     // TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
   });
 
-  static _getTextTheme(String? font) =>
-      Typography.material2021().englishLike.apply(
-            fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-            fontFamilyFallback: ['思源黑体', '微软雅黑'],
-            fontSizeFactor: 0.95, // 所有字体缩小为原来的 90%
-            fontSizeDelta: 0.0, // 在缩放基础上增加/减少固定像素值
-          );
+  static _getTextTheme(String? font) => ThemeData.light().textTheme.apply(
+        fontSizeFactor: 0.8,
+        //fontSizeDelta: 2.0,
+        fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
+        fontFamilyFallback: ['思源黑体', '微软雅黑'],
+      );
+  // Typography.material2021().englishLike.apply(
+  //       fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
+  //       fontFamilyFallback: ['思源黑体', '微软雅黑'],
+  //       fontSizeFactor: 0.95, // 所有字体缩小为原来的 90%
+  //       fontSizeDelta: 0.0, // 在缩放基础上增加/减少固定像素值
+  //     );
 
-  static final _visualDensity = VisualDensity(horizontal: -2, vertical: -2);
+  static final _visualDensity = VisualDensity(horizontal: -3, vertical: -3);
 
   static buildLight(FlexScheme scheme, String? font) {
     return FlexThemeData.light(
@@ -34,7 +39,8 @@ abstract final class SillyChatThemeBuilder {
         // Surface color adjustments.
         surfaceMode: FlexSurfaceMode.highBackgroundLowScaffold,
         blendLevel: 2,
-        // textTheme: _getTextTheme(font),
+
+        //textTheme: _getTextTheme(font),
 
         // Component theme configurations for light mode.
         subThemesData: const FlexSubThemesData(
@@ -80,7 +86,7 @@ abstract final class SillyChatThemeBuilder {
         visualDensity: _visualDensity,
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
         fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['MiSans', '思源黑体', '微软雅黑']);
+        fontFamilyFallback: ['LexendDeca']);
   }
 
   static buildNight(FlexScheme scheme, String? font) {
@@ -90,7 +96,7 @@ abstract final class SillyChatThemeBuilder {
         // Surface color adjustments.
         surfaceMode: FlexSurfaceMode.highBackgroundLowScaffold,
         blendLevel: 8,
-        // textTheme: _getTextTheme(font),
+        //textTheme: _getTextTheme(font),
         // Component theme configurations for dark mode.
         subThemesData: const FlexSubThemesData(
           cardElevation: 0,
@@ -136,7 +142,7 @@ abstract final class SillyChatThemeBuilder {
         visualDensity: _visualDensity,
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
         fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['思源黑体', '微软雅黑']);
+        fontFamilyFallback: ['LexendDeca']);
   }
 
   // The FlexColorScheme defined dark mode ThemeData.
