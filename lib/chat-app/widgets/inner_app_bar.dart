@@ -19,7 +19,10 @@ class InnerAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppBar(
+    return SliverAppBar(
+      floating: true,
+      snap: true,
+      pinned: false, // 如果设为 true，AppBar 会折叠后固定在顶部
       titleTextStyle: TextStyle(
           fontSize: titleSize,
           fontWeight: FontWeight.bold,
@@ -39,7 +42,7 @@ class InnerAppBar extends StatelessWidget implements PreferredSizeWidget {
       // 3. 调整左侧区域宽度
       // 默认是 56，如果不改小，左上角图标旁边会有大片空白
       leadingWidth: height,
-      backgroundColor: Colors.transparent, // 核心样式
+      backgroundColor: theme.scaffoldBackgroundColor, // 核心样式
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       foregroundColor: Colors.transparent,

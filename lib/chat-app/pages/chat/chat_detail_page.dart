@@ -86,6 +86,9 @@ class ChatDetailPage extends StatelessWidget {
   }
 
   Widget _buildFileDetailsCard() {
+    if (chatModel.file == null) {
+      return SizedBox.shrink();
+    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -100,13 +103,13 @@ class ChatDetailPage extends StatelessWidget {
             _buildInfoRow(
               icon: Icons.sd_storage,
               title: '大小',
-              value: _formatFileSize(chatModel.file.statSync().size),
+              value: _formatFileSize(chatModel.file!.statSync().size),
             ),
             const SizedBox(height: 16),
             _buildInfoRow(
               icon: Icons.folder,
               title: '路径',
-              value: chatModel.file.path,
+              value: chatModel.file!.path,
               isPath: true, // 路径可能很长，需要特殊处理
             ),
             const SizedBox(height: 16),
@@ -114,7 +117,7 @@ class ChatDetailPage extends StatelessWidget {
               icon: Icons.calendar_today,
               title: '修改日期',
               value: DateFormat('yyyy年MM月dd日 HH:mm')
-                  .format(chatModel.file.statSync().modified),
+                  .format(chatModel.file!.statSync().modified),
             ),
           ],
         ),

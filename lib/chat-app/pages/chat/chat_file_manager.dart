@@ -284,8 +284,11 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         //   centerButton: SizedBox.shrink(),
         // ),
         backgroundColor: Colors.transparent,
-        appBar: _buildAppBar(),
-        body: _buildFileList(),
+        body: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [_buildAppBar()];
+            },
+            body: _buildFileList()),
         floatingActionButton:
             _isMultiSelectMode ? null : _buildFloatingActionButton(),
       ),
@@ -454,9 +457,10 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         const SizedBox(height: 16),
         FloatingActionButton(
           onPressed: () async {
+            // TODO:改这里
             final chat =
                 await ChatController.of.createQuickChat(_currentDirectory.path);
-            _openChat(chat.file.path);
+            _openChat(chat.file!.path);
           },
           child: const Icon(Icons.chat),
           heroTag: 'add',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/alert_card.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
 import '../../providers/vault_setting_controller.dart';
@@ -179,300 +181,160 @@ class _SettingPageState extends State<SettingPage>
     }
   }
 
+  Widget _buildSettingsGroup({required List<Widget> children}) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: children.asMap().entries.map((entry) {
+          int idx = entry.key;
+          Widget child = entry.value;
+          // 自动在项之间添加分割线
+          if (idx > 0) {
+            return Column(
+              children: [
+                const Divider(height: 1, indent: 20, endIndent: 20),
+                child,
+              ],
+            );
+          }
+          return child;
+        }).toList(),
+      ),
+    );
+  }
+
+  /// 构建通用的设置行
+  Widget _buildSettingTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+    Widget? leadingOverride,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: leadingOverride ??
+          Icon(icon, color: Theme.of(context).colorScheme.secondary),
+      onTap: onTap,
+      title: Text(
+        title,
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing:
+          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+    );
+  }
+
   Widget _buildGeneralTab() {
     return ListView(
-      key: _pageKey, // Apply the key here
+      key: _pageKey,
       padding: const EdgeInsets.all(16.0),
       children: [
-        Card(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Column(children: [
-              Obx(() => ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading:
-                        AvatarImage.round(_characterController.me.avatar, 20),
-                    onTap: () {
-                      _showCharacterSelectDialog();
-                    },
-                    title: Text(
-                      _characterController.me.roleName,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '切换主控角色',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios,
-                        size: 16, color: Colors.grey[400]),
-                  )),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.cabin,
-                    color: Theme.of(context).colorScheme.secondary),
-                onTap: () {
-                  customNavigate(VaultManagerPage(), context: context);
-                },
-                title: Text(
-                  '仓库管理',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '在不同仓库中独立管理应用数据',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-            ])),
-
-        // Theme Toggle
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.color_lens,
-                    color: Theme.of(context).colorScheme.secondary),
-                onTap: () {
-                  customNavigate(AppearanceSettingsPage(), context: context);
-                },
-                title: Text(
-                  '聊天界面设置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '编辑聊天界面的样式，包括气泡、头像、背景等',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.format_align_center,
-                    color: Theme.of(context).colorScheme.secondary),
-                onTap: () {
-                  customNavigate(PromptFormatSettingsPage(), context: context);
-                },
-                title: Text(
-                  '格式设置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '编辑连续输出时的格式、群聊消息的格式等',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.miscellaneous_services,
-                    color: Theme.of(context).colorScheme.secondary),
-                onTap: () {
-                  customNavigate(MiscSettingsPage(), context: context);
-                },
-                title: Text(
-                  '杂项设置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '编辑自动生成标题、生成摘要和AI帮答的相关设置',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-            ],
+        // 1. 账户与仓库
+        _buildSettingsGroup(children: [
+          Obx(() => _buildSettingTile(
+                title: _characterController.me.roleName,
+                subtitle: '切换主控角色',
+                icon: Icons.person, // 这里的 icon 会被 leadingOverride 覆盖
+                leadingOverride:
+                    AvatarImage.round(_characterController.me.avatar, 20),
+                onTap: _showCharacterSelectDialog,
+              )),
+          _buildSettingTile(
+            title: '仓库管理',
+            subtitle: '在不同仓库中独立管理应用数据',
+            icon: Icons.cabin,
+            onTap: () => customNavigate(VaultManagerPage(), context: context),
           ),
-        ),
-
-        // WebDAV Configuration
-        Card(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  leading: Icon(Icons.pattern,
-                      color: Theme.of(context).colorScheme.secondary),
-                  title: Text(
-                    '全局正则',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    '编辑全局正则表达式',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  onTap: () {
-                    customNavigate(EditGlobalRegexPage(), context: context);
-                  },
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      size: 16, color: Colors.grey[400]),
-                ),
-              ],
-            )),
-
-        // Cloud Data Management
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.cloud_queue,
-                    color: Theme.of(context).colorScheme.secondary),
-                title: Text(
-                  'WebDAV 配置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '连接到你的WebDav网盘或服务器以同步数据。',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: _setupWebDav,
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.cloud_upload_outlined,
-                    color: Theme.of(context).colorScheme.secondary),
-                title: Text(
-                  '上传到云端',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '将本地数据上传到WebDav云储存',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: _uploadAll,
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              const Divider(height: 1, indent: 20, endIndent: 20),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.cloud_download_outlined,
-                    color: Theme.of(context).colorScheme.secondary),
-                title: Text(
-                  '从云端导入',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '从云端下载数据，本地数据将会被覆盖。',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: _downloadAll,
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-            ],
+          _buildSettingTile(
+            title: '预设管理',
+            subtitle: '管理聊天预设',
+            icon: Icons.dashboard,
+            onTap: () =>
+                customNavigate(ChatOptionsManagerPage(), context: context),
           ),
-        ),
+        ]),
 
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.clear_all,
-                    color: Theme.of(context).colorScheme.secondary),
-                title: Text(
-                  '查看日志',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '查看应用内运行日志（主要是API请求记录）',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: () {
-                  customNavigate(LogPage(), context: context);
-                },
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: Icon(Icons.more_horiz,
-                    color: Theme.of(context).colorScheme.secondary),
-                title: Text(
-                  '其他设置',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '乱七八糟的设置',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: () {
-                  customNavigate(OtherSettingsPage(), context: context);
-                },
-                trailing: Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey[400]),
-              ),
-            ],
+        // 2. 界面与格式
+        _buildSettingsGroup(children: [
+          _buildSettingTile(
+            title: '聊天界面设置',
+            subtitle: '编辑聊天界面的样式，包括气泡、头像、背景等',
+            icon: Icons.color_lens,
+            onTap: () =>
+                customNavigate(AppearanceSettingsPage(), context: context),
           ),
-        ),
+          _buildSettingTile(
+            title: '格式设置',
+            subtitle: '编辑连续输出时的格式、群聊消息的格式等',
+            icon: Icons.format_align_center,
+            onTap: () =>
+                customNavigate(PromptFormatSettingsPage(), context: context),
+          ),
+          _buildSettingTile(
+            title: '杂项设置',
+            subtitle: '编辑自动生成标题、生成摘要和AI帮答的相关设置',
+            icon: Icons.miscellaneous_services,
+            onTap: () => customNavigate(MiscSettingsPage(), context: context),
+          ),
+        ]),
+
+        // 3. 增强功能
+        _buildSettingsGroup(children: [
+          _buildSettingTile(
+            title: '全局正则',
+            subtitle: '编辑全局正则表达式',
+            icon: Icons.pattern,
+            onTap: () =>
+                customNavigate(EditGlobalRegexPage(), context: context),
+          ),
+        ]),
+
+        // 4. 云端同步
+        _buildSettingsGroup(children: [
+          _buildSettingTile(
+            title: 'WebDAV 配置',
+            subtitle: '连接到你的WebDav网盘或服务器以同步数据。',
+            icon: Icons.cloud_queue,
+            onTap: _setupWebDav,
+          ),
+          _buildSettingTile(
+            title: '上传到云端',
+            subtitle: '将本地数据上传到WebDav云储存',
+            icon: Icons.cloud_upload_outlined,
+            onTap: _uploadAll,
+          ),
+          _buildSettingTile(
+            title: '从云端导入',
+            subtitle: '从云端下载数据，本地数据将会被覆盖。',
+            icon: Icons.cloud_download_outlined,
+            onTap: _downloadAll,
+          ),
+        ]),
+
+        // 5. 系统
+        _buildSettingsGroup(children: [
+          _buildSettingTile(
+            title: '查看日志',
+            subtitle: '查看应用内运行日志（主要是API请求记录）',
+            icon: Icons.clear_all,
+            onTap: () => customNavigate(LogPage(), context: context),
+          ),
+          _buildSettingTile(
+            title: '其他设置',
+            subtitle: '乱七八糟的设置',
+            icon: Icons.more_horiz,
+            onTap: () => customNavigate(OtherSettingsPage(), context: context),
+          ),
+        ]),
       ],
     );
   }
@@ -480,11 +342,33 @@ class _SettingPageState extends State<SettingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _pageKey,
-      appBar: AppBar(
-        title: const Text('设置'),
+      // 移除原有的 appBar: InnerAppBar(...)
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            InnerAppBar(
+              title: const Text('设置'),
+            ),
+          ];
+        },
+        body: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, Colors.white.withOpacity(0.0)],
+              stops: [0.85, 1.0],
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.dstIn,
+          // 关键：内部 ListView 的 padding 需要调整，因为它不再直接顶着屏幕顶端
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true, // 移除顶部安全距离，交给 NestedScrollView 处理
+            child: _buildGeneralTab(),
+          ),
+        ),
       ),
-      body: _buildGeneralTab(),
     );
   }
 }

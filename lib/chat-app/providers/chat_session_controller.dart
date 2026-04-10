@@ -48,7 +48,7 @@ class ChatSessionController extends GetxController {
 
   final Rx<ChatModel> _chat = ChatModel(
       id: -1,
-      name: '未加载的聊天',
+      name: '新会话',
       avatar: '',
       lastMessage: '',
       time: '',
@@ -69,12 +69,12 @@ class ChatSessionController extends GetxController {
   }
 
   ChatModel get chat => _chat.value;
-  File get file => _chat.value.file;
+  File? get file => _chat.value.file;
   bool get isChatLoading => chat.id == -1;
   String get tag => chatPath;
-  bool isChatUninitialized = false;
+  bool get isChatUninitialized => file == null;
 
-  final String chatPath;
+  String chatPath;
 
   Function(ChatModel) onChatUpdate = (cm) {};
   Worker? aiStateListener;
@@ -88,7 +88,7 @@ class ChatSessionController extends GetxController {
   }
 
   factory ChatSessionController.uninitialized() {
-    return ChatSessionController('')..isChatUninitialized = true;
+    return ChatSessionController('');
   }
 
   static ChatSessionController? tryGetSession(String path) {
@@ -105,12 +105,6 @@ class ChatSessionController extends GetxController {
     if (tag.isNotEmpty) {
       VaultSettingController.of().addToChatHistory(tag);
       ChatController.of.openedChat[tag] = this;
-    }
-
-    File f = File(chatPath);
-    if (!f.existsSync()) {
-      // TODO:加个提示
-      isChatUninitialized = true;
     }
 
     ever(ChatController.of.fileDeleteEvent, (fe) {
@@ -177,8 +171,6 @@ class ChatSessionController extends GetxController {
         messages: []);
 
     inputController.text = '';
-
-    isChatUninitialized = true;
   }
 
   Future<void> loadChat() async {
@@ -204,20 +196,24 @@ class ChatSessionController extends GetxController {
   }
 
   Future<void> saveChat() async {
+    final createPath = chat.pathToCreate;
     onChatUpdate(chat);
-    if (await file.exists()) {
+    if (file != null && await file!.exists()) {
       final String contents = json.encode(chat.toJson());
-      await file.writeAsString(contents);
+      await file!.writeAsString(contents);
 
       await ChatController.of
-          .updateChatMeta(file.path, ChatMetaModel.fromChatModel(chat));
+          .updateChatMeta(file!.path, ChatMetaModel.fromChatModel(chat));
       print('save Chat');
 
       // 异步执行Token计算
       // TODO:添加防抖
       updateTokens();
+    } else if (createPath != null) {
+      final fullPath = await ChatController.of.createChat(chat, createPath);
+      chatPath = fullPath;
     } else {
-      Get.snackbar('聊天${file.path}保存失败.', '聊天文件不存在');
+      //Get.snackbar('聊天${file?.path ?? '<未创建>'}保存失败.', '聊天文件不存在');
     }
   }
 
@@ -380,9 +376,8 @@ class ChatSessionController extends GetxController {
   /// 仅群聊模式下可用
   /// 让AI直接发送一条消息，无需输入问题
   Future<void> onGroupMessage(CharacterModel assistant) async {
-
     // 将发送者的ID自动添加到成员列表中
-    if(!chat.characterIds.contains(assistant.id)){
+    if (!chat.characterIds.contains(assistant.id)) {
       chat.characterIds.add(assistant.id);
     }
 

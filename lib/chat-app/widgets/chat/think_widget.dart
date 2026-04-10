@@ -33,7 +33,7 @@ class _ThinkWidgetState extends State<ThinkWidget> {
     const double fontSize = 13.0;
     const double lineHeight = 1.5;
     // 4行的大致高度
-    const double collapsedHeight = fontSize * lineHeight * 5;
+    const double collapsedHeight = fontSize * lineHeight * 3;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),

@@ -21,7 +21,14 @@ class VaultSettingController extends GetxController {
   final String vaultSettingFileName = 'settings.json';
 
   final RxList<ApiModel> apis = <ApiModel>[].obs;
-  final Rx<int?> defaultApi = Rx(null); // 如果没有设置默认API，则会自动选取第一个。
+  final Rx<int?> defaultApiId = Rx(null); // 如果没有设置默认API，则会自动选取第一个。
+
+  ApiModel? get defaultApi {
+    if (defaultApiId.value == null) {
+      return null;
+    }
+    return getApiById(defaultApiId.value!);
+  }
 
   final RxList<RegexModel> regexes = <RegexModel>[].obs;
   final Rx<DateTime?> lastSyncTime = Rx<DateTime?>(null);
@@ -108,7 +115,7 @@ class VaultSettingController extends GetxController {
                 .cast<RegexModel>()
             : <RegexModel>[];
 
-        defaultApi.value = jsonMap['defaultApi'] ?? -1;
+        defaultApiId.value = jsonMap['defaultApi'] ?? -1;
 
         if (jsonMap['autoTileSetting'] != null) {
           miscSetting.value =
@@ -150,7 +157,7 @@ class VaultSettingController extends GetxController {
         'vaultName': SettingController.currectValutName,
         'lastSyncTime': lastSyncTime.value?.toIso8601String(),
         'apis': apis.map((api) => api.toJson()).toList(),
-        'defaultApi': defaultApi.value,
+        'defaultApi': defaultApiId.value,
         'regexes': regexes.map((reg) => reg.toJson()).toList(),
         'myId': myId.value,
         'displaySettingModel': displaySettingModel.toJson(),
@@ -180,7 +187,7 @@ class VaultSettingController extends GetxController {
   // API管理方法
   Future<void> addApi(ApiModel api) async {
     if (apis.isEmpty) {
-      defaultApi.value = api.id;
+      defaultApiId.value = api.id;
     }
     apis.add(api);
 
@@ -197,8 +204,8 @@ class VaultSettingController extends GetxController {
 
   Future<void> deleteApi({required int id}) async {
     apis.removeWhere((a) => a.id == id);
-    if (id == defaultApi.value && apis.isNotEmpty) {
-      defaultApi.value = apis.first.id;
+    if (id == defaultApiId.value && apis.isNotEmpty) {
+      defaultApiId.value = apis.first.id;
     }
     await saveSettings();
   }
@@ -212,7 +219,7 @@ class VaultSettingController extends GetxController {
   ApiModel? getApiById(int id) {
     final api = apis.firstWhereOrNull((a) => a.id == id);
     if (api == null) {
-      return apis.firstWhereOrNull((a) => a.id == defaultApi.value);
+      return apis.firstWhereOrNull((a) => a.id == defaultApiId.value);
     } else {
       return api;
     }

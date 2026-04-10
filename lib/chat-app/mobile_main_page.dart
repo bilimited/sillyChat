@@ -23,6 +23,7 @@ import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/custom_bottom_bar.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
+import 'package:marquee/marquee.dart';
 
 class MainPageMobile extends StatefulWidget {
   const MainPageMobile({super.key});
@@ -61,12 +62,14 @@ class _MainPageMobileState extends State<MainPageMobile> {
     ContactsPage(
       scaffoldKey: _scaffoldKey,
     ),
-    ChatOptionsManagerPage(
-      scaffoldKey: _scaffoldKey,
-    ),
+    // ChatOptionsManagerPage(
+    //   scaffoldKey: _scaffoldKey,
+    // ),
     LoreBookManagerPage(
       scaffoldKey: _scaffoldKey,
     ),
+    SettingPage()
+
     // ApiManagerPage(
     //   scaffoldKey: _scaffoldKey,
     // ),
@@ -96,6 +99,51 @@ class _MainPageMobileState extends State<MainPageMobile> {
     return n1 > n2 ? n2 : n1;
   }
 
+  Widget _buildAPIButton(BuildContext context) {
+    return Tooltip(
+      message: "设置API",
+      child: InkWell(
+        onTap: () {
+          customNavigate(ApiManagerPage(), context: context);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              const Icon(Icons.power),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 24, // 需要指定高度
+                width: 86,
+                child: Obx(() {
+                  String label =
+                      VaultSettingController.of().defaultApi?.displayName ??
+                          "未设置API";
+
+                  // 只有当文字较长时才使用 Marquee，否则居左显示普通 Text
+                  // 这里可以根据业务需求调整判断逻辑
+                  return Marquee(
+                    text: label,
+                    style: const TextStyle(fontSize: 14), // 保持与原 Text 样式一致
+                    scrollAxis: Axis.horizontal,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    blankSpace: 20.0, // 循环滚动时的间距
+                    velocity: 30.0, // 滚动速度
+                    pauseAfterRound: const Duration(seconds: 1), // 每圈滚动后的暂停时间
+                    accelerationDuration: const Duration(seconds: 1),
+                    accelerationCurve: Curves.linear,
+                    decelerationDuration: const Duration(milliseconds: 500),
+                    decelerationCurve: Curves.easeOut,
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -107,47 +155,75 @@ class _MainPageMobileState extends State<MainPageMobile> {
       key: _scaffoldKey,
       drawer: Drawer(
         width: myMin(_maxDrawerWidth, screenWidth * _drawerWidthScaler),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // const SizedBox(height: 20),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 等间距分布
-                children: [
-                  _buildTopIconBtn(
-                      _currentIndex == 0
-                          ? Icons.chat_bubble
-                          : Icons.chat_bubble_outline,
-                      0),
-                  _buildTopIconBtn(
-                      _currentIndex == 1 ? Icons.people : Icons.people_outline,
-                      1),
-                  _buildTopIconBtn(
-                      _currentIndex == 2
-                          ? Icons.dashboard
-                          : Icons.dashboard_outlined,
-                      2),
-                  _buildTopIconBtn(
-                      _currentIndex == 3 ? Icons.book : Icons.book_outlined, 3),
-                ],
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            title: Center(
+              child: InkWell(
+                onTap: () {
+                  customNavigate(VaultManagerPage(), context: context);
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      SettingController.currectValutName,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.expand_more,
+                      color: Theme.of(context).colorScheme.outline,
+                      size: 18,
+                    )
+                  ],
+                ),
               ),
-
-              const Divider(thickness: 1),
-
-              Expanded(
-                child: _drawerContents[_currentIndex],
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(SettingController.of.isDarkMode.value
+                    ? Icons.dark_mode
+                    : Icons.light_mode),
+                onPressed: () {
+                  SettingController.of.toggleDarkMode();
+                },
+                tooltip: '切换主题',
               ),
-
-              const Divider(thickness: 1),
-
-              CustomBottomBar(
-                centerButton: SizedBox.shrink(),
-              ),
-              //_buildDrawerBottom(),
-              // 底部安全距离
-              // const SizedBox(height: 20),
+              _buildAPIButton(context)
             ],
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            showUnselectedLabels: false,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            type: BottomNavigationBarType.fixed,
+            items: [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble), label: '聊天'),
+              BottomNavigationBarItem(icon: Icon(Icons.people), label: '角色'),
+              BottomNavigationBarItem(icon: Icon(Icons.book), label: '世界书'),
+              BottomNavigationBarItem(icon: Icon(Icons.settings), label: '设置'),
+            ],
+            currentIndex: _currentIndex,
+            onTap: (value) {
+              setState(() {
+                _currentIndex = value;
+              });
+            },
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                const Divider(
+                  thickness: 1,
+                  height: 0,
+                ),
+                Expanded(
+                  child: _drawerContents[_currentIndex],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -143,7 +143,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             provider: _selectedServiceProvider);
 
         await vault.addApi(api);
-        vault.defaultApi.value = api.id;
+        vault.defaultApiId.value = api.id;
       }
 
       vault.isShowOnBoardPage.value = false;

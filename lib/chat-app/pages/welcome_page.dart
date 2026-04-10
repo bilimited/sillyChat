@@ -16,7 +16,8 @@ class WelcomePage extends StatefulWidget {
   State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -34,7 +35,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       CurvedAnimation(parent: _animController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeOutQuad),
     );
 
@@ -53,9 +55,13 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     // 这里假设 provider 已经初始化并能同步获取数据，实际情况可能需要放在 build 内部监听或使用 FutureBuilder
     // 为了示例运行顺畅，增加了空值保护
     try {
-      return VaultSettingController.of().historyModel.value.chatHistory.map((h) =>
-          ChatController.of.getIndex(h)
-      ).nonNulls.toList();
+      return VaultSettingController.of()
+          .historyModel
+          .value
+          .chatHistory
+          .map((h) => ChatController.of.getIndex(h))
+          .nonNulls
+          .toList();
     } catch (e) {
       return [];
     }
@@ -67,8 +73,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
   void gotoCreateChat() async {
     // 增加一点按键反馈延迟，体验更好
-    final chat = await ChatController.of.createQuickChat(SettingController.of.getChatPathSync());
-    GotoChat.byPath(chat.file.path);
+    final chat = await ChatController.of
+        .createQuickChat(SettingController.of.getChatPathSync());
+    // TODO:改这里
+    //GotoChat.byPath(chat.file.path);
   }
 
   // 获取时段问候语
@@ -85,9 +93,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
   late final _greetingSubtitle = greetings[Random().nextInt(greetings.length)];
 
-  List<String> greetings = [
-    "这里写点啥好捏?","喵喵喵!","欢迎回来。"
-  ];
+  List<String> greetings = ["这里写点啥好捏?", "喵喵喵!", "欢迎回来。"];
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +174,11 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                             return const LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.white, Colors.white, Colors.transparent],
+                              colors: [
+                                Colors.white,
+                                Colors.white,
+                                Colors.transparent
+                              ],
                               stops: [0.0, 0.85, 1.0], // 底部 15% 渐变透明
                             ).createShader(bounds);
                           },
@@ -176,11 +186,13 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                           child: ListView.separated(
                             physics: const BouncingScrollPhysics(),
                             itemCount: chats.length,
-                            separatorBuilder: (c, i) => const SizedBox(height: 12),
+                            separatorBuilder: (c, i) =>
+                                const SizedBox(height: 12),
                             // 底部留白，防止被遮罩完全遮挡
                             padding: const EdgeInsets.only(bottom: 40),
                             itemBuilder: (context, index) {
-                              return _buildChatCard(chats[index], theme, colorScheme);
+                              return _buildChatCard(
+                                  chats[index], theme, colorScheme);
                             },
                           ),
                         ),
@@ -247,7 +259,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildChatCard(ChatMetaModel meta, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildChatCard(
+      ChatMetaModel meta, ThemeData theme, ColorScheme colorScheme) {
     return Card(
       elevation: 0,
       color: colorScheme.surfaceContainerLow, // 稍微不同于背景的颜色
@@ -265,7 +278,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                 radius: 24,
                 backgroundColor: colorScheme.primary.withOpacity(0.2),
                 child: Text(
-                  meta.name.isNotEmpty ? meta.name.substring(0, 1).toUpperCase() : '?',
+                  meta.name.isNotEmpty
+                      ? meta.name.substring(0, 1).toUpperCase()
+                      : '?',
                   style: TextStyle(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.bold,

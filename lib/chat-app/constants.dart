@@ -13,6 +13,8 @@ class Constants {
   // TODO:替换所有的硬编码chat
   static const CHAT_FOLDER_NAME = 'chat';
 
+  static const TMP_CHAT_FOLDER_NAME = ".tmp"; // 存放临时聊天的文件夹名称。
+
   static const DEFAULT_THEME_NAME = "greyLaw";
   static const DEFAULT_THEME = FlexScheme.greyLaw;
 

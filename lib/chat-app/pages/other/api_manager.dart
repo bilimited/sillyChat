@@ -28,27 +28,26 @@ class ApiManagerPage extends StatelessWidget {
           },
           itemBuilder: (context, index) {
             final api = controller.apis[index];
-            return Obx(()=>Card(
-              
-              shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
-        side: VaultSettingController.of().defaultApi.value == api.id
-            ? BorderSide(width: 2, color: colors.primary)
-            : BorderSide.none,
-      ),
-              child: InkWell(
-                onTap: () =>
-                    customNavigate(ApiEditPage(api: api), context: context),
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      // 左侧文本信息
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            
+            return Obx(
+              () => Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  side: VaultSettingController.of().defaultApiId.value == api.id
+                      ? BorderSide(width: 2, color: colors.primary)
+                      : BorderSide.none,
+                ),
+                child: InkWell(
+                  onTap: () =>
+                      customNavigate(ApiEditPage(api: api), context: context),
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        // 左侧文本信息
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
@@ -61,73 +60,75 @@ class ApiManagerPage extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                            
-                            Text(
-                              '${api.modelName}',
-                              style: TextStyle(
-                                  fontSize: 16, color: colors.outline),
-                            ),
-                            if (api.remarks != null && api.remarks!.isNotEmpty)
                               Text(
-                                '备注: ${api.remarks}',
+                                '${api.modelName}',
                                 style: TextStyle(
-                                    fontSize: 14, color: colors.outline),
+                                    fontSize: 16, color: colors.outline),
                               ),
-                          ],
+                              if (api.remarks != null &&
+                                  api.remarks!.isNotEmpty)
+                                Text(
+                                  '备注: ${api.remarks}',
+                                  style: TextStyle(
+                                      fontSize: 14, color: colors.outline),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                      
-                      // --- 新增：模拟单选按钮 ---
-                      Obx(() {
-                        final isDefault =
-                            controller.defaultApi.value == api.id;
-                        return IconButton(
-                          onPressed: () {
-                            if (!isDefault) {
-                              controller.defaultApi.value = api.id;
-                              controller.saveSettings();
+
+                        // --- 新增：模拟单选按钮 ---
+                        Obx(() {
+                          final isDefault =
+                              controller.defaultApiId.value == api.id;
+                          return IconButton(
+                            onPressed: () {
+                              if (!isDefault) {
+                                controller.defaultApiId.value = api.id;
+                                controller.saveSettings();
+                              }
+                            },
+                            icon: Icon(
+                              isDefault
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              color: isDefault
+                                  ? colors.primary
+                                  : colors.outline, // 选中用主色，未选中用轮廓色
+                            ),
+                            tooltip: '设为默认',
+                          );
+                        }),
+
+                        // 右侧更多菜单（保留了删除功能，也可以保留设为默认作为双重入口）
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'set_default') {
+                              VaultSettingController.of().defaultApiId.value =
+                                  api.id;
+                              VaultSettingController.of().saveSettings();
+                            } else if (value == 'delete') {
+                              VaultSettingController.of().deleteApi(id: api.id);
                             }
                           },
-                          icon: Icon(
-                            isDefault
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                            color: isDefault
-                                ? colors.primary
-                                : colors.outline, // 选中用主色，未选中用轮廓色
-                          ),
-                          tooltip: '设为默认',
-                        );
-                      }),
-
-                      // 右侧更多菜单（保留了删除功能，也可以保留设为默认作为双重入口）
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'set_default') {
-                            VaultSettingController.of().defaultApi.value =
-                                api.id;
-                            VaultSettingController.of().saveSettings();
-                          } else if (value == 'delete') {
-                            VaultSettingController.of().deleteApi(id: api.id);
-                          }
-                        },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'set_default',
-                            child: Text('设为默认'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Text('删除'),
-                          ),
-                        ],
-                      ),
-                    ],
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                              value: 'set_default',
+                              child: Text('设为默认'),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Text('删除'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),key: ValueKey(api.id),) ;
+              key: ValueKey(api.id),
+            );
           },
         ),
       ),

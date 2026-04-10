@@ -295,117 +295,126 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      floatingActionButton: Obx(() => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (CharacterController.of.characterCilpBoard.value != null)
-                FloatingActionButton(
-                  heroTag: 'paste_character',
-                  onPressed: () {
-                    characterController.addCharacter(
-                        characterController.characterCilpBoard.value!);
-                    // setState() is likely needed here to reflect the change
-                    setState(() {
-                      characterController.characterCilpBoard.value = null;
-                    });
-                  },
-                  tooltip: '粘贴角色',
-                  child: const Icon(Icons.paste),
+        floatingActionButton: Obx(() => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (CharacterController.of.characterCilpBoard.value != null)
+                  FloatingActionButton(
+                    heroTag: 'paste_character',
+                    onPressed: () {
+                      characterController.addCharacter(
+                          characterController.characterCilpBoard.value!);
+                      // setState() is likely needed here to reflect the change
+                      setState(() {
+                        characterController.characterCilpBoard.value = null;
+                      });
+                    },
+                    tooltip: '粘贴角色',
+                    child: const Icon(Icons.paste),
+                  ),
+                SizedBox(
+                  height: 16,
                 ),
-              SizedBox(
-                height: 16,
-              ),
-              FloatingActionButton(
-                onPressed: () {
-                  // 点击按钮时，调用函数显示对话框
-                  _showAddCharacterDialog(context);
-                },
-                tooltip: '新增角色',
-                child: const Icon(Icons.add),
-              ),
-            ],
-          )),
-      backgroundColor: Colors.transparent,
-      // 使用 AppBar
-      appBar: InnerAppBar(
-        title: Container(
-          height: 40, // 设置一个合适的高度
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface, // 背景色匹配原来的设计
-            borderRadius: BorderRadius.circular(20.0), // 圆角
-          ),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: '搜索角色',
-              hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-              prefixIcon: Icon(
-                Icons.search,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 20, // 调整图标大小
-              ),
-              prefixIconConstraints: const BoxConstraints(
-                minHeight: 32, minWidth: 32, // 调整图标约束
-              ),
-              // 移除默认边框和填充，使用 Container 的装饰
-              // border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              // 可选：添加清除按钮
-              suffixIcon: _searchText.value.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear,
-                          size: 20, color: theme.colorScheme.onSurfaceVariant),
-                      onPressed: () {
-                        _searchController.clear();
-                        _searchText.value = '';
-                      },
-                    )
-                  : null,
-            ),
-            style: TextStyle(color: theme.colorScheme.onSurface),
-            cursorColor: theme.colorScheme.primary,
-          ),
-        ),
-        // AppBar 操作区域放置按钮
-        actions: [
-          // 排序模式切换按钮
+                FloatingActionButton(
+                  onPressed: () {
+                    // 点击按钮时，调用函数显示对话框
+                    _showAddCharacterDialog(context);
+                  },
+                  tooltip: '新增角色',
+                  child: const Icon(Icons.add),
+                ),
+              ],
+            )),
+        backgroundColor: Colors.transparent,
+        // 使用 AppBar
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              InnerAppBar(
+                title: Container(
+                  height: 40, // 设置一个合适的高度
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface, // 背景色匹配原来的设计
+                    borderRadius: BorderRadius.circular(20.0), // 圆角
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: '搜索角色',
+                      hintStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 20, // 调整图标大小
+                      ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minHeight: 32, minWidth: 32, // 调整图标约束
+                      ),
+                      // 移除默认边框和填充，使用 Container 的装饰
+                      // border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 12),
+                      // 可选：添加清除按钮
+                      suffixIcon: _searchText.value.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear,
+                                  size: 20,
+                                  color: theme.colorScheme.onSurfaceVariant),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchText.value = '';
+                              },
+                            )
+                          : null,
+                    ),
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                    cursorColor: theme.colorScheme.primary,
+                  ),
+                ),
+                // AppBar 操作区域放置按钮
+                actions: [
+                  // 排序模式切换按钮
 
-          IconButton(
-            icon: Icon(_isSortingMode ? Icons.check : Icons.sort,
-                color: theme.colorScheme.onSurface),
-            onPressed: () {
-              setState(() {
-                _isSortingMode = !_isSortingMode;
-              });
-            },
-            tooltip: _isSortingMode ? '完成排序' : '进入排序', // 添加提示
-          ),
-          IconButton(
-            icon: Icon(Icons.download, color: theme.colorScheme.onSurface),
-            onPressed: () {
-              _importCharCard();
-            },
-            tooltip: '导入角色卡', // 添加提示
-          ),
+                  IconButton(
+                    icon: Icon(_isSortingMode ? Icons.check : Icons.sort,
+                        color: theme.colorScheme.onSurface),
+                    onPressed: () {
+                      setState(() {
+                        _isSortingMode = !_isSortingMode;
+                      });
+                    },
+                    tooltip: _isSortingMode ? '完成排序' : '进入排序', // 添加提示
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.download,
+                        color: theme.colorScheme.onSurface),
+                    onPressed: () {
+                      _importCharCard();
+                    },
+                    tooltip: '导入角色卡', // 添加提示
+                  ),
 
-          const SizedBox(width: 8), // 右边距
-        ],
-      ),
-      body: Obx(() {
-        // 根据是否为排序模式来决定显示哪个视图
-        if (_isSortingMode) {
-          return _reorderableListWidget(context);
-        } else {
-          return ListView(
-            children: [
-              ..._groupedContactsWidget(context),
-            ],
-          );
-        }
-      }),
-      // 移除原来的 floatingActionButton
-      // floatingActionButton: ...
-    );
+                  const SizedBox(width: 8), // 右边距
+                ],
+              ),
+            ];
+          },
+          body: Obx(() {
+            // 根据是否为排序模式来决定显示哪个视图
+            if (_isSortingMode) {
+              return _reorderableListWidget(context);
+            } else {
+              return ListView(
+                children: [
+                  ..._groupedContactsWidget(context),
+                ],
+              );
+            }
+          }),
+        )
+        // 移除原来的 floatingActionButton
+        // floatingActionButton: ...
+        );
   }
 }

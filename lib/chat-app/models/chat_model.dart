@@ -17,7 +17,11 @@ class ChatModel {
   @Deprecated('不再使用了')
   late final int fileId;
 
-  late final File file; // 加载时赋值
+  File? file; // JSONIGNORE 加载时赋值
+
+  String? pathToCreate; // JSONIGNORE 该聊天要创建在哪个目录。
+
+  bool get unInitilazed => file == null;
 
   int id = 1;
 
@@ -115,8 +119,6 @@ class ChatModel {
     this.needAutoTitle = false,
   }) {}
 
-
-
   List<String> getAllAvatars(CharacterController controller) {
     return characterIds
         .map((id) => controller.getCharacterById(id))
@@ -132,17 +134,18 @@ class ChatModel {
     return activitedLorebookItems['$lorebookId@$itemId'];
   }
 
-  factory ChatModel.empty(){
-    return ChatModel(id: DateTime.now().microsecondsSinceEpoch, name: 
-    
-    "新对话", avatar: '', lastMessage: '对话已创建', time: DateTime.now().toString(), messages: [],chatOptionId: 
-      Get.find<ChatOptionController>()
-            .chatOptions
-            .elementAtOrNull(0)
-            ?.id,assistantId: -1
-    );
+  factory ChatModel.empty() {
+    return ChatModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: "新对话",
+        avatar: '',
+        lastMessage: '对话已创建',
+        time: DateTime.now().toString(),
+        messages: [],
+        chatOptionId:
+            Get.find<ChatOptionController>().chatOptions.elementAtOrNull(0)?.id,
+        assistantId: -1);
   }
-
 
   factory ChatModel.fromJson(Map<String, dynamic> json) {
     return ChatModel(

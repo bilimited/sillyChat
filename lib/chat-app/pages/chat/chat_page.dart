@@ -691,16 +691,10 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _copyThisChat() async {
-    final newChat =
-        chat.copyWith(isCopyFile: false, messages: [], name: chat.name + '-副本');
-    // 简单的复制聊天方法
-    final fp =
-        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
-    ChatController.of.currentChat.value = ChatSessionController(fp);
-  }
-
   void _createBranchFrom(MessageModel fromWhere) async {
+    if (chat.file == null) {
+      return;
+    }
     // 获取fromWhere在messages中的下标
     final index = chat.messages.indexOf(fromWhere);
     // 截取fromWhere之前的所有消息（包括fromWhere本身）
@@ -709,7 +703,7 @@ class _ChatPageState extends State<ChatPage> {
         isCopyFile: false, messages: branchMessages, name: chat.name + '的分支');
     // 简单的复制聊天方法
     final fp =
-        await ChatController.of.createChat(newChat, p.dirname(chat.file.path));
+        await ChatController.of.createChat(newChat, p.dirname(chat.file!.path));
     ChatController.of.currentChat.value = ChatSessionController(fp);
   }
 
@@ -1354,8 +1348,6 @@ class _ChatPageState extends State<ChatPage> {
           sessionController.doLocalSummary();
         } else if (value == 'gen_memory') {
           _genMemory();
-        } else if (value == 'new_chat') {
-          _copyThisChat();
         } else if (value == 'auto_title') {
           sessionController.generateTitle();
         } else if (value == 'ai_help_answer') {

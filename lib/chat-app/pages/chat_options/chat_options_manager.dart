@@ -14,8 +14,8 @@ import '../../models/chat_option_model.dart';
 class ChatOptionsManagerPage extends StatelessWidget {
   final ChatOptionController _controller = Get.find<ChatOptionController>();
 // 顶级菜单的key，用于控制侧边栏
-  final GlobalKey<ScaffoldState>? scaffoldKey;
-  ChatOptionsManagerPage({Key? key, this.scaffoldKey}) : super(key: key);
+  // final GlobalKey<ScaffoldState>? scaffoldKey;
+  ChatOptionsManagerPage({Key? key}) : super(key: key);
 
   void onDelete(BuildContext context, int index) {
     showDialog<bool>(
@@ -176,7 +176,7 @@ class ChatOptionsManagerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: InnerAppBar(
+      appBar: AppBar(
         title: const Text('对话预设'),
         actions: [
           IconButton(

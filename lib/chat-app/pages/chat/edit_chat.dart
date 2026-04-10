@@ -93,9 +93,9 @@ class _EditChatPageState extends State<EditChatPage>
                       padding: EdgeInsets.all(8),
                       color: colors.surfaceContainerHighest,
                       child: Text(
-                        widget.chat.id == -1
+                        widget.chat.file == null
                             ? '聊天未创建'
-                            : '聊天ID：${widget.chat.id}; 文件名:${p.basename(widget.chat.file.path)}',
+                            : '聊天ID：${widget.chat.id}; 文件名:${p.basename(widget.chat.file!.path)}',
                         style: TextStyle(
                           color: widget.chat.id == -1
                               ? colors.outline

@@ -121,8 +121,8 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('切换仓库'),
-          content: Text('确定要切换到仓库 "$vaultName" 吗？应用将会重启。'),
+          title: Text('切换项目'),
+          content: Text('确定要切换到项目 "$vaultName" 吗？应用将会重启。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -150,7 +150,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     final newVaultDir = Directory(newVaultPath);
 
     if (await newVaultDir.exists()) {
-      Get.snackbar('错误', '仓库已存在');
+      Get.snackbar('错误', '项目已存在');
       return;
     }
 
@@ -176,7 +176,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     }
 
     await _loadVaultFolders();
-    Get.snackbar('成功', '仓库创建成功');
+    Get.snackbar('成功', '项目创建成功');
   }
 
   void _showCreateVaultDialog() {
@@ -184,13 +184,13 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('创建新仓库'),
+          title: Text('创建新项目'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: Icon(Icons.create_new_folder),
-                title: Text('创建空白仓库'),
+                title: Text('创建空白项目'),
                 onTap: () {
                   Navigator.pop(context);
                   _showNameInputDialog(false);
@@ -198,7 +198,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
               ),
               ListTile(
                 leading: Icon(Icons.content_copy),
-                title: Text('复制当前仓库'),
+                title: Text('复制当前项目'),
                 onTap: () {
                   Navigator.pop(context);
                   _showNameInputDialog(true);
@@ -217,11 +217,11 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('输入仓库名称'),
+          title: Text('输入项目名称'),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(
-              hintText: '请输入仓库名称',
+              hintText: '请输入项目名称',
             ),
           ),
           actions: [
@@ -252,7 +252,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     if (await vaultDir.exists()) {
       await vaultDir.delete(recursive: true);
       await _loadVaultFolders();
-      Get.snackbar('成功', '仓库已删除');
+      Get.snackbar('成功', '项目已删除');
     }
   }
 
@@ -272,7 +272,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       settingController.setCurrentVaultName(newName);
     }
     await _loadVaultFolders();
-    Get.snackbar('成功', '仓库已重命名');
+    Get.snackbar('成功', '项目已重命名');
   }
 
   void _showDeleteConfirmDialog(String vaultName) {
@@ -280,8 +280,8 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('删除仓库'),
-          content: Text('确定要删除仓库 "$vaultName" 吗？此操作不可恢复。'),
+          title: Text('删除项目'),
+          content: Text('确定要删除项目 "$vaultName" 吗？此操作不可恢复。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -306,7 +306,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('重命名仓库'),
+          title: Text('重命名项目'),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(
@@ -337,7 +337,7 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('仓库管理(当前:${SettingController.currectValutName})'),
+        title: Text('项目管理'),
         actions: [
           IconButton(
               onPressed: () async {
