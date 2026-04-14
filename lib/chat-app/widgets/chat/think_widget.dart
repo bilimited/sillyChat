@@ -87,20 +87,6 @@ class _ThinkWidgetState extends State<ThinkWidget> {
                     ),
                   ),
                 const Spacer(), // 将按钮推到右侧（可选）
-                // IconButton(
-                //   visualDensity: VisualDensity(vertical: -4),
-                //   iconSize: 16,
-                //   // 使用旋转动画切换箭头方向
-                //   icon: AnimatedRotation(
-                //     turns: _isExpanded ? 0.5 : 0.0, // 0.0 是向下，0.5 是向上（180度）
-                //     duration: const Duration(milliseconds: 200),
-                //     child: Icon(
-                //       Icons.keyboard_arrow_down,
-                //       color: colors.outline,
-                //     ),
-                //   ),
-                //   onPressed: _toggleExpanded,
-                // ),
               ],
             ),
 

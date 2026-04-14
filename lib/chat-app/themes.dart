@@ -30,7 +30,7 @@ abstract final class SillyChatThemeBuilder {
   //       fontSizeDelta: 0.0, // 在缩放基础上增加/减少固定像素值
   //     );
 
-  static final _visualDensity = VisualDensity(horizontal: -3, vertical: -3);
+  static final _visualDensity = VisualDensity(horizontal: -2, vertical: -4);
 
   static buildLight(FlexScheme scheme, String? font) {
     return FlexThemeData.light(
@@ -63,7 +63,7 @@ abstract final class SillyChatThemeBuilder {
           inputDecoratorRadius: 12.0,
           inputDecoratorUnfocusedHasBorder: false,
           inputDecoratorPrefixIconSchemeColor: SchemeColor.primary,
-          popupMenuRadius: 6.0,
+          popupMenuRadius: 12.0,
           popupMenuElevation: 8.0,
           alignedDropdown: true,
           drawerIndicatorSchemeColor: SchemeColor.primary,
@@ -98,6 +98,7 @@ abstract final class SillyChatThemeBuilder {
         blendLevel: 8,
         //textTheme: _getTextTheme(font),
         // Component theme configurations for dark mode.
+
         subThemesData: const FlexSubThemesData(
           cardElevation: 0,
           interactionEffects: true,
@@ -118,7 +119,8 @@ abstract final class SillyChatThemeBuilder {
           inputDecoratorBorderType: FlexInputBorderType.outline,
           inputDecoratorRadius: 12.0,
           inputDecoratorUnfocusedHasBorder: false,
-          popupMenuRadius: 6.0,
+
+          popupMenuRadius: 12.0,
           popupMenuElevation: 8.0,
           alignedDropdown: true,
           drawerIndicatorSchemeColor: SchemeColor.primary,

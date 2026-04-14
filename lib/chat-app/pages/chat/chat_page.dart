@@ -1397,35 +1397,6 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         ),
-        // PopupMenuItem<String>(
-        //   value: 'summary_in_new_chat',
-        //   child: Row(
-        //     children: [
-        //       Icon(
-        //         Icons.chat_bubble_outline,
-        //         color: Theme.of(context).iconTheme.color,
-        //         size: 22,
-        //       ),
-        //       SizedBox(width: 12),
-        //       Text('总结并开启新聊天'),
-        //     ],
-        //   ),
-        // ),
-
-        // PopupMenuItem<String>(
-        //   value: 'new_chat',
-        //   child: Row(
-        //     children: [
-        //       Icon(
-        //         Icons.add_comment,
-        //         color: Theme.of(context).iconTheme.color,
-        //         size: 22,
-        //       ),
-        //       SizedBox(width: 12),
-        //       Text('开启新话题'),
-        //     ],
-        //   ),
-        // ),
       ],
     );
   }
