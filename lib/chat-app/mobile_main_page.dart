@@ -110,7 +110,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              const Icon(Icons.power),
+              const Icon(Icons.power_outlined),
               const SizedBox(width: 8),
               SizedBox(
                 height: 24, // 需要指定高度
@@ -183,8 +183,8 @@ class _MainPageMobileState extends State<MainPageMobile> {
             actions: [
               IconButton(
                 icon: Icon(SettingController.of.isDarkMode.value
-                    ? Icons.dark_mode
-                    : Icons.light_mode),
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined),
                 onPressed: () {
                   SettingController.of.toggleDarkMode();
                 },

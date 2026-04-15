@@ -1,3 +1,4 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
@@ -17,13 +18,15 @@ class ChatListItem extends StatelessWidget {
   VoidCallback onTap;
   VoidCallback onLongPress;
 
-  ChatListItem(
-      {Key? key,
-      required this.path,
-      required this.isSelected,
-      required this.onTap,
-      required this.onLongPress})
-      : super(key: key);
+  Widget? avatar; // 替换头像
+
+  ChatListItem({
+    Key? key,
+    required this.path,
+    required this.isSelected,
+    required this.onTap,
+    required this.onLongPress,
+  }) : super(key: key);
 
   String _formatTime(String time) {
     final dateTime = DateTime.parse(time);
@@ -50,6 +53,7 @@ class ChatListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final gradColor = theme.colorScheme.primaryContainer.blend(theme.colorScheme.surface,70);
 
     if (chat == null) {
       ChatController.of.buildIndex(path);
@@ -62,8 +66,17 @@ class ChatListItem extends StatelessWidget {
       child: Obx(() => Container(
             decoration: selected
                 ? BoxDecoration(
-                    border: Border.all(
-                        color: theme.colorScheme.secondary, width: 1))
+                  
+                  gradient: LinearGradient(
+                    stops: [
+                      0.4,1.0
+                    ],
+                    colors: [
+                    gradColor,
+                    theme.colorScheme.surface
+                  ]),
+                  
+                    )
                 : null,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -72,7 +85,16 @@ class ChatListItem extends StatelessWidget {
                   chat!.mode == ChatMode.group
                       ? StackAvatar(avatarUrls: chat!.getAllAvatars())
                       : isQuickChat
-                          ? SizedBox.shrink()
+                          ? CircleAvatar(
+                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                              radius: 24,
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: theme.colorScheme.onSurface,
+                                size: 20,
+                              )
+                              //Text(chat!.name[0],style: TextStyle(color: theme.colorScheme.onPrimary),),
+                              )
                           : AvatarImage.round(chat!.assistant.avatar, 24),
                 const SizedBox(width: 16),
                 Expanded(

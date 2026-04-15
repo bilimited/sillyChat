@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
+import 'package:flutter_example/chat-app/widgets/chat/folder_item.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -178,17 +179,20 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
     final textColor = theme.colorScheme.onSurface;
 
     return ListTile(
-      leading: isDirectory
-          ? isTemplateDirectory
-              ? Icon(
-                  Icons.grid_view,
-                  color: iconColor,
-                )
-              : Icon(
-                  Icons.folder,
-                  color: iconColor,
-                )
-          : null,
+      leading: CircleAvatar(
+          radius: 30, // 半径大小
+          // backgroundColor: Colors.blue, // 背景颜色
+          child: isDirectory
+              ? isTemplateDirectory
+                  ? Icon(
+                      Icons.grid_view,
+                      color: iconColor,
+                    )
+                  : Icon(
+                      Icons.folder,
+                      color: iconColor,
+                    )
+              : null),
       title: Text(
         isTemplateDirectory
             ? '模板文件夹'
@@ -222,19 +226,29 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       bool isSelected, VoidCallback onTap) {
     final isDirectory = entity is Directory;
 
+    final onLongPress = (e) {
+      if (!_isMultiSelectMode) {
+        setState(() {
+          _isMultiSelectMode = true;
+          _selectedFiles.add(e);
+        });
+      }
+    };
+
     return isDirectory
-        ? _defaultItemBuilder(context, entity, isSelected, onTap)
+        ? FolderItem(
+            entity: entity,
+            isSelected: isSelected,
+            onTap: onTap,
+            onLongPress: () {
+              onLongPress(entity);
+            }) //_defaultItemBuilder(context, entity, isSelected, onTap)
         : ChatListItem(
             path: entity.path,
             isSelected: isSelected,
             onTap: onTap,
             onLongPress: () {
-              if (!_isMultiSelectMode) {
-                setState(() {
-                  _isMultiSelectMode = true;
-                  _selectedFiles.add(entity);
-                });
-              }
+              onLongPress(entity);
             },
           );
   }
@@ -362,7 +376,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
       }
     } else {
       actions.add(IconButton(
-        icon: const Icon(Icons.folder_copy),
+        icon: const Icon(Icons.folder_copy_outlined),
         tooltip: "添加文件夹",
         onPressed: () {
           _showCreateFolderDialog();
