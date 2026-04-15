@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/webview/relationship_map_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -146,123 +148,147 @@ class _EditRelationshipState extends State<EditRelationship> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 56.0 * _relationList.length + 80,
-          child: ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    Colors.transparent,
-                    Colors.black,
-                    Colors.black,
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.06, 0.94, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: ReorderableListView(
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                shrinkWrap: true,
-                physics: const ScrollPhysics(),
-                onReorder: _onReorder,
-                children: [
-                  for (final entry in _relationList)
-                    Padding(
-                      key: ValueKey(entry.key),
-                      padding: const EdgeInsets.only(bottom: 16, top: 16),
-                      child: Row(
+        Expanded(
+            child: ReorderableListView(
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          shrinkWrap: true,
+          physics: const ScrollPhysics(),
+          onReorder: _onReorder,
+          children: [
+            for (final entry in _relationList)
+              Padding(
+                key: ValueKey(entry.key),
+                padding: const EdgeInsets.only(bottom: 16, top: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 16,
-                                      backgroundImage: _characterController
-                                              .getCharacterById(entry.key)
-                                              .avatar
-                                              .isNotEmpty
-                                          ? FileImage(File(_characterController
-                                              .getCharacterById(entry.key)
-                                              .avatar))
-                                          : null,
-                                      child: _characterController
-                                              .getCharacterById(entry.key)
-                                              .avatar
-                                              .isEmpty
-                                          ? Text(_characterController
-                                              .getCharacterById(entry.key)
-                                              .roleName[0])
-                                          : null,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(_characterController
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundImage: _characterController
                                         .getCharacterById(entry.key)
-                                        .roleName),
-                                    const Text(' 是我的 '),
-                                    Expanded(
-                                      child: TextFormField(
-                                        initialValue: entry.value.type ?? '',
-                                        decoration: const InputDecoration(
-                                          hintText: '关系',
-                                          isDense: true,
-                                          contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 8,
-                                          ),
-                                        ),
-                                        onChanged: (value) {
-                                          entry.value.type = value;
-                                          widget.onChanged(_relations);
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                ExpandableTextField(
-                                  controller: _briefControllers[entry.key]!,
+                                        .avatar
+                                        .isNotEmpty
+                                    ? FileImage(File(_characterController
+                                        .getCharacterById(entry.key)
+                                        .avatar))
+                                    : null,
+                                child: _characterController
+                                        .getCharacterById(entry.key)
+                                        .avatar
+                                        .isEmpty
+                                    ? Text(_characterController
+                                        .getCharacterById(entry.key)
+                                        .roleName[0])
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(_characterController
+                                  .getCharacterById(entry.key)
+                                  .roleName),
+                              const Text(' 是我的 '),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: entry.value.type ?? '',
                                   decoration: const InputDecoration(
-                                    hintText: '关系描述（可选）',
+                                    hintText: '关系',
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
                                   ),
-                                  style: TextStyle(fontSize: 13),
-                                  maxLines: null,
-                                  minLines: 2,
-                                  extraActions: [
-                                    buildIconTextButton(context,
-                                        text: '同步关系',
-                                        icon: Icons.sync_rounded,
-                                        onPressed: () =>
-                                            _syncRelation(entry.key))
-                                  ],
+                                  onChanged: (value) {
+                                    entry.value.type = value;
+                                    widget.onChanged(_relations);
+                                  },
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => _removeRelation(entry.key),
+                          const SizedBox(height: 8),
+                          ExpandableTextField(
+                            controller: _briefControllers[entry.key]!,
+                            decoration: const InputDecoration(
+                              hintText: '关系描述（可选）',
+                            ),
+                            style: TextStyle(fontSize: 13),
+                            maxLines: null,
+                            minLines: 2,
+                            extraActions: [
+                              buildIconTextButton(context,
+                                  text: '同步关系',
+                                  icon: Icons.sync_rounded,
+                                  onPressed: () => _syncRelation(entry.key))
+                            ],
                           ),
                         ],
                       ),
                     ),
-                ],
-              )),
-        ),
-        TextButton.icon(
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => _removeRelation(entry.key),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        )),
+        //ElevatedButton(onPressed: _addRelation, child: Text("添加关系")),
+        FilledButton(
           onPressed: _addRelation,
-          icon: const Icon(Icons.add),
-          label: const Text('添加关系'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(double.infinity, 54), // 宽度占满，高度54
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // 设置为30就是胶囊形按钮
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add,),
+              SizedBox(width: 8,),
+              Text("添加关系"),
+            ],
+          ),
         ),
+        SizedBox(
+          height: 8,
+        ),
+        FilledButton(
+          onPressed: () {
+            customNavigate(RelationshipMapWebview(), context: context);
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.surfaceContainer,
+            minimumSize: const Size(double.infinity, 54), // 宽度占满，高度54
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // 设置为30就是胶囊形按钮
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bubble_chart,color: theme.colorScheme.onSurface,),
+              SizedBox(width: 8,),
+              Text("查看关系网",style: TextStyle(color: theme.colorScheme.onSurface),),
+            ],
+          ),
+        )
+        // TextButton.icon(
+        //   onPressed: _addRelation,
+        //   icon: const Icon(Icons.add),
+        //   label: const Text('添加关系'),
+        // ),
       ],
     );
   }

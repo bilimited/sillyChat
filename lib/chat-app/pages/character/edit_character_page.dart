@@ -55,7 +55,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     if (widget.characterId != null) {
       _character = _characterController.getCharacterById(widget.characterId!);
     }
@@ -227,157 +227,120 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   }
 
   Widget _buildBasicInfoTab() {
+    final colors = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(10),
       children: [
         Center(
           child: GestureDetector(
             onTap: () => _pickImage(true),
-            child: Container(
-              height: 120,
-              width: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-                color: Colors.grey.shade100,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(60),
-                child: _avatarPath != null
-                    ? AvatarImage(fileName: _avatarPath!)
-                    : Icon(
-                        Icons.add_photo_alternate,
-                        size: 40,
-                        color: Colors.grey.shade600,
+            child: Stack(
+              children: [
+                Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.surfaceContainerHighest, width: 2),
+                    color: colors.surfaceContainerHighest,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(60),
+                    child: _avatarPath != null
+                        ? AvatarImage(fileName: _avatarPath!)
+                        : Icon(
+                            Icons.add_photo_alternate,
+                            size: 40,
+                            color: Colors.grey.shade600,
+                          ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(3), // 白色边框的宽度
+                    decoration:  BoxDecoration(
+                      color: colors.surfaceContainerHighest, // 边框颜色
+                      shape: BoxShape.circle,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(6), // 相机背景的大小
+                      decoration:  BoxDecoration(
+                        color: colors.primary, // 相机图标背景色
+                        shape: BoxShape.circle,
                       ),
-              ),
+                      child:  Icon(
+                        Icons.camera_alt,
+                        size: 16, // 相机图标大小
+                        color: colors.surface,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 24),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0), // 卡片内部的内边距
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // 让 Column 尽可能小地占用垂直空间
-              crossAxisAlignment: CrossAxisAlignment.stretch, // 子组件水平方向拉伸
-              children: [
-                // 角色名称和备注
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _nickNameController,
-                        decoration: const InputDecoration(
-                          labelText: '角色名称',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16.0), // 间隔
-                    Expanded(
-                      child: TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: '备注',
-                        ),
-                      ),
-                    ),
-                  ],
+        // Card(
+        //   child:
+        Padding(
+          padding: const EdgeInsets.all(5.0), // 卡片内部的内边距
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // 让 Column 尽可能小地占用垂直空间
+            crossAxisAlignment: CrossAxisAlignment.stretch, // 子组件水平方向拉伸
+            children: [
+              TextFormField(
+                controller: _nickNameController,
+                decoration: const InputDecoration(
+                  labelText: '角色名称',
                 ),
-                const SizedBox(height: 16), // 间隔
-                // 简略介绍
+              ),
+              const SizedBox(height: 16), // 间隔
+              // 简略介绍
 
-                ExpandableTextField(
-                  controller: _briefController,
-                  decoration: const InputDecoration(
-                    labelText: '简略介绍(可选)',
-                  ),
-                  minLines: 2,
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 16), // 间隔
-                // 首句台词
-                ExpandableTextField(
-                  controller: _firstMessageController,
-                  decoration: InputDecoration(
-                    labelText: '开场白(可选)',
-                  ),
-                  extraActions: [
-                    if (_character != null)
-                      buildIconTextButton(
-                        context,
-                        text: '更多选项',
-                        icon: Icons.more_horiz,
-                        onPressed: () {
-                          customNavigate(
-                              MoreFirstMessagePage(character: _character!),
-                              context: context);
-                        },
-                      )
-                  ],
-                ),
+              ExpandableTextField(
+                controller: _briefController,
+                decoration: const InputDecoration(
+                    labelText: '简略介绍', helperText: "(可选)角色的简介。"),
+                minLines: 2,
+                maxLines: 4,
+              ),
+              const SizedBox(height: 16), // 间隔
+              // 首句台词
+              ExpandableTextField(
+                controller: _firstMessageController,
+                decoration: InputDecoration(
+                    labelText: '开场白', helperText: "(可选)角色的开场白，即该角色的第一条对话"),
+                extraActions: [
+                  if (_character != null)
+                    buildIconTextButton(
+                      context,
+                      text: '更多选项',
+                      icon: Icons.more_horiz,
+                      onPressed: () {
+                        customNavigate(
+                            MoreFirstMessagePage(character: _character!),
+                            context: context);
+                      },
+                    )
+                ],
+              ),
 
-                const SizedBox(height: 16), // 间隔
-                const Divider(), // 分隔线
-                const SizedBox(height: 16), // 分隔线后的间隔
-                // 角色介绍
-                ExpandableTextField(
-                  controller: _archiveController,
-                  decoration: const InputDecoration(
-                    labelText: '角色介绍',
-                  ),
-                  style: TextStyle(fontSize: 15),
-                  maxLines: 16,
-                ),
-                const SizedBox(height: 10), // 间隔
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '人物关系',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    IconButton(
-                        onPressed: () {
-                          _save();
-                          customNavigate(RelationshipMapWebview(),
-                              context: context);
-                        },
-                        icon: Icon(Icons.bubble_chart))
-                  ],
-                ),
-                const SizedBox(height: 16),
-                EditRelationship(
-                  character: _character,
-                  relations: _character?.relations ?? {},
-                  onChanged: (relations) {
-                    if (_character != null) {
-                      setState(() {
-                        _character!.relations = relations;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
+              const SizedBox(height: 16), // 间隔
+              const Divider(), // 分隔线
+              const SizedBox(height: 16), // 分隔线后的间隔
+              // 角色介绍
+              ExpandableTextField(
+                controller: _archiveController,
+                decoration: const InputDecoration(
+                    labelText: '角色设定', helperText: '(必填)角色的人设文本'),
+                style: TextStyle(fontSize: 15),
+                maxLines: 16,
+              ),
+              const SizedBox(height: 10), // 间隔
+            ],
           ),
         ),
       ],
@@ -386,6 +349,16 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   List<Widget> _buildMemoryAndLorebookCard() {
     return [
+      Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: const Text(
+          '世界书绑定',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
       Card(
         // 角色绑定的世界书管理
         child: Padding(
@@ -393,14 +366,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '世界书绑定',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 16),
               if (_character != null && _character!.lorebookIds.isEmpty)
                 const SizedBox(
                   height: 40,
@@ -523,6 +488,16 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         ),
       ),
       const SizedBox(height: 16),
+      Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: const Text(
+          '角色记忆',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
       Builder(builder: (context) {
         final memory = _character!.memoryBook;
         return Card(
@@ -531,14 +506,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '记忆',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   if (memory == null) ...[
                     const SizedBox(
                       height: 40,
@@ -628,112 +595,129 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     ];
   }
 
+  Widget _buildRelationshipTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: EditRelationship(
+        character: _character,
+        relations: _character?.relations ?? {},
+        onChanged: (relations) {
+          if (_character != null) {
+            setState(() {
+              _character!.relations = relations;
+            });
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildSettingsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _categoryController,
-                  decoration: const InputDecoration(
-                    labelText: '分类',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<MessageStyle>(
-                  value: _character?.messageStyle,
-                  decoration: const InputDecoration(
-                    labelText: '消息气泡样式',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                        value: MessageStyle.common, child: Text('普通')),
-                    DropdownMenuItem(
-                        value: MessageStyle.narration, child: Text('旁白')),
-                    DropdownMenuItem(
-                        value: MessageStyle.summary, child: Text('摘要')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      if (_character != null) {
-                        _character!.messageStyle = value ?? MessageStyle.common;
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Expanded(
-                        child: DropdownButtonFormField<int?>(
-                      // <-- 1. 确保泛型是 int?
-                      value: _bindOption,
-                      decoration: const InputDecoration(
-                        label: Text('绑定预设'),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      hint: const Text('选择聊天预设'),
-                      items: [
-                        // <-- 2. 手动添加一个“空白”选项
-                        DropdownMenuItem<int?>(
-                          value: null, // 这个 item 的值是 null
-                          child: Text(
-                            '无(使用默认预设)',
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.outline),
-                          ), // 显示给用户的文本
-                        ),
-                        // 3. 使用展开操作符(...)将原来的列表合并进来
-                        ...Get.find<ChatOptionController>()
-                            .chatOptions
-                            .map((option) {
-                          return DropdownMenuItem<int>(
-                            // 这里的泛型保持 int 也可以，会自动转换
-                            value: option.id,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 250),
-                              child: Text(
-                                option.name, // 建议模板字符串里不要加大括号，除非必要
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                      onChanged: (int? value) {
-                        setState(() {
-                          // <-- 4. 记得调用 setState 来更新UI
-                          _bindOption = value;
-                        });
-                      },
-                    )),
-                    IconButton(
-                        onPressed: () {
-                          customNavigate(ChatOptionsManagerPage(),
-                              context: context);
-                        },
-                        icon: Icon(Icons.list)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  '背景图片',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildBackgroundimageSelecter()
-              ],
+        Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: const Text(
+            '一般设置',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _categoryController,
+                decoration: const InputDecoration(
+                  labelText: '分类',
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<MessageStyle>(
+                value: _character?.messageStyle,
+                decoration: const InputDecoration(
+                  labelText: '消息气泡样式',
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: MessageStyle.common, child: Text('普通')),
+                  DropdownMenuItem(
+                      value: MessageStyle.narration, child: Text('旁白')),
+                  DropdownMenuItem(
+                      value: MessageStyle.summary, child: Text('摘要')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    if (_character != null) {
+                      _character!.messageStyle = value ?? MessageStyle.common;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Expanded(
+                      child: DropdownButtonFormField<int?>(
+                    // <-- 1. 确保泛型是 int?
+                    value: _bindOption,
+                    decoration: const InputDecoration(
+                      label: Text('绑定预设'),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    hint: const Text('选择聊天预设'),
+                    items: [
+                      // <-- 2. 手动添加一个“空白”选项
+                      DropdownMenuItem<int?>(
+                        value: null, // 这个 item 的值是 null
+                        child: Text(
+                          '无(使用默认预设)',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.outline),
+                        ), // 显示给用户的文本
+                      ),
+                      // 3. 使用展开操作符(...)将原来的列表合并进来
+                      ...Get.find<ChatOptionController>()
+                          .chatOptions
+                          .map((option) {
+                        return DropdownMenuItem<int>(
+                          // 这里的泛型保持 int 也可以，会自动转换
+                          value: option.id,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 250),
+                            child: Text(
+                              option.name, // 建议模板字符串里不要加大括号，除非必要
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                    onChanged: (int? value) {
+                      setState(() {
+                        // <-- 4. 记得调用 setState 来更新UI
+                        _bindOption = value;
+                      });
+                    },
+                  )),
+                  IconButton(
+                      onPressed: () {
+                        customNavigate(ChatOptionsManagerPage(),
+                            context: context);
+                      },
+                      icon: Icon(Icons.list)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildBackgroundimageSelecter()
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -770,58 +754,53 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 24),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _nickNameController,
-                  decoration: const InputDecoration(
-                    labelText: '角色名称',
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return '角色名称';
-                    return null;
-                  },
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _nickNameController,
+                decoration: const InputDecoration(
+                  labelText: '角色名称',
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _briefController,
-                  decoration: const InputDecoration(
-                    labelText: '简略介绍',
-                  ),
-                  maxLines: 2,
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return '角色名称';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _briefController,
+                decoration: const InputDecoration(
+                  labelText: '简略介绍',
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<MessageStyle>(
-                  value: _character?.messageStyle,
-                  decoration: const InputDecoration(
-                    labelText: '消息气泡样式',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                        value: MessageStyle.common, child: Text('普通')),
-                    DropdownMenuItem(
-                        value: MessageStyle.narration, child: Text('旁白')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      if (_character != null) {
-                        _character!.messageStyle = value ?? MessageStyle.common;
-                      }
-                    });
-                  },
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<MessageStyle>(
+                value: _character?.messageStyle,
+                decoration: const InputDecoration(
+                  labelText: '消息气泡样式',
                 ),
-                SizedBox(
-                  height: 32,
-                ),
-                _buildBackgroundimageSelecter(),
-              ],
-            ),
+                items: const [
+                  DropdownMenuItem(
+                      value: MessageStyle.common, child: Text('普通')),
+                  DropdownMenuItem(
+                      value: MessageStyle.narration, child: Text('旁白')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    if (_character != null) {
+                      _character!.messageStyle = value ?? MessageStyle.common;
+                    }
+                  });
+                },
+              ),
+              SizedBox(
+                height: 32,
+              ),
+              _buildBackgroundimageSelecter(),
+            ],
           ),
         ),
       ],
@@ -848,7 +827,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     tabs: const [
                       Tab(text: '基本信息'),
                       Tab(text: '其他设置'),
-                      // Tab(text: '编辑记忆'),
+                      Tab(text: '角色关系'),
                     ],
                   ),
             actions: isEditPlayer
@@ -882,6 +861,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     children: [
                       _buildBasicInfoTab(),
                       _buildSettingsTab(),
+                      _buildRelationshipTab(),
                       // _buildMemoryTab()
                     ],
                   ),
