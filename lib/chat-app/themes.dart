@@ -10,27 +10,8 @@ enum ThemeStyle {
 }
 
 abstract final class SillyChatThemeBuilder {
-  static PageTransitionsTheme _pageTransitionsTheme =
-      PageTransitionsTheme(builders: {
-    // TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-    // TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-    // TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
-  });
 
-  static _getTextTheme(String? font) => ThemeData.light().textTheme.apply(
-        fontSizeFactor: 0.8,
-        //fontSizeDelta: 2.0,
-        fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['思源黑体', '微软雅黑'],
-      );
-  // Typography.material2021().englishLike.apply(
-  //       fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-  //       fontFamilyFallback: ['思源黑体', '微软雅黑'],
-  //       fontSizeFactor: 0.95, // 所有字体缩小为原来的 90%
-  //       fontSizeDelta: 0.0, // 在缩放基础上增加/减少固定像素值
-  //     );
-
-  static final _visualDensity = VisualDensity(horizontal: -2, vertical: -4);
+  static final _visualDensity = VisualDensity(horizontal: -2, vertical: -2);
 
   static buildLight(FlexScheme scheme, String? font) {
     return FlexThemeData.light(
@@ -85,8 +66,8 @@ abstract final class SillyChatThemeBuilder {
         // Direct ThemeData properties.
         visualDensity: _visualDensity,
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-        fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['LexendDeca']);
+        fontFamily: font ?? 'LexendDeca',
+        fontFamilyFallback: ['Noto Sans SC']);
   }
 
   static buildNight(FlexScheme scheme, String? font) {
@@ -143,8 +124,44 @@ abstract final class SillyChatThemeBuilder {
         // Direct ThemeData properties.
         visualDensity: _visualDensity,
         cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-        fontFamily: font ?? (Platform.isWindows ? "思源黑体" : null),
-        fontFamilyFallback: ['LexendDeca']);
+        fontFamily: font ?? ('LexendDeca'),
+        fontFamilyFallback: ['Noto Sans SC']);
+  }
+
+    static buildStandardLight(Color seedColor, String? font) {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      // 使用 seedColor 可以快速生成符合 M3 标准的一套配色
+      colorSchemeSeed: seedColor,
+      
+      // 保持字体配置一致
+      fontFamily: font ?? 'LexendDeca',
+      fontFamilyFallback: const ['Noto Sans SC'],
+      
+      // 保持基础布局配置一致
+      visualDensity: _visualDensity,
+      cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
+      
+      // 注意：这里不配置 subThemesData，将使用 Material 3 官方默认样式
+    );
+  }
+
+  /// 默认暗色主题 (原生 Flutter)
+  static buildStandardNight(Color seedColor, String? font) {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorSchemeSeed: seedColor,
+      
+      // 保持字体配置一致
+      fontFamily: font ?? 'LexendDeca',
+      fontFamilyFallback: const ['Noto Sans SC'],
+      
+      // 保持基础布局配置一致
+      visualDensity: _visualDensity,
+      cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
+    );
   }
 
   // The FlexColorScheme defined dark mode ThemeData.

@@ -336,11 +336,6 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           path: path.normalize(_currentDirectory.path).replaceAll('\\', '/'),
           basePath: path.normalize(widget.directory.path).replaceAll('\\', '/'),
           maxLevels: 10,
-          style: TextStyle(fontSize: 16),
-          activeStyle: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: theme.primaryColor),
           onCrumbTap: (path) {
             _currentDirectory = Directory(path);
             ChatController.of.currentPath.value = _currentDirectory.path;

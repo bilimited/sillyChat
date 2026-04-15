@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
@@ -29,7 +30,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
       if (!_globalFontFocusNode.hasFocus) {
         // If the focus node has lost focus
         controller.saveSettings();
-        controller.updateTheme(fontName: _globalFontController.text);
+        controller.updateThemeStardard(fontName: _globalFontController.text);
       }
     });
   }
@@ -97,6 +98,39 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
           body: ListView(
             padding: const EdgeInsets.all(16.0),
             children: <Widget>[
+              ListTile(
+                title: const Text('主题颜色'),
+                trailing: CircleAvatar(backgroundColor: setting.themeColor,radius: 16,),
+                onTap: () {
+                  Color pickerColor = Colors.blue; // 临时变量
+
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('选择主题颜色'),
+                      content: SingleChildScrollView(
+                        // 这里有多种选择器：ColorPicker, SlidePicker, BlockPicker
+                        child: BlockPicker(
+                          pickerColor: pickerColor,
+                          onColorChanged: (color) {
+                            setting.themeColor = color;
+                            controller.displaySettingModel.refresh();
+                            controller.saveSettings();
+                            controller.updateThemeStardard(color: color);
+                          },
+                          
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          child: const Text('确定'),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               // Dropdown for AvatarStyle
               ListTile(
                 title: const Text('头像风格'),
@@ -179,7 +213,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                               FontManager.loadFont(
                                   context: context,
                                   onFontLoaded: (fontFamily, fontPath) {
-                                    controller.updateTheme(
+                                    controller.updateThemeStardard(
                                         fontName: fontFamily);
                                     _globalFontController.text = fontFamily;
                                     setting.GlobalFont = fontFamily;
@@ -196,7 +230,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                           ElevatedButton.icon(
                             onPressed: () {
                               _globalFontController.text = '';
-                              controller.updateTheme(fontName: '');
+                              controller.updateThemeStardard(fontName: '');
                               setting.GlobalFont = null;
                               setting.CustomFontPath = null;
                               controller.displaySettingModel.refresh();
@@ -211,6 +245,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
 
               const Divider(),
               // Switches for boolean values
+
               SwitchListTile(
                 title: const Text('显示用户名称'), // 'Display User Name'
                 value: setting.displayUserName,
@@ -399,15 +434,16 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
               const SizedBox(
                 height: 16,
               ),
-              ThemeSelector(
-                  initialValue: controller.displaySettingModel.value.schemeName,
-                  onThemeSelected: (theme) {
-                    setting.schemeName = theme;
-                    controller.displaySettingModel.refresh();
-                    controller.saveSettings();
-                    controller.updateTheme(themename: theme);
-                  }),
-              const SizedBox(height: 16),
+
+              // ThemeSelector(
+              //     initialValue: controller.displaySettingModel.value.schemeName,
+              //     onThemeSelected: (theme) {
+              //       setting.schemeName = theme;
+              //       controller.displaySettingModel.refresh();
+              //       controller.saveSettings();
+              //       controller.updateTheme(themename: theme);
+              //     }),
+              // const SizedBox(height: 16),
               Text(
                 '预览',
                 style: TextStyle(fontSize: 17),

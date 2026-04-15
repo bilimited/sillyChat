@@ -138,9 +138,14 @@ class VaultSettingController extends GetxController {
             displaySettingModel.value.CustomFontPath ?? "");
       }
 
-      updateTheme(
-          themename: displaySettingModel.value.schemeName,
-          fontName: displaySettingModel.value.GlobalFont);
+      // updateTheme(
+      //     themename: displaySettingModel.value.schemeName,
+      //     fontName: displaySettingModel.value.GlobalFont);
+
+      updateThemeStardard(
+        color: displaySettingModel.value.themeColor,
+        fontName: displaySettingModel.value.GlobalFont
+      );
     } catch (e) {
       print('加载设置失败: $e');
       displaySettingModel.value = ChatDisplaySettingModel();
@@ -173,15 +178,29 @@ class VaultSettingController extends GetxController {
     }
   }
 
+
+
   void updateTheme({String? fontName, String? themename}) {
     FlexScheme theme =
         schemeMap[themename ?? displaySettingModel.value.schemeName] ??
             Constants.DEFAULT_THEME;
-    //FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
+    FlexScheme.sakura; // 默认使用sakura主题，如果未找到则使用sakura
     themeLight.value = SillyChatThemeBuilder.buildLight(
         theme, fontName ?? displaySettingModel.value.GlobalFont);
     themeNight.value = SillyChatThemeBuilder.buildNight(
         theme, fontName ?? displaySettingModel.value.GlobalFont);
+
+    // themeLight.value = SillyChatThemeBuilder.buildStandardLight(Colors.purpleAccent, fontName ?? displaySettingModel.value.GlobalFont);
+    // themeNight.value = SillyChatThemeBuilder.buildStandardNight(Colors.purpleAccent, fontName ?? displaySettingModel.value.GlobalFont);
+  }
+
+  void updateThemeStardard({String? fontName, Color? color}) {
+    themeLight.value = SillyChatThemeBuilder.buildStandardLight(
+        color ?? Colors.purpleAccent,
+        fontName ?? displaySettingModel.value.GlobalFont);
+    themeNight.value = SillyChatThemeBuilder.buildStandardNight(
+        color ?? Colors.purpleAccent,
+        fontName ?? displaySettingModel.value.GlobalFont);
   }
 
   // API管理方法

@@ -20,11 +20,6 @@ class BreadcrumbNavigation extends StatelessWidget {
   /// 自定义分隔符
   final Widget separator;
 
-  /// 自定义文本样式
-  final TextStyle? style;
-
-  /// 自定义激活状态的文本样式（最后一个面包屑）
-  final TextStyle? activeStyle;
 
   /// 最多显示的面包屑层级数
   final int maxLevels;
@@ -36,8 +31,6 @@ class BreadcrumbNavigation extends StatelessWidget {
     required this.onCrumbTap,
     this.rootLabel = '根路径', // 默认显示为 "根路径"
     this.separator = const Icon(Icons.chevron_right, size: 18.0),
-    this.style,
-    this.activeStyle,
     this.maxLevels = 3, // 默认最多显示3级
   }) : super(key: key);
 
@@ -64,7 +57,7 @@ class BreadcrumbNavigation extends StatelessWidget {
             final item = items[itemIndex];
             final isLast = itemIndex == items.length - 1;
 
-            return _buildCrumbItem(item, isLast);
+            return _buildCrumbItem(item, isLast, Theme.of(context));
           } else {
             // 奇数索引是分隔符
             return separator;
@@ -74,22 +67,33 @@ class BreadcrumbNavigation extends StatelessWidget {
     );
   }
 
-  /// 构建单个面包屑项
-  Widget _buildCrumbItem(_BreadcrumbItem item, bool isLast) {
-    // 最后一个面包屑项通常是当前页面，可以设置为不可点击或有不同样式
-    return InkWell(
-      onTap: isLast ? null : () => onCrumbTap(item.path),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text(
-          item.label,
-          style: isLast
-              ? activeStyle ?? style?.copyWith(fontWeight: FontWeight.bold)
-              : style,
-        ),
+Widget _buildCrumbItem(_BreadcrumbItem item, bool isLast, ThemeData theme) {
+  // 1. 获取主题中标准的文字样式作为基准
+  // bodyMedium 通常是 Flutter 默认的文本样式
+  TextStyle baseStyle = theme.textTheme.bodyMedium ?? const TextStyle();
+
+  return InkWell(
+    onTap: isLast ? null : () => onCrumbTap(item.path),
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        item.label,
+        style: isLast
+            ? baseStyle.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                // 使用 colorScheme 兼容性更好
+                color: theme.colorScheme.primary, 
+              )
+            : baseStyle.copyWith(
+                fontSize: 16,
+                // 未激活状态通常使用次要文字颜色或默认颜色
+                color: theme.textTheme.bodySmall?.color, 
+              ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// 解析路径并生成面包屑数据
   List<_BreadcrumbItem> _buildCrumbs() {

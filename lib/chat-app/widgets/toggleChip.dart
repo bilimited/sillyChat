@@ -60,9 +60,9 @@ class _ToggleChipState extends State<ToggleChip> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final activeColor = theme.primaryColor;
+    final activeColor = theme.colorScheme.primary;
     final inactiveColor = theme.colorScheme.outline;
-    final activeContentColor = theme.primaryColor;
+    final activeContentColor = theme.colorScheme.primary;
     final inactiveBackgroundColor = theme.colorScheme.outline;
 
     return Padding(
