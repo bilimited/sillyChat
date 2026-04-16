@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
@@ -175,6 +176,7 @@ class ChatController extends GetxController {
     }
   }
 
+
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
     chatIndex[p.normalize(path)] = chatMeta;
@@ -182,12 +184,23 @@ class ChatController extends GetxController {
     await saveChatIndex();
   }
 
+  bool isFolderSettingExist(String path){
+    path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
+    return folderSettings.containsKey(p.normalize(path));
+  }
+
+
   Future<void> createFolderSetting(String path) async {
+    path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
     File f = File(path);
     f.createSync();
 
-    final setting = FolderSettingModel(id: Uuid().v8g(), path: path).toJson();
-    f.writeAsStringSync(json.encode(setting));
+    final setting = FolderSettingModel(id: Uuid().v8g(), path: path);
+    folderSettings[p.normalize(path)] = setting;
+
+    f.writeAsStringSync(json.encode(setting.toJson()));
+
+    print("创建了一个FolderSetting!");
   }
 
   Future<void> saveFolderSetting(FolderSettingModel setting) async {
@@ -196,13 +209,11 @@ class ChatController extends GetxController {
 
     File f = File(setting.path);
     f.writeAsStringSync(json.encode(setting.toJson()));
-
-
   }
 
   Future<Map<String, FolderSettingModel>> getAllFolderSetting() async {
     final directory = await Get.find<SettingController>().getVaultPath();
-    final path = p.join(directory, 'chats',);
+    final path = p.join(directory, Constants.CHAT_FOLDER_NAME,);
     // List<FolderSettingModel> settings = [];
     Map<String, FolderSettingModel> settings = {};
 

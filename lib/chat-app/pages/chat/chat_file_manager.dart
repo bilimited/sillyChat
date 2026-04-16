@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
+import 'package:flutter_example/chat-app/pages/other/folder_setting.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -389,6 +390,21 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
                     _openChat(path);
                   }),
               context: context);
+        },
+      ));
+      actions.add(IconButton(
+        icon: const Icon(Icons.settings_outlined),
+        tooltip: "设置",
+        onPressed: () async {
+          if(ChatController.of.isFolderSettingExist(_currentDirectory.path)){
+            customNavigate(FolderSettingPage(path: _currentDirectory.path),
+                context: context);
+          }else{
+            await ChatController.of.createFolderSetting(_currentDirectory.path);
+            customNavigate(FolderSettingPage(path: _currentDirectory.path),
+                context: context);
+          }
+
         },
       ));
     }
@@ -850,11 +866,6 @@ class _ChatManagePageState extends State<ChatManagePage> {
           }
           if (snapshot.hasData) {
             return FileManagerWidget(
-              // leading: IconButton(
-              //     onPressed: () {
-              //       widget.scaffoldKey?.currentState?.openDrawer();
-              //     },
-              //     icon: Icon(Icons.menu)),
               directory: snapshot.data!,
             );
           }
