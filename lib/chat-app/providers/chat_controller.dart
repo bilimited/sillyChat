@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
+import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/FileUtils.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 import '../models/chat_model.dart';
 
 import 'package:path/path.dart' as p;
@@ -58,6 +60,8 @@ class ChatController extends GetxController {
   final RxMap<String, ChatMetaModel> chatIndex = <String, ChatMetaModel>{}.obs;
   final String chatIndexFileName = 'chat_index.json';
 
+  final RxMap<String, FolderSettingModel> folderSettings = <String, FolderSettingModel>{}.obs;
+
   // 已打开的聊天
   final RxMap<String, ChatSessionController?> openedChat =
       <String, ChatSessionController>{}.obs;
@@ -75,6 +79,8 @@ class ChatController extends GetxController {
     super.onInit();
 
     loadChatIndex();
+
+    folderSettings.value = await getAllFolderSetting();
   }
 
   /// ----迁移用
@@ -176,35 +182,50 @@ class ChatController extends GetxController {
     await saveChatIndex();
   }
 
-  Future<List<ChatMetaModel>> getAllChatTemplate() async {
+  Future<void> createFolderSetting(String path) async {
+    File f = File(path);
+    f.createSync();
+
+    final setting = FolderSettingModel(id: Uuid().v8g(), path: path).toJson();
+    f.writeAsStringSync(json.encode(setting));
+  }
+
+  Future<void> saveFolderSetting(FolderSettingModel setting) async {
+
+    folderSettings[p.normalize(setting.path)] = setting;
+
+    File f = File(setting.path);
+    f.writeAsStringSync(json.encode(setting.toJson()));
+
+
+  }
+
+  Future<Map<String, FolderSettingModel>> getAllFolderSetting() async {
     final directory = await Get.find<SettingController>().getVaultPath();
-    final path = p.join(directory, 'chats', 'templates');
-    List<ChatMetaModel> metas = [];
+    final path = p.join(directory, 'chats',);
+    // List<FolderSettingModel> settings = [];
+    Map<String, FolderSettingModel> settings = {};
 
     try {
       final dir = Directory(path);
-      if (!await dir.exists()) return [];
+      if (!await dir.exists()) return {};
 
       await for (final entity
           in dir.list(recursive: true, followLinks: false)) {
-        if (entity is File && Fileutils.isChatFile(entity.path)) {
+        if (entity is File && Fileutils.isFolderSettingFile(entity.path)) {
           final filePath = entity.path;
-
-          if (getIndex(entity.path) == null) {
-            final meta = await buildIndex(entity.path);
-            if (meta != null) {
-              metas.add(meta);
-            }
-          } else {
-            metas.add(getIndex(entity.path)!);
-          }
+          final file = File(filePath);
+          final setting = FolderSettingModel.fromJson(json.decode(file.readAsStringSync()));
+          settings[filePath] = setting;
         }
       }
     } catch (e) {
-      print('扫描模板目录失败: $e');
+      print('扫描文件夹设置失败: $e');
     }
-    return metas;
+    return settings;
   }
+
+
 
   ChatMetaModel? getIndex(String _path) {
     final meta = chatIndex[p.normalize(_path)];

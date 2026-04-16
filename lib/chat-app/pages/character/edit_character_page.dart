@@ -328,8 +328,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ],
               ),
 
-              const SizedBox(height: 16), // 间隔
-              const Divider(), // 分隔线
+
               const SizedBox(height: 16), // 分隔线后的间隔
               // 角色介绍
               ExpandableTextField(

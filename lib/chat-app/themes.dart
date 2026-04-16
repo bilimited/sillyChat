@@ -137,7 +137,7 @@ abstract final class SillyChatThemeBuilder {
       
       // 保持字体配置一致
       fontFamily: font ?? 'LexendDeca',
-      fontFamilyFallback: const ['Noto Sans SC'],
+      fontFamilyFallback: const ['MiSans','Noto Sans SC'],
       
       // 保持基础布局配置一致
       visualDensity: _visualDensity,
@@ -156,7 +156,7 @@ abstract final class SillyChatThemeBuilder {
       
       // 保持字体配置一致
       fontFamily: font ?? 'LexendDeca',
-      fontFamilyFallback: const ['Noto Sans SC'],
+      fontFamilyFallback: const ['MiSans','Noto Sans SC'],
       
       // 保持基础布局配置一致
       visualDensity: _visualDensity,

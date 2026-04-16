@@ -215,14 +215,7 @@ class ChatSessionController extends GetxController {
       //Get.snackbar('聊天${file?.path ?? '<未创建>'}保存失败.', '聊天文件不存在');
     }
   }
-
-  void useChatTemplate(ChatModel chat) {
-    chat.needAutoTitle =
-        VaultSettingController.of().miscSetting.value.autoTitle_enabled;
-    this._chat.value = chat;
-    saveChat();
-  }
-
+  
   void bindWebController(WebSessionController controller) {
     const int? maxMessages = 10;
 

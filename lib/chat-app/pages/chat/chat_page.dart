@@ -1547,22 +1547,39 @@ class _ChatPageState extends State<ChatPage> {
         );
       },
       child: Padding(
-        padding: EdgeInsets.only(bottom: 64, left: 30, right: 30),
+        padding: EdgeInsets.only(bottom: 128, left: 30, right: 30),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             InkWell(
-              child: AvatarImage.round(chat.assistant.avatar, 36),
+              child: AvatarImage.round(chat.assistant.avatar, 48),
               onTap: selectCharacter,
             ),
             SizedBox(
-              height: 8,
+              height: 16,
             ),
             Column(
               children: [
-                ElevatedButton(
+                FilledButton(
                   onPressed: selectCharacter,
-                  child: const Text('选择角色'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(48 + 24, 44), // 宽度占满，高度54
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30), // 设置为30就是胶囊形按钮
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text("选择角色"),
+                    ],
+                  ),
                 ),
                 if (ChatController.of.messageClipboard.isNotEmpty) ...[
                   SizedBox(
@@ -1584,14 +1601,6 @@ class _ChatPageState extends State<ChatPage> {
             ),
             NewChatButtons(
               onSelectRole: selectCharacter,
-              onTemplateSelected: (value) {
-                final meta = value.meta!;
-                final file = File(meta.path);
-                final chat =
-                    ChatModel.fromJson(json.decode(file.readAsStringSync()));
-                chat.file = sessionController.file;
-                sessionController.useChatTemplate(chat);
-              },
             ),
           ],
         ),
