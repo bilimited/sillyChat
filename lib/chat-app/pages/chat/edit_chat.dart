@@ -20,6 +20,7 @@ import '../../providers/character_controller.dart';
 
 import 'package:path/path.dart' as p;
 
+@Deprecated("不再使用了")
 class EditChatPage extends StatefulWidget {
   final ChatSessionController session;
 

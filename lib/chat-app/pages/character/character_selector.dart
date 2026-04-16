@@ -96,7 +96,7 @@ class _CharacterSelectorState extends State<CharacterSelector> {
                         physics: NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: 8),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: SillyChatApp.isDesktop() ? 5 : 4,
+                          crossAxisCount: SillyChatApp.isDesktop() ? 6 : 4,
                           childAspectRatio: 0.8,
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,

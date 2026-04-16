@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
+import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
@@ -18,6 +19,7 @@ class ChatModel {
   late final int fileId;
 
   File? file; // JSONIGNORE 加载时赋值
+  FolderSettingModel? folderSettingModel; // JSONIgnore 加载时赋值
 
   String? pathToCreate; // JSONIGNORE 该聊天要创建在哪个目录。
 
@@ -32,8 +34,14 @@ class ChatModel {
   String time;
   int? userId;
   int? assistantId;
+
+  
+
+  @Deprecated("已迁移到文件夹设置")
   int? chatOptionId;
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
+
+  @Deprecated("需要更好的解决方案")
   List<int> characterIds = [];
   Map<String, String> chatVars = {};
 
@@ -46,13 +54,21 @@ class ChatModel {
 
   // 对话摘要，介绍或作者注释
   // 会被插入到提示词中
+  @Deprecated("没用")
   String? description;
+  @Deprecated("不再使用")
+  String messageTemplate = "{{msg}}"; // 新增：消息模板字段
+  @Deprecated("不再使用")
+  List<String> tags = []; // 新增：标签字段
+
+  ChatMode? mode;
+  List<BookMarkModel> bookmarks = [];
 
   String? get backgroundOrCharBackground =>
       backgroundImage ?? assistant.backgroundImage ?? null;
 
   ChatOptionModel get chatOption =>
-      Get.find<ChatOptionController>().getChatOptionById(chatOptionId ?? -1) ??
+      folderSettingModel?.chatOptionModel ??
       Get.find<ChatOptionController>().defaultOption;
 
   bool get isChatNotCreated => id == -1;
@@ -92,11 +108,9 @@ class ChatModel {
         : controller.getCharacterById(userId!);
   }
 
-  String messageTemplate = "{{msg}}"; // 新增：消息模板字段
-  List<String> tags = []; // 新增：标签字段
 
-  ChatMode? mode;
-  List<BookMarkModel> bookmarks = [];
+
+
 
   void initOptions(ChatOptionModel option) {
     chatOptionId = option.id;

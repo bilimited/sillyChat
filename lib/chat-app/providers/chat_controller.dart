@@ -61,7 +61,8 @@ class ChatController extends GetxController {
   final RxMap<String, ChatMetaModel> chatIndex = <String, ChatMetaModel>{}.obs;
   final String chatIndexFileName = 'chat_index.json';
 
-  final RxMap<String, FolderSettingModel> folderSettings = <String, FolderSettingModel>{}.obs;
+  final RxMap<String, FolderSettingModel> folderSettings =
+      <String, FolderSettingModel>{}.obs;
 
   // 已打开的聊天
   final RxMap<String, ChatSessionController?> openedChat =
@@ -176,6 +177,32 @@ class ChatController extends GetxController {
     }
   }
 
+  /**
+   * TODO:全错。重新写
+   */
+  FolderSettingModel? getFolderSettingByChatPath(String chatPath) {
+    // 1. 获取聊天文件所在的文件夹路径 (例如: A/B/C)
+    String currentDir = p.dirname(chatPath);
+
+    // 2. 循环向上查找，直到到达根目录
+    while (true) {
+      // 构造当前目录下的配置文件路径 (例如: A/B/C/folder_setting.json)
+      // 使用 p.join 可以自动处理斜杠，最后统一转为 / 以匹配你的 Map key
+      String settingKey =
+          p.join(currentDir, 'folder_setting.json').replaceAll('\\', '/');
+      
+      if (folderSettings.containsKey(settingKey)) {
+        return folderSettings[settingKey];
+      }
+      String parentDir = p.dirname(currentDir);
+      if (parentDir == currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    return null; // 如果整条路径都没有找到设置，返回 null
+  }
 
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
@@ -184,11 +211,10 @@ class ChatController extends GetxController {
     await saveChatIndex();
   }
 
-  bool isFolderSettingExist(String path){
+  bool isFolderSettingExist(String path) {
     path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
     return folderSettings.containsKey(p.normalize(path));
   }
-
 
   Future<void> createFolderSetting(String path) async {
     path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
@@ -203,8 +229,12 @@ class ChatController extends GetxController {
     print("创建了一个FolderSetting!");
   }
 
-  Future<void> saveFolderSetting(FolderSettingModel setting) async {
+  FolderSettingModel? getFolderSetting(String path) {
+    path = p.normalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
+    return folderSettings[path];
+  }
 
+  Future<void> saveFolderSetting(FolderSettingModel setting) async {
     folderSettings[p.normalize(setting.path)] = setting;
 
     File f = File(setting.path);
@@ -213,20 +243,21 @@ class ChatController extends GetxController {
 
   Future<Map<String, FolderSettingModel>> getAllFolderSetting() async {
     final directory = await Get.find<SettingController>().getVaultPath();
-    final path = p.join(directory, Constants.CHAT_FOLDER_NAME,);
+    final path = p.join(directory, Constants.CHAT_FOLDER_NAME);
     // List<FolderSettingModel> settings = [];
     Map<String, FolderSettingModel> settings = {};
 
     try {
-      final dir = Directory(path);
+      final dir = Directory(p.normalize(path));
       if (!await dir.exists()) return {};
 
       await for (final entity
           in dir.list(recursive: true, followLinks: false)) {
         if (entity is File && Fileutils.isFolderSettingFile(entity.path)) {
-          final filePath = entity.path;
+          final filePath = p.normalize(entity.path);
           final file = File(filePath);
-          final setting = FolderSettingModel.fromJson(json.decode(file.readAsStringSync()));
+          final setting =
+              FolderSettingModel.fromJson(json.decode(file.readAsStringSync()));
           settings[filePath] = setting;
         }
       }
@@ -235,8 +266,6 @@ class ChatController extends GetxController {
     }
     return settings;
   }
-
-
 
   ChatMetaModel? getIndex(String _path) {
     final meta = chatIndex[p.normalize(_path)];

@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
+import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 // 假设你的模型文件在这里导入
 // import 'path_to_your_model/folder_setting_model.dart';
 
@@ -14,7 +23,8 @@ class FolderSettingPage extends StatefulWidget {
 class _FolderSettingPageState extends State<FolderSettingPage> {
   // 1. 声明数据模型
   // late FolderSettingModel _settingModel;
-  bool _isLoading = true;
+
+  late final Rx<FolderSettingModel> _settingModel;
 
   @override
   void initState() {
@@ -24,37 +34,67 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
 
   // 2. 初始化方法
   Future<void> _initData() async {
-    setState(() => _isLoading = true);
-    
-    // TODO: 这里编写加载数据的逻辑
-    // 如果是编辑模式，根据 widget.folderId 获取数据
-    // 如果是新建模式，初始化一个空模型
-    
-    await Future.delayed(const Duration(milliseconds: 500)); // 模拟网络延迟
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _settingModel = Rx(ChatController.of.getFolderSetting(widget.path)!);
   }
 
   // 3. 释放资源方法
   @override
   void dispose() {
-    // TODO: 在这里销毁 TextEditingController 等资源
     super.dispose();
   }
 
   // 4. 保存方法
   void _onSave() {
-    // TODO: 校验表单并调用 API 保存
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('正在保存设置...')),
+    ChatController.of.saveFolderSetting(_settingModel.value);
+  }
+
+  void _showChatOptionDialog() {
+    final controller = Get.find<ChatOptionController>();
+    final options = controller.chatOptions;
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('选择聊天预设'),
+        content: SizedBox(
+          width: double.maxFinite,
+          // 使用 ListView.builder 处理可能较长的列表
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: options.length,
+            itemBuilder: (context, index) {
+              final option = options[index];
+              // 检查当前是否选中
+              bool isSelected = _settingModel.value.chatOptionId == option.id;
+
+              return ListTile(
+                title: Text(
+                  '${option.name}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+                    : null,
+                selected: isSelected,
+                onTap: () {
+                  // 1. 更新数据
+                  setState(() {
+                    _settingModel.value =
+                        _settingModel.value.copyWith(chatOptionId: option.id);
+                  });
+                  Get.back();
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
     );
-    
-    // 成功后返回上一页
-    // Navigator.pop(context);
   }
 
   @override
@@ -62,47 +102,70 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface, // 使用主题背景色
-      appBar: AppBar(
-        title: const Text('文件夹设置'),
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        actions: [
-          // 备用保存按钮
-          IconButton(
-            onPressed: _onSave,
-            icon: const Icon(Icons.check),
-            tooltip: '保存',
-          ),
-        ],
-      ),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        _onSave();
+      },
+      child: Scaffold(
+        backgroundColor: colorScheme.surface, // 使用主题背景色
+        appBar: AppBar(
+          title: const Text('文件夹设置'),
+          backgroundColor: colorScheme.primaryContainer,
+          foregroundColor: colorScheme.onPrimaryContainer,
+          actions: [
+          ],
+        ),
       
-      // 内容区域
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
+        // 内容区域
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Obx(() => Column(
                 children: [
-                  // TODO: 在这里添加你的表单组件、文本框、选择器等
-                  const Center(
-                    child: Text(
-                      '设置内容请填充在此处',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                  ListTile(
+                    title: Text("使用的预设"),
+                    subtitle: Text("该文件夹下的聊天会默认使用此预设"),
+                    trailing:
+                        Text(_settingModel.value.chatOptionModel?.name ?? "未选择"),
+                    onTap: _showChatOptionDialog,
                   ),
+                  ListTile(
+                    title: Text("默认角色"),
+                    subtitle: Text("该文件夹下新聊天会默认使用此角色"),
+                    trailing: Text(
+                        _settingModel.value.defaultAssistant?.roleName ?? "未选择"),
+                    onTap: () async {
+                      final CharacterModel? charactar = await customNavigate(
+                          CharacterSelector(),
+                          context: context);
+                      _settingModel.value = _settingModel.value
+                          .copyWith(defaultAssistantId: charactar?.id ?? null);
+                    },
+                  ),
+                  ListTile(
+                    title: Text("重置设置"),
+                    subtitle: Text("重置所有设置"),
+                    onTap: () async {
+                      Get.defaultDialog(
+                          title: "确认重置",
+                          middleText: "您确定要重置所有设置吗？此操作将无法撤销。",
+                          textConfirm: "确定重置",
+                          textCancel: "取消",
+                          onConfirm: () {
+                            _settingModel.value = FolderSettingModel(
+                                id: _settingModel.value.id,
+                                path: _settingModel.value.path);
+                            // 在这里执行重置逻辑
+      
+                            Get.back(); // 关闭弹窗
+                          });
+                    },
+                  )
                 ],
-              ),
-            ),
+              )),
+        ),
+      
+        // 悬浮保存按钮
 
-      // 悬浮保存按钮
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _onSave,
-        label: const Text('保存设置'),
-        icon: const Icon(Icons.save),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
       ),
     );
   }

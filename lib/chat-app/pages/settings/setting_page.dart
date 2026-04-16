@@ -261,6 +261,16 @@ class _SettingPageState extends State<SettingPage>
             onTap: () =>
                 customNavigate(ChatOptionsManagerPage(), context: context),
           ),
+          _buildSettingTile(
+            title: '从SillyTarvern导入',
+            subtitle: '从酒馆导入角色卡、预设和世界书等数据',
+            icon: Icons.wine_bar,
+            onTap: () {
+              
+            },
+            // onTap: () =>
+            //     customNavigate(ChatOptionsManagerPage(), context: context),
+          ),
         ]),
 
         // 2. 界面与格式

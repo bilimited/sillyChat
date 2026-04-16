@@ -186,6 +186,7 @@ class ChatSessionController extends GetxController {
       _chat.value = ChatModel.fromJson(data);
       //chat.fileId = 0; // fileId字段已弃用
       chat.file = chatFile;
+      chat.folderSettingModel = ChatController.of.getFolderSettingByChatPath(chatPath);
     } else {
       //Get.snackbar('聊天加载失败.', '聊天文件不存在');
     }
@@ -554,7 +555,7 @@ class ChatSessionController extends GetxController {
   }
 
   /// 在当前聊天上下文下生成AI回复
-  /// [overrideOption] 若设为空，则使用聊天设置的Option
+  /// [overrideOption] 若设为空，则使用全局默认预设（所有预设中的第一个）
   /// [overrideAssistant] 若设为空，则使用聊天设置的AI角色生成回复
   Stream<String> _getResponse({
     ChatOptionModel? overrideOption,

@@ -18,6 +18,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
@@ -1256,84 +1257,101 @@ class _ChatPageState extends State<ChatPage> {
       backgroundColor:
           Colors.transparent, //isDesktop ? colors.surfaceContainerHigh : null,
 
-      title: Obx(
-        () => Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.5,
-                  child: sessionController.isGeneratingTitle.value
-                      ? Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SpinKitWave(
-                                itemCount: 3,
-                                color: colors.onSurface,
-                                size: 15.0,
+      title: InkWell(
+        onTap: () {
+          showEditDialog(
+              title: "编辑标题",
+              hintText: '请输入聊天标题',
+              initialValue: chat.name,
+              onConfirm: (name) {
+                chat.name = name;
+                setState((){
+                  _updateChat();
+                });
+                
+              });
+        },
+        child: Obx(
+          () => Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    child: sessionController.isGeneratingTitle.value
+                        ? Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SpinKitWave(
+                                  itemCount: 3,
+                                  color: colors.onSurface,
+                                  size: 15.0,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '正在生成标题...',
-                              style: TextStyle(
-                                  color: colors.outline, fontSize: 16),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          chat.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                ),
-                Text(
-                  "约 ${sessionController.cachedTokens} Tokens",
-                  style: TextStyle(fontSize: 12, color: colors.outline),
-                ),
-              ],
-            ),
-          ],
+                              Text(
+                                '正在生成标题...',
+                                style: TextStyle(
+                                    color: colors.outline, fontSize: 16),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            chat.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                  Text(
+                    "约 ${sessionController.cachedTokens} Tokens",
+                    style: TextStyle(fontSize: 12, color: colors.outline),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         _buildMoreVertButton(),
-        IconButton(
-            onPressed: () async {
-              final path = await _showRecentChatPicker(context, (id) {
-                return ChatController.of.getIndex(id)?.name ?? '未知聊天';
-              });
 
-              if (path != null && path.isNotEmpty) {
-                GotoChat.byPath(path);
-              }
-            },
-            icon: Icon(Icons.history)),
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            customNavigate(
-                ManageMessagePage(
-                  chat: chat,
-                  chatSessionController: sessionController,
-                  onTapMessage: (message) {
-                    _scrollToMessage(message);
-                  },
-                ),
-                context: context);
-          },
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.settings,
-          ),
-          onPressed: () {
-            customNavigate(EditChatPage(session: sessionController),
-                context: context);
-          },
-        ),
+        // IconButton(
+        //   icon: Icon(
+        //     Icons.settings,
+        //   ),
+        //   onPressed: () {
+        //     customNavigate(EditChatPage(session: sessionController),
+        //         context: context);
+        //   },
+        // ),
+
+        // IconButton(
+        //     onPressed: () async {
+        //       final path = await _showRecentChatPicker(context, (id) {
+        //         return ChatController.of.getIndex(id)?.name ?? '未知聊天';
+        //       });
+
+        //       if (path != null && path.isNotEmpty) {
+        //         GotoChat.byPath(path);
+        //       }
+        //     },
+        //     icon: Icon(Icons.history)),
+        // IconButton(
+        //   icon: const Icon(Icons.search),
+        //   onPressed: () {
+        //     customNavigate(
+        //         ManageMessagePage(
+        //           chat: chat,
+        //           chatSessionController: sessionController,
+        //           onTapMessage: (message) {
+        //             _scrollToMessage(message);
+        //           },
+        //         ),
+        //         context: context);
+        //   },
+        // ),
       ],
     );
   }
@@ -1352,6 +1370,24 @@ class _ChatPageState extends State<ChatPage> {
           sessionController.generateTitle();
         } else if (value == 'ai_help_answer') {
           sessionController.simulateUserMessage();
+        } else if (value == 'recent_chat') {
+          final path = await _showRecentChatPicker(context, (id) {
+            return ChatController.of.getIndex(id)?.name ?? '未知聊天';
+          });
+
+          if (path != null && path.isNotEmpty) {
+            GotoChat.byPath(path);
+          }
+        } else if (value == 'search') {
+          customNavigate(
+              ManageMessagePage(
+                chat: chat,
+                chatSessionController: sessionController,
+                onTapMessage: (message) {
+                  _scrollToMessage(message);
+                },
+              ),
+              context: context);
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -1384,19 +1420,47 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         PopupMenuItem<String>(
-          value: 'gen_memory',
+          value: 'recent_chat',
           child: Row(
             children: [
               Icon(
-                Icons.memory,
+                Icons.history,
                 color: Theme.of(context).iconTheme.color,
                 size: 22,
               ),
               SizedBox(width: 12),
-              Text('生成记忆'),
+              Text('最近聊天'),
             ],
           ),
         ),
+        PopupMenuItem<String>(
+          value: 'search',
+          child: Row(
+            children: [
+              Icon(
+                Icons.search,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              SizedBox(width: 12),
+              Text('搜索'),
+            ],
+          ),
+        ),
+        // PopupMenuItem<String>(
+        //   value: 'gen_memory',
+        //   child: Row(
+        //     children: [
+        //       Icon(
+        //         Icons.memory,
+        //         color: Theme.of(context).iconTheme.color,
+        //         size: 22,
+        //       ),
+        //       SizedBox(width: 12),
+        //       Text('生成记忆'),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }
@@ -1460,7 +1524,6 @@ class _ChatPageState extends State<ChatPage> {
               if (chat.backgroundOrCharBackground != null)
                 _buildBackgroundImage(),
               _buildMainContent(),
-              //_buildStatusBar(),
               _buildFloatingButtonOverlay(),
             ],
           ),

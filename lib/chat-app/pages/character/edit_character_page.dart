@@ -13,7 +13,6 @@ import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
-import 'package:flutter_example/chat-app/widgets/webview/relationship_map_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -21,15 +20,13 @@ import '../../providers/character_controller.dart';
 
 class EditCharacterPage extends StatefulWidget {
   final int? characterId;
-
   const EditCharacterPage({Key? key, this.characterId}) : super(key: key);
 
   @override
   State<EditCharacterPage> createState() => _EditCharacterPageState();
 }
 
-class _EditCharacterPageState extends State<EditCharacterPage>
-    with SingleTickerProviderStateMixin {
+class _EditCharacterPageState extends State<EditCharacterPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _characterController = Get.find<CharacterController>();
   final _lorebookController = Get.find<LoreBookController>();
@@ -43,12 +40,11 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _briefController;
   late TextEditingController _firstMessageController;
 
-  late int? _bindOption;
-
+  int? _bindOption;
   String? _avatarPath;
   String? _backgroundPath;
-
   CharacterModel? _character;
+
   bool get isEditMode => widget.characterId != null;
   bool get isEditPlayer => widget.characterId == 0;
 
@@ -56,64 +52,51 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    if (widget.characterId != null) {
+    if (isEditMode) {
       _character = _characterController.getCharacterById(widget.characterId!);
     }
 
     _nameController = TextEditingController(text: _character?.remark ?? '');
-    _nickNameController =
-        TextEditingController(text: _character?.roleName ?? '');
-    _descriptionController =
-        TextEditingController(text: _character?.description ?? '');
+    _nickNameController = TextEditingController(text: _character?.roleName ?? '');
+    _descriptionController = TextEditingController(text: _character?.description ?? '');
     _archiveController = TextEditingController(text: _character?.archive ?? '');
-    _categoryController =
-        TextEditingController(text: _character?.category ?? '');
-    // _ageController =
-    //     TextEditingController(text: (_character?.age ?? 18).toString());
+    _categoryController = TextEditingController(text: _character?.category ?? '');
     _briefController = TextEditingController(text: _character?.brief ?? '');
-    // _selectedGender = _character?.gender ?? '女';
     _avatarPath = _character?.avatar;
     _backgroundPath = _character?.backgroundImage;
-    _firstMessageController =
-        TextEditingController(text: _character?.firstMessage ?? '');
+    _firstMessageController = TextEditingController(text: _character?.firstMessage ?? '');
+    _bindOption = _character?.bindOptionId;
 
-    _bindOption = widget.characterId != null
-        ? _characterController
-            .getCharacterById(widget.characterId!)
-            .bindOptionId
-        : null;
-
-    if (!ChatOptionController.of()
-        .chatOptions
-        .map((option) => option.id)
-        .contains(_bindOption)) {
+    if (!ChatOptionController.of().chatOptions.any((o) => o.id == _bindOption)) {
       _bindOption = null;
     }
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _nameController.dispose();
+    _nickNameController.dispose();
+    _descriptionController.dispose();
+    _archiveController.dispose();
+    _categoryController.dispose();
+    _briefController.dispose();
+    _firstMessageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage(bool isAvatar) async {
-    // final XFile? image =
-    //     await _imagePicker.pickImage(source: ImageSource.gallery);
     final t = DateTime.now().hashCode;
     final path = await ImageUtils.selectAndCropImage(context,
-        isCrop: isAvatar, fileName: 'avatar_${widget.characterId}_${t}');
+        isCrop: isAvatar, fileName: '${isAvatar ? "avatar" : "bg"}_${widget.characterId}_$t');
 
     if (path != null) {
-      setState(() {
-        if (isAvatar) {
-          if (_avatarPath != null) {}
-
-          _avatarPath = path;
-        } else {
-          _backgroundPath = path;
-        }
-      });
+      setState(() => isAvatar ? _avatarPath = path : _backgroundPath = path);
     }
   }
 
-  // 复制角色
   CharacterModel? _saveCharacter() {
-    if (!_formKey.currentState!.validate()) return null; // TODO:字段校验不通过无提示
+    if (!_formKey.currentState!.validate()) return null;
 
     return CharacterModel(
       id: _character?.id ?? DateTime.now().millisecondsSinceEpoch,
@@ -121,8 +104,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       roleName: _nickNameController.text,
       avatar: _avatarPath ?? '',
       description: _descriptionController.text,
-      category:
-          _categoryController.text.isEmpty ? "默认" : _categoryController.text,
+      category: _categoryController.text.isEmpty ? "默认" : _categoryController.text,
       lorebookIds: _character?.lorebookIds ?? [],
       firstMessage: _firstMessageController.text,
     )
@@ -139,142 +121,61 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   Future<void> _save() async {
     final character = _saveCharacter();
     if (character == null) return;
-    if (isEditMode) {
-      await _characterController.updateCharacter(character);
-    } else {
-      await _characterController.addCharacter(character);
-    }
+    isEditMode ? await _characterController.updateCharacter(character) : await _characterController.addCharacter(character);
   }
 
   Future<void> _deleteCharacter() async {
-    if (!isEditMode) return;
-
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('确认删除'),
         content: const Text('确定要删除这个角色吗？'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            child: const Text('确定'),
-          ),
+          TextButton(onPressed: () => Get.back(result: false), child: const Text('取消')),
+          TextButton(onPressed: () => Get.back(result: true), child: const Text('确定')),
         ],
       ),
     );
-
     if (confirmed == true) {
       await _characterController.deleteCharacter(widget.characterId!);
       Get.back();
     }
   }
 
-  Future<void> _copyCharacter() async {
-    if (_character == null) return;
+  // --- 视图组件 ---
 
-    var char = _character!.copyWith(roleName: _character!.roleName + '的副本');
-    _characterController.characterCilpBoard.value = char;
-    SillyChatApp.snackbar(context, '角色已复制到剪贴板');
-  }
-
-  Widget _buildBackgroundimageSelecter() {
-    return GestureDetector(
-      onTap: () => _pickImage(false),
-      onLongPress: () {
-        setState(() {
-          _backgroundPath = null;
-        });
-      },
-      child: Container(
-        height: 160,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-          color: Colors.grey.shade100,
-        ),
-        child: _backgroundPath != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(_backgroundPath!),
-                  fit: BoxFit.cover,
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate,
-                    size: 40,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '点击选择背景图片',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
+  Widget _buildSectionTitle(String title) {
+    return Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold));
   }
 
   Widget _buildBasicInfoTab() {
     final colors = Theme.of(context).colorScheme;
     return ListView(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(16),
       children: [
         Center(
           child: GestureDetector(
             onTap: () => _pickImage(true),
             child: Stack(
               children: [
-                Container(
-                  height: 120,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colors.surfaceContainerHighest, width: 2),
-                    color: colors.surfaceContainerHighest,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
+                CircleAvatar(
+                  radius: 60,
+                  backgroundColor: colors.surfaceContainerHighest,
+                  child: ClipOval(
                     child: _avatarPath != null
                         ? AvatarImage(fileName: _avatarPath!)
-                        : Icon(
-                            Icons.add_photo_alternate,
-                            size: 40,
-                            color: Colors.grey.shade600,
-                          ),
+                        : Icon(Icons.add_photo_alternate, size: 40, color: colors.onSurfaceVariant),
                   ),
                 ),
                 Positioned(
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(3), // 白色边框的宽度
-                    decoration:  BoxDecoration(
-                      color: colors.surfaceContainerHighest, // 边框颜色
-                      shape: BoxShape.circle,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(6), // 相机背景的大小
-                      decoration:  BoxDecoration(
-                        color: colors.primary, // 相机图标背景色
-                        shape: BoxShape.circle,
-                      ),
-                      child:  Icon(
-                        Icons.camera_alt,
-                        size: 16, // 相机图标大小
-                        color: colors.surface,
-                      ),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: colors.surface, shape: BoxShape.circle),
+                    child: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: colors.primary,
+                      child: Icon(Icons.camera_alt, size: 14, color: colors.onPrimary),
                     ),
                   ),
                 ),
@@ -283,39 +184,24 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           ),
         ),
         const SizedBox(height: 24),
-        // Card(
-        //   child:
-        Padding(
-          padding: const EdgeInsets.all(5.0), // 卡片内部的内边距
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // 让 Column 尽可能小地占用垂直空间
-            crossAxisAlignment: CrossAxisAlignment.stretch, // 子组件水平方向拉伸
-            children: [
-              TextFormField(
-                controller: _nickNameController,
-                decoration: const InputDecoration(
-                  labelText: '角色名称',
-                ),
-              ),
-              const SizedBox(height: 16), // 间隔
-              // 简略介绍
-
-              ExpandableTextField(
-                controller: _briefController,
-                decoration: const InputDecoration(
-                    labelText: '简略介绍', helperText: "(可选)角色的简介。"),
-                minLines: 2,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 16), // 间隔
-              // 首句台词
-              ExpandableTextField(
-                controller: _firstMessageController,
-                decoration: InputDecoration(
-                    labelText: '开场白', helperText: "(可选)角色的开场白，即该角色的第一条对话"),
-                extraActions: [
-                  if (_character != null)
-                    buildIconTextButton(
+        TextFormField(
+          controller: _nickNameController,
+          decoration: const InputDecoration(labelText: '角色名称', hintText: '输入角色显示的昵称'),
+        ),
+        const SizedBox(height: 16),
+        ExpandableTextField(
+          controller: _briefController,
+          decoration: const InputDecoration(labelText: '简略介绍', helperText: "角色的简短描述"),
+          minLines: 2,
+          maxLines: 3,
+        ),
+        const SizedBox(height: 16),
+        ExpandableTextField(
+          controller: _firstMessageController,
+          decoration: const InputDecoration(labelText: '开场白', helperText: "角色的第一条对话"),
+          extraActions: [
+            if (_character != null)
+              buildIconTextButton(
                       context,
                       text: '更多选项',
                       icon: Icons.more_horiz,
@@ -325,564 +211,265 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                             context: context);
                       },
                     )
-                ],
-              ),
-
-
-              const SizedBox(height: 16), // 分隔线后的间隔
-              // 角色介绍
-              ExpandableTextField(
-                controller: _archiveController,
-                decoration: const InputDecoration(
-                    labelText: '角色设定', helperText: '(必填)角色的人设文本'),
-                style: TextStyle(fontSize: 15),
-                maxLines: 16,
-              ),
-              const SizedBox(height: 10), // 间隔
-            ],
-          ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ExpandableTextField(
+          controller: _archiveController,
+          decoration: const InputDecoration(labelText: '角色设定', helperText: '角色的背景、性格、能力等核心设定'),
+          maxLines: 15,
         ),
       ],
-    );
-  }
-
-  List<Widget> _buildMemoryAndLorebookCard() {
-    return [
-      Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: const Text(
-          '世界书绑定',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-      Card(
-        // 角色绑定的世界书管理
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_character != null && _character!.lorebookIds.isEmpty)
-                const SizedBox(
-                  height: 40,
-                  child: Center(
-                    child: Text(
-                      '当前角色未绑定任何世界书',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                )
-              else if (_character != null && _character!.lorebookIds.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _character!.lorebookIds.map((id) {
-                    final lorebook = _lorebookController.getLorebookById(id);
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: InkWell(
-                        onTap: () {
-                          if (lorebook != null) {}
-                        },
-                        child: ListTile(
-                          onTap: () {
-                            final lb = LoreBookController.of
-                                .getLorebookById(lorebook?.id ?? -1);
-                            //TODO: LoreBookEditorPage不应该传入lorebook，会导致未更新。
-                            customNavigate(
-                                LoreBookEditorPage(
-                                  lorebook: lb,
-                                ),
-                                context: context);
-                          },
-                          title: Text(lorebook?.name ?? '未知世界书'),
-                          subtitle: Text(
-                            // TODO: 改成总Token，
-                            "共${lorebook?.items?.length ?? '未知'}条",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.link_off),
-                            onPressed: () {
-                              setState(() {
-                                _character!.lorebookIds.remove(id);
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  TextButton.icon(
-                      onPressed: () {
-                        if (_character == null) {
-                          return;
-                        }
-                        final lorebooks = _lorebookController.lorebooks
-                            .where((lorebook) =>
-                                lorebook.type == LorebookType.character)
-                            .where((lorebook) =>
-                                !_character!.lorebookIds.contains(lorebook.id))
-                            .toList();
-
-                        // 显示一个弹窗，从中选择一个世界书
-                        Get.dialog(
-                          AlertDialog(
-                            title: const Text('选择世界书'),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: lorebooks.length,
-                                itemBuilder: (context, index) {
-                                  final lorebook = lorebooks[index];
-                                  return ListTile(
-                                    title: Text(lorebook.name),
-                                    onTap: () {
-                                      setState(() {
-                                        _character?.lorebookIds
-                                            .add(lorebook.id);
-                                      });
-                                      Get.back();
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      label: const Text('绑定角色书'),
-                      icon: const Icon(Icons.link)),
-                  SizedBox(
-                    width: 8,
-                  ),
-                  TextButton.icon(
-                      onPressed: () {
-                        final lb = LorebookModel.emptyCharacterBook();
-                        LoreBookController.of.addLorebook(lb);
-                        setState(() {
-                          _character!.lorebookIds.add(lb.id);
-                        });
-
-                        customNavigate(
-                            LoreBookEditorPage(
-                              lorebook: lb,
-                            ),
-                            context: context);
-                      },
-                      label: const Text('添加角色书'),
-                      icon: const Icon(Icons.add)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      const SizedBox(height: 16),
-      Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: const Text(
-          '角色记忆',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-      Builder(builder: (context) {
-        final memory = _character!.memoryBook;
-        return Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (memory == null) ...[
-                    const SizedBox(
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          '当前角色未启用记忆',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        final lb = LorebookModel.emptyMemoryBook()
-                            .copyWith(name: "${_character!.roleName}的记忆");
-                        LoreBookController.of.addLorebook(lb);
-                        setState(() {
-                          _character!.memoryBookId = lb.id;
-                        });
-
-                        customNavigate(
-                            LoreBookEditorPage(
-                              lorebook: lb,
-                            ),
-                            context: context);
-                      },
-                      label: Text('添加记忆'),
-                      icon: Icon(Icons.add),
-                    )
-                  ] else
-                    Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: InkWell(
-                        child: ListTile(
-                          onTap: () {
-                            final lb = LoreBookController.of
-                                .getLorebookById(memory?.id ?? -1);
-                            customNavigate(
-                                LoreBookEditorPage(
-                                  lorebook: lb,
-                                ),
-                                context: context);
-                          },
-                          title: Text(memory?.name ?? '未知世界书'),
-                          subtitle: Text(
-                            // TODO: 改成总Token，
-                            "共${memory?.items?.length ?? '未知'}条",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              final confirmed = await Get.dialog<bool>(
-                                AlertDialog(
-                                  title: const Text('确认删除'),
-                                  content:
-                                      const Text('确定要删除记忆本并清除记忆吗？此操作无法撤销。'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Get.back(result: false),
-                                      child: const Text('取消'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Get.back(result: true),
-                                      child: const Text('确定'),
-                                    ),
-                                  ],
-                                ),
-                              );
-
-                              if (confirmed == true) {
-                                setState(() {
-                                  LoreBookController.of.deleteLorebook(
-                                      _character!.memoryBookId!);
-                                  _character!.memoryBookId = null;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    )
-                ],
-              )),
-        );
-      })
-    ];
-  }
-
-  Widget _buildRelationshipTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: EditRelationship(
-        character: _character,
-        relations: _character?.relations ?? {},
-        onChanged: (relations) {
-          if (_character != null) {
-            setState(() {
-              _character!.relations = relations;
-            });
-          }
-        },
-      ),
     );
   }
 
   Widget _buildSettingsTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
-        Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: const Text(
-            '一般设置',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+        // 1. 一般设置
+        ExpansionTile(
+          shape: const Border(),          // 去掉展开时的顶部和底部线条
+  collapsedShape: const Border(), // 去掉折叠时的线条
+          initiallyExpanded: true,
+          title: _buildSectionTitle('一般设置'),
+          // leading: const Icon(Icons.settings_outlined),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          children: [
+            TextFormField(
+              controller: _categoryController,
+              decoration: const InputDecoration(labelText: '分类', hintText: '例如：动漫、原创、历史'),
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _categoryController,
-                decoration: const InputDecoration(
-                  labelText: '分类',
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<MessageStyle>(
-                value: _character?.messageStyle,
-                decoration: const InputDecoration(
-                  labelText: '消息气泡样式',
-                ),
-                items: const [
-                  DropdownMenuItem(
-                      value: MessageStyle.common, child: Text('普通')),
-                  DropdownMenuItem(
-                      value: MessageStyle.narration, child: Text('旁白')),
-                  DropdownMenuItem(
-                      value: MessageStyle.summary, child: Text('摘要')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    if (_character != null) {
-                      _character!.messageStyle = value ?? MessageStyle.common;
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Expanded(
-                      child: DropdownButtonFormField<int?>(
-                    // <-- 1. 确保泛型是 int?
+            const SizedBox(height: 16),
+            DropdownButtonFormField<MessageStyle>(
+              value: _character?.messageStyle,
+              decoration: const InputDecoration(labelText: '消息气泡样式'),
+              items: const [
+                DropdownMenuItem(value: MessageStyle.common, child: Text('普通')),
+                DropdownMenuItem(value: MessageStyle.narration, child: Text('旁白')),
+                DropdownMenuItem(value: MessageStyle.summary, child: Text('摘要')),
+              ],
+              onChanged: (v) => setState(() => _character?.messageStyle = v ?? MessageStyle.common),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int?>(
                     value: _bindOption,
-                    decoration: const InputDecoration(
-                      label: Text('绑定预设'),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
+                    decoration: const InputDecoration(labelText: '绑定预设'),
                     hint: const Text('选择聊天预设'),
                     items: [
-                      // <-- 2. 手动添加一个“空白”选项
-                      DropdownMenuItem<int?>(
-                        value: null, // 这个 item 的值是 null
-                        child: Text(
-                          '无(使用默认预设)',
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.outline),
-                        ), // 显示给用户的文本
-                      ),
-                      // 3. 使用展开操作符(...)将原来的列表合并进来
-                      ...Get.find<ChatOptionController>()
-                          .chatOptions
-                          .map((option) {
-                        return DropdownMenuItem<int>(
-                          // 这里的泛型保持 int 也可以，会自动转换
-                          value: option.id,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 250),
-                            child: Text(
-                              option.name, // 建议模板字符串里不要加大括号，除非必要
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                      const DropdownMenuItem(value: null, child: Text('无 (使用默认)')),
+                      ...Get.find<ChatOptionController>().chatOptions.map((opt) => DropdownMenuItem(
+                            value: opt.id,
+                            child: Text(opt.name, overflow: TextOverflow.ellipsis),
+                          )),
                     ],
-                    onChanged: (int? value) {
-                      setState(() {
-                        // <-- 4. 记得调用 setState 来更新UI
-                        _bindOption = value;
-                      });
-                    },
-                  )),
-                  IconButton(
-                      onPressed: () {
-                        customNavigate(ChatOptionsManagerPage(),
-                            context: context);
-                      },
-                      icon: Icon(Icons.list)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildBackgroundimageSelecter()
-            ],
-          ),
+                    onChanged: (v) => setState(() => _bindOption = v),
+                  ),
+                ),
+                IconButton(onPressed: () => customNavigate(ChatOptionsManagerPage(), context: context), icon: const Icon(Icons.settings_suggest)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildBgSelector(),
+          ],
         ),
-        const SizedBox(height: 16),
-        if (_character != null) ..._buildMemoryAndLorebookCard()
+        SizedBox(height: 16,),
+        // 2. 世界书绑定
+        ExpansionTile(
+                    shape: const Border(),          // 去掉展开时的顶部和底部线条
+  collapsedShape: const Border(), // 去掉折叠时的线条
+          initiallyExpanded: true,
+          title: _buildSectionTitle('世界书绑定'),
+          // leading: const Icon(Icons.menu_book_outlined),
+          childrenPadding: const EdgeInsets.all(8),
+          children: [
+            if (_character?.lorebookIds.isEmpty ?? true)
+              const Padding(padding: EdgeInsets.all(16), child: Text('未绑定任何世界书', style: TextStyle(color: Colors.grey)))
+            else
+              ...(_character!.lorebookIds.map((id) {
+                final lb = _lorebookController.getLorebookById(id);
+                return ListTile(
+                  title: Text(lb?.name ?? '未知世界书'),
+                  subtitle: Text("共 ${lb?.items?.length ?? 0} 条条目"),
+                  trailing: IconButton(icon: const Icon(Icons.link_off), onPressed: () => setState(() => _character!.lorebookIds.remove(id))),
+                  onTap: () => customNavigate(LoreBookEditorPage(lorebook: LoreBookController.of.getLorebookById(id)), context: context),
+                );
+              })),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton.icon(onPressed: _onBindLorebook, label: const Text('选择已有'), icon: const Icon(Icons.link)),
+                TextButton.icon(onPressed: _onCreateLorebook, label: const Text('新建绑定'), icon: const Icon(Icons.add)),
+              ],
+            ),
+          ],
+        ),
+SizedBox(height: 16,),
+        // 3. 角色记忆
+        ExpansionTile(
+                    shape: const Border(),          // 去掉展开时的顶部和底部线条
+  collapsedShape: const Border(), // 去掉折叠时的线条
+          initiallyExpanded: true,
+          title: _buildSectionTitle('角色记忆'),
+          // leading: const Icon(Icons.memory_outlined),
+          childrenPadding: const EdgeInsets.all(8),
+          children: [
+            if (_character?.memoryBook == null)
+              Center(
+                child: TextButton.icon(
+                  onPressed: _onCreateMemory,
+                  label: const Text('为角色开启记忆本'),
+                  icon: const Icon(Icons.add_circle_outline),
+                ),
+              )
+            else
+              ListTile(
+                title: Text(_character!.memoryBook?.name ?? ''),
+                subtitle: Text("共 ${_character!.memoryBook?.items?.length ?? 0} 条记忆"),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  onPressed: _onDeleteMemory,
+                ),
+                onTap: () => customNavigate(LoreBookEditorPage(lorebook: LoreBookController.of.getLorebookById(_character!.memoryBookId!)), context: context),
+              ),
+          ],
+        ),
       ],
     );
   }
 
-  // 用户（Id==0）的设置界面
-  Widget _buildPlayerSetting() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Center(
-          child: GestureDetector(
-            onTap: () => _pickImage(true),
-            child: Container(
-              height: 120,
-              width: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(60),
-                child: _avatarPath != null
-                    ? AvatarImage(fileName: _avatarPath!)
-                    : Icon(
-                        Icons.add_photo_alternate,
-                        size: 40,
-                        color: Colors.grey.shade600,
-                      ),
-              ),
-            ),
-          ),
+  Widget _buildBgSelector() {
+    return GestureDetector(
+      onTap: () => _pickImage(false),
+      onLongPress: () => setState(() => _backgroundPath = null),
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
         ),
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nickNameController,
-                decoration: const InputDecoration(
-                  labelText: '角色名称',
-                ),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return '角色名称';
-                  return null;
-                },
+        child: _backgroundPath != null
+            ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(File(_backgroundPath!), fit: BoxFit.cover, width: double.infinity))
+            : const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [Icon(Icons.add_photo_alternate_outlined, color: Colors.grey), Text('设置角色聊天背景', style: TextStyle(color: Colors.grey, fontSize: 12))],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _briefController,
-                decoration: const InputDecoration(
-                  labelText: '简略介绍',
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<MessageStyle>(
-                value: _character?.messageStyle,
-                decoration: const InputDecoration(
-                  labelText: '消息气泡样式',
-                ),
-                items: const [
-                  DropdownMenuItem(
-                      value: MessageStyle.common, child: Text('普通')),
-                  DropdownMenuItem(
-                      value: MessageStyle.narration, child: Text('旁白')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    if (_character != null) {
-                      _character!.messageStyle = value ?? MessageStyle.common;
-                    }
-                  });
-                },
-              ),
-              SizedBox(
-                height: 32,
-              ),
-              _buildBackgroundimageSelecter(),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  // --- 操作逻辑 ---
+
+  void _onBindLorebook() {
+    final availableBooks = _lorebookController.lorebooks
+        .where((lb) => lb.type == LorebookType.character && !(_character?.lorebookIds.contains(lb.id) ?? false))
+        .toList();
+
+    Get.dialog(AlertDialog(
+      title: const Text('绑定世界书'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: availableBooks.isEmpty
+            ? const Text("暂无可用世界书")
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: availableBooks.length,
+                itemBuilder: (c, i) => ListTile(
+                  title: Text(availableBooks[i].name),
+                  onTap: () {
+                    setState(() => _character?.lorebookIds.add(availableBooks[i].id));
+                    Get.back();
+                  },
+                ),
+              ),
+      ),
+    ));
+  }
+
+  void _onCreateLorebook() {
+    final lb = LorebookModel.emptyCharacterBook();
+    _lorebookController.addLorebook(lb);
+    setState(() => _character?.lorebookIds.add(lb.id));
+    customNavigate(LoreBookEditorPage(lorebook: lb), context: context);
+  }
+
+  void _onCreateMemory() {
+    final lb = LorebookModel.emptyMemoryBook().copyWith(name: "${_character?.roleName ?? '角色'}的记忆");
+    _lorebookController.addLorebook(lb);
+    setState(() => _character?.memoryBookId = lb.id);
+  }
+
+  void _onDeleteMemory() async {
+    final confirmed = await Get.dialog<bool>(AlertDialog(
+      title: const Text('确认删除'),
+      content: const Text('将永久清除角色记忆，是否继续？'),
+      actions: [
+        TextButton(onPressed: () => Get.back(result: false), child: const Text('取消')),
+        TextButton(onPressed: () => Get.back(result: true), child: const Text('确认')),
+      ],
+    ));
+    if (confirmed == true && _character?.memoryBookId != null) {
+      _lorebookController.deleteLorebook(_character!.memoryBookId!);
+      setState(() => _character!.memoryBookId = null);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvokedWithResult: (didPop, result) {
-          _save();
-        },
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(isEditPlayer
-                ? '编辑用户角色'
-                : isEditMode
-                    ? '编辑角色'
-                    : '新建角色'),
-            bottom: isEditPlayer
-                ? null
-                : TabBar(
-                    controller: _tabController,
-                    tabs: const [
-                      Tab(text: '基本信息'),
-                      Tab(text: '其他设置'),
-                      Tab(text: '角色关系'),
-                    ],
-                  ),
-            actions: isEditPlayer
-                ? []
-                : [
-                    IconButton(
-                        onPressed: () {
-                          final galleryPath =
-                              "${SettingController.of.getImagePathSync()}/${widget.characterId}/";
-                          customNavigate(
-                              CharacterGalleryPage(path: galleryPath),
-                              context: context);
-                        },
-                        icon: const Icon(Icons.image)),
-                    IconButton(
-                        onPressed: _copyCharacter,
-                        icon: const Icon(Icons.copy)),
-                    if (isEditMode)
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: _deleteCharacter,
-                      ),
-                  ],
-          ),
-          body: Form(
-            key: _formKey,
-            child: isEditPlayer
-                ? _buildPlayerSetting()
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildBasicInfoTab(),
-                      _buildSettingsTab(),
-                      _buildRelationshipTab(),
-                      // _buildMemoryTab()
-                    ],
-                  ),
-          ),
-          // floatingActionButton: FloatingActionButton.extended(
-          //   onPressed: _save,
-          //   icon: Icon(isEditMode ? Icons.save : Icons.create),
-          //   label: Text(
-          //     isEditMode ? '保存修改' : '创建角色',
-          //     style: const TextStyle(fontSize: 16),
-          //   ),
-          // ),
-        ));
+      onPopInvokedWithResult: (didPop, result) => _save(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditPlayer ? '编辑用户' : (isEditMode ? '编辑角色' : '新建角色')),
+          bottom: isEditPlayer ? null : TabBar(controller: _tabController, tabs: const [Tab(text: '基本信息'), Tab(text: '其他设置'), Tab(text: '关系')]),
+          actions: isEditPlayer ? [] : [
+            IconButton(icon: const Icon(Icons.image_outlined), onPressed: () => customNavigate(CharacterGalleryPage(path: "${SettingController.of.getImagePathSync()}/${widget.characterId}/"), context: context)),
+            IconButton(icon: const Icon(Icons.copy_all), onPressed: () {
+              if (_character != null) {
+                _characterController.characterCilpBoard.value = _character!.copyWith(roleName: '${_character!.roleName}_副本');
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
+              }
+            }),
+            if (isEditMode) IconButton(icon: const Icon(Icons.delete_outline), onPressed: _deleteCharacter),
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: isEditPlayer
+              ? _buildPlayerSetting()
+              : TabBarView(controller: _tabController, children: [
+                  _buildBasicInfoTab(),
+                  _buildSettingsTab(),
+                  Padding(padding: const EdgeInsets.all(16), child: EditRelationship(character: _character, relations: _character?.relations ?? {}, onChanged: (r) => setState(() => _character?.relations = r))),
+                ]),
+        ),
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _nameController.dispose();
-    _descriptionController.dispose();
-    _categoryController.dispose();
-    _briefController.dispose();
-    super.dispose();
+  Widget _buildPlayerSetting() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Center(
+          child: GestureDetector(
+            onTap: () => _pickImage(true),
+            child: CircleAvatar(radius: 50, child: ClipOval(child: _avatarPath != null ? AvatarImage(fileName: _avatarPath!) : const Icon(Icons.person, size: 50))),
+          ),
+        ),
+        const SizedBox(height: 32),
+        TextFormField(controller: _nickNameController, decoration: const InputDecoration(labelText: '我的名字')),
+        const SizedBox(height: 16),
+        TextFormField(controller: _briefController, decoration: const InputDecoration(labelText: '个人简介'), maxLines: 2),
+        const SizedBox(height: 24),
+        _buildSectionTitle('聊天背景'),
+        const SizedBox(height: 8),
+        _buildBgSelector(),
+      ],
+    );
   }
 }
