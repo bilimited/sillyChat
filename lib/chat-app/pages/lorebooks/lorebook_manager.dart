@@ -230,30 +230,7 @@ class LoreBookManagerPage extends StatelessWidget {
                           },
                         )),
                   ),
-                  actions: [
-                    IconButton(
-                      onPressed: () {
-                        FileImporter(
-                          introduction:
-                              '请注意:本应用仍在测试阶段，未兼容SillyTavern的部分功能。导入后，默认将被分类为“世界”类型。',
-                          paramList: [],
-                          allowedExtensions: ['json'],
-                          onImport: (fileName, content, params, path) {
-                            final loreBook = STLorebookImporter.fromJson(
-                                json.decode(content),
-                                fileName: fileName);
-                            if (loreBook != null) {
-                              // 导入时可以默认设置类型，或者根据内容判断
-                              //loreBook.type = _selectedType.value;
-                              LoreBookController.of.addLorebook(loreBook);
-                            }
-                          },
-                        ).pickAndProcessFile(context);
-                      },
-                      icon: const Icon(Icons.download),
-                      tooltip: '导入世界书',
-                    )
-                  ],
+
                 ),
               ];
             },

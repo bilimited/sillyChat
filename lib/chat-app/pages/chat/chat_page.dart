@@ -479,7 +479,8 @@ class _ChatPageState extends State<ChatPage> {
             SillyChatApp.snackbar(context, '复制成功');
           },
         ),
-        if (sessionController.isLastMessage(message) && !sessionController.isGenerating) ...[
+        if (sessionController.isLastMessage(message) &&
+            !sessionController.isGenerating) ...[
           const SizedBox(width: 8),
           _buildActionButton(
             icon: Icons.refresh,
@@ -864,6 +865,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildInputBar() {
     final colors = Theme.of(context).colorScheme;
+
     return Container(
       color: Colors
           .transparent, //isDesktop ? colors.surfaceContainerHigh : colors.surface,
@@ -877,7 +879,6 @@ class _ChatPageState extends State<ChatPage> {
             child: IgnorePointer(
                 ignoring: _isMultiSelecting,
                 child: Obx(() {
-                  final isGenerating = sessionController.aiState.isGenerating;
 
                   return BottomInputArea(
                     sessionController: sessionController,
@@ -899,7 +900,6 @@ class _ChatPageState extends State<ChatPage> {
                                 chat.mode = ChatMode.group;
                               }
                             });
-
                             _updateChat();
                           }),
                       ...manualItems.map((item) {
@@ -936,42 +936,6 @@ class _ChatPageState extends State<ChatPage> {
                           }),
                     ],
                     havaBackgroundImage: chat.assistant.backgroundImage != null,
-                    // TOOL BAR
-                    toolBar: [
-                      if (isGroupMode && !isGenerating)
-                        IconButton(
-                          tooltip: '选择群聊角色',
-                          icon: Icon(
-                            Icons.group_outlined,
-                            color: colors.outline,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            _showCharacterExecuter(context);
-                          },
-                        ),
-                      if (!isGroupMode && !isGenerating)
-                        IconButton(
-                          tooltip: 'AI帮答',
-                          icon: Icon(Icons.quickreply_outlined,
-                              size: 20, color: colors.outline),
-                          onPressed: () async {
-                            if (simulateUserFuture == null) {
-                              simulateUserFuture =
-                                  sessionController.simulateUserMessage();
-                            }
-
-                            final result =
-                                await SimulateUserHelper.showAIAssistDialog(
-                                    context: context,
-                                    simulateUserMessage: simulateUserFuture!);
-                            if (result != null) {
-                              sessionController.inputController.text = result;
-                              simulateUserFuture = null;
-                            }
-                          },
-                        ),
-                    ],
                   );
                 })),
           ),

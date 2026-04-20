@@ -5,12 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
+import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
+import 'package:flutter_example/chat-app/widgets/chat/character_executer.dart';
 import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -47,7 +50,6 @@ class BottomInputArea extends StatefulWidget {
   final bool showToolBar;
   final bool havaBackgroundImage;
 
-  final List<Widget> toolBar;
   final List<Widget> topToolBar;
 
   BottomInputArea({
@@ -57,7 +59,6 @@ class BottomInputArea extends StatefulWidget {
     required this.onSendMessage,
     required this.onRetryLastest,
     required this.onUpdateChat,
-    this.toolBar = const [],
     this.topToolBar = const [],
     this.canSend = true,
     this.showPlus = true,
@@ -87,6 +88,8 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
   bool isThinkMode = false;
   List<String> selectedPath = [];
+
+  Future<List<String>>? simulateUserFuture;
 
   @override
   void initState() {
@@ -141,6 +144,54 @@ class _BottomInputAreaState extends State<BottomInputArea> {
     setState(() {
       selectedPath = [];
     });
+  }
+
+  Widget _buildHelperButton(bool isGenerating) {
+    final colors = Theme.of(context).colorScheme;
+    if (isGroupMode && !isGenerating) {
+      return IconButton(
+        tooltip: '选择群聊角色',
+        icon: Icon(
+          Icons.group_outlined,
+          color: colors.outline,
+          size: 20,
+        ),
+        onPressed: () async {
+          await showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return CharacterExecuter(onToggleMember: (char) {
+                  widget.sessionController.onGroupMessage(
+                      CharacterController.of.getCharacterById(char));
+                  VaultSettingController.of().addToCharacterHistory(char);
+                  Get.back();
+                });
+              });
+        },
+      );
+    } else if (!isGroupMode && !isGenerating) {
+      return IconButton(
+        tooltip: 'AI帮答',
+        icon: Icon(Icons.quickreply_outlined, size: 20, color: colors.outline),
+        onPressed: () async {
+          if (simulateUserFuture == null) {
+            simulateUserFuture = widget.sessionController.simulateUserMessage();
+          }
+
+          final result = await SimulateUserHelper.showAIAssistDialog(
+              context: context, simulateUserMessage: simulateUserFuture!);
+
+          if (result != null) {
+            setState(() {
+              widget.sessionController.inputController.text = result;
+              simulateUserFuture = null;
+            });
+          }
+        },
+      );
+    } else {
+      return SizedBox.shrink();
+    }
   }
 
   Widget _buildDirectorModePanel() {
@@ -214,13 +265,9 @@ class _BottomInputAreaState extends State<BottomInputArea> {
             direction: Axis.horizontal,
             children: widget.topToolBar,
           ),
-
           Divider(
             height: 24,
           ),
-          // Divider(
-          //   height: 16,
-          // ),
         ],
       ),
     );
@@ -244,7 +291,9 @@ class _BottomInputAreaState extends State<BottomInputArea> {
           curve: Curves.easeInOut, // 动画曲线
           decoration: BoxDecoration(
             color: cardColor,
-            border: _isFocused ? Border.all(color: glowColor, width: 2) : null,
+            border: _isFocused
+                ? Border.all(color: glowColor, width: 2)
+                : Border.all(color: Colors.transparent, width: 2),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -271,6 +320,9 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                     vertical: 10,
                   ),
                 ),
+                onChanged: (value) {
+                  setState(() {});
+                },
                 minLines: 1,
                 maxLines: 8,
                 // onSubmitted is removed to allow custom handling via Actions.
@@ -283,26 +335,30 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                   // Left side: Toolbar
                   if (widget.showToolBar)
                     Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: '导演模式',
-                            icon: Icon(Icons.tune,
-                                size: 20,
-                                color: _isDirectorPanelExpanded
-                                    ? colors.primary
-                                    : colors.outline),
-                            onPressed: () {
-                              setState(() => _isDirectorPanelExpanded =
-                                  !_isDirectorPanelExpanded);
-                            },
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() => _isDirectorPanelExpanded =
+                                !_isDirectorPanelExpanded);
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(Icons.tune,
+                                    size: 20,
+                                    color: _isDirectorPanelExpanded
+                                        ? colors.primary
+                                        : colors.outline),
+                              ),
+
+                              // Text("更多",style: TextStyle(fontSize: 13,color: _isDirectorPanelExpanded
+                              //           ? colors.primary
+                              //           : colors.outline),)
+                            ],
                           ),
-                          ...widget.toolBar
-                        ],
-                      ),
-                    ),
+                        )),
 
                   const Spacer(),
 
@@ -311,7 +367,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Non-generating state buttons
-                      if (!widget.sessionController.aiState.isGenerating) ...[
+                      if (!widget.sessionController.isGenerating) ...[
                         if (widget.showPlus)
                           Opacity(
                             opacity: 0.6,
@@ -319,39 +375,78 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                 onPressed: _pickImage,
                                 icon: const Icon(Icons.add, size: 20)),
                           ),
-                        // if (widget.showRetry && (isAutoMode || isGroupMode))
-                        //   Opacity(
-                        //     opacity: 0.6,
-                        //     child: IconButton(
-                        //       icon: const Icon(Icons.refresh, size: 20),
-                        //       onPressed: widget.onRetryLastest,
-                        //     ),
-                        //   ),
-
                         SizedBox(
                           width: 6,
                         ),
                         // Send button
-                        Container(
-                          margin: const EdgeInsets.only(
-                              right: 8, top: 4, bottom: 4),
-                          decoration: BoxDecoration(
-                            color: widget.canSend
-                                ? colors.primary
-                                : colors.outline,
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.send,
-                              color: widget.canSend
-                                  ? colors.onPrimary
-                                  : colors.surface,
-                              size: 18,
-                            ),
-                            onPressed: _submit,
-                          ),
-                        ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200), // 动画时长
+                          layoutBuilder: (Widget? currentChild,
+                              List<Widget> previousChildren) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: <Widget>[
+                                ...previousChildren,
+                                if (currentChild != null) currentChild,
+                              ],
+                            );
+                          },
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                            // 使用 StepCurve 或者 Interval 来分配动画时间
+                            final bool isEntering =
+                                child.key == const ValueKey('send_button')
+                                    ? messageController.text.isNotEmpty
+                                    : messageController.text.isEmpty;
+
+                            return FadeTransition(
+                              opacity: animation.drive(
+                                CurveTween(
+                                  // 前 50% 时间旧图标消失，后 50% 时间新图标进入
+                                  curve:
+                                      Interval(0.5, 1.0, curve: Curves.easeIn),
+                                ),
+                              ),
+                              child: child,
+                              // child: ScaleTransition(
+                              //   scale: animation.drive(
+                              //       CurveTween(curve: Interval(0.5, 1.0))),
+                              //   child: child,
+                              // ),
+                            );
+                          },
+                          child: messageController.text.isEmpty
+                              ? Container(
+                                  key: const ValueKey(
+                                      'helper_button'), // 必须有唯一的 Key
+                                  margin: const EdgeInsets.only(
+                                      right: 8, top: 4, bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: _buildHelperButton(
+                                      widget.sessionController.isGenerating),
+                                )
+                              : Container(
+                                  key: const ValueKey(
+                                      'send_button'), // 必须有唯一的 Key
+                                  margin: const EdgeInsets.only(
+                                      right: 8, top: 4, bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.send,
+                                      color: colors.onSurface,
+                                      size: 18,
+                                    ),
+                                    onPressed: _submit,
+                                  ),
+                                ),
+                        )
                       ]
                       // Stop generating button
                       else
@@ -461,17 +556,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               ),
             ),
           ),
-        // SingleChildScrollView(
-        //   // 设置滚动方向为水平方向
-        //   scrollDirection: Axis.horizontal,
-        //   child: Row(
-        //     children: widget.topToolBar,
-        //   ),
-        // ),
-        // SizedBox(
-        //   height: 12,
-        // ),
-        // Input field and actions card
         Row(
           children: [
             Expanded(

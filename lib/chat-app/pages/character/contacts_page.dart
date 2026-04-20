@@ -45,31 +45,6 @@ class _ContactsPageState extends State<ContactsPage> {
     super.dispose();
   }
 
-  Future<void> _importCharCard() async {
-    // 使用file_picker选择PNG文件
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['png'],
-      dialogTitle: '选择角色卡PNG文件',
-    );
-    if (result == null || result.files.single.path == null) return;
-
-    final file = File(result.files.single.path!);
-    try {
-      String decoded = await STCharacterImporter.readPNGExts(file);
-      final char = await STCharacterImporter.fromJson(
-          json.decode(decoded), file.path, file.path);
-      if (char != null) {
-        characterController.addCharacter(char);
-        Get.snackbar('导入成功', '角色卡已导入');
-      } else {
-        Get.snackbar('导入失败', '未知错误');
-      }
-    } catch (e) {
-      Get.snackbar('导入失败', '$e');
-    }
-  }
-
   // 处理搜索过滤后的分组
   Map<String, List<CharacterModel>> get _filteredAndGroupedContacts {
     // 如果搜索框为空，返回所有分组
@@ -386,14 +361,7 @@ class _ContactsPageState extends State<ContactsPage> {
                     },
                     tooltip: _isSortingMode ? '完成排序' : '进入排序', // 添加提示
                   ),
-                  IconButton(
-                    icon: Icon(Icons.download,
-                        color: theme.colorScheme.onSurface),
-                    onPressed: () {
-                      _importCharCard();
-                    },
-                    tooltip: '导入角色卡', // 添加提示
-                  ),
+
 
                   const SizedBox(width: 8), // 右边距
                 ],

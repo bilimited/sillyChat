@@ -184,17 +184,6 @@ class ChatOptionsManagerPage extends StatelessWidget {
                 customNavigate(PromptManagerPage(), context: context);
               },
               icon: Icon(Icons.article)),
-          IconButton(
-              onPressed: () {
-                FileImporter(
-                    introduction: '导入SillyTavern预设。',
-                    paramList: [],
-                    allowedExtensions: ['json'],
-                    onImport: (fileName, content, params, path) {
-                      STConfigImporter.fromJson(json.decode(content), fileName);
-                    }).pickAndProcessFile(context);
-              },
-              icon: Icon(Icons.download))
         ],
       ),
       body: Obx(

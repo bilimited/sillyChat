@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/import_from_sillytavern_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/misc_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/other_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_page.dart';
@@ -266,7 +267,7 @@ class _SettingPageState extends State<SettingPage>
             subtitle: '从酒馆导入角色卡、预设和世界书等数据',
             icon: Icons.wine_bar,
             onTap: () {
-              
+              customNavigate(ImportFromSillytavernPage(), context: context);
             },
             // onTap: () =>
             //     customNavigate(ChatOptionsManagerPage(), context: context),
