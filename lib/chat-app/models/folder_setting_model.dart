@@ -12,6 +12,8 @@ class FolderSettingModel {
   int? defaultAssistantId;
   List<int> characterIds;
   int? chatOptionId;
+  String remark; // 文件夹备注
+
   Map<String, dynamic> metaData;
 
   FolderSettingModel({
@@ -21,6 +23,7 @@ class FolderSettingModel {
     this.characterIds = const [],
     this.chatOptionId,
     this.metaData = const {},
+    this.remark = "",
   });
 
   CharacterModel? get defaultAssistant => defaultAssistantId == null
@@ -47,6 +50,7 @@ class FolderSettingModel {
       metaData: json['metaData'] != null
           ? Map<String, dynamic>.from(json['metaData'])
           : {},
+      remark: (json['remark']??"") as String
     );
   }
 
@@ -58,6 +62,7 @@ class FolderSettingModel {
       'characterIds': characterIds,
       'chatOptionId': chatOptionId,
       'metaData': metaData,
+      'remark': remark
     };
   }
 
@@ -70,6 +75,7 @@ class FolderSettingModel {
     List<int>? characterIds,
     int? chatOptionId,
     Map<String, dynamic>? metaData,
+    String? remark,
   }) {
     return FolderSettingModel(
       id: id ?? this.id,
@@ -80,6 +86,7 @@ class FolderSettingModel {
       characterIds: characterIds ?? this.characterIds,
       chatOptionId: chatOptionId ?? this.chatOptionId,
       metaData: metaData ?? this.metaData,
+      remark: remark ?? this.remark,
     );
   }
 }

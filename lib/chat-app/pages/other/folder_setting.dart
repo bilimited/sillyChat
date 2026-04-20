@@ -26,6 +26,8 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
 
   late final Rx<FolderSettingModel> _settingModel;
 
+  late final TextEditingController _remarkController; 
+
   @override
   void initState() {
     super.initState();
@@ -34,12 +36,16 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
 
   // 2. 初始化方法
   Future<void> _initData() async {
-    _settingModel = Rx(ChatController.of.getFolderSetting(widget.path)!);
+    final model = ChatController.of.getFolderSetting(widget.path)!;
+    _settingModel = Rx(model);
+    // --- 新增：初始化控制器文本 ---
+    _remarkController = TextEditingController(text: model.remark);
   }
 
   // 3. 释放资源方法
   @override
   void dispose() {
+    _remarkController.dispose(); 
     super.dispose();
   }
 
@@ -141,23 +147,49 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
                           .copyWith(defaultAssistantId: charactar?.id ?? null);
                     },
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("备注", style: TextStyle(fontSize: 16)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _remarkController,
+                          maxLines: 5, // 多行输入
+                          minLines: 2,
+                          decoration: InputDecoration(
+                            hintText: "输入文件夹备注信息...",
+                            // border: OutlineInputBorder(
+                            //   borderRadius: BorderRadius.circular(8),
+                            // ),
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          ),
+                          onChanged: (value) {
+                            // 同步数据到模型
+                            _settingModel.value = _settingModel.value.copyWith(remark: value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
                   ListTile(
                     title: Text("重置设置"),
                     subtitle: Text("重置所有设置"),
                     onTap: () async {
                       Get.defaultDialog(
-                          title: "确认重置",
-                          middleText: "您确定要重置所有设置吗？此操作将无法撤销。",
-                          textConfirm: "确定重置",
-                          textCancel: "取消",
-                          onConfirm: () {
-                            _settingModel.value = FolderSettingModel(
-                                id: _settingModel.value.id,
-                                path: _settingModel.value.path);
-                            // 在这里执行重置逻辑
-      
-                            Get.back(); // 关闭弹窗
-                          });
+                        // ... 弹窗逻辑
+                        onConfirm: () {
+                          _settingModel.value = FolderSettingModel(
+                              id: _settingModel.value.id,
+                              path: _settingModel.value.path);
+                          // --- 新增：重置时清空输入框 ---
+                          _remarkController.clear(); 
+                          Get.back();
+                        }
+                      );
                     },
                   )
                 ],

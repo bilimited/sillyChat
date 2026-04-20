@@ -30,6 +30,9 @@ abstract class Promptformatter {
         RegExp(r'\{\{lastuserMessage\}\}|\{\{lastmessage\}\}',
             caseSensitive: false),
         userMessage); // 兼容酒馆
+    prompt = prompt.replaceAll(
+        RegExp(r'\{\{folderremark\}\}', caseSensitive: false),
+        chat.folderSettingModel?.remark ?? "");
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);
@@ -50,7 +53,7 @@ abstract class Promptformatter {
 
     return prompt;
   }
-  
+
   // 插入聊天中最近出现的角色信息
   static String injectCharacterLore(
       String prompt, ChatModel chat, CharacterModel sender) {
@@ -94,7 +97,6 @@ abstract class Promptformatter {
     }
     return prompt;
   }
-
 
   static String BuildRelationsPrompt(
     String prompt,

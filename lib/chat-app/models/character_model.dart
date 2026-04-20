@@ -81,7 +81,7 @@ class CharacterModel {
   ChatOptionModel? get bindOption {
     // 默认助手直接绑定空预设
     if (isDefaultAssistant) {
-      return ChatOptionModel.empty();
+      return ChatOptionModel.base();
     }
     return bindOptionId == null
         ? null

@@ -202,6 +202,30 @@ class ChatOptionModel {
         regex: []);
   }
 
+  // 基本预设，比空白预设多一点东西（部分宏）
+  factory ChatOptionModel.base({String? name}) {
+    int id = DateTime.now().microsecondsSinceEpoch;
+    return ChatOptionModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: name ?? '默认预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel(id: id, 
+          content: '''现在的时间是: {{time}}
+
+{{folderremark}}''', role: 'system', name: 'Base'),
+          PromptModel(
+              id: id+1,
+              content: 'messageList',
+              role: 'system',
+              name: '消息列表',
+              isChatHistory: true),
+          // PromptModel(
+          //     id: id + 2, content: userMessage, role: 'user', name: '用户输入')
+        ],
+        regex: []);
+  }
+
   factory ChatOptionModel.autoTitle() {
     int id = DateTime.now().microsecondsSinceEpoch;
     return ChatOptionModel(
