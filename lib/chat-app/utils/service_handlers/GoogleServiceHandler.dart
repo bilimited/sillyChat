@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
@@ -172,6 +173,7 @@ class Googleservicehandler extends Servicehandler {
         receiveTimeout: const Duration(seconds: 180),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
+          'User-Agent': Constants.USER_AGENT,
         },
       ),
       data: jsonEncode(requestBody), // Encode the body to a JSON string

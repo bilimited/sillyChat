@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:dio/dio.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
@@ -202,6 +203,7 @@ class Openaiservicehandler extends Servicehandler {
         receiveTimeout: const Duration(seconds: 180),
         headers: {
           'Authorization': 'Bearer ' + key,
+          'User-Agent': Constants.USER_AGENT,
         },
         contentType: 'application/json; charset=utf-8',
       ),

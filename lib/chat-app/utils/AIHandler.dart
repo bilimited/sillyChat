@@ -111,7 +111,7 @@ class Aihandler {
           this,
           LLMRequestOptions(messages: [
             LLMMessage(
-                content: '你好!收到这条信息后，请只回复一个"好"字，不要有任何多余的内容。', role: 'user')
+                content: '收到这条信息后，请只回复一个单独的"好"字，**不要有任何多余的内容**。', role: 'user')
           ], isStreaming: false),
           ApiModel(
               id: -1,
