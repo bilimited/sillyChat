@@ -177,43 +177,49 @@ class ChatController extends GetxController {
     }
   }
 
-  /**
-   * TODO:全错。重新写
-   */
-  FolderSettingModel? getFolderSettingByChatPath(String chatPath) {
+  (FolderSettingModel? setting, String? bestDir, String? bestKey)
+      getFolderSettingByChatPath(String chatPath) {
     // 1. 获取聊天文件所在的文件夹路径 (例如: A/B/C)
-    String currentDir = p.dirname(chatPath);
+    String chatDir = p.canonicalize(p.dirname(chatPath));
 
-    // 2. 循环向上查找，直到到达根目录
-    while (true) {
-      // 构造当前目录下的配置文件路径 (例如: A/B/C/folder_setting.json)
-      // 使用 p.join 可以自动处理斜杠，最后统一转为 / 以匹配你的 Map key
-      String settingKey =
-          p.join(currentDir, 'folder_setting.json').replaceAll('\\', '/');
-      
-      if (folderSettings.containsKey(settingKey)) {
-        return folderSettings[settingKey];
-      }
-      String parentDir = p.dirname(currentDir);
-      if (parentDir == currentDir) {
-        break;
-      }
-      currentDir = parentDir;
-    }
+    String? bestKey;
+    String? deepestMatchDir;
 
-    return null; // 如果整条路径都没有找到设置，返回 null
+    folderSettings.keys.forEach((key) {
+      // 1. 获取该配置所属的目录并规范化
+      final currentDir = p.canonicalize(p.dirname(key));
+
+      // 2. 判断 currentDir 是否是 chatDir 的父目录或就是同一个目录
+      bool isParent =
+          p.equals(currentDir, chatDir) || p.isWithin(currentDir, chatDir);
+
+      if (isParent) {
+        // 3. 如果是父目录，则比较深度（路径越长，层级越深，距离文件越近）
+        if (deepestMatchDir == null ||
+            currentDir.length > deepestMatchDir!.length) {
+          deepestMatchDir = currentDir;
+          bestKey = key;
+        }
+      }
+    });
+
+    return (
+      folderSettings[bestKey],
+      deepestMatchDir,
+      bestKey
+    ); // 如果整条路径都没有找到设置，返回 null
   }
 
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
-    chatIndex[p.normalize(path)] = chatMeta;
+    chatIndex[p.canonicalize(path)] = chatMeta;
     //chatIndex.assign(path, chatMeta);
     await saveChatIndex();
   }
 
   bool isFolderSettingExist(String path) {
     path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
-    return folderSettings.containsKey(p.normalize(path));
+    return folderSettings.containsKey(p.canonicalize(path));
   }
 
   Future<void> createFolderSetting(String path) async {
@@ -222,7 +228,7 @@ class ChatController extends GetxController {
     f.createSync();
 
     final setting = FolderSettingModel(id: Uuid().v8g(), path: path);
-    folderSettings[p.normalize(path)] = setting;
+    folderSettings[p.canonicalize(path)] = setting;
 
     f.writeAsStringSync(json.encode(setting.toJson()));
 
@@ -230,12 +236,12 @@ class ChatController extends GetxController {
   }
 
   FolderSettingModel? getFolderSetting(String path) {
-    path = p.normalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
+    path = p.canonicalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
     return folderSettings[path];
   }
 
   Future<void> saveFolderSetting(FolderSettingModel setting) async {
-    folderSettings[p.normalize(setting.path)] = setting;
+    folderSettings[p.canonicalize(setting.path)] = setting;
 
     File f = File(setting.path);
     f.writeAsStringSync(json.encode(setting.toJson()));
@@ -248,13 +254,13 @@ class ChatController extends GetxController {
     Map<String, FolderSettingModel> settings = {};
 
     try {
-      final dir = Directory(p.normalize(path));
+      final dir = Directory(p.canonicalize(path));
       if (!await dir.exists()) return {};
 
       await for (final entity
           in dir.list(recursive: true, followLinks: false)) {
         if (entity is File && Fileutils.isFolderSettingFile(entity.path)) {
-          final filePath = p.normalize(entity.path);
+          final filePath = p.canonicalize(entity.path);
           final file = File(filePath);
           final setting =
               FolderSettingModel.fromJson(json.decode(file.readAsStringSync()));
@@ -268,13 +274,13 @@ class ChatController extends GetxController {
   }
 
   ChatMetaModel? getIndex(String _path) {
-    final meta = chatIndex[p.normalize(_path)];
-    return meta?.copyWith(path: p.normalize(_path));
+    final meta = chatIndex[p.canonicalize(_path)];
+    return meta?.copyWith(path: p.canonicalize(_path));
   }
 
   // 构建一条聊天索引，用于在初次加载一个聊天时使用
   Future<ChatMetaModel?> buildIndex(String _path) async {
-    final path = p.normalize(_path);
+    final path = p.canonicalize(_path);
     try {
       final file = File(path);
       final content = await file.readAsString();
@@ -291,7 +297,7 @@ class ChatController extends GetxController {
 
   // 新增：删除聊天元数据
   Future<void> deleteChatMetaByPath(String _path) async {
-    final path = p.normalize(_path);
+    final path = p.canonicalize(_path);
     chatIndex.remove(path);
     await saveChatIndex();
   }

@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ class ChatModel {
   late final int fileId;
 
   File? file; // JSONIGNORE 加载时赋值
-  FolderSettingModel? folderSettingModel; // JSONIgnore 加载时赋值
+  String? folderSettingPath; // JSONIgnore 加载时赋值
 
   String? pathToCreate; // JSONIGNORE 该聊天要创建在哪个目录。
 
@@ -34,8 +35,6 @@ class ChatModel {
   String time;
   int? userId;
   int? assistantId;
-
-  
 
   @Deprecated("已迁移到文件夹设置")
   int? chatOptionId;
@@ -63,6 +62,10 @@ class ChatModel {
 
   ChatMode? mode;
   List<BookMarkModel> bookmarks = [];
+
+  FolderSettingModel? get folderSettingModel => folderSettingPath != null
+      ? ChatController.of.getFolderSetting(folderSettingPath!)
+      : null;
 
   String? get backgroundOrCharBackground =>
       backgroundImage ?? assistant.backgroundImage ?? null;
@@ -107,10 +110,6 @@ class ChatModel {
         ? controller.me
         : controller.getCharacterById(userId!);
   }
-
-
-
-
 
   void initOptions(ChatOptionModel option) {
     chatOptionId = option.id;
