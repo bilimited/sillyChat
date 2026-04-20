@@ -274,57 +274,6 @@ class _ChatPageState extends State<ChatPage> {
                   },
                 ),
               ],
-              // ListTile(
-              //   leading: message.bookmark != null
-              //       ? const Icon(Icons.bookmark)
-              //       : const Icon(Icons.bookmark_add),
-              //   title: message.bookmark != null
-              //       ? Text(message.bookmark!)
-              //       : const Text('设为书签'),
-              //   onTap: () {
-              //     Get.back();
-              //     Get.dialog(
-              //       AlertDialog(
-              //         title: const Text('编辑书签'),
-              //         content: TextFormField(
-              //           initialValue: message.bookmark ?? '',
-              //           decoration: const InputDecoration(
-              //             hintText: '输入书签内容',
-              //           ),
-              //           onChanged: (value) {
-              //             message.bookmark = value;
-              //           },
-              //         ),
-              //         actions: [
-              //           TextButton(
-              //             onPressed: () => Get.back(),
-              //             child: const Text('取消'),
-              //           ),
-              //           TextButton(
-              //             onPressed: () {
-              //               if ((message.bookmark ?? '').isNotEmpty) {
-              //                 sessionController.updateMessage(
-              //                     message.time, message);
-              //               }
-              //               Get.back();
-              //             },
-              //             child: const Text('提交'),
-              //           ),
-              //           TextButton(
-              //             onPressed: () {
-              //               message.bookmark = null;
-              //               sessionController.updateMessage(
-              //                   message.time, message);
-              //               Get.back();
-              //             },
-              //             child: const Text('删除'),
-              //           ),
-              //         ],
-              //       ),
-              //     );
-              //     _updateChat();
-              //   },
-              // ),
               ListTile(
                 leading: const Icon(Icons.image),
                 title: const Text('添加图片'),
@@ -358,6 +307,13 @@ class _ChatPageState extends State<ChatPage> {
                   message.alternativeContent.clear();
                   message.alternativeContent.add(null);
                   sessionController.updateMessage(message.time, message);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_fix_high),
+                title: const Text('消息优化'),
+                onTap: () {
+                  _showOptimizationDialog(message);
                 },
               ),
             ],
@@ -523,12 +479,14 @@ class _ChatPageState extends State<ChatPage> {
             SillyChatApp.snackbar(context, '复制成功');
           },
         ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.auto_fix_high,
-          label: '优化',
-          onTap: () => _showOptimizationDialog(message),
-        ),
+        if (sessionController.isLastMessage(message) && !sessionController.isGenerating) ...[
+          const SizedBox(width: 8),
+          _buildActionButton(
+            icon: Icons.refresh,
+            label: '重新生成',
+            onTap: () => sessionController.onRetry(),
+          ),
+        ],
         const SizedBox(width: 8),
         _buildActionButton(
           icon: Icons.more_horiz,
@@ -983,17 +941,20 @@ class _ChatPageState extends State<ChatPage> {
                       if (isGroupMode && !isGenerating)
                         IconButton(
                           tooltip: '选择群聊角色',
-                          icon: Icon(Icons.group, color: colors.outline),
+                          icon: Icon(
+                            Icons.group_outlined,
+                            color: colors.outline,
+                            size: 20,
+                          ),
                           onPressed: () {
                             _showCharacterExecuter(context);
-                            //setState(() => _showWheel = !_showWheel);
                           },
                         ),
                       if (!isGroupMode && !isGenerating)
                         IconButton(
                           tooltip: 'AI帮答',
-                          icon: Icon(Icons.quickreply_rounded,
-                              color: colors.outline),
+                          icon: Icon(Icons.quickreply_outlined,
+                              size: 20, color: colors.outline),
                           onPressed: () async {
                             if (simulateUserFuture == null) {
                               simulateUserFuture =
@@ -1010,12 +971,6 @@ class _ChatPageState extends State<ChatPage> {
                             }
                           },
                         ),
-                      // IconButton(
-                      //     onPressed: _showLoreBookActiviator,
-                      //     icon: Icon(
-                      //       Icons.book,
-                      //       color: colors.outline,
-                      //     )),
                     ],
                   );
                 })),
@@ -1265,10 +1220,9 @@ class _ChatPageState extends State<ChatPage> {
               initialValue: chat.name,
               onConfirm: (name) {
                 chat.name = name;
-                setState((){
+                setState(() {
                   _updateChat();
                 });
-                
               });
         },
         child: Obx(

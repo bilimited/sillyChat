@@ -382,6 +382,11 @@ class ChatSessionController extends GetxController {
     }
   }
 
+  // 检查是否是最后一条消息
+  bool isLastMessage(MessageModel message){
+    return message.id == chat.messages.last.id;
+  }
+
   // AI帮答
   Future<List<String>> simulateUserMessage() async {
     final simUserOption =

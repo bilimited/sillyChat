@@ -290,6 +290,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                           IconButton(
                             tooltip: '导演模式',
                             icon: Icon(Icons.tune,
+                                size: 20,
                                 color: _isDirectorPanelExpanded
                                     ? colors.primary
                                     : colors.outline),
@@ -316,16 +317,16 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                             opacity: 0.6,
                             child: IconButton(
                                 onPressed: _pickImage,
-                                icon: const Icon(Icons.add, size: 22)),
+                                icon: const Icon(Icons.add, size: 20)),
                           ),
-                        if (widget.showRetry && (isAutoMode || isGroupMode))
-                          Opacity(
-                            opacity: 0.6,
-                            child: IconButton(
-                              icon: const Icon(Icons.refresh, size: 22),
-                              onPressed: widget.onRetryLastest,
-                            ),
-                          ),
+                        // if (widget.showRetry && (isAutoMode || isGroupMode))
+                        //   Opacity(
+                        //     opacity: 0.6,
+                        //     child: IconButton(
+                        //       icon: const Icon(Icons.refresh, size: 20),
+                        //       onPressed: widget.onRetryLastest,
+                        //     ),
+                        //   ),
 
                         SizedBox(
                           width: 6,
