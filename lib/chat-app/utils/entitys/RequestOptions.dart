@@ -1,5 +1,6 @@
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/PackageValue.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 
@@ -12,7 +13,7 @@ class LLMRequestOptions {
   final double frequencyPenalty; // 词频惩罚
   final int maxHistoryLength; // 历史消息长度上限
   final int apiId;
-  final String modelName;
+  final String? modelName;
   final int seed;
 
   final bool isDeleteThinking; // 是否删除思考消息
@@ -38,7 +39,7 @@ class LLMRequestOptions {
     this.seed = -1,
     this.isMergeMessageList = false,
     this.isStreaming = true,
-    this.modelName = "",
+    this.modelName,
     ChatCompressionSettings? chatCompressionSettings,
   }) : chatCompressionSettings =
             chatCompressionSettings ?? const ChatCompressionSettings();
@@ -63,7 +64,7 @@ class LLMRequestOptions {
       chatCompressionSettings: json.containsKey('chat_compression_settings')
           ? ChatCompressionSettings.fromJson(json['chat_compression_settings'])
           : null,
-      modelName: json['modelName'] ?? '',
+      modelName: json['modelName'],
     );
   }
 
@@ -101,7 +102,7 @@ class LLMRequestOptions {
     bool? isMergeMessageList,
     bool? isStreaming,
     ChatCompressionSettings? chatCompressionSettings,
-    String? modelName,
+    PackageValue<String?>? modelName,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -119,7 +120,7 @@ class LLMRequestOptions {
       isStreaming: isStreaming ?? this.isStreaming,
       chatCompressionSettings:
           chatCompressionSettings ?? this.chatCompressionSettings,
-      modelName: modelName ?? this.modelName,
+      modelName: modelName !=null ? modelName.value : this.modelName,
     );
   }
 }

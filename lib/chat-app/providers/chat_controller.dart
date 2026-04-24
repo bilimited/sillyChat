@@ -203,6 +203,12 @@ class ChatController extends GetxController {
       }
     });
 
+    if(bestKey==null){
+      return (
+        null,null,null
+      );
+    }
+
     return (
       folderSettings[bestKey],
       deepestMatchDir,

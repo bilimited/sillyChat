@@ -236,12 +236,12 @@ class VaultSettingController extends GetxController {
   }
 
   ApiModel? getApiById(int id) {
-    final api = apis.firstWhereOrNull((a) => a.id == id);
-    if (api == null) {
-      return apis.firstWhereOrNull((a) => a.id == defaultApiId.value);
-    } else {
-      return api;
-    }
+    return apis.firstWhereOrNull((a) => a.id == id);
+    // if (api == null) {
+    //   return apis.firstWhereOrNull((a) => a.id == defaultApiId.value);
+    // } else {
+    //   return api;
+    // }
   }
 
   void addToChatHistory(String chatId) {

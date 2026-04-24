@@ -79,10 +79,10 @@ class CharacterModel {
   bool get isDefaultAssistant => this.id == -1;
 
   ChatOptionModel? get bindOption {
-    // 默认助手直接绑定空预设
-    if (isDefaultAssistant) {
-      return ChatOptionModel.base();
-    }
+    // 默认助手直接绑定空预设（已取消，现在使用默认预设）
+    // if (isDefaultAssistant) {
+    //   return ChatOptionModel.base();
+    // }
     return bindOptionId == null
         ? null
         : ChatOptionController.of().getChatOptionById(bindOptionId!);

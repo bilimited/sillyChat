@@ -1231,43 +1231,23 @@ class _ChatPageState extends State<ChatPage> {
         ),
       ),
       actions: [
+                IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            customNavigate(
+                ManageMessagePage(
+                  chat: chat,
+                  chatSessionController: sessionController,
+                  onTapMessage: (message) {
+                    _scrollToMessage(message);
+                  },
+                ),
+                context: context);
+          },
+        ),
         _buildMoreVertButton(),
 
-        // IconButton(
-        //   icon: Icon(
-        //     Icons.settings,
-        //   ),
-        //   onPressed: () {
-        //     customNavigate(EditChatPage(session: sessionController),
-        //         context: context);
-        //   },
-        // ),
 
-        // IconButton(
-        //     onPressed: () async {
-        //       final path = await _showRecentChatPicker(context, (id) {
-        //         return ChatController.of.getIndex(id)?.name ?? '未知聊天';
-        //       });
-
-        //       if (path != null && path.isNotEmpty) {
-        //         GotoChat.byPath(path);
-        //       }
-        //     },
-        //     icon: Icon(Icons.history)),
-        // IconButton(
-        //   icon: const Icon(Icons.search),
-        //   onPressed: () {
-        //     customNavigate(
-        //         ManageMessagePage(
-        //           chat: chat,
-        //           chatSessionController: sessionController,
-        //           onTapMessage: (message) {
-        //             _scrollToMessage(message);
-        //           },
-        //         ),
-        //         context: context);
-        //   },
-        // ),
       ],
     );
   }
@@ -1346,20 +1326,6 @@ class _ChatPageState extends State<ChatPage> {
               ),
               SizedBox(width: 12),
               Text('最近聊天'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'search',
-          child: Row(
-            children: [
-              Icon(
-                Icons.search,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              SizedBox(width: 12),
-              Text('搜索'),
             ],
           ),
         ),

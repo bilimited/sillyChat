@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/pages/other/api_selector.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/PackageValue.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 import 'package:get/get.dart';
@@ -213,7 +214,11 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
     return ListTile(
       leading: Icon(Icons.smart_toy_outlined),
       title: Text("选择模型"),
-      subtitle: Text(widget.options.modelName),
+      subtitle: Text(widget.options.modelName ?? "留空使用全局默认模型"),
+      trailing: IconButton(onPressed: (){
+        widget.onChanged(widget.options
+              .copyWith(apiId: -1,modelName: PackageValue(null)));
+      }, icon: Icon(Icons.cancel))  ,
       onTap: () async {
         ModelSelectionResult? result = await customNavigate(
             ApiModelSelectionPage(
@@ -224,7 +229,7 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           // VaultSettingController.of().defaultApiId.value = result.api.id;
           // VaultSettingController.of().defaultModelName.value = result.modelName;
           widget.onChanged(widget.options
-              .copyWith(apiId: result.api.id, modelName: result.modelName));
+              .copyWith(apiId: result.api.id, modelName: PackageValue(result.modelName)));
         }
       },
     );

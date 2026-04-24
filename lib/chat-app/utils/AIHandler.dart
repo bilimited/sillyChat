@@ -149,15 +149,30 @@ class Aihandler {
         //isBusy = true;
         await onTaskStart();
       }
-
+      late ApiModel? api;
       final VaultSettingController settingController = Get.find();
-      final ApiModel? api = settingController.getApiById(options.apiId);
+      if (options.apiId == -1) {
+        // 配置中未设置API，使用全局API
+        api = settingController.defaultApi
+            ?.copyWith(modelName: settingController.defaultModelName.value);
+      } else {
+        api = settingController
+            .getApiById(options.apiId)
+            ?.copyWith(modelName: options.modelName);
+      }
+
       if (api == null) {
         Get.snackbar("无可用API!", "请检查你是否已经配置了API");
         onGenerateStateChange('未选择API');
         isBusy = false;
         return;
       }
+      // if (api.modelName == null) {
+      //   Get.snackbar("未选择模型!", "请检查你是否已选择了模型");
+      //   onGenerateStateChange('未选择模型');
+      //   isBusy = false;
+      //   return;
+      // }
       initDio();
       final handler = Servicehandlerfactory.getHandler(api.provider);
 
