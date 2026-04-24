@@ -22,6 +22,7 @@ class VaultSettingController extends GetxController {
 
   final RxList<ApiModel> apis = <ApiModel>[].obs;
   final Rx<int?> defaultApiId = Rx(null); // 如果没有设置默认API，则会自动选取第一个。
+  final Rx<String> defaultModelName = Rx("未设置API");
 
   ApiModel? get defaultApi {
     if (defaultApiId.value == null) {
@@ -116,6 +117,7 @@ class VaultSettingController extends GetxController {
             : <RegexModel>[];
 
         defaultApiId.value = jsonMap['defaultApi'] ?? -1;
+        defaultModelName.value = jsonMap['defaultModelName'] ?? '未设置API';
 
         if (jsonMap['autoTileSetting'] != null) {
           miscSetting.value =
@@ -143,9 +145,8 @@ class VaultSettingController extends GetxController {
       //     fontName: displaySettingModel.value.GlobalFont);
 
       updateThemeStardard(
-        color: displaySettingModel.value.themeColor,
-        fontName: displaySettingModel.value.GlobalFont
-      );
+          color: displaySettingModel.value.themeColor,
+          fontName: displaySettingModel.value.GlobalFont);
     } catch (e) {
       print('加载设置失败: $e');
       displaySettingModel.value = ChatDisplaySettingModel();
@@ -169,6 +170,7 @@ class VaultSettingController extends GetxController {
         'promptSettingModel': promptSettingModel.toJson(),
         'autoTileSetting': miscSetting.toJson(),
         'history': historyModel.toJson(),
+        'defaultModelName': defaultModelName.value,
       };
 
       final String jsonString = json.encode(jsonMap);
@@ -177,8 +179,6 @@ class VaultSettingController extends GetxController {
       print('保存设置失败: $e');
     }
   }
-
-
 
   void updateTheme({String? fontName, String? themename}) {
     FlexScheme theme =

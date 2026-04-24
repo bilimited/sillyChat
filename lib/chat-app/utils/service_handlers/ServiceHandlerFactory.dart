@@ -8,7 +8,7 @@ import 'package:flutter_example/chat-app/utils/service_handlers/SiliconFlowServi
 
 class Servicehandlerfactory {
   static const providers = {
-    ServiceProvider.openai: Openaiservicehandler(
+    ServiceType.openai: Openaiservicehandler(
         baseUrl: 'https://api.openai.com/v1',
         name: 'openAI',
         defaultModelList: [
@@ -16,11 +16,11 @@ class Servicehandlerfactory {
           "gpt-4",
           "gpt-4o",
         ]),
-    ServiceProvider.deepseek: Deepseekservicehandler(),
-    ServiceProvider.siliconflow: Siliconflowservicehandler(),
-    ServiceProvider.custom_openai_compatible:
+    ServiceType.deepseek: Deepseekservicehandler(),
+    ServiceType.siliconflow: Siliconflowservicehandler(),
+    ServiceType.custom_openai_compatible:
         Openaiservicehandler(baseUrl: '', name: '自定义', defaultModelList: []),
-    ServiceProvider.google: Googleservicehandler(
+    ServiceType.google: Googleservicehandler(
         baseUrl: 'no need',
         name: 'google',
         defaultModelList: [
@@ -40,7 +40,7 @@ class Servicehandlerfactory {
           "gemini-1.5-pro",
           "gemini-1.0-pro"
         ]),
-    ServiceProvider.kimi: Kimiservicehandler(),
+    ServiceType.kimi: Kimiservicehandler(),
   };
 
   static const defaultHandler = Openaiservicehandler(
@@ -52,10 +52,8 @@ class Servicehandlerfactory {
         "gpt-4o",
       ]);
 
-  static Servicehandler getHandler(ServiceProvider service,
-      {String? customURL}) {
-    if (service == ServiceProvider.custom_openai_compatible &&
-        customURL != null) {
+  static Servicehandler getHandler(ServiceType service, {String? customURL}) {
+    if (service == ServiceType.custom_openai_compatible && customURL != null) {
       return Openaiservicehandler(
           baseUrl: customURL, name: '自定义', defaultModelList: []);
     }

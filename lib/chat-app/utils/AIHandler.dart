@@ -92,7 +92,7 @@ class Aihandler {
   }
 
   Stream<String> requestTest(String apiKey, String modelName, String url,
-      ServiceProvider provider) async* {
+      ServiceType provider) async* {
     try {
       isInterrupt = false;
       isError = false;

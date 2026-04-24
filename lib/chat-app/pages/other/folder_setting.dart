@@ -5,6 +5,7 @@ import 'package:flutter_example/chat-app/pages/character/character_selector.dart
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
@@ -26,7 +27,9 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
 
   late final Rx<FolderSettingModel> _settingModel;
 
-  late final TextEditingController _remarkController; 
+  late final TextEditingController _remarkController;
+
+  bool isDelete = false;
 
   @override
   void initState() {
@@ -45,7 +48,7 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
   // 3. 释放资源方法
   @override
   void dispose() {
-    _remarkController.dispose(); 
+    _remarkController.dispose();
     super.dispose();
   }
 
@@ -110,7 +113,9 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
-        _onSave();
+        if (!isDelete) {
+          _onSave();
+        }
       },
       child: Scaffold(
         backgroundColor: colorScheme.surface, // 使用主题背景色
@@ -118,10 +123,9 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
           title: const Text('文件夹设置'),
           backgroundColor: colorScheme.primaryContainer,
           foregroundColor: colorScheme.onPrimaryContainer,
-          actions: [
-          ],
+          actions: [],
         ),
-      
+
         // 内容区域
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -130,15 +134,16 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
                   ListTile(
                     title: Text("使用的预设"),
                     subtitle: Text("该文件夹下的聊天会默认使用此预设"),
-                    trailing:
-                        Text(_settingModel.value.chatOptionModel?.name ?? "未选择"),
+                    trailing: Text(
+                        _settingModel.value.chatOptionModel?.name ?? "未选择"),
                     onTap: _showChatOptionDialog,
                   ),
                   ListTile(
                     title: Text("默认角色"),
                     subtitle: Text("该文件夹下新聊天会默认使用此角色"),
                     trailing: Text(
-                        _settingModel.value.defaultAssistant?.roleName ?? "未选择"),
+                        _settingModel.value.defaultAssistant?.roleName ??
+                            "未选择"),
                     onTap: () async {
                       final CharacterModel? charactar = await customNavigate(
                           CharacterSelector(),
@@ -148,7 +153,8 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
                     },
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -164,40 +170,39 @@ class _FolderSettingPageState extends State<FolderSettingPage> {
                             //   borderRadius: BorderRadius.circular(8),
                             // ),
                             filled: true,
-                            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                            fillColor: theme.colorScheme.surfaceVariant
+                                .withOpacity(0.3),
                           ),
                           onChanged: (value) {
                             // 同步数据到模型
-                            _settingModel.value = _settingModel.value.copyWith(remark: value);
+                            _settingModel.value =
+                                _settingModel.value.copyWith(remark: value);
                           },
                         ),
                       ],
                     ),
                   ),
-
                   ListTile(
-                    title: Text("重置设置"),
-                    subtitle: Text("重置所有设置"),
+                    title: Text("删除设置"),
+                    subtitle: Text("移除当前文件夹的设置"),
                     onTap: () async {
-                      Get.defaultDialog(
-                        // ... 弹窗逻辑
-                        onConfirm: () {
-                          _settingModel.value = FolderSettingModel(
-                              id: _settingModel.value.id,
-                              path: _settingModel.value.path);
-                          // --- 新增：重置时清空输入框 ---
-                          _remarkController.clear(); 
-                          Get.back();
-                        }
-                      );
+                      showConfirmDialog(
+                          context: context,
+                          title: "是否删除文件夹设置",
+                          content: "此操作不可逆.",
+                          isDestructive: true,
+                          onConfirm: () {
+                            isDelete = true;
+                            Get.back();
+                            ChatController.of.removeFolderSetting(widget.path);
+                          });
                     },
                   )
                 ],
               )),
         ),
-      
-        // 悬浮保存按钮
 
+        // 悬浮保存按钮
       ),
     );
   }

@@ -128,24 +128,6 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
       characters.addCharacter(user);
 
-      if (!_isCustomModel) {
-        final _selectedServiceProvider =
-            ServiceProvider.findProviderByModelName(_selectedModel!);
-
-        final ApiModel api = ApiModel(
-            id: DateTime.now().microsecondsSinceEpoch,
-            apiKey: _apiKeyController.text,
-            displayName: _selectedModel!,
-            modelName: _selectedModel!,
-            url: ServiceProvider.providerData[_selectedServiceProvider]
-                    ?['defaultUrl'] ??
-                'Error',
-            provider: _selectedServiceProvider);
-
-        await vault.addApi(api);
-        vault.defaultApiId.value = api.id;
-      }
-
       vault.isShowOnBoardPage.value = false;
 
       if (_presetFile != null && _presetFile!.path != null) {

@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
+import 'package:flutter_example/chat-app/pages/other/api_selector.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -103,8 +104,18 @@ class _MainPageMobileState extends State<MainPageMobile> {
     return Tooltip(
       message: "设置API",
       child: InkWell(
-        onTap: () {
-          customNavigate(ApiManagerPage(), context: context);
+        onTap: () async {
+          ModelSelectionResult? result = await customNavigate(
+              ApiModelSelectionPage(
+                apiList: VaultSettingController.of().apis.value,
+              ),
+              context: context);
+          if (result != null) {
+            VaultSettingController.of().defaultApiId.value = result.api.id;
+            VaultSettingController.of().defaultModelName.value =
+                result.modelName;
+            VaultSettingController.of().saveSettings();
+          }
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -117,7 +128,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
                 width: 86,
                 child: Obx(() {
                   String label =
-                      VaultSettingController.of().defaultApi?.displayName ??
+                      VaultSettingController.of().defaultModelName.value ??
                           "未设置API";
 
                   // 只有当文字较长时才使用 Marquee，否则居左显示普通 Text

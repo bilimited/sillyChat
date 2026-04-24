@@ -3,6 +3,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
+import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/import_from_sillytavern_page.dart';
@@ -254,6 +255,12 @@ class _SettingPageState extends State<SettingPage>
             subtitle: '在不同仓库中独立管理应用数据',
             icon: Icons.cabin,
             onTap: () => customNavigate(VaultManagerPage(), context: context),
+          ),
+          _buildSettingTile(
+            title: 'API管理',
+            subtitle: '管理API服务商',
+            icon: Icons.api,
+            onTap: () => customNavigate(ApiManagerPage(), context: context),
           ),
           _buildSettingTile(
             title: '预设管理',

@@ -235,6 +235,14 @@ class ChatController extends GetxController {
     print("创建了一个FolderSetting!");
   }
 
+  Future<void> removeFolderSetting(String path) async {
+    path = p.canonicalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
+    File f = File(path);
+    f.deleteSync();
+
+    folderSettings.remove(path);
+  }
+
   FolderSettingModel? getFolderSetting(String path) {
     path = p.canonicalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
     return folderSettings[path];

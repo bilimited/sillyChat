@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
+import 'package:flutter_example/chat-app/pages/other/api_selector.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
@@ -51,6 +52,10 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildApiSelector(),
+        Divider(
+          height: 16,
+        ),
         _buildSlider(
           label: '温度 (Temperature)',
           value: widget.options.temperature,
@@ -123,8 +128,8 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
               label: '是否合并消息列表',
               value: widget.options.isMergeMessageList,
               onChanged: (value) {
-                widget
-                .onChanged(widget.options.copyWith(isMergeMessageList: value));
+                widget.onChanged(
+                    widget.options.copyWith(isMergeMessageList: value));
               },
             ),
             // 新增信息图标按钮
@@ -134,7 +139,8 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
                       ChatCompressionSettingsPage(
                         settings_: widget.options.chatCompressionSettings,
                         onChanged: (settings) {
-                          widget.onChanged(widget.options.copyWith(chatCompressionSettings: settings));
+                          widget.onChanged(widget.options
+                              .copyWith(chatCompressionSettings: settings));
                         },
                       ),
                       context: context);
@@ -143,7 +149,6 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
           ],
         ),
         const SizedBox(height: 16),
-        _buildApiSelector(),
       ],
     );
   }
@@ -205,77 +210,23 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
   }
 
   Widget _buildApiSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('模型API'),
-        const SizedBox(height: 8),
-        Obx(() {
-          final apis = vaultSettingController.apis;
-          int? selectedApiId = widget.options.apiId;
-          if (!apis.map((a) => a.id).contains(selectedApiId)) {
-            selectedApiId = -1;
-          }
-
-          return Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: selectedApiId,
-                  decoration: const InputDecoration(
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  hint: const Text('请选择API'),
-                  items: [
-                    DropdownMenuItem<int>(
-                      value: -1,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: 250),
-                        child: Text(
-                          '无(使用默认API)',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.outline),
-                        ),
-                      ),
-                    ),
-                    ...apis.map((api) {
-                      return DropdownMenuItem<int>(
-                        value: api.id,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: 250),
-                          child: Text(
-                            '${api.displayName} (${api.modelName})',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      );
-                    }).toList()
-                  ],
-                  onChanged: (int? value) {
-                    if (value != null) {
-                      widget.onChanged(widget.options.copyWith(apiId: value));
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: '添加API',
-                onPressed: () async {
-                  final api = await customNavigate<ApiModel?>(ApiEditPage(),
-                      context: context);
-                  if (api != null) {
-                    widget.onChanged(widget.options.copyWith(apiId: api.id));
-                  }
-                },
-              ),
-            ],
-          );
-        }),
-      ],
+    return ListTile(
+      leading: Icon(Icons.smart_toy_outlined),
+      title: Text("选择模型"),
+      subtitle: Text(widget.options.modelName),
+      onTap: () async {
+        ModelSelectionResult? result = await customNavigate(
+            ApiModelSelectionPage(
+              apiList: VaultSettingController.of().apis.value,
+            ),
+            context: context);
+        if (result != null) {
+          // VaultSettingController.of().defaultApiId.value = result.api.id;
+          // VaultSettingController.of().defaultModelName.value = result.modelName;
+          widget.onChanged(widget.options
+              .copyWith(apiId: result.api.id, modelName: result.modelName));
+        }
+      },
     );
   }
 

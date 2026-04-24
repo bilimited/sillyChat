@@ -879,7 +879,6 @@ class _ChatPageState extends State<ChatPage> {
             child: IgnorePointer(
                 ignoring: _isMultiSelecting,
                 child: Obx(() {
-
                   return BottomInputArea(
                     sessionController: sessionController,
                     onSendMessage: _sendMessage,
@@ -965,7 +964,6 @@ class _ChatPageState extends State<ChatPage> {
         child: Stack(
           children: [
             Obx(() {
-              //final messages = chat.messages.reversed.toList();
               final messages = chat.messages.reversed.toList();
               // 聊天正文
               return ScrollablePositionedList.builder(

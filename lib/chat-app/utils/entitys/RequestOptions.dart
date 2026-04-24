@@ -12,6 +12,7 @@ class LLMRequestOptions {
   final double frequencyPenalty; // 词频惩罚
   final int maxHistoryLength; // 历史消息长度上限
   final int apiId;
+  final String modelName;
   final int seed;
 
   final bool isDeleteThinking; // 是否删除思考消息
@@ -37,8 +38,10 @@ class LLMRequestOptions {
     this.seed = -1,
     this.isMergeMessageList = false,
     this.isStreaming = true,
+    this.modelName = "",
     ChatCompressionSettings? chatCompressionSettings,
-  }) : chatCompressionSettings = chatCompressionSettings ?? const ChatCompressionSettings();
+  }) : chatCompressionSettings =
+            chatCompressionSettings ?? const ChatCompressionSettings();
 
   factory LLMRequestOptions.fromJson(Map<String, dynamic> json) {
     return LLMRequestOptions(
@@ -60,6 +63,7 @@ class LLMRequestOptions {
       chatCompressionSettings: json.containsKey('chat_compression_settings')
           ? ChatCompressionSettings.fromJson(json['chat_compression_settings'])
           : null,
+      modelName: json['modelName'] ?? '',
     );
   }
 
@@ -78,6 +82,7 @@ class LLMRequestOptions {
       'is_merge_message_list': isMergeMessageList,
       'is_streaming': isStreaming,
       'chat_compression_settings': chatCompressionSettings.toJson(),
+      'modelName': modelName
     };
   }
 
@@ -96,6 +101,7 @@ class LLMRequestOptions {
     bool? isMergeMessageList,
     bool? isStreaming,
     ChatCompressionSettings? chatCompressionSettings,
+    String? modelName,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -111,7 +117,9 @@ class LLMRequestOptions {
       seed: seed ?? this.seed,
       isMergeMessageList: isMergeMessageList ?? this.isMergeMessageList,
       isStreaming: isStreaming ?? this.isStreaming,
-      chatCompressionSettings: chatCompressionSettings ?? this.chatCompressionSettings,
+      chatCompressionSettings:
+          chatCompressionSettings ?? this.chatCompressionSettings,
+      modelName: modelName ?? this.modelName,
     );
   }
 }

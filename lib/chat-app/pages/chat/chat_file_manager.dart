@@ -6,6 +6,7 @@ import 'package:flutter_example/chat-app/pages/other/folder_setting.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
@@ -396,15 +397,21 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         icon: const Icon(Icons.settings_outlined),
         tooltip: "设置",
         onPressed: () async {
-          if(ChatController.of.isFolderSettingExist(_currentDirectory.path)){
+          if (ChatController.of.isFolderSettingExist(_currentDirectory.path)) {
             customNavigate(FolderSettingPage(path: _currentDirectory.path),
                 context: context);
-          }else{
-            await ChatController.of.createFolderSetting(_currentDirectory.path);
-            customNavigate(FolderSettingPage(path: _currentDirectory.path),
-                context: context);
+          } else {
+            showConfirmDialog(
+                context: context,
+                content: "是否创建文件夹设置？\n此处创建的文件夹设置会覆盖父级文件夹的设置",
+                onConfirm: () async {
+                  await ChatController.of
+                      .createFolderSetting(_currentDirectory.path);
+                  customNavigate(
+                      FolderSettingPage(path: _currentDirectory.path),
+                      context: context);
+                });
           }
-
         },
       ));
     }

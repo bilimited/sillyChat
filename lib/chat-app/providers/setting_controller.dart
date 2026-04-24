@@ -23,8 +23,8 @@ class SettingController extends GetxController {
   // 应用上次打开的版本
   static String last_version = "";
 
-  static RxMap<ServiceProvider, List<String>> cachedModelList =
-      <ServiceProvider, List<String>>{}.obs;
+  static RxMap<ServiceType, List<String>> cachedModelList =
+      <ServiceType, List<String>>{}.obs;
 
   static String vaultPath = '';
 
@@ -132,8 +132,8 @@ class SettingController extends GetxController {
 
         cachedModelList.value = (jsonDecode(settings['cachedModelList'] ?? '')
                 as Map<String, dynamic>)
-            .map((key, value) => MapEntry(
-                ServiceProvider.fromJson(key), List<String>.from(value)));
+            .map((key, value) =>
+                MapEntry(ServiceType.fromJson(key), List<String>.from(value)));
 
         vaultPath = await getVaultPath();
       }

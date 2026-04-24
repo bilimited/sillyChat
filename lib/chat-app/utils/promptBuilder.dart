@@ -225,7 +225,7 @@ class Promptbuilder {
         : llmMessages;
 
     return _mergeLLMMessages(
-        llmMessagesAfterFormat, api?.provider == ServiceProvider.google);
+        llmMessagesAfterFormat, api?.provider == ServiceType.google);
   }
 
   /// 排序并插入”聊天中“Prompt
