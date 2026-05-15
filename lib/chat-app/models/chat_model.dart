@@ -6,14 +6,18 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
+import 'package:flutter_example/chat-app/models/story_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
+
+import 'package:path/path.dart' as p;
 
 class ChatModel {
   @Deprecated('不再使用了')
@@ -60,6 +64,26 @@ class ChatModel {
 
   ChatMode? mode;
   List<BookMarkModel> bookmarks = [];
+
+  String get filePath => p.canonicalize(file?.path ?? '');
+
+  CharacterModel? get bindCharacter {
+    final id = extractCharacterId(filePath);
+    if (id != null) {
+      return CharacterController.of.getCharacterById(int.parse(id));
+    } else {
+      return null;
+    }
+  }
+
+  StoryModel? get bindStory {
+    final id = extractStoryId(filePath);
+    if (id != null) {
+      return StoryController.of().getStoryById(id);
+    } else {
+      return null;
+    }
+  }
 
   FolderSettingModel? get folderSettingModel => folderSettingPath != null
       ? ChatController.of.getFolderSetting(folderSettingPath!)
@@ -143,6 +167,18 @@ class ChatModel {
 
   bool? getLorebookItemStat(int lorebookId, int itemId) {
     return activitedLorebookItems['$lorebookId@$itemId'];
+  }
+
+  String? extractStoryId(String path) {
+    final regExp = RegExp(r'^.*[\\/]stories[\\/]([^\\/]+)[\\/][^\\/]+\.chat$');
+    final match = regExp.firstMatch(path);
+    return match?.group(1);
+  }
+
+  String? extractCharacterId(String path) {
+    final regExp = RegExp(r'^.*[\\/]roles[\\/]([^\\/]+)[\\/][^\\/]+\.chat$');
+    final match = regExp.firstMatch(path);
+    return match?.group(1);
   }
 
   factory ChatModel.empty() {

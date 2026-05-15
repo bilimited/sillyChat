@@ -208,6 +208,8 @@ class ChatSessionController extends GetxController {
     if (onLoadFinished != null) {
       onLoadFinished!();
     }
+    print(chat.bindStory?.name ?? "No Story!");
+    print(chat.bindCharacter?.roleName ?? "No Char!");
   }
 
   Future<void> saveChat() async {

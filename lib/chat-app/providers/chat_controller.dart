@@ -352,6 +352,42 @@ class ChatController extends GetxController {
     return chatModel;
   }
 
+  Future<(ChatModel, String)> createChatForCharacter(
+      CharacterModel character) async {
+    String path = p.join(SettingController.of.getChatPathSync(), 'roles',
+        character.id.toString());
+    final chat =
+        ChatModel.empty().copyWith(assistantId: character.id, messages: [
+      if (character.firstMessage != null && character.firstMessage!.isNotEmpty)
+        MessageModel(
+            id: DateTime.now().millisecondsSinceEpoch,
+            content: character.firstMessage!,
+            senderId: character.id,
+            time: DateTime.now(),
+            alternativeContent: [null, ...character.moreFirstMessage])
+    ]);
+    final fp = await createChat(chat, path);
+    return (chat, fp);
+  }
+
+  Future<(ChatModel, String)> createChatForStory(StoryModel story) async {
+    String path = p.join(
+        SettingController.of.getChatPathSync(), 'stories', story.id.toString());
+    final chat = ChatModel.empty().copyWith(mode: ChatMode.group);
+    final fp = await createChat(chat, path);
+    return (chat, fp);
+  }
+
+  Future<(ChatModel, String)> createChatForChat(ChatModel chat) async {
+    if (chat.bindCharacter != null) {
+      return await createChatForCharacter(chat.bindCharacter!);
+    } else if (chat.bindStory != null) {
+      return await createChatForStory(chat.bindStory!);
+    } else {
+      throw Exception("聊天无法创建！");
+    }
+  }
+
   void openChat(String path) {
     currentChat.value = ChatSessionController(path);
   }
@@ -371,8 +407,7 @@ class ChatController extends GetxController {
     }).toList();
 
     if (files.isEmpty) {
-      final chat = ChatModel.empty().copyWith(assistantId: character.id);
-      final fp = await createChat(chat, path);
+      final (chat, fp) = await createChatForCharacter(character);
       openChat(fp);
     } else {
       files.sort((a, b) => b.value.compareTo(a.value));
@@ -396,8 +431,7 @@ class ChatController extends GetxController {
     }).toList();
 
     if (files.isEmpty) {
-      final chat = ChatModel.empty().copyWith(mode: ChatMode.group);
-      final fp = await createChat(chat, path);
+      final (chat, fp) = await createChatForStory(story);
       openChat(fp);
     } else {
       files.sort((a, b) => b.value.compareTo(a.value));

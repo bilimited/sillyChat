@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/character/profile_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
@@ -136,7 +137,7 @@ class _ContactsPageState extends State<ContactsPage> {
           customNavigate(ProfilePage(character: contact), context: context);
         },
         child: Container(
-          height: 140.0,
+          height: 70.0,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: ImageUtils.getProvider(bgImage),
@@ -146,13 +147,13 @@ class _ContactsPageState extends State<ContactsPage> {
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.center,
+                end: Alignment.centerRight,
                 colors: [Colors.black26, Colors.black87],
               ),
             ),
             padding: const EdgeInsets.all(16.0),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -176,28 +177,28 @@ class _ContactsPageState extends State<ContactsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton.icon(
+                    IconButton(
                       onPressed: () {
-                        // TODO: 预留编辑方法
+                        customNavigate(
+                          EditCharacterPage(characterId: contact.id),
+                          context: context,
+                        );
                       },
                       icon: const Icon(Icons.edit,
                           size: 18.0, color: Colors.white),
-                      label: const Text('编辑',
-                          style: TextStyle(color: Colors.white)),
                       style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact),
                     ),
                     const SizedBox(width: 8.0),
-                    FilledButton.icon(
+                    IconButton(
                       onPressed: () {
-                        // TODO: 预留聊天方法
+                        ChatController.of.openCharacterLatestChat(contact);
+                        Get.back();
                       },
-                      icon: const Icon(Icons.chat, size: 18.0),
-                      label: const Text('聊天'),
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: theme.colorScheme.primary,
-                      ),
+                      icon: const Icon(Icons.chat,
+                          size: 18.0, color: Colors.white),
+                      style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact),
                     ),
                   ],
                 ),

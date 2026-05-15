@@ -1249,27 +1249,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildNewChatScreen() {
-    VoidCallback selectCharacter = () async {
-      CharacterModel? char = await customNavigate(
-          CharacterSelector(excludeCharacters: [chat.user]),
-          context: context);
-      if (char != null) {
-        chat.assistantId = char.id;
-        if (char.firstMessage != null && char.firstMessage!.isNotEmpty) {
-          sessionController.addMessage(
-              message: MessageModel(
-                  id: DateTime.now().millisecondsSinceEpoch,
-                  content: char.firstMessage!,
-                  senderId: char.id,
-                  time: DateTime.now(),
-                  alternativeContent: [null, ...char.moreFirstMessage]));
-        }
-
-        _updateChat();
-        sessionController.reflesh();
-      }
-    };
-
     return TweenAnimationBuilder<Offset>(
       tween: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero),
       duration: const Duration(milliseconds: 450),
@@ -1285,59 +1264,7 @@ class _ChatPageState extends State<ChatPage> {
         padding: EdgeInsets.only(bottom: 128, left: 30, right: 30),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            InkWell(
-              child: AvatarImage.round(chat.assistant.avatar, 48),
-              onTap: selectCharacter,
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Column(
-              children: [
-                FilledButton(
-                  onPressed: selectCharacter,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(48 + 24, 44), // 宽度占满，高度54
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30), // 设置为30就是胶囊形按钮
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add,
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Text("选择角色"),
-                    ],
-                  ),
-                ),
-                if (ChatController.of.messageClipboard.isNotEmpty) ...[
-                  SizedBox(
-                    height: 12,
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final messagesToPaste = _chatController.messageToPaste;
-                      final msgList = chat.messages;
-
-                      msgList.addAll(messagesToPaste);
-                      await _updateChat();
-                      setState(() {});
-                    },
-                    child: const Text('粘贴消息'),
-                  ),
-                ]
-              ],
-            ),
-            NewChatButtons(
-              onSelectRole: selectCharacter,
-            ),
-          ],
+          children: [Text("！？强强？！")],
         ),
       ),
     );
