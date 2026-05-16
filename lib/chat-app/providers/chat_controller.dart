@@ -86,6 +86,11 @@ class ChatController extends GetxController {
     loadChatIndex();
 
     folderSettings.value = await getAllFolderSetting();
+
+    ever(fileDeleteEvent, (ev) {
+      if (ev == null) return;
+      chatIndex.remove(ev!.filePath);
+    });
   }
 
   /// ----迁移用
@@ -156,7 +161,8 @@ class ChatController extends GetxController {
         final String contents = await file.readAsString();
         final Map<String, dynamic> jsonList = json.decode(contents);
         jsonList.forEach((key, json) {
-          chatIndex[key] = ChatMetaModel.fromJson(json);
+          chatIndex[key] =
+              ChatMetaModel.fromJson(json, p.canonicalize(file.path));
         });
       } else {}
     } catch (e) {
@@ -301,7 +307,7 @@ class ChatController extends GetxController {
       final content = await file.readAsString();
       final chat = ChatModel.fromJson(json.decode(content));
 
-      chatIndex[path] = ChatMetaModel.fromChatModel(chat);
+      chatIndex[path] = ChatMetaModel.fromChatModel(chat, path);
 
       saveChatIndex();
       return chatIndex[path];
@@ -320,8 +326,8 @@ class ChatController extends GetxController {
   /// [path] 要创建聊天的绝对路径。不包含文件名。
   /// TODO:添加事件监听实现自动更新聊天列表
   Future<String> createChat(ChatModel chat, String path) async {
-    final fullPath =
-        p.join(path, '${chat.name}-${DateTime.now().hashCode}.chat');
+    final fullPath = p.canonicalize(
+        p.join(path, '${chat.name}-${DateTime.now().hashCode}.chat'));
     //'$path\\${chat.name}-${DateTime.now().hashCode}.chat';
 
     final file =
@@ -337,7 +343,7 @@ class ChatController extends GetxController {
     // 启用自动标题
 
     // 新增：创建聊天后，同步更新聊天元数据索引
-    final chatMeta = ChatMetaModel.fromChatModel(chat);
+    final chatMeta = ChatMetaModel.fromChatModel(chat, fullPath);
     await updateChatMeta(fullPath, chatMeta);
     fileCreateEvent.value = FileCreatedEvent(fullPath);
     return fullPath;

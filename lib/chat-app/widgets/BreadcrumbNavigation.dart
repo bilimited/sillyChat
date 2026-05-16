@@ -20,7 +20,6 @@ class BreadcrumbNavigation extends StatelessWidget {
   /// 自定义分隔符
   final Widget separator;
 
-
   /// 最多显示的面包屑层级数
   final int maxLevels;
 
@@ -67,33 +66,33 @@ class BreadcrumbNavigation extends StatelessWidget {
     );
   }
 
-Widget _buildCrumbItem(_BreadcrumbItem item, bool isLast, ThemeData theme) {
-  // 1. 获取主题中标准的文字样式作为基准
-  // bodyMedium 通常是 Flutter 默认的文本样式
-  TextStyle baseStyle = theme.textTheme.bodyMedium ?? const TextStyle();
+  Widget _buildCrumbItem(_BreadcrumbItem item, bool isLast, ThemeData theme) {
+    // 1. 获取主题中标准的文字样式作为基准
+    // bodyMedium 通常是 Flutter 默认的文本样式
+    TextStyle baseStyle = theme.textTheme.bodyMedium ?? const TextStyle();
 
-  return InkWell(
-    onTap: isLast ? null : () => onCrumbTap(item.path),
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        item.label,
-        style: isLast
-            ? baseStyle.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                // 使用 colorScheme 兼容性更好
-                color: theme.colorScheme.primary, 
-              )
-            : baseStyle.copyWith(
-                fontSize: 16,
-                // 未激活状态通常使用次要文字颜色或默认颜色
-                color: theme.textTheme.bodySmall?.color, 
-              ),
+    return InkWell(
+      onTap: isLast ? null : () => onCrumbTap(item.path),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          item.label,
+          style: isLast
+              ? baseStyle.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  // 使用 colorScheme 兼容性更好
+                  color: theme.colorScheme.primary,
+                )
+              : baseStyle.copyWith(
+                  fontSize: 16,
+                  // 未激活状态通常使用次要文字颜色或默认颜色
+                  color: theme.textTheme.bodySmall?.color,
+                ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   /// 解析路径并生成面包屑数据
   List<_BreadcrumbItem> _buildCrumbs() {

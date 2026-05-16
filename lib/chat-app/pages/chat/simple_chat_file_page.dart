@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/events.dart';
+import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
@@ -118,6 +120,8 @@ class _SimpleChatFilesPageState extends State<SimpleChatFilesPage> {
               for (final file in _selectedFiles) {
                 try {
                   await file.delete();
+                  ChatController.of.fileDeleteEvent.value =
+                      FileDeletedEvent(path.canonicalize(file.path));
                 } catch (e) {
                   if (mounted) {
                     SillyChatApp.snackbarErr(context, '删除失败: $e');

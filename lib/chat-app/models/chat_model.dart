@@ -44,8 +44,8 @@ class ChatModel {
   int? chatOptionId;
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
 
-  @Deprecated("需要更好的解决方案")
-  List<int> characterIds = [];
+  List<int> get characterIds => bindStory?.characterIds ?? [assistant.id];
+
   Map<String, String> chatVars = {};
 
   Map<String, dynamic> metaData = {};
@@ -92,9 +92,15 @@ class ChatModel {
   String? get backgroundOrCharBackground =>
       backgroundImage ?? assistant.backgroundImage ?? null;
 
-  ChatOptionModel get chatOption =>
-      folderSettingModel?.chatOptionModel ??
-      Get.find<ChatOptionController>().defaultOption;
+  ChatOptionModel get chatOption {
+    if (bindStory?.chatOption != null) {
+      return bindStory!.chatOption!;
+    } else if (bindCharacter?.bindOption != null) {
+      return bindCharacter!.bindOption!;
+    } else {
+      return Get.find<ChatOptionController>().defaultOption;
+    }
+  }
 
   bool get isChatNotCreated => id == -1;
 
@@ -223,7 +229,6 @@ class ChatModel {
               .toList() ??
           []
       ..tags = (json['tags'] as List?)?.cast<String>() ?? []
-      ..characterIds = json['characterIds']?.cast<int>() ?? []
       ..chatVars = (json['chatVars'] as Map<String, dynamic>?)
               ?.map((key, value) => MapEntry(key, value.toString())) ??
           {}
@@ -302,7 +307,6 @@ class ChatModel {
         needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..bookmarks = bookmarks ?? this.bookmarks
       ..tags = tags ?? this.tags
-      ..characterIds = characterIds ?? this.characterIds
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
@@ -349,7 +353,6 @@ class ChatModel {
         needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
-      ..characterIds = characterIds ?? [...this.characterIds]
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =

@@ -16,7 +16,6 @@ import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
-import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
 import 'package:flutter_example/chat-app/utils/chat/token_calc.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
@@ -30,7 +29,6 @@ import 'package:get/get.dart';
 class ChatSessionController extends GetxController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
-  late TextEditingController commandController;
 
   VoidCallback? onLoadFinished;
   VoidCallback? onAIStateUpdate;
@@ -74,7 +72,7 @@ class ChatSessionController extends GetxController {
   ChatModel get chat => _chat.value;
   File? get file => _chat.value.file;
 
-  String get tag => chatPath;
+  String get tag => p.canonicalize(chatPath);
   bool get isChatUninitialized => file == null;
 
   String chatPath;
@@ -87,7 +85,6 @@ class ChatSessionController extends GetxController {
    */
   ChatSessionController(this.chatPath) {
     this.inputController = TextEditingController();
-    this.commandController = TextEditingController();
   }
 
   factory ChatSessionController.uninitialized() {
@@ -106,7 +103,6 @@ class ChatSessionController extends GetxController {
   void onInit() {
     super.onInit();
     if (tag.isNotEmpty) {
-      VaultSettingController.of().addToChatHistory(tag);
       ChatController.of.openedChat[tag] = this;
     }
 
@@ -154,7 +150,6 @@ class ChatSessionController extends GetxController {
     super.onClose();
     ChatController.of.openedChat.remove(tag);
     inputController.dispose();
-    commandController.dispose();
   }
 
   void reflesh() {
@@ -165,7 +160,6 @@ class ChatSessionController extends GetxController {
   bool get canDestory {
     return !_aiState.value.isGenerating &&
         inputController.text.isEmpty &&
-        commandController.text.isEmpty &&
         backGroundTasks == 0 &&
         !isLock.value;
   }
@@ -215,14 +209,14 @@ class ChatSessionController extends GetxController {
   Future<void> saveChat() async {
     final createPath = chat.pathToCreate;
     onChatUpdate(chat);
+
     if (file != null && await file!.exists()) {
       final String contents = json.encode(chat.toJson());
       await file!.writeAsString(contents);
 
-      await ChatController.of
-          .updateChatMeta(file!.path, ChatMetaModel.fromChatModel(chat));
+      final meta = ChatMetaModel.fromChatModel(chat, chat.filePath);
+      await ChatController.of.updateChatMeta(file!.path, meta);
       print('save Chat');
-
       // 异步执行Token计算
       // TODO:添加防抖
       updateTokens();
@@ -373,8 +367,8 @@ class ChatSessionController extends GetxController {
         return;
       } else if (chat.mode == ChatMode.auto) {
         await for (var content in _getResponse(
-          overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
-        )) {
+            //overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
+            )) {
           _handleAIResult(content, chat.assistantId ?? -1);
         }
       } else {
@@ -392,7 +386,7 @@ class ChatSessionController extends GetxController {
     }
 
     await for (var content in _getResponse(
-      overrideOption: assistant.bindOption,
+      //overrideOption: assistant.bindOption,
       overrideAssistant: assistant,
     )) {
       _handleAIResult(content, assistant.id);
@@ -467,7 +461,7 @@ class ChatSessionController extends GetxController {
     } else if (chat.mode == ChatMode.group && message != null) {
       final CharacterController controller = Get.find();
       await for (var content in _getResponse(
-        overrideOption: message.sender.bindOption,
+        //overrideOption: message.sender.bindOption,
         overrideAssistant: controller.getCharacterById(message.senderId),
       )) {
         _handleAIResult(content, message.senderId, existedMessage: message);
@@ -589,20 +583,8 @@ class ChatSessionController extends GetxController {
 
     late List<LLMMessage> messages;
 
-    // 附加指令
-    final extraContent = commandController.text.isNotEmpty
-        ? LLMMessage(content: commandController.text, role: 'user')
-        : null;
-
-    if (commandController.text.isNotEmpty) {
-      HistoryCommandPicker.addCommandToHistory(commandController.text);
-    }
-    if (!isCommandPinned.value) {
-      commandController.text = "";
-    }
-
-    messages = Promptbuilder(chat, overrideOption).getLLMMessageList(
-        sender: overrideAssistant, extraContent: extraContent);
+    messages = Promptbuilder(chat, overrideOption)
+        .getLLMMessageList(sender: overrideAssistant);
 
     final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);

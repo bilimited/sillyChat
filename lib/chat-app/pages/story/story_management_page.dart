@@ -4,6 +4,8 @@ import 'package:flutter_example/chat-app/pages/story/story_form_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/widgets/common/app_option_card.dart';
+import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 
 class StoryManagementPage extends GetView<StoryController> {
@@ -16,38 +18,46 @@ class StoryManagementPage extends GetView<StoryController> {
 
     return Scaffold(
       // 没有 AppBar
-      body: Obx(() {
-        final stories = controller.stories;
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            InnerAppBar(title: const Text('故事管理')),
+          ];
+        },
+        body: Obx(() {
+          final stories = controller.stories;
 
-        if (stories.isEmpty) {
-          return Center(
-            child: Text(
-              '还没有故事，点击右下角按钮添加',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+          if (stories.isEmpty) {
+            return Center(
+              child: Text(
+                '还没有故事，点击右下角按钮添加',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: stories.length,
-          itemBuilder: (context, index) {
-            final story = stories[index];
-            return _StoryCard(
-              story: story,
-              colorScheme: colorScheme,
-              onTap: () {
-                ChatController.of.openStoryLatestChat(story);
-                Get.back();
-                // 预留：点击故事卡片的处理事件
-              },
-              onDelete: () => _confirmDelete(context, index),
             );
-          },
-        );
-      }),
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: stories.length,
+            itemBuilder: (context, index) {
+              final story = stories[index];
+              return _StoryCard(
+                story: story,
+                colorScheme: colorScheme,
+                onTap: () {
+                  ChatController.of.openStoryLatestChat(story);
+                  Get.back();
+                  // 预留：点击故事卡片的处理事件
+                },
+                onDelete: () => _confirmDelete(context, story.id),
+              );
+            },
+          );
+        }),
+      ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // 预留：添加故事的处理事件
@@ -59,7 +69,7 @@ class StoryManagementPage extends GetView<StoryController> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, int index) async {
+  Future<void> _confirmDelete(BuildContext context, String id) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -79,7 +89,7 @@ class StoryManagementPage extends GetView<StoryController> {
     );
 
     if (result == true) {
-      await controller.deleteStory(index);
+      await controller.deleteStory(id);
     }
   }
 }
@@ -99,82 +109,57 @@ class _StoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant, width: 1),
-      ),
-      elevation: 0,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      story.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (story.remark.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        story.remark,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                icon: Icon(
-                  Icons.more_vert,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                color: colorScheme.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    onDelete?.call();
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: colorScheme.error),
-                        const SizedBox(width: 12),
-                        Text('删除故事',
-                            style: TextStyle(color: colorScheme.error)),
-                      ],
-                    ),
+    return AppOptionCard<String>(
+      title: story.name,
+      subTitle: story.remark.isNotEmpty
+          ? Text(
+              story.remark,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                ],
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            )
+          : null,
+      options: [
+        AppCardOptionItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit),
+              const SizedBox(width: 12),
+              Text(
+                '编辑故事',
               ),
             ],
           ),
         ),
-      ),
+        AppCardOptionItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: colorScheme.error),
+              const SizedBox(width: 12),
+              Text(
+                '删除故事',
+                style: TextStyle(color: colorScheme.error),
+              ),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        if (value == 'delete') {
+          onDelete?.call();
+        } else if (value == "edit") {
+          customNavigate(
+              StoryFormPage(
+                initialStory: story,
+              ),
+              context: context);
+        }
+      },
+      onTap: onTap,
     );
   }
 }

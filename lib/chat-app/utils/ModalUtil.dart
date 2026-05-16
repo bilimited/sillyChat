@@ -46,7 +46,7 @@ void showEditDialog({
   );
 }
 
-void showConfirmDialog({
+Future<void> showConfirmDialog({
   required BuildContext context,
   required String content,
   String? title,
@@ -59,45 +59,48 @@ void showConfirmDialog({
   VoidCallback? onCancel,
 }) {
   final colors = Theme.of(context).colorScheme;
-  Get.dialog(
-    AlertDialog(
-      title: title != null ? Text(title!) : null,
-      content: Text(content),
-      actions: [
-        // 取消按钮
-        TextButton(
-          onPressed: () {
-            if (onCancel != null) onCancel();
-            Get.back();
-          },
-          child: Text(
-            cancelText,
-            style: TextStyle(color: colors.outline),
-          ),
-        ),
-        // 确定按钮
-        TextButton(
-          onPressed: () {
-            onConfirm();
-            Get.back();
-          },
-          // style: ElevatedButton.styleFrom(
-          //   // 如果是破坏性操作且未指定颜色，默认用红色
-          //   backgroundColor: confirmButtonColor ??
-          //       (isDestructive ? Colors.red : Colors.blue),
-          //   foregroundColor: confirmTextColor ?? Colors.white,
-          //   elevation: 0,
-          // ),
-          child: Text(
-            confirmText,
-            style: TextStyle(
-                color: confirmButtonColor ??
-                    (isDestructive ? colors.error : colors.onSurface)),
-          ),
-        ),
-      ],
-    ),
-    // 点击背景是否可以关闭对话框
+  return showDialog<void>(
+    context: context,
     barrierDismissible: true,
+    builder: (context) {
+      return AlertDialog(
+        title: title != null
+            ? Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16, // 标题字体调小
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            : null,
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () {
+              onCancel?.call();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              cancelText,
+              style: TextStyle(color: colors.outline),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              onConfirm();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              confirmText,
+              style: TextStyle(
+                color: confirmTextColor ??
+                    confirmButtonColor ??
+                    (isDestructive ? colors.error : colors.onSurface),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
   );
 }

@@ -1,3 +1,8 @@
+import 'package:flutter_example/chat-app/models/chat_option_model.dart';
+import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
+
 class StoryModel {
   String id;
   String name;
@@ -7,6 +12,14 @@ class StoryModel {
   List<int> characterIds;
   List<int> lorebookIds;
   Map<String, dynamic> metaData;
+
+  ChatOptionModel? get chatOption =>
+      ChatOptionController.of().getChatOptionById(chatOptionId ?? -1);
+
+  List<LorebookModel> get loreBooks => lorebookIds
+      .map((id) => LoreBookController.of.getLorebookById(id))
+      .nonNulls
+      .toList();
 
   StoryModel({
     required this.id,
