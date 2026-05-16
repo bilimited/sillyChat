@@ -13,10 +13,10 @@ class CharacterController extends GetxController {
 
   final VaultSettingController _vaultSettingController = Get.find();
 
-  // 按category字段分组
+  // 按category字段分组（排除临时角色）
   Map<String, List<CharacterModel>> get groupedCharacters {
     final Map<String, List<CharacterModel>> grouped = {};
-    for (var character in characters) {
+    for (var character in characters.where((c) => c.bindStoryId == null)) {
       if (!grouped.containsKey(character.category)) {
         grouped[character.category] = [];
       }
@@ -188,4 +188,17 @@ class CharacterController extends GetxController {
   }
 
   static CharacterController get of => Get.find<CharacterController>();
+
+  List<CharacterModel> getAllCharacters() {
+    return characters.where((char) => char.bindStoryId == null).toList();
+  }
+
+  List<CharacterModel> getCharactersByStoryId(String storyId) {
+    return characters.where((char) => char.bindStoryId == storyId).toList();
+  }
+
+  Future<void> deleteCharactersByStoryId(String storyId) async {
+    characters.removeWhere((char) => char.bindStoryId == storyId);
+    await saveCharacters();
+  }
 }

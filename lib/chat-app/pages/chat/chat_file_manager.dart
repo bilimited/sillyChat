@@ -274,13 +274,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_isMultiSelectMode &&
-          _currentDirectory.path == widget.directory.path,
+      canPop: !_isMultiSelectMode,
       onPopInvokedWithResult: (didPop, result) {
-        //print("canPop:$canPop");
-        if (ChatController.of.pageController.page != 0) {
-          return;
-        }
         if (_isMultiSelectMode) {
           setState(() {
             _isMultiSelectMode = false;
@@ -288,26 +283,16 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
           });
           return;
         }
-        if (_currentDirectory.path != widget.directory.path) {
-          setState(() {
-            _currentDirectory = _currentDirectory.parent;
-            ChatController.of.currentPath.value = _currentDirectory.path;
-            _loadFiles();
-          });
-        }
       },
       child: Scaffold(
         // bottomNavigationBar: CustomBottomBar(
         //   centerButton: SizedBox.shrink(),
         // ),
-        backgroundColor: Colors.transparent,
-        body: NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [_buildAppBar()];
-            },
-            body: _buildFileList()),
-        floatingActionButton:
-            _isMultiSelectMode ? null : _buildFloatingActionButton(),
+        // backgroundColor: Colors.transparent,
+        appBar: _buildAppBar(),
+        body: _buildFileList(),
+        // floatingActionButton:
+        //     _isMultiSelectMode ? null : _buildFloatingActionButton(),
       ),
     );
   }
@@ -315,7 +300,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
   PreferredSizeWidget _buildAppBar() {
     final theme = Theme.of(context);
     if (_isMultiSelectMode) {
-      return InnerAppBar(
+      return AppBar(
         title: Text(
           '${_selectedFiles.length} 已选择',
           style: theme.textTheme.titleSmall,
@@ -332,7 +317,7 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         actions: _buildAppBarActions(),
       );
     } else {
-      return InnerAppBar(
+      return AppBar(
         leading: widget.leading,
         actions: [...widget.actions, ..._buildAppBarActions()],
         title: BreadcrumbNavigation(

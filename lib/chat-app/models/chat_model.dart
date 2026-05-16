@@ -116,10 +116,14 @@ class ChatModel {
 
   List<CharacterModel> get characters {
     CharacterController controller = Get.find();
-    return characterIds
-        .map((id) => controller.getCharacterById(id))
-        .nonNulls
-        .toList();
+    return [
+      ...characterIds
+          .map((id) => controller.getCharacterById(id))
+          .nonNulls
+          .toList(),
+      if (bindStory != null)
+        ...CharacterController.of.getCharactersByStoryId(bindStory!.id)
+    ];
   }
 
   /// 包括聊天配置的正则和全局正则

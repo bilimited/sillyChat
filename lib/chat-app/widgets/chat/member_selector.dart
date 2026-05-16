@@ -22,7 +22,9 @@ class MemberSelector extends StatelessWidget {
     final CharacterController characterController = Get.find();
 
     return Obx(() {
-      final allCharacters = characterController.characters;
+      final allCharacters = characterController.characters
+          .where((c) => c.bindStoryId == null)
+          .toList();
       Map<String, List<CharacterModel>> groupedCharacters = {};
 
       for (var character in allCharacters) {

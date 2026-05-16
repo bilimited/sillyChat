@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
@@ -268,6 +269,12 @@ class _SettingPageState extends State<SettingPage>
             icon: Icons.dashboard,
             onTap: () =>
                 customNavigate(ChatOptionsManagerPage(), context: context),
+          ),
+          _buildSettingTile(
+            title: '文件管理器',
+            subtitle: '打开旧版文件管理器',
+            icon: Icons.file_copy,
+            onTap: () => customNavigate(ChatManagePage(), context: context),
           ),
           _buildSettingTile(
             title: '从SillyTarvern导入',

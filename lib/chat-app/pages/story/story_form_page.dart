@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
+import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -27,6 +28,8 @@ class _StoryFormPageState extends State<StoryFormPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final StoryController _storyController = Get.find<StoryController>();
+  final CharacterController _characterController =
+      Get.find<CharacterController>();
   final LoreBookController _lorebookController = Get.find<LoreBookController>();
   final ChatOptionController _chatOptionController =
       Get.find<ChatOptionController>();
@@ -36,6 +39,7 @@ class _StoryFormPageState extends State<StoryFormPage>
   late TextEditingController _remarkController;
   late TextEditingController _promptController;
 
+  late String _storyId;
   late List<int> _characterIds;
   late List<int> _lorebookIds;
   int? _chatOptionId;
@@ -48,6 +52,7 @@ class _StoryFormPageState extends State<StoryFormPage>
     _tabController = TabController(length: 2, vsync: this);
 
     final story = widget.initialStory;
+    _storyId = story?.id ?? const Uuid().v4();
     _nameController = TextEditingController(text: story?.name ?? '');
     _remarkController = TextEditingController(text: story?.remark ?? '');
     _promptController = TextEditingController(text: story?.story_prompt ?? '');
@@ -89,7 +94,7 @@ class _StoryFormPageState extends State<StoryFormPage>
       await _storyController.updateStory(updated);
     } else {
       final newStory = StoryModel(
-        id: const Uuid().v4(),
+        id: _storyId,
         name: name,
         remark: remark,
         story_prompt: prompt,
@@ -109,6 +114,56 @@ class _StoryFormPageState extends State<StoryFormPage>
         _characterIds.add(characterId);
       }
     });
+  }
+
+  void _showCreateTempCharacterDialog() {
+    final nameCtrl = TextEditingController();
+    final briefCtrl = TextEditingController();
+
+    Get.dialog(AlertDialog(
+      title: const Text('创建临时角色'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameCtrl,
+            decoration: const InputDecoration(labelText: '角色名称'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: briefCtrl,
+            decoration: const InputDecoration(labelText: '简介'),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('取消')),
+        TextButton(
+          onPressed: () {
+            final name = nameCtrl.text.trim();
+            if (name.isEmpty) return;
+            final char = CharacterModel(
+              id: DateTime.now().millisecondsSinceEpoch,
+              remark: name,
+              roleName: name,
+              avatar: '',
+              category: '临时角色',
+              bindStoryId: _storyId,
+              brief: briefCtrl.text.trim(),
+            );
+            _characterController.addCharacter(char);
+            Get.back();
+          },
+          child: const Text('确认'),
+        ),
+      ],
+    ));
+  }
+
+  void _deleteTempCharacter(int id) async {
+    await _characterController.deleteCharacter(id);
+    setState(() {});
   }
 
   // --- Lorebook binding ---
@@ -213,6 +268,39 @@ class _StoryFormPageState extends State<StoryFormPage>
                 onPressed: () => _showMemberSelector(context),
                 icon: const Icon(Icons.person_add),
                 label: const Text('添加角色'),
+              ),
+            ],
+          );
+        }),
+        const SizedBox(height: 24),
+        _buildSectionTitle('临时角色'),
+        const SizedBox(height: 8),
+        Obx(() {
+          final tempChars =
+              _characterController.getCharactersByStoryId(_storyId);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (tempChars.isNotEmpty)
+                ...tempChars.map((char) => ListTile(
+                      leading: AvatarImage.round(char.avatar, 18),
+                      title: Text(char.roleName),
+                      subtitle:
+                          char.brief?.isNotEmpty == true ? Text(char.brief!) : null,
+                      trailing: IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: () => _deleteTempCharacter(char.id),
+                      ),
+                      onTap: () => customNavigate(
+                        EditCharacterPage(characterId: char.id),
+                        context: context,
+                      ),
+                    )),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _showCreateTempCharacterDialog,
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('添加临时角色'),
               ),
             ],
           );

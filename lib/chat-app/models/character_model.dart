@@ -76,7 +76,9 @@ class CharacterModel {
   bool get canGenMemory => memoryBook != null;
 
   int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
+  String? bindStoryId; // 绑定的故事ID，非空表示临时角色
 
+  bool get isTemporary => bindStoryId != null;
   bool get isDefaultAssistant => this.id == -1;
 
   ChatOptionModel? get bindOption {
@@ -98,6 +100,7 @@ class CharacterModel {
       required this.category,
       this.messageStyle = MessageStyle.common,
       this.brief,
+      this.bindStoryId,
       List<int>? lorebookIds,
       this.firstMessage}) {
     if (lorebookIds != null) {
@@ -131,6 +134,7 @@ class CharacterModel {
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
       'memoryBookId': memoryBookId, // 添加memoryBookId字段
       'bindOption': bindOptionId, // 添加bindOption字段
+      'bindStoryId': bindStoryId,
     };
   }
 
@@ -181,6 +185,7 @@ class CharacterModel {
     );
 
     char.bindOptionId = json['bindOption'];
+    char.bindStoryId = json['bindStoryId'];
 
     return char;
   }
@@ -210,6 +215,7 @@ class CharacterModel {
     List<int>? lorebookIds,
     MessageStyle? messageStyle,
     PackageValue<int?>? bindOption,
+    PackageValue<String?>? bindStoryId,
     int? memoryBookId,
   }) {
     var newChar = CharacterModel(
@@ -250,6 +256,12 @@ class CharacterModel {
     }
 
     newChar.memoryBookId = memoryBookId ?? this.memoryBookId;
+
+    if (bindStoryId != null) {
+      newChar.bindStoryId = bindStoryId.value;
+    } else {
+      newChar.bindStoryId = this.bindStoryId;
+    }
 
     return newChar;
   }

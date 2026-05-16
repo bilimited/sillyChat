@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
 import '../models/story_model.dart';
+import 'character_controller.dart';
 import 'setting_controller.dart';
 
 class StoryController extends GetxController {
@@ -78,6 +79,7 @@ class StoryController extends GetxController {
 
   // 删除故事
   Future<void> deleteStory(String id) async {
+    await Get.find<CharacterController>().deleteCharactersByStoryId(id);
     stories.removeWhere((s) => s.id == id);
     await saveStories();
   }

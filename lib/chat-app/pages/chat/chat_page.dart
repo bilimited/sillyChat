@@ -1195,9 +1195,7 @@ class _ChatPageState extends State<ChatPage> {
             child: Container(
               child: Center(
                 child: CharacterWheel(
-                  characters: chat.characterIds
-                      .map((id) => CharacterController.of.getCharacterById(id))
-                      .toList(),
+                  characters: chat.characters,
                   onCharacterSelected: (character) {
                     setState(() => _showWheel = false);
                     sessionController.onGroupMessage(character);
