@@ -65,6 +65,10 @@ class ChatController extends GetxController {
   final String chatIndexFileName = 'chat_index.json';
   final String recentChatFileName = "recent_chat.json";
 
+  // 最近聊天列表：按时间从新到旧。每个父目录（角色/故事）只保留一条最新条目。
+  static const int recentChatLimit = 50;
+  final RxList<ChatMetaModel> recentChats = <ChatMetaModel>[].obs;
+
   final RxMap<String, FolderSettingModel> folderSettings =
       <String, FolderSettingModel>{}.obs;
 
@@ -85,12 +89,14 @@ class ChatController extends GetxController {
     super.onInit();
 
     loadChatIndex();
+    loadRecentChats();
 
     folderSettings.value = await getAllFolderSetting();
 
     ever(fileDeleteEvent, (ev) {
       if (ev == null) return;
       chatIndex.remove(ev!.filePath);
+      removeRecentChatByPath(ev.filePath);
     });
   }
 
@@ -184,6 +190,84 @@ class ChatController extends GetxController {
       await file.writeAsString(jsonString);
     } catch (e) {
       print('保存聊天索引失败: $e');
+    }
+  }
+
+  // 加载最近聊天
+  Future<void> loadRecentChats() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$recentChatFileName');
+      if (!await file.exists()) {
+        print('最近聊天文件不存在，跳过加载');
+        return;
+      }
+      final String contents = await file.readAsString();
+      final List<dynamic> jsonList = json.decode(contents);
+      final List<ChatMetaModel> loaded = [];
+      for (final item in jsonList) {
+        try {
+          final map = item as Map<String, dynamic>;
+          final path = p.canonicalize(map['path'] as String);
+          loaded.add(ChatMetaModel.fromJson(map, path));
+        } catch (e) {
+          print('解析单条最近聊天失败: $e');
+        }
+      }
+      recentChats.assignAll(loaded);
+      print('加载最近聊天成功，共 ${recentChats.length} 条');
+    } catch (e) {
+      print('加载最近聊天失败: $e');
+    }
+  }
+
+  // 保存最近聊天
+  Future<void> saveRecentChats() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$recentChatFileName');
+      final List<Map<String, dynamic>> data = recentChats.map((meta) {
+        final m = meta.toJson();
+        m['path'] = meta.path;
+        return m;
+      }).toList();
+      await file.writeAsString(json.encode(data));
+      print('保存最近聊天成功，共 ${recentChats.length} 条');
+    } catch (e) {
+      print('保存最近聊天失败: $e');
+    }
+  }
+
+  // 将一条聊天置顶到最近聊天。
+  // 同一父目录下只保留最新的一条（同目录视为同一角色/故事）。
+  Future<void> pushRecentChat(String _path, ChatMetaModel meta) async {
+    final path = p.canonicalize(_path);
+    final dir = p.dirname(path);
+
+    recentChats.removeWhere((m) {
+      final mp = p.canonicalize(m.path);
+      return p.equals(mp, path) || p.equals(p.dirname(mp), dir);
+    });
+
+    recentChats.insert(0, meta.copyWith(path: path));
+
+    if (recentChats.length > recentChatLimit) {
+      recentChats.removeRange(recentChatLimit, recentChats.length);
+    }
+
+    print('置顶最近聊天: $path (当前共 ${recentChats.length} 条)');
+    await saveRecentChats();
+  }
+
+  // 按完整路径移除一条最近聊天
+  Future<void> removeRecentChatByPath(String _path) async {
+    final path = p.canonicalize(_path);
+    final before = recentChats.length;
+    recentChats.removeWhere((m) => p.equals(p.canonicalize(m.path), path) ||
+        p.isWithin(path, p.canonicalize(m.path)));
+    if (recentChats.length != before) {
+      print('移除最近聊天: $path (剩余 ${recentChats.length} 条)');
+      await saveRecentChats();
     }
   }
 

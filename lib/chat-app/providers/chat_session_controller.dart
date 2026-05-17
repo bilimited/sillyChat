@@ -115,6 +115,13 @@ class ChatSessionController extends GetxController {
         return;
       }
       print('收到新消息...${ev.message.content}');
+
+      // 更新最近聊天（同目录下只保留最新一条）
+      if (chatPath.isNotEmpty) {
+        final meta = ChatMetaModel.fromChatModel(ev.chat, chatPath);
+        ChatController.of.pushRecentChat(chatPath, meta);
+      }
+
       if (ev.chat.needAutoTitle &&
           ev.chat.messages.length >=
               VaultSettingController.of().miscSetting.value.autoTitle_level) {

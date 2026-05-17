@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/character/character_selector.dart
 import 'package:flutter_example/chat-app/pages/character/contacts_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/recent_chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
@@ -58,9 +59,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
 
   // Drawer内部切换的具体内容视图
   late List<Widget> _drawerContents = [
-    // ChatManagePage(
-    //   scaffoldKey: _scaffoldKey,
-    // ),
+    RecentChatPage(),
     ContactsPage(
       scaffoldKey: _scaffoldKey,
     ),
@@ -212,8 +211,8 @@ class _MainPageMobileState extends State<MainPageMobile> {
             backgroundColor: Colors.transparent,
             type: BottomNavigationBarType.fixed,
             items: [
-              // BottomNavigationBarItem(
-              //     icon: Icon(Icons.chat_bubble), label: '聊天'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.history), label: '最近'),
               BottomNavigationBarItem(icon: Icon(Icons.people), label: '角色'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.store_mall_directory), label: '故事'),

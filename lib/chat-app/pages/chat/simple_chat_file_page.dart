@@ -221,7 +221,7 @@ class _SimpleChatFilesPageState extends State<SimpleChatFilesPage> {
     }
 
     return ListView.builder(
-      itemCount: _chatFiles.length,
+      itemCount: _chatFiles.length, 
       itemBuilder: (context, index) {
         final file = _chatFiles[index];
         final isSelected = _selectedFiles.contains(file);
