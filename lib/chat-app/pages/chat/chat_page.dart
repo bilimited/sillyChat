@@ -25,7 +25,6 @@ import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
 import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
-import 'package:flutter_example/chat-app/widgets/chat/character_executer.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
@@ -104,8 +103,9 @@ class _ChatPageState extends State<ChatPage> {
   List<LorebookItemModel> get manualItems {
     final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
     final chars = chat.characters.expand((char) => char.loreBooks).toList();
+    final stories = chat.bindStory?.loreBooks ?? [];
     Set<LorebookItemModel> lst = {};
-    for (final lorebook in [...global, ...chars]) {
+    for (final lorebook in [...global, ...chars, ...stories]) {
       for (final item in lorebook.items) {
         if (item.activationType == ActivationType.manual) {
           lst.add(item);
@@ -127,6 +127,8 @@ class _ChatPageState extends State<ChatPage> {
       _scrollController.hasClients && _scrollController.offset < 40;
 
   bool _isRendering = false;
+
+  bool _showWheel = false;
 
   @override
   void setState(VoidCallback fn) {
@@ -370,101 +372,6 @@ class _ChatPageState extends State<ChatPage> {
           message: message,
         ),
         context: context);
-  }
-
-  /// 显示“选择最近聊天”弹窗
-  ///
-  /// [context]：BuildContext
-  /// [chatIdToName]：将聊天ID（String）转换为显示名称（String）的函数
-  ///
-  /// 返回用户选择的聊天ID（String?），若取消则返回 null
-  Future<String?> _showRecentChatPicker(
-    BuildContext context,
-    String Function(String chatId) chatIdToName,
-  ) async {
-    final chatIds = VaultSettingController.of()
-        .historyModel
-        .value
-        .chatHistory; // List<String>
-
-    if (chatIds.isEmpty) {
-      return await showModalBottomSheet<String?>(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text('选择最近聊天', style: TextStyle(fontWeight: FontWeight.bold)),
-                Divider(height: 16),
-                Text('暂无最近聊天记录'),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final items = <Widget>[];
-
-    // 按顺序显示（chatHistory 通常最新在前，若需反转请调整）
-    for (final chatId in chatIds) {
-      final displayName = chatIdToName(chatId);
-      items.add(
-        ListTile(
-          title: Text(displayName),
-          subtitle: Text(chatId,
-              // textDirection: TextDirection.rtl,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          onTap: () {
-            Navigator.of(context).pop(chatId);
-          },
-        ),
-      );
-    }
-
-    return await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: SizedBox(
-            height: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      const Text('🕒 最近聊天',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: items,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   // 选择消息时的底部操作菜单
@@ -754,21 +661,26 @@ class _ChatPageState extends State<ChatPage> {
               sessionController.onRetry();
             },
             onUpdateChat: _updateChat,
+            onShowWheel: () {
+              setState(() {
+                _showWheel = !_showWheel;
+              });
+            },
             topToolBar: [
-              ToggleChip(
-                  icon: Icons.chat,
-                  text: '手动模式',
-                  initialValue: chat.mode == ChatMode.group,
-                  onToggle: (value) {
-                    setState(() {
-                      if (chat.mode == ChatMode.group) {
-                        chat.mode = ChatMode.auto;
-                      } else {
-                        chat.mode = ChatMode.group;
-                      }
-                    });
-                    _updateChat();
-                  }),
+              // ToggleChip(
+              //     icon: Icons.chat,
+              //     text: '手动模式',
+              //     initialValue: chat.mode == ChatMode.group,
+              //     onToggle: (value) {
+              //       setState(() {
+              //         if (chat.mode == ChatMode.group) {
+              //           chat.mode = ChatMode.auto;
+              //         } else {
+              //           chat.mode = ChatMode.group;
+              //         }
+              //       });
+              //       _updateChat();
+              //     }),
               ...manualItems.map((item) {
                 return ToggleChip(
                     // icon: Icons.book,
@@ -790,13 +702,14 @@ class _ChatPageState extends State<ChatPage> {
                     final chars = chat.characters
                         .expand((char) => char.loreBooks)
                         .toSet();
+                    final stories = chat.bindStory?.loreBooks ?? [];
                     if (chat.assistantId != null)
                       chars.addAll(chat.assistant!.loreBooks);
                     customNavigate(
                         LoreBookActivator(
                             chatSessionController: sessionController,
                             lorebooks: [
-                              ...{...global, ...chars}
+                              ...{...global, ...chars, ...stories}
                             ],
                             chat: chat),
                         context: context);
@@ -1018,11 +931,23 @@ class _ChatPageState extends State<ChatPage> {
                               ),
                             ],
                           )
-                        : Text(
-                            chat.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                        : Row(
+                            children: [
+                              Text(
+                                chat.bindStory?.name ??
+                                    chat.bindCharacter?.roleName ??
+                                    "未知",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const Icon(Icons.chevron_right, size: 18.0),
+                              Text(
+                                chat.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
                           ),
                   ),
                   Text(
@@ -1077,15 +1002,6 @@ class _ChatPageState extends State<ChatPage> {
           sessionController.generateTitle();
         } else if (value == 'ai_help_answer') {
           sessionController.simulateUserMessage();
-        } else if (value == 'recent_chat') {
-          final path = await _showRecentChatPicker(context, (id) {
-            return ChatController.of.getIndex(id)?.name ?? '未知聊天';
-          });
-
-          if (path != null && path.isNotEmpty) {
-            //GotoChat.byPath(path);
-            ChatController.of.openChat(path);
-          }
         } else if (value == 'search') {
           customNavigate(
               ManageMessagePage(
@@ -1198,6 +1114,7 @@ class _ChatPageState extends State<ChatPage> {
             if (chat.backgroundOrCharBackground != null)
               _buildBackgroundImage(),
             _buildMainContent(),
+            _buildCharacterWheelOverlay(),
             _buildToBottomButton()
           ],
         ),
@@ -1249,27 +1166,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildNewChatScreen() {
-    VoidCallback selectCharacter = () async {
-      CharacterModel? char = await customNavigate(
-          CharacterSelector(excludeCharacters: [chat.user]),
-          context: context);
-      if (char != null) {
-        chat.assistantId = char.id;
-        if (char.firstMessage != null && char.firstMessage!.isNotEmpty) {
-          sessionController.addMessage(
-              message: MessageModel(
-                  id: DateTime.now().millisecondsSinceEpoch,
-                  content: char.firstMessage!,
-                  senderId: char.id,
-                  time: DateTime.now(),
-                  alternativeContent: [null, ...char.moreFirstMessage]));
-        }
-
-        _updateChat();
-        sessionController.reflesh();
-      }
-    };
-
     return TweenAnimationBuilder<Offset>(
       tween: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero),
       duration: const Duration(milliseconds: 450),
@@ -1285,61 +1181,30 @@ class _ChatPageState extends State<ChatPage> {
         padding: EdgeInsets.only(bottom: 128, left: 30, right: 30),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            InkWell(
-              child: AvatarImage.round(chat.assistant.avatar, 48),
-              onTap: selectCharacter,
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Column(
-              children: [
-                FilledButton(
-                  onPressed: selectCharacter,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(48 + 24, 44), // 宽度占满，高度54
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30), // 设置为30就是胶囊形按钮
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add,
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Text("选择角色"),
-                    ],
-                  ),
-                ),
-                if (ChatController.of.messageClipboard.isNotEmpty) ...[
-                  SizedBox(
-                    height: 12,
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final messagesToPaste = _chatController.messageToPaste;
-                      final msgList = chat.messages;
-
-                      msgList.addAll(messagesToPaste);
-                      await _updateChat();
-                      setState(() {});
-                    },
-                    child: const Text('粘贴消息'),
-                  ),
-                ]
-              ],
-            ),
-            NewChatButtons(
-              onSelectRole: selectCharacter,
-            ),
-          ],
+          children: [Text("！？强强？！")],
         ),
       ),
+    );
+  }
+
+  Widget _buildCharacterWheelOverlay() {
+    return Positioned.fill(
+      child: SizeAnimatedWidget(
+          child: GestureDetector(
+            onTap: () => setState(() => _showWheel = false),
+            child: Container(
+              child: Center(
+                child: CharacterWheel(
+                  characters: chat.characters,
+                  onCharacterSelected: (character) {
+                    setState(() => _showWheel = false);
+                    sessionController.onGroupMessage(character);
+                  },
+                ),
+              ),
+            ),
+          ),
+          visible: _showWheel),
     );
   }
 

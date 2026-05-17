@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:get/get.dart';
 import 'package:get/instance_manager.dart';
+import 'package:get/state_manager.dart';
 
 class ProfilePage extends StatelessWidget {
   final CharacterModel character;

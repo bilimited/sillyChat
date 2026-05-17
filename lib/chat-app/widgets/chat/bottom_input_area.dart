@@ -5,16 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
-import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/chat/history_command_picker.dart';
+import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
-import 'package:flutter_example/chat-app/widgets/chat/character_executer.dart';
-import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,6 +35,7 @@ class BottomInputArea extends StatefulWidget {
   final Function(String, List<String>) onSendMessage;
   final VoidCallback onRetryLastest;
   final VoidCallback onUpdateChat;
+  final VoidCallback onShowWheel;
 
   ChatModel get chat => sessionController.chat;
   ChatMode get mode => chat.mode ?? ChatMode.auto;
@@ -59,6 +57,7 @@ class BottomInputArea extends StatefulWidget {
     required this.onSendMessage,
     required this.onRetryLastest,
     required this.onUpdateChat,
+    required this.onShowWheel,
     this.topToolBar = const [],
     this.canSend = true,
     this.showPlus = true,
@@ -74,9 +73,6 @@ class BottomInputArea extends StatefulWidget {
 class _BottomInputAreaState extends State<BottomInputArea> {
   TextEditingController get messageController =>
       widget.sessionController.inputController; //TextEditingController();
-
-  TextEditingController get commandController =>
-      widget.sessionController.commandController;
 
   final FocusNode _focusNode = FocusNode(); // 1. 创建 FocusNode
   bool _isFocused = false; // 跟踪焦点状态
@@ -157,16 +153,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
           size: 20,
         ),
         onPressed: () async {
-          await showModalBottomSheet(
-              context: context,
-              builder: (BuildContext context) {
-                return CharacterExecuter(onToggleMember: (char) {
-                  widget.sessionController.onGroupMessage(
-                      CharacterController.of.getCharacterById(char));
-                  VaultSettingController.of().addToCharacterHistory(char);
-                  Get.back();
-                });
-              });
+          widget.onShowWheel();
         },
       );
     } else if (!isGroupMode && !isGenerating) {
@@ -196,70 +183,12 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
   Widget _buildDirectorModePanel() {
     final colors = Theme.of(context).colorScheme;
-    final h = VaultSettingController.of().historyModel.value.commandHistory;
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  // focusNode: _focusNode, // 6. 将 FocusNode 附加到 TextField
-                  controller: commandController,
-                  onChanged: (text) {
-                    // 每次输入都触发 rebuild，确保 suffixIcon 最新
-                    setState(() {});
-                  },
-                  decoration: InputDecoration(
-                    isDense: true,
-                    // labelText: "在这里输入附加指令",
-                    hintText: "在这里输入附加指令",
-                    hintStyle: TextStyle(color: colors.outlineVariant),
-
-                    suffixIcon: commandController.text.isNotEmpty
-                        ? IconButton(
-                            onPressed: () {
-                              commandController.text = "";
-                              setState(() {});
-                            },
-                            icon: Icon(Icons.close))
-                        : IconButton(
-                            onPressed: () async {
-                              final command = await HistoryCommandPicker
-                                  .showHistoryCommandPicker(context);
-                              if (command != null) {
-                                commandController.text = command;
-                              }
-                            },
-                            icon: Icon(Icons.history)),
-                  ),
-                  minLines: 1,
-                  maxLines: 3,
-                  // onSubmitted is removed to allow custom handling via Actions.
-                ),
-              ),
-              SizedBox(
-                width: 6,
-              ),
-              IconButton(
-                  onPressed: () {
-                    widget.sessionController.isCommandPinned.value =
-                        !widget.sessionController.isCommandPinned.value;
-                  },
-                  icon: Obx(() => widget.sessionController.isCommandPinned.value
-                      ? Icon(
-                          Icons.push_pin,
-                          color: colors.primary,
-                        )
-                      : Icon(Icons.push_pin_outlined)))
-            ],
-          ),
-          SizedBox(
-            height: 8,
-          ),
           Wrap(
             runSpacing: 4,
             direction: Axis.horizontal,
@@ -332,6 +261,39 @@ class _BottomInputAreaState extends State<BottomInputArea> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: InkWell(
+                        onTap: () {
+                          showConfirmDialog(
+                              context: context,
+                              title: "确定要开启新话题吗?",
+                              content: "你可以点击右上角时钟图标查看历史话题。",
+                              onConfirm: () async {
+                                final (chat, fp) = await ChatController.of
+                                    .createChatForChat(widget.chat);
+                                Get.back();
+                                ChatController.of.openChat(fp);
+                              });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.add_comment,
+                                color: colors.outline,
+                                size: 20,
+                              ),
+                            ),
+
+                            // Text("更多",style: TextStyle(fontSize: 13,color: _isDirectorPanelExpanded
+                            //           ? colors.primary
+                            //           : colors.outline),)
+                          ],
+                        ),
+                      )),
                   // Left side: Toolbar
                   if (widget.showToolBar)
                     Padding(
@@ -408,11 +370,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                                 ),
                               ),
                               child: child,
-                              // child: ScaleTransition(
-                              //   scale: animation.drive(
-                              //       CurveTween(curve: Interval(0.5, 1.0))),
-                              //   child: child,
-                              // ),
                             );
                           },
                           child: messageController.text.isEmpty

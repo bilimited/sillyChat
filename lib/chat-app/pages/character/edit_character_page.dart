@@ -20,7 +20,8 @@ import '../../providers/character_controller.dart';
 
 class EditCharacterPage extends StatefulWidget {
   final int? characterId;
-  const EditCharacterPage({Key? key, this.characterId}) : super(key: key);
+  final String? bindStoryId;
+  const EditCharacterPage({Key? key, this.characterId, this.bindStoryId}) : super(key: key);
 
   @override
   State<EditCharacterPage> createState() => _EditCharacterPageState();
@@ -47,14 +48,19 @@ class _EditCharacterPageState extends State<EditCharacterPage> with SingleTicker
 
   bool get isEditMode => widget.characterId != null;
   bool get isEditPlayer => widget.characterId == 0;
+  bool get isTemporaryCharacter =>
+      widget.bindStoryId != null || (_character?.isTemporary ?? false);
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     if (isEditMode) {
       _character = _characterController.getCharacterById(widget.characterId!);
     }
+    _tabController = TabController(
+      length: (isTemporaryCharacter || isEditPlayer) ? 1 : 3,
+      vsync: this,
+    );
 
     _nameController = TextEditingController(text: _character?.remark ?? '');
     _nickNameController = TextEditingController(text: _character?.roleName ?? '');
@@ -107,6 +113,7 @@ class _EditCharacterPageState extends State<EditCharacterPage> with SingleTicker
       category: _categoryController.text.isEmpty ? "默认" : _categoryController.text,
       lorebookIds: _character?.lorebookIds ?? [],
       firstMessage: _firstMessageController.text,
+      bindStoryId: widget.bindStoryId ?? _character?.bindStoryId,
     )
       ..moreFirstMessage = _character?.moreFirstMessage ?? []
       ..backgroundImage = _backgroundPath
@@ -418,6 +425,22 @@ SizedBox(height: 16,),
     }
   }
 
+  Future<void> _promoteToGlobal() async {
+    final confirmed = await Get.dialog<bool>(AlertDialog(
+      title: const Text('转为全局角色'),
+      content: const Text('将此角色从故事中解绑，使其成为全局角色？'),
+      actions: [
+        TextButton(onPressed: () => Get.back(result: false), child: const Text('取消')),
+        TextButton(onPressed: () => Get.back(result: true), child: const Text('确认')),
+      ],
+    ));
+    if (confirmed == true && _character != null) {
+      _character!.bindStoryId = null;
+      await _characterController.updateCharacter(_character!);
+      Get.back();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -425,15 +448,19 @@ SizedBox(height: 16,),
       child: Scaffold(
         appBar: AppBar(
           title: Text(isEditPlayer ? '编辑用户' : (isEditMode ? '编辑角色' : '新建角色')),
-          bottom: isEditPlayer ? null : TabBar(controller: _tabController, tabs: const [Tab(text: '基本信息'), Tab(text: '其他设置'), Tab(text: '关系')]),
+          bottom: (isEditPlayer || isTemporaryCharacter) ? null : TabBar(controller: _tabController, tabs: const [Tab(text: '基本信息'), Tab(text: '其他设置'), Tab(text: '关系')]),
           actions: isEditPlayer ? [] : [
-            IconButton(icon: const Icon(Icons.image_outlined), onPressed: () => customNavigate(CharacterGalleryPage(path: "${SettingController.of.getImagePathSync()}/${widget.characterId}/"), context: context)),
-            IconButton(icon: const Icon(Icons.copy_all), onPressed: () {
-              if (_character != null) {
-                _characterController.characterCilpBoard.value = _character!.copyWith(roleName: '${_character!.roleName}_副本');
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
-              }
-            }),
+            if (isTemporaryCharacter && isEditMode)
+              IconButton(icon: const Icon(Icons.publish), tooltip: '转为全局角色', onPressed: _promoteToGlobal),
+            if (!isTemporaryCharacter)
+              IconButton(icon: const Icon(Icons.image_outlined), onPressed: () => customNavigate(CharacterGalleryPage(path: "${SettingController.of.getImagePathSync()}/${widget.characterId}/"), context: context)),
+            if (!isTemporaryCharacter)
+              IconButton(icon: const Icon(Icons.copy_all), onPressed: () {
+                if (_character != null) {
+                  _characterController.characterCilpBoard.value = _character!.copyWith(roleName: '${_character!.roleName}_副本');
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
+                }
+              }),
             if (isEditMode) IconButton(icon: const Icon(Icons.delete_outline), onPressed: _deleteCharacter),
           ],
         ),
@@ -441,11 +468,13 @@ SizedBox(height: 16,),
           key: _formKey,
           child: isEditPlayer
               ? _buildPlayerSetting()
-              : TabBarView(controller: _tabController, children: [
-                  _buildBasicInfoTab(),
-                  _buildSettingsTab(),
-                  Padding(padding: const EdgeInsets.all(16), child: EditRelationship(character: _character, relations: _character?.relations ?? {}, onChanged: (r) => setState(() => _character?.relations = r))),
-                ]),
+              : isTemporaryCharacter
+                  ? _buildBasicInfoTab()
+                  : TabBarView(controller: _tabController, children: [
+                      _buildBasicInfoTab(),
+                      _buildSettingsTab(),
+                      Padding(padding: const EdgeInsets.all(16), child: EditRelationship(character: _character, relations: _character?.relations ?? {}, onChanged: (r) => setState(() => _character?.relations = r))),
+                    ]),
         ),
       ),
     );

@@ -28,6 +28,7 @@ class ChatMetaModel {
     required this.characterIds,
     required this.assistantId,
     required this.mode,
+    required this.path,
   });
 
   CharacterModel get assistant {
@@ -43,7 +44,7 @@ class ChatMetaModel {
         .toList();
   }
 
-  factory ChatMetaModel.fromChatModel(ChatModel chatModel) {
+  factory ChatMetaModel.fromChatModel(ChatModel chatModel, String path) {
     return ChatMetaModel(
         id: chatModel.id,
         name: chatModel.name,
@@ -53,10 +54,11 @@ class ChatMetaModel {
         messageCount: chatModel.messages.length,
         characterIds: chatModel.characterIds,
         mode: chatModel.mode ?? ChatMode.auto,
-        assistantId: chatModel.assistantId ?? -1);
+        assistantId: chatModel.assistantId ?? -1,
+        path: path);
   }
 
-  factory ChatMetaModel.fromJson(Map<String, dynamic> json) {
+  factory ChatMetaModel.fromJson(Map<String, dynamic> json, String path) {
     return ChatMetaModel(
         id: json['id'],
         name: json['name'],
@@ -70,7 +72,8 @@ class ChatMetaModel {
             ? ChatMode.values.firstWhere(
                 (e) => e.toString() == 'ChatMode.${json['mode']}',
                 orElse: () => ChatMode.auto)
-            : ChatMode.auto);
+            : ChatMode.auto,
+        path: path);
   }
 
   Map<String, dynamic> toJson() {
@@ -108,14 +111,14 @@ class ChatMetaModel {
     String? path,
   }) {
     return ChatMetaModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      lastMessage: lastMessage ?? this.lastMessage,
-      time: time ?? this.time,
-      messageCount: messageCount ?? this.messageCount,
-      characterIds: characterIds ?? this.characterIds,
-      mode: mode ?? this.mode,
-      assistantId: assistant ?? this.assistantId,
-    )..path = path ?? this.path;
+        id: id ?? this.id,
+        name: name ?? this.name,
+        lastMessage: lastMessage ?? this.lastMessage,
+        time: time ?? this.time,
+        messageCount: messageCount ?? this.messageCount,
+        characterIds: characterIds ?? this.characterIds,
+        mode: mode ?? this.mode,
+        assistantId: assistant ?? this.assistantId,
+        path: path ?? this.path);
   }
 }

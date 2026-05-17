@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
 import '../models/story_model.dart';
+import 'character_controller.dart';
 import 'setting_controller.dart';
 
 class StoryController extends GetxController {
@@ -68,30 +69,19 @@ class StoryController extends GetxController {
   }
 
   // 更新故事
-  Future<void> updateStory(StoryModel story, int? index) async {
-    if (index == null) {
-      index = stories.indexWhere((s) => s.id == story.id);
-    }
-    if (index >= 0 && index < stories.length) {
+  Future<void> updateStory(StoryModel story) async {
+    final index = stories.indexWhere((s) => s.id == story.id);
+    if (index >= 0) {
       stories[index] = story;
       await saveStories();
     }
   }
 
   // 删除故事
-  Future<void> deleteStory(int index) async {
-    if (index >= 0 && index < stories.length) {
-      stories.removeAt(index);
-      await saveStories();
-    }
-  }
-
-  // 获取特定索引的故事
-  StoryModel? getStoryByIndex(int index) {
-    if (index >= 0 && index < stories.length) {
-      return stories[index];
-    }
-    return null;
+  Future<void> deleteStory(String id) async {
+    await Get.find<CharacterController>().deleteCharactersByStoryId(id);
+    stories.removeWhere((s) => s.id == id);
+    await saveStories();
   }
 
   StoryModel? getStoryById(String id) {

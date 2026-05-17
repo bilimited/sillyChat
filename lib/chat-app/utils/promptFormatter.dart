@@ -31,8 +31,8 @@ abstract class Promptformatter {
             caseSensitive: false),
         userMessage); // 兼容酒馆
     prompt = prompt.replaceAll(
-        RegExp(r'\{\{folderremark\}\}', caseSensitive: false),
-        chat.folderSettingModel?.remark ?? "");
+        RegExp(r'\{\{extraprompt\}\}', caseSensitive: false),
+        chat.bindStory?.story_prompt ?? "");
     prompt = BuildCharacterSystemPrompt(prompt, assistant);
     prompt = BuildRelationsPrompt(prompt, assistant, characterController, chat);
     prompt = injectCharacterLore(prompt, chat, assistant);

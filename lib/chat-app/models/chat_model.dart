@@ -6,14 +6,18 @@ import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
+import 'package:flutter_example/chat-app/models/story_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
 import '../utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
+
+import 'package:path/path.dart' as p;
 
 class ChatModel {
   @Deprecated('不再使用了')
@@ -40,8 +44,8 @@ class ChatModel {
   int? chatOptionId;
   List<MessageModel> messages = []; // 消息极有可能不按时间排列。
 
-  @Deprecated("需要更好的解决方案")
-  List<int> characterIds = [];
+  List<int> get characterIds => bindStory?.characterIds ?? [assistant.id];
+
   Map<String, String> chatVars = {};
 
   Map<String, dynamic> metaData = {};
@@ -61,6 +65,26 @@ class ChatModel {
   ChatMode? mode;
   List<BookMarkModel> bookmarks = [];
 
+  String get filePath => p.canonicalize(file?.path ?? '');
+
+  CharacterModel? get bindCharacter {
+    final id = extractCharacterId(filePath);
+    if (id != null) {
+      return CharacterController.of.getCharacterById(int.parse(id));
+    } else {
+      return null;
+    }
+  }
+
+  StoryModel? get bindStory {
+    final id = extractStoryId(filePath);
+    if (id != null) {
+      return StoryController.of().getStoryById(id);
+    } else {
+      return null;
+    }
+  }
+
   FolderSettingModel? get folderSettingModel => folderSettingPath != null
       ? ChatController.of.getFolderSetting(folderSettingPath!)
       : null;
@@ -68,9 +92,15 @@ class ChatModel {
   String? get backgroundOrCharBackground =>
       backgroundImage ?? assistant.backgroundImage ?? null;
 
-  ChatOptionModel get chatOption =>
-      folderSettingModel?.chatOptionModel ??
-      Get.find<ChatOptionController>().defaultOption;
+  ChatOptionModel get chatOption {
+    if (bindStory?.chatOption != null) {
+      return bindStory!.chatOption!;
+    } else if (bindCharacter?.bindOption != null) {
+      return bindCharacter!.bindOption!;
+    } else {
+      return Get.find<ChatOptionController>().defaultOption;
+    }
+  }
 
   bool get isChatNotCreated => id == -1;
 
@@ -86,10 +116,14 @@ class ChatModel {
 
   List<CharacterModel> get characters {
     CharacterController controller = Get.find();
-    return characterIds
-        .map((id) => controller.getCharacterById(id))
-        .nonNulls
-        .toList();
+    return [
+      ...characterIds
+          .map((id) => controller.getCharacterById(id))
+          .nonNulls
+          .toList(),
+      if (bindStory != null)
+        ...CharacterController.of.getCharactersByStoryId(bindStory!.id)
+    ];
   }
 
   /// 包括聊天配置的正则和全局正则
@@ -145,6 +179,18 @@ class ChatModel {
     return activitedLorebookItems['$lorebookId@$itemId'];
   }
 
+  String? extractStoryId(String path) {
+    final regExp = RegExp(r'^.*[\\/]stories[\\/]([^\\/]+)[\\/][^\\/]+\.chat$');
+    final match = regExp.firstMatch(path);
+    return match?.group(1);
+  }
+
+  String? extractCharacterId(String path) {
+    final regExp = RegExp(r'^.*[\\/]roles[\\/]([^\\/]+)[\\/][^\\/]+\.chat$');
+    final match = regExp.firstMatch(path);
+    return match?.group(1);
+  }
+
   factory ChatModel.empty() {
     return ChatModel(
         id: DateTime.now().microsecondsSinceEpoch,
@@ -187,7 +233,6 @@ class ChatModel {
               .toList() ??
           []
       ..tags = (json['tags'] as List?)?.cast<String>() ?? []
-      ..characterIds = json['characterIds']?.cast<int>() ?? []
       ..chatVars = (json['chatVars'] as Map<String, dynamic>?)
               ?.map((key, value) => MapEntry(key, value.toString())) ??
           {}
@@ -266,7 +311,6 @@ class ChatModel {
         needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..bookmarks = bookmarks ?? this.bookmarks
       ..tags = tags ?? this.tags
-      ..characterIds = characterIds ?? this.characterIds
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
@@ -313,7 +357,6 @@ class ChatModel {
         needAutoTitle: needAutoTitle ?? this.needAutoTitle)
       ..tags = tags ?? [...this.tags]
       ..bookmarks = bookmarks ?? this.bookmarks.map((b) => b.copy()).toList()
-      ..characterIds = characterIds ?? [...this.characterIds]
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =

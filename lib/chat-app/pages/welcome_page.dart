@@ -50,23 +50,6 @@ class _WelcomePageState extends State<WelcomePage>
     super.dispose();
   }
 
-  // 获取最近聊天列表
-  List<ChatMetaModel> get recentChat {
-    // 这里假设 provider 已经初始化并能同步获取数据，实际情况可能需要放在 build 内部监听或使用 FutureBuilder
-    // 为了示例运行顺畅，增加了空值保护
-    try {
-      return VaultSettingController.of()
-          .historyModel
-          .value
-          .chatHistory
-          .map((h) => ChatController.of.getIndex(h))
-          .nonNulls
-          .toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
   void onTapChat(String path) {
     ChatController.of.openChat(path);
 
@@ -101,7 +84,6 @@ class _WelcomePageState extends State<WelcomePage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final chats = recentChat;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -164,42 +146,6 @@ class _WelcomePageState extends State<WelcomePage>
                 ),
               ),
               const SizedBox(height: 16),
-
-              // --- Recent Chats List with Fade Mask ---
-              Expanded(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: chats.isEmpty
-                      ? _buildEmptyState(theme, colorScheme)
-                      : ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white,
-                                Colors.white,
-                                Colors.transparent
-                              ],
-                              stops: [0.0, 0.85, 1.0], // 底部 15% 渐变透明
-                            ).createShader(bounds);
-                          },
-                          blendMode: BlendMode.dstIn,
-                          child: ListView.separated(
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: chats.length,
-                            separatorBuilder: (c, i) =>
-                                const SizedBox(height: 12),
-                            // 底部留白，防止被遮罩完全遮挡
-                            padding: const EdgeInsets.only(bottom: 40),
-                            itemBuilder: (context, index) {
-                              return _buildChatCard(
-                                  chats[index], theme, colorScheme);
-                            },
-                          ),
-                        ),
-                ),
-              ),
             ],
           ),
         ),
