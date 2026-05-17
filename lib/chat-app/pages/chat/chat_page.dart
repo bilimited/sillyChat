@@ -10,6 +10,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
+import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
 import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
@@ -147,7 +148,6 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     _registerController(widget.sessionController);
-
   }
 
   void _registerController(ChatSessionController controller) {
@@ -1117,6 +1117,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildNewChatScreen() {
+    final theme = Theme.of(context);
     return TweenAnimationBuilder<Offset>(
       tween: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero),
       duration: const Duration(milliseconds: 450),
@@ -1132,7 +1133,76 @@ class _ChatPageState extends State<ChatPage> {
         padding: EdgeInsets.only(bottom: 128, left: 30, right: 30),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [Text("！？强强？！")],
+          children: [
+            if (chat.bindCharacter != null) ...[
+              InkWell(
+                child: AvatarImage.round(chat.bindCharacter!.avatar, 44),
+                onTap: () {
+                  customNavigate(
+                      EditCharacterPage(
+                        characterId: chat.bindCharacter!.id,
+                      ),
+                      context: context);
+                },
+              ),
+              SizedBox(
+                height: 16,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    chat.bindCharacter!.roleName,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(left: 6),
+                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 5),
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      chat.bindCharacter!.category,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  )
+                ],
+              ),
+            ] else if (chat.bindStory != null) ...[
+              Text.rich(
+                
+                TextSpan(
+                  
+                  children: [
+                    const TextSpan(text: '点击右下角'),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Icon(
+                          Icons.group_outlined, // 群聊图标
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                    ),
+                    const TextSpan(text: '让AI角色发送一条消息\n'),
+                    const TextSpan(text: '或者直接输入消息并发送'),
+                  ],
+                ),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.outline,
+                ),
+              )
+            ] else
+              Text("如果你看到这个,一定是出了什么bug。")
+          ],
         ),
       ),
     );

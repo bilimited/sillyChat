@@ -38,6 +38,7 @@ class _StoryFormPageState extends State<StoryFormPage>
   late TextEditingController _nameController;
   late TextEditingController _remarkController;
   late TextEditingController _promptController;
+  late TextEditingController _categoryController;
 
   late String _storyId;
   late List<int> _characterIds;
@@ -56,6 +57,7 @@ class _StoryFormPageState extends State<StoryFormPage>
     _nameController = TextEditingController(text: story?.name ?? '');
     _remarkController = TextEditingController(text: story?.remark ?? '');
     _promptController = TextEditingController(text: story?.story_prompt ?? '');
+    _categoryController = TextEditingController(text: story?.category ?? '');
     _characterIds = List<int>.from(story?.characterIds ?? []);
     _lorebookIds = List<int>.from(story?.lorebookIds ?? []);
     _chatOptionId = story?.chatOptionId;
@@ -72,6 +74,7 @@ class _StoryFormPageState extends State<StoryFormPage>
     _nameController.dispose();
     _remarkController.dispose();
     _promptController.dispose();
+    _categoryController.dispose();
     super.dispose();
   }
 
@@ -81,12 +84,14 @@ class _StoryFormPageState extends State<StoryFormPage>
     final name = _nameController.text.trim();
     final remark = _remarkController.text.trim();
     final prompt = _promptController.text.trim();
+    final category = _categoryController.text.trim();
 
     if (_isEditing && widget.initialStory != null) {
       final updated = widget.initialStory!.copyWith(
         name: name,
         remark: remark,
         story_prompt: prompt,
+        category: category,
         characterIds: _characterIds,
         lorebookIds: _lorebookIds,
         chatOptionId: _chatOptionId,
@@ -98,6 +103,7 @@ class _StoryFormPageState extends State<StoryFormPage>
         name: name,
         remark: remark,
         story_prompt: prompt,
+        category: category,
         characterIds: _characterIds,
         lorebookIds: _lorebookIds,
         chatOptionId: _chatOptionId,
@@ -229,6 +235,8 @@ class _StoryFormPageState extends State<StoryFormPage>
           ),
           maxLines: 2,
         ),
+        const SizedBox(height: 16),
+        _buildCategoryField(),
         const SizedBox(height: 16),
         TextFormField(
           controller: _promptController,
@@ -426,6 +434,41 @@ class _StoryFormPageState extends State<StoryFormPage>
   Widget _buildSectionTitle(String title) {
     return Text(title,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold));
+  }
+
+  Widget _buildCategoryField() {
+    final existing = _storyController.stories
+        .map((s) => s.category)
+        .where((c) => c.trim().isNotEmpty)
+        .toSet()
+        .toList();
+
+    return Autocomplete<String>(
+      initialValue: TextEditingValue(text: _categoryController.text),
+      optionsBuilder: (textEditingValue) {
+        final input = textEditingValue.text.trim();
+        if (input.isEmpty) return existing;
+        return existing.where((c) => c.contains(input));
+      },
+      onSelected: (value) => _categoryController.text = value,
+      fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+        controller.text = _categoryController.text;
+        controller.addListener(() {
+          _categoryController.text = controller.text;
+        });
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: '分类',
+            hintText: '留空则归入「未分类」',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

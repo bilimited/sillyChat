@@ -8,6 +8,7 @@ class StoryModel {
   String name;
   String remark;
   String story_prompt;
+  String category;
   int? chatOptionId;
   List<int> characterIds;
   List<int> lorebookIds;
@@ -26,6 +27,7 @@ class StoryModel {
     required this.name,
     required this.remark,
     required this.story_prompt,
+    this.category = '',
     this.chatOptionId,
     this.characterIds = const [],
     this.lorebookIds = const [],
@@ -38,6 +40,7 @@ class StoryModel {
       name: json['name'] as String,
       remark: json['remark'] as String,
       story_prompt: json['story_prompt'] as String,
+      category: json['category'] as String? ?? '',
       chatOptionId: json['chatOptionId'] as int?,
       characterIds: (json['characterIds'] as List<dynamic>?)?.cast<int>() ?? [],
       lorebookIds: (json['lorebookIds'] as List<dynamic>?)?.cast<int>() ?? [],
@@ -51,6 +54,7 @@ class StoryModel {
       'name': name,
       'remark': remark,
       'story_prompt': story_prompt,
+      'category': category,
       if (chatOptionId != null) 'chatOptionId': chatOptionId,
       'characterIds': characterIds,
       'lorebookIds': lorebookIds,
@@ -63,6 +67,7 @@ class StoryModel {
     String? name,
     String? remark,
     String? story_prompt,
+    String? category,
     int? chatOptionId,
     List<int>? characterIds,
     List<int>? lorebookIds,
@@ -73,6 +78,7 @@ class StoryModel {
       name: name ?? this.name,
       remark: remark ?? this.remark,
       story_prompt: story_prompt ?? this.story_prompt,
+      category: category ?? this.category,
       chatOptionId: chatOptionId ?? this.chatOptionId,
       characterIds: characterIds ?? this.characterIds,
       lorebookIds: lorebookIds ?? this.lorebookIds,

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
-import 'package:flutter_example/chat-app/pages/character/profile_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
@@ -53,63 +52,112 @@ class _ContactsPageState extends State<ContactsPage> {
 
   // 搜索和分组逻辑
   Map<String, List<CharacterModel>> get _filteredAndGroupedContacts {
-    if (_searchText.value.isEmpty) {
-      return characterController.characters
-          .fold(<String, List<CharacterModel>>{}, (map, contact) {
-        if (!map.containsKey(contact.category)) {
-          map[contact.category] = [];
-        }
-        map[contact.category]!.add(contact);
-        return map;
-      });
-    } else {
-      final filteredContacts = characterController.characters
-          .where((contact) =>
-              contact.roleName
-                  .toLowerCase()
-                  .contains(_searchText.value.toLowerCase()) ||
-              contact.category
-                  .toLowerCase()
-                  .contains(_searchText.value.toLowerCase()) ||
-              (contact.brief?.toLowerCase() ?? '')
-                  .contains(_searchText.value.toLowerCase()))
-          .toList();
+    final allCharacters = _searchText.value.isEmpty
+        ? characterController.getAllCharacters()
+        : characterController.characters
+            .where((contact) =>
+                contact.roleName
+                    .toLowerCase()
+                    .contains(_searchText.value.toLowerCase()) ||
+                contact.category
+                    .toLowerCase()
+                    .contains(_searchText.value.toLowerCase()) ||
+                (contact.brief?.toLowerCase() ?? '')
+                    .contains(_searchText.value.toLowerCase()))
+            .toList();
 
-      return filteredContacts.fold(<String, List<CharacterModel>>{},
-          (map, contact) {
-        if (!map.containsKey(contact.category)) {
-          map[contact.category] = [];
-        }
-        map[contact.category]!.add(contact);
-        return map;
-      });
-    }
+    return allCharacters.fold(<String, List<CharacterModel>>{}, (map, contact) {
+      map.putIfAbsent(contact.category, () => []);
+      map[contact.category]!.add(contact);
+      return map;
+    });
   }
 
   void _showAddCharacterDialog(BuildContext context) {
     customNavigate(const EditCharacterPage(), context: context);
   }
 
+  void _openChat(CharacterModel contact) {
+    ChatController.of.openCharacterLatestChat(contact);
+    Get.back();
+  }
+
+  void _editCharacter(BuildContext context, CharacterModel contact) {
+    customNavigate(
+      EditCharacterPage(characterId: contact.id),
+      context: context,
+    );
+  }
+
+  void _deleteCharacter(BuildContext context, CharacterModel contact) {
+    showConfirmDialog(
+      context: context,
+      title: "确定删除该角色?",
+      content: "该操作不可撤销。",
+      onConfirm: () {
+        CharacterController.of.deleteCharacter(contact.id);
+      },
+    );
+  }
+
+  void _handleCharacterMenuAction(
+    BuildContext context,
+    CharacterModel contact,
+    String value,
+  ) {
+    switch (value) {
+      case 'edit':
+        _editCharacter(context, contact);
+        break;
+      case 'delete':
+        _deleteCharacter(context, contact);
+        break;
+    }
+  }
+
+  Widget _buildCharacterMenu(
+    BuildContext context,
+    CharacterModel contact, {
+    Color? iconColor,
+  }) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_horiz, size: 20, color: iconColor),
+      onSelected: (value) => _handleCharacterMenuAction(context, contact, value),
+      itemBuilder: (context) => const [
+        PopupMenuItem<String>(
+          value: 'edit',
+          child: Text('编辑角色'),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Text('删除角色'),
+        ),
+      ],
+    );
+  }
+
   // 获取模式切换按钮的图标
   IconData _getViewModeIcon() {
     switch (_viewMode) {
       case CharacterViewMode.list:
-        return Icons.view_agenda_rounded; // 提示下一个是卡片模式
+        return Icons.view_agenda_rounded;
       case CharacterViewMode.card:
-        return Icons.grid_view_rounded; // 提示下一个是大卡片网格模式
+        return Icons.grid_view_rounded;
       case CharacterViewMode.grid:
-        return Icons.view_list_rounded; // 提示下一个是列表模式
+        return Icons.view_list_rounded;
     }
   }
 
   Widget _buildListTile(BuildContext context, CharacterModel contact) {
     final isDesktop = SillyChatApp.isDesktop();
+
     return StatefulBuilder(
-      builder: (context, setState) {
+      builder: (context, setInnerState) {
         bool hovered = false;
+
         return MouseRegion(
-          onEnter: (_) => setState(() => hovered = true),
-          onExit: (_) => setState(() => hovered = false),
+          onEnter: (_) => setInnerState(() => hovered = true),
+          onExit: (_) => setInnerState(() => hovered = false),
           child: ListTile(
             leading: CircleAvatar(
               backgroundImage: ImageUtils.getProvider(contact.avatar),
@@ -127,56 +175,16 @@ class _ContactsPageState extends State<ContactsPage> {
                   )
                 : null,
             trailing: (!isDesktop || hovered)
-                ? PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, size: 20),
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'edit':{
-                          customNavigate(
-                            EditCharacterPage(characterId: contact.id),
-                            context: context,
-                          );
-                          
-                          break;
-                        }
-
-                        case 'delete':
-                          showConfirmDialog(
-                              context: context,
-                              title: "确定删除该角色?",
-                              content: "该操作不可撤销。",
-                              onConfirm: () {
-                                CharacterController.of
-                                    .deleteCharacter(contact.id);
-                              });
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem<String>(
-                        value: 'edit',
-                        child: Text('编辑角色'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Text('删除角色'),
-                      ),
-                    ],
-                  )
+                ? _buildCharacterMenu(context, contact)
                 : const SizedBox(width: 24),
-            onTap: () {
-              ChatController.of.openCharacterLatestChat(contact);
-              Get.back();
-            },
+            onTap: () => _openChat(contact),
           ),
         );
       },
     );
   }
 
-  // 2. 卡片式 Item
   Widget _buildCardTile(BuildContext context, CharacterModel contact) {
-    final theme = Theme.of(context);
     final bgImage = contact.backgroundImage ?? contact.avatar;
 
     return Card(
@@ -185,9 +193,7 @@ class _ContactsPageState extends State<ContactsPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 2.0,
       child: InkWell(
-        onTap: () {
-          customNavigate(ProfilePage(character: contact), context: context);
-        },
+        onTap: () => _openChat(contact),
         child: Container(
           height: 110.0,
           decoration: BoxDecoration(
@@ -208,12 +214,26 @@ class _ContactsPageState extends State<ContactsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  contact.roleName,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        contact.roleName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    _buildCharacterMenu(
+                      context,
+                      contact,
+                      iconColor: Colors.white,
+                    ),
+                  ],
                 ),
                 if (contact.brief != null) ...[
                   const SizedBox(height: 4.0),
@@ -225,35 +245,6 @@ class _ContactsPageState extends State<ContactsPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        customNavigate(
-                          EditCharacterPage(characterId: contact.id),
-                          context: context,
-                        );
-                      },
-                      icon: const Icon(Icons.edit,
-                          size: 18.0, color: Colors.white),
-                      style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact),
-                    ),
-                    const SizedBox(width: 8.0),
-                    IconButton(
-                      onPressed: () {
-                        ChatController.of.openCharacterLatestChat(contact);
-                        Get.back();
-                      },
-                      icon: const Icon(Icons.chat,
-                          size: 18.0, color: Colors.white),
-                      style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -262,62 +253,86 @@ class _ContactsPageState extends State<ContactsPage> {
     );
   }
 
-  // 3. 大卡片式 Item
   Widget _buildGridTile(BuildContext context, CharacterModel contact) {
     final bgImage = contact.backgroundImage ?? contact.avatar;
+
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 2.0,
       child: InkWell(
-        onTap: () {
-          customNavigate(ProfilePage(character: contact), context: context);
-        },
+        onTap: () => _openChat(contact),
         child: SizedBox(
-          // 用 SizedBox 固定高度，替代 GridView 的 childAspectRatio
           height: 200.0,
-          child: Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: ImageUtils.getProvider(bgImage),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black87],
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: ImageUtils.getProvider(bgImage),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    contact.roleName,
-                    style: const TextStyle(
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black87],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 4.0,
+                right: 4.0,
+                child: Material(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(20.0),
+                  child: _buildCharacterMenu(
+                    context,
+                    contact,
+                    iconColor: Colors.white,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12.0,
+                right: 12.0,
+                bottom: 12.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      contact.roleName,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 15.0),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (contact.brief != null) ...[
-                    const SizedBox(height: 4.0),
-                    Text(
-                      contact.brief!,
-                      style: const TextStyle(
-                          color: Colors.white70, fontSize: 12.0),
-                      maxLines: 2,
+                        fontSize: 15.0,
+                      ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (contact.brief != null) ...[
+                      const SizedBox(height: 4.0),
+                      Text(
+                        contact.brief!,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12.0,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -325,21 +340,26 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   Widget _buildContentForMode(
-      BuildContext context, List<CharacterModel> contacts) {
+    BuildContext context,
+    List<CharacterModel> contacts,
+  ) {
     switch (_viewMode) {
       case CharacterViewMode.list:
         return Column(
           children: contacts.map((c) => _buildListTile(context, c)).toList(),
         );
+
       case CharacterViewMode.card:
         return Column(
           children: contacts.map((c) => _buildCardTile(context, c)).toList(),
         );
+
       case CharacterViewMode.grid:
         final List<Widget> rows = [];
         for (int i = 0; i < contacts.length; i += 2) {
           final left = contacts[i];
           final right = (i + 1 < contacts.length) ? contacts[i + 1] : null;
+
           rows.add(
             Padding(
               padding:
@@ -369,31 +389,35 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Scaffold(
-      floatingActionButton: Obx(() => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (CharacterController.of.characterCilpBoard.value != null)
-                FloatingActionButton(
-                  heroTag: 'paste_character',
-                  onPressed: () {
-                    characterController.addCharacter(
-                        characterController.characterCilpBoard.value!);
-                    setState(() {
-                      characterController.characterCilpBoard.value = null;
-                    });
-                  },
-                  tooltip: '粘贴角色',
-                  child: const Icon(Icons.paste),
-                ),
-              const SizedBox(height: 16.0),
+      floatingActionButton: Obx(
+        () => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (CharacterController.of.characterCilpBoard.value != null)
               FloatingActionButton(
-                onPressed: () => _showAddCharacterDialog(context),
-                tooltip: '新增角色',
-                child: const Icon(Icons.add),
+                heroTag: 'paste_character',
+                onPressed: () {
+                  characterController.addCharacter(
+                    characterController.characterCilpBoard.value!,
+                  );
+                  setState(() {
+                    characterController.characterCilpBoard.value = null;
+                  });
+                },
+                tooltip: '粘贴角色',
+                child: const Icon(Icons.paste),
               ),
-            ],
-          )),
+            const SizedBox(height: 16.0),
+            FloatingActionButton(
+              onPressed: () => _showAddCharacterDialog(context),
+              tooltip: '新增角色',
+              child: const Icon(Icons.add),
+            ),
+          ],
+        ),
+      ),
       backgroundColor: Colors.transparent,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -405,48 +429,54 @@ class _ContactsPageState extends State<ContactsPage> {
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(20.0),
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '搜索角色',
-                    hintStyle:
-                        TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 20.0,
-                    ),
-                    prefixIconConstraints: const BoxConstraints(
-                      minHeight: 32.0,
-                      minWidth: 32.0,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 12.0),
-                    border: InputBorder.none, // 移除下划线
-                    suffixIcon: _searchText.value.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.clear,
+                child: Obx(
+                  () => TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: '搜索角色',
+                      hintStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 20.0,
+                      ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minHeight: 32.0,
+                        minWidth: 32.0,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10.0,
+                        horizontal: 12.0,
+                      ),
+                      border: InputBorder.none,
+                      suffixIcon: _searchText.value.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
                                 size: 20.0,
-                                color: theme.colorScheme.onSurfaceVariant),
-                            onPressed: () {
-                              _searchController.clear();
-                              _searchText.value = '';
-                            },
-                          )
-                        : null,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchText.value = '';
+                              },
+                            )
+                          : null,
+                    ),
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                    cursorColor: theme.colorScheme.primary,
                   ),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                  cursorColor: theme.colorScheme.primary,
                 ),
               ),
               actions: [
-                // 视图模式切换按钮
                 IconButton(
-                  icon: Icon(_getViewModeIcon(),
-                      color: theme.colorScheme.onSurface),
+                  icon: Icon(
+                    _getViewModeIcon(),
+                    color: theme.colorScheme.onSurface,
+                  ),
                   onPressed: () {
                     setState(() {
-                      // 循环切换视图模式
                       _viewMode = CharacterViewMode.values[
                           (_viewMode.index + 1) %
                               CharacterViewMode.values.length];
@@ -468,19 +498,25 @@ class _ContactsPageState extends State<ContactsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.search_off,
-                      size: 60.0, color: theme.colorScheme.outline),
+                  Icon(
+                    Icons.search_off,
+                    size: 60.0,
+                    color: theme.colorScheme.outline,
+                  ),
                   const SizedBox(height: 16.0),
-                  Text('未找到匹配的角色',
-                      style: theme.textTheme.bodyLarge
-                          ?.copyWith(color: theme.colorScheme.outline)),
+                  Text(
+                    '未找到匹配的角色',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
                 ],
               ),
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 80.0), // 防止FAB挡住最后的内容
+            padding: const EdgeInsets.only(bottom: 80.0),
             itemCount: groupedContacts.length,
             itemBuilder: (context, index) {
               final entry = groupedContacts.entries.elementAt(index);

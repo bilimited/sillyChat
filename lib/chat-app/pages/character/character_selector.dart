@@ -55,7 +55,7 @@ class _CharacterSelectorState extends State<CharacterSelector> {
           ),
           Expanded(
             child: Obx(() {
-              final availableCharacters = characterController.characters
+              final availableCharacters = characterController.getAllCharacters()
                   .where((char) => !(widget.excludeCharacters
                           ?.any((excluded) => excluded.id == char.id) ??
                       false))
