@@ -210,17 +210,18 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   // 3. 大卡片式 Item
-  Widget _buildGridTile(BuildContext context, CharacterModel contact) {
-    final bgImage = contact.backgroundImage ?? contact.avatar;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      elevation: 2.0,
-      child: InkWell(
-        onTap: () {
-          customNavigate(ProfilePage(character: contact), context: context);
-        },
+Widget _buildGridTile(BuildContext context, CharacterModel contact) {
+  final bgImage = contact.backgroundImage ?? contact.avatar;
+  return Card(
+    clipBehavior: Clip.antiAlias,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+    elevation: 2.0,
+    child: InkWell(
+      onTap: () {
+        customNavigate(ProfilePage(character: contact), context: context);
+      },
+      child: SizedBox(          // 用 SizedBox 固定高度，替代 GridView 的 childAspectRatio
+        height: 200.0,
         child: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -265,39 +266,49 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
         ),
       ),
-    );
-  }
-
-  // 根据当前模式构建内容视图
-  Widget _buildContentForMode(
-      BuildContext context, List<CharacterModel> contacts) {
-    switch (_viewMode) {
-      case CharacterViewMode.list:
-        return Column(
-          children: contacts.map((c) => _buildListTile(context, c)).toList(),
-        );
-      case CharacterViewMode.card:
-        return Column(
-          children: contacts.map((c) => _buildCardTile(context, c)).toList(),
-        );
-      case CharacterViewMode.grid:
-        return GridView.builder(
-          primary: false, // 强制声明为非主滚动视图，极其重要！防止与外层 ListView 冲突
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(), // 完全交出滚动权
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12.0, // 强制指定 .0 为 double 类型，避免旧版类型报错
-            mainAxisSpacing: 12.0,
-            childAspectRatio: 0.8,
+    ),
+  );
+}
+Widget _buildContentForMode(
+    BuildContext context, List<CharacterModel> contacts) {
+  switch (_viewMode) {
+    case CharacterViewMode.list:
+      return Column(
+        children: contacts.map((c) => _buildListTile(context, c)).toList(),
+      );
+    case CharacterViewMode.card:
+      return Column(
+        children: contacts.map((c) => _buildCardTile(context, c)).toList(),
+      );
+    case CharacterViewMode.grid:
+      final List<Widget> rows = [];
+      for (int i = 0; i < contacts.length; i += 2) {
+        final left = contacts[i];
+        final right = (i + 1 < contacts.length) ? contacts[i + 1] : null;
+        rows.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildGridTile(context, left)),
+                const SizedBox(width: 12.0),
+                Expanded(
+                  child: right != null
+                      ? _buildGridTile(context, right)
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
           ),
-          itemCount: contacts.length,
-          itemBuilder: (context, index) =>
-              _buildGridTile(context, contacts[index]),
         );
-    }
+      }
+      return Padding(
+        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+        child: Column(children: rows),
+      );
   }
+}
 
   @override
   Widget build(BuildContext context) {

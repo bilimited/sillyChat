@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
+import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:get/get.dart';
+import 'package:get/instance_manager.dart';
 
 class ProfilePage extends StatelessWidget {
   final CharacterModel character;
@@ -182,7 +185,9 @@ class ProfilePage extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // 预留发消息事件
+                      ChatController.of.openCharacterLatestChat(character);
+                      Get.back();
+                      Get.back();
                     },
                     icon: const Icon(Icons.chat_bubble_outline,
                         color: Colors.white, size: 22),
