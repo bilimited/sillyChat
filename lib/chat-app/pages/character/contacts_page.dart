@@ -7,10 +7,12 @@ import 'package:flutter_example/chat-app/pages/character/edit_character_page.dar
 import 'package:flutter_example/chat-app/pages/character/profile_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
+import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
+import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 
@@ -100,24 +102,74 @@ class _ContactsPageState extends State<ContactsPage> {
     }
   }
 
-  // 1. 列表式 Item
   Widget _buildListTile(BuildContext context, CharacterModel contact) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: ImageUtils.getProvider(contact.avatar),
-        radius: 24.0,
-      ),
-      title: Text(contact.roleName),
-      subtitle: contact.brief != null
-          ? Text(
-              contact.brief!,
-              style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            )
-          : null,
-      onTap: () {
-        customNavigate(ProfilePage(character: contact), context: context);
+    final isDesktop = SillyChatApp.isDesktop();
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool hovered = false;
+        return MouseRegion(
+          onEnter: (_) => setState(() => hovered = true),
+          onExit: (_) => setState(() => hovered = false),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundImage: ImageUtils.getProvider(contact.avatar),
+              radius: 24.0,
+            ),
+            title: Text(contact.roleName),
+            subtitle: contact.brief != null
+                ? Text(
+                    contact.brief!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: (!isDesktop || hovered)
+                ? PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz, size: 20),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'edit':{
+                          customNavigate(
+                            EditCharacterPage(characterId: contact.id),
+                            context: context,
+                          );
+                          
+                          break;
+                        }
+
+                        case 'delete':
+                          showConfirmDialog(
+                              context: context,
+                              title: "确定删除该角色?",
+                              content: "该操作不可撤销。",
+                              onConfirm: () {
+                                CharacterController.of
+                                    .deleteCharacter(contact.id);
+                              });
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Text('编辑角色'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text('删除角色'),
+                      ),
+                    ],
+                  )
+                : const SizedBox(width: 24),
+            onTap: () {
+              ChatController.of.openCharacterLatestChat(contact);
+              Get.back();
+            },
+          ),
+        );
       },
     );
   }
@@ -137,7 +189,7 @@ class _ContactsPageState extends State<ContactsPage> {
           customNavigate(ProfilePage(character: contact), context: context);
         },
         child: Container(
-          height: 70.0,
+          height: 110.0,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: ImageUtils.getProvider(bgImage),
@@ -153,7 +205,7 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
             ),
             padding: const EdgeInsets.all(16.0),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -211,105 +263,108 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   // 3. 大卡片式 Item
-Widget _buildGridTile(BuildContext context, CharacterModel contact) {
-  final bgImage = contact.backgroundImage ?? contact.avatar;
-  return Card(
-    clipBehavior: Clip.antiAlias,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-    elevation: 2.0,
-    child: InkWell(
-      onTap: () {
-        customNavigate(ProfilePage(character: contact), context: context);
-      },
-      child: SizedBox(          // 用 SizedBox 固定高度，替代 GridView 的 childAspectRatio
-        height: 200.0,
-        child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: ImageUtils.getProvider(bgImage),
-              fit: BoxFit.cover,
-            ),
-          ),
+  Widget _buildGridTile(BuildContext context, CharacterModel contact) {
+    final bgImage = contact.backgroundImage ?? contact.avatar;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      elevation: 2.0,
+      child: InkWell(
+        onTap: () {
+          customNavigate(ProfilePage(character: contact), context: context);
+        },
+        child: SizedBox(
+          // 用 SizedBox 固定高度，替代 GridView 的 childAspectRatio
+          height: 200.0,
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black87],
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: ImageUtils.getProvider(bgImage),
+                fit: BoxFit.cover,
               ),
             ),
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  contact.roleName,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.0),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black87],
                 ),
-                if (contact.brief != null) ...[
-                  const SizedBox(height: 4.0),
+              ),
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    contact.brief!,
-                    style:
-                        const TextStyle(color: Colors.white70, fontSize: 12.0),
-                    maxLines: 2,
+                    contact.roleName,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.0),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (contact.brief != null) ...[
+                    const SizedBox(height: 4.0),
+                    Text(
+                      contact.brief!,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 12.0),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-Widget _buildContentForMode(
-    BuildContext context, List<CharacterModel> contacts) {
-  switch (_viewMode) {
-    case CharacterViewMode.list:
-      return Column(
-        children: contacts.map((c) => _buildListTile(context, c)).toList(),
-      );
-    case CharacterViewMode.card:
-      return Column(
-        children: contacts.map((c) => _buildCardTile(context, c)).toList(),
-      );
-    case CharacterViewMode.grid:
-      final List<Widget> rows = [];
-      for (int i = 0; i < contacts.length; i += 2) {
-        final left = contacts[i];
-        final right = (i + 1 < contacts.length) ? contacts[i + 1] : null;
-        rows.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildGridTile(context, left)),
-                const SizedBox(width: 12.0),
-                Expanded(
-                  child: right != null
-                      ? _buildGridTile(context, right)
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-      return Padding(
-        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-        child: Column(children: rows),
-      );
+    );
   }
-}
+
+  Widget _buildContentForMode(
+      BuildContext context, List<CharacterModel> contacts) {
+    switch (_viewMode) {
+      case CharacterViewMode.list:
+        return Column(
+          children: contacts.map((c) => _buildListTile(context, c)).toList(),
+        );
+      case CharacterViewMode.card:
+        return Column(
+          children: contacts.map((c) => _buildCardTile(context, c)).toList(),
+        );
+      case CharacterViewMode.grid:
+        final List<Widget> rows = [];
+        for (int i = 0; i < contacts.length; i += 2) {
+          final left = contacts[i];
+          final right = (i + 1 < contacts.length) ? contacts[i + 1] : null;
+          rows.add(
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildGridTile(context, left)),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: right != null
+                        ? _buildGridTile(context, right)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+          child: Column(children: rows),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

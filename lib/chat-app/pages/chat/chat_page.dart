@@ -148,55 +148,6 @@ class _ChatPageState extends State<ChatPage> {
 
     _registerController(widget.sessionController);
 
-    // if (widget.initialPosition != null) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     _scrollToMessage(widget.initialPosition!);
-    //   });
-    // }
-
-    // sessionController.onLoadFinished = () {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     _jumpToTrueBottom();
-    //     _isUserReading = false;
-    //   });
-    // };
-
-    sessionController.onAIStateUpdate = () {
-      final shouldStickToBottom = isNearBottom;
-      // 更新前的数据
-      final oldMaxExtent = _scrollController.position.maxScrollExtent;
-      final oldOffset = _scrollController.offset;
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scrollController.hasClients) return;
-        if (!shouldStickToBottom) {
-          // 用户正在看历史，补偿被“顶上去”的距离
-          final newMaxExtent = _scrollController.position.maxScrollExtent;
-          final diff = newMaxExtent - oldMaxExtent;
-          if (diff.abs() > 0.1) {
-            final target = oldOffset + diff;
-            _scrollController.jumpTo(
-              target.clamp(
-                0.0,
-                _scrollController.position.maxScrollExtent,
-              ),
-            );
-          }
-        }
-      });
-    };
-
-    // sessionController.onGenerateStart = () {
-    //   setState(() {
-    //     _isUserReading = false;
-    //   });
-
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     _scrollToBottom();
-    //   });
-
-    //_scrollToBottom();
-    //};
   }
 
   void _registerController(ChatSessionController controller) {

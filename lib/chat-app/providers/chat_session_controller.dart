@@ -9,7 +9,6 @@ import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
-import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -22,17 +21,12 @@ import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
-import 'package:flutter_example/main.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
 class ChatSessionController extends GetxController {
   String get sessionId => this.chatPath;
   late TextEditingController inputController;
-
-  VoidCallback? onLoadFinished;
-  VoidCallback? onAIStateUpdate;
-  VoidCallback? onGenerateStart;
 
   RxBool isLoading = false.obs;
 
@@ -137,11 +131,7 @@ class ChatSessionController extends GetxController {
         .obs;
     // 异步加载，显示进度条
 
-    ever(_aiState, (ev) {
-      if (onAIStateUpdate != null) {
-        onAIStateUpdate!();
-      }
-    });
+
     loadChat();
   }
 
@@ -199,9 +189,6 @@ class ChatSessionController extends GetxController {
 
     isLoading.value = false;
     updateTokens();
-    if (onLoadFinished != null) {
-      onLoadFinished!();
-    }
     print(chat.bindStory?.name ?? "No Story!");
     print(chat.bindCharacter?.roleName ?? "No Char!");
   }
@@ -577,9 +564,7 @@ class ChatSessionController extends GetxController {
     ChatOptionModel? overrideOption,
     CharacterModel? overrideAssistant = null,
   }) async* {
-    if (onGenerateStart != null) {
-      onGenerateStart!();
-    }
+
 
     late List<LLMMessage> messages;
 

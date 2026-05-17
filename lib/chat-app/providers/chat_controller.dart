@@ -63,6 +63,7 @@ class ChatController extends GetxController {
   // 新增：聊天元数据索引
   final RxMap<String, ChatMetaModel> chatIndex = <String, ChatMetaModel>{}.obs;
   final String chatIndexFileName = 'chat_index.json';
+  final String recentChatFileName = "recent_chat.json";
 
   final RxMap<String, FolderSettingModel> folderSettings =
       <String, FolderSettingModel>{}.obs;
