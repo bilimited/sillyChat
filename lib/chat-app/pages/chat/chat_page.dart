@@ -493,16 +493,18 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     // 防遮挡设计
-    return chat.messages.isEmpty || message == chat.messages.first
-        ? Column(
-            children: [
-              SizedBox(
-                height: 104,
-              ),
-              messageBubble,
-            ],
-          )
-        : messageBubble;
+    return 
+    // chat.messages.isEmpty || message == chat.messages.first
+    //     ? Column(
+    //         children: [
+    //           SizedBox(
+    //             height: 104,
+    //           ),
+    //           messageBubble,
+    //         ],
+    //       )
+    //     : 
+        messageBubble;
   }
 
   // 消息操作按钮小组件
@@ -730,7 +732,7 @@ class _ChatPageState extends State<ChatPage> {
         maxHeight: double.infinity,
       ),
       child: Align(
-        alignment: Alignment.bottomCenter,
+        alignment: Alignment.topCenter,
         child: NotificationListener<ScrollNotification>(
           onNotification: (ScrollNotification notification) {
             if (notification is UserScrollNotification) {
@@ -742,51 +744,46 @@ class _ChatPageState extends State<ChatPage> {
 
             return false;
           },
-          child: Stack(
-            children: [
-              Obx(() {
-                final messages = chat.messages.reversed.toList();
-                // 聊天正文
-                return ListView.builder(
-                    controller: _scrollController,
-                    //itemScrollController: _scrollController,
-                    reverse: true,
-                    itemCount: messages.length + 1,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        //正在（新）生成的Message，永远位于底部
-                        return Obx(() => sessionController.aiState.isGenerating
-                            ? _buildMessageBubble(
-                                MessageModel(
-                                    id: -9999,
-                                    content:
-                                        sessionController.aiState.LLMBuffer,
-                                    senderId: sessionController
-                                        .aiState.currentAssistant,
-                                    time: DateTime.now(),
-                                    alternativeContent: [null],
-                                    style: sessionController.aiState.style),
-                                messages.length == 0 ? null : messages[0])
-                            : const SizedBox.shrink());
-                      } else {
-                        return Builder(builder: (context) {
-                          final i = index - 1;
+          child: Obx(() {
+            final messages = chat.messages.reversed.toList();
+            // 聊天正文
+            return ListView.builder(
+                controller: _scrollController,
+                reverse: true,
+                itemCount: messages.length + 1 + 1,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    //正在（新）生成的Message，永远位于底部
+                    return Obx(() => sessionController.aiState.isGenerating
+                        ? _buildMessageBubble(
+                            MessageModel(
+                                id: -9999,
+                                content: sessionController.aiState.LLMBuffer,
+                                senderId:
+                                    sessionController.aiState.currentAssistant,
+                                time: DateTime.now(),
+                                alternativeContent: [null],
+                                style: sessionController.aiState.style),
+                            messages.length == 0 ? null : messages[0])
+                        : const SizedBox.shrink());
+                  } else if(index == messages.length + 1){
+                    return NewChatScreen(chat: chat);
+                  } else {
+                    return Builder(builder: (context) {
+                      final i = index - 1;
 
-                          final message = messages[i];
-                          return _buildMessageBubble(message,
-                              i < messages.length - 1 ? messages[i + 1] : null,
-                              index: i,
-                              isNarration:
-                                  message.style == MessageStyle.narration);
-                        });
-                      }
-                    }
-                    //},
-                    );
-              }),
-            ],
-          ),
+                      final message = messages[i];
+                      return _buildMessageBubble(message,
+                          i < messages.length - 1 ? messages[i + 1] : null,
+                          index: i,
+                          isNarration: message.style == MessageStyle.narration);
+                    });
+                  }
+                }
+                //},
+                );
+          }),
         ),
       ),
     );
@@ -797,20 +794,21 @@ class _ChatPageState extends State<ChatPage> {
     return Column(
       children: [
         Expanded(
-          child: chat.messages.isEmpty
-              ? NewChatScreen(
-                  chat: chat,
-                  onAvatarTap: () {
-                    customNavigate(
-                        EditCharacterPage(
-                          characterId: chat.bindCharacter!.id,
-                        ),
-                        context: context);
-                  },
-                )
-              : useWebview
-                  ? _buildWebviewMessageList()
-                  : _buildFlutterMessageList(),
+          child: _buildFlutterMessageList(),
+          // chat.messages.isEmpty
+          //     ? NewChatScreen(
+          //         chat: chat,
+          //         onAvatarTap: () {
+          //           customNavigate(
+          //               EditCharacterPage(
+          //                 characterId: chat.bindCharacter!.id,
+          //               ),
+          //               context: context);
+          //         },
+          //       )
+          //     : useWebview
+          //         ? _buildWebviewMessageList()
+          //         : _buildFlutterMessageList(),
         ),
 
         // 输入框

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
+import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/story/story_form_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -25,7 +26,20 @@ class StoryManagementPage extends GetView<StoryController> {
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-            InnerAppBar(title: const Text('故事管理')),
+            InnerAppBar(
+              title: const Text('故事管理'),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.label_outline,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  onPressed: () => _openCategoryManage(context),
+                  tooltip: '管理分组',
+                ),
+                const SizedBox(width: 8.0),
+              ],
+            ),
           ];
         },
         body: Obx(() {
@@ -85,13 +99,47 @@ class StoryManagementPage extends GetView<StoryController> {
       map.putIfAbsent(key, () => []).add(story);
     }
 
+    // 按 categoryConfigs 排序
+    final configNames = controller.categoryConfigs
+        .map((c) => c.name)
+        .toList();
     final entries = map.entries.toList();
     entries.sort((a, b) {
       if (a.key == _kUncategorizedKey) return 1;
       if (b.key == _kUncategorizedKey) return -1;
+
+      final aIdx = configNames.indexOf(a.key);
+      final bIdx = configNames.indexOf(b.key);
+      if (aIdx >= 0 && bIdx >= 0) return aIdx.compareTo(bIdx);
+      if (aIdx >= 0) return -1;
+      if (bIdx >= 0) return 1;
       return a.key.compareTo(b.key);
     });
     return entries;
+  }
+
+  void _openCategoryManage(BuildContext context) {
+    customNavigate(
+      CategoryManagePage(
+        title: '故事分组',
+        categories: controller.categoryConfigs,
+        entityCount: (name) {
+          return controller.stories
+              .where((s) =>
+                  name == _kUncategorizedKey
+                      ? s.category.trim().isEmpty
+                      : s.category == name)
+              .length;
+        },
+        onAdd: (name) => controller.addCategory(name),
+        onRename: (oldName, newName) =>
+            controller.renameCategory(oldName, newName),
+        onDelete: (name) => controller.deleteCategory(name),
+        onReorder: (oldIndex, newIndex) =>
+            controller.reorderCategories(oldIndex, newIndex),
+      ),
+      context: context,
+    );
   }
 
   Future<void> _confirmDelete(BuildContext context, String id) async {

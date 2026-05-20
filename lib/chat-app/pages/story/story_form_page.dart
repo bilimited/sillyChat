@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
+import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
@@ -435,41 +436,67 @@ class _StoryFormPageState extends State<StoryFormPage>
   Widget _buildSectionTitle(String title) {
     return Text(title,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold));
-  }
+  } 
 
   Widget _buildCategoryField() {
-    final existing = _storyController.stories
-        .map((s) => s.category)
-        .where((c) => c.trim().isNotEmpty)
-        .toSet()
-        .toList();
+    return Obx(() {
+      final configs = _storyController.categoryConfigs.toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
+      final currentValue = _categoryController.text.trim();
+      final isInConfig = configs.any((c) => c.name == currentValue);
 
-    return Autocomplete<String>(
-      initialValue: TextEditingValue(text: _categoryController.text),
-      optionsBuilder: (textEditingValue) {
-        final input = textEditingValue.text.trim();
-        if (input.isEmpty) return existing;
-        return existing.where((c) => c.contains(input));
-      },
-      onSelected: (value) => _categoryController.text = value,
-      fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-        controller.text = _categoryController.text;
-        controller.addListener(() {
-          _categoryController.text = controller.text;
-        });
-        return TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          decoration: InputDecoration(
-            labelText: '分类',
-            hintText: '留空则归入「未分类」',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+      return Row(
+        children: [
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              initialValue:
+                  currentValue.isNotEmpty && isInConfig ? currentValue : null,
+              decoration: const InputDecoration(
+                labelText: '分类',
+                hintText: '未分类',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('未分类'),
+                ),
+                ...configs.map(
+                  (c) => DropdownMenuItem<String>(
+                    value: c.name,
+                    child: Text(c.name),
+                  ),
+                ),
+              ],
+              onChanged: (v) => _categoryController.text = v ?? '',
             ),
           ),
-        );
-      },
-    );
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.label_outline, size: 20),
+            onPressed: () => customNavigate(
+              CategoryManagePage(
+                title: '故事分组',
+                categories: _storyController.categoryConfigs,
+                entityCount: (name) => _storyController.stories
+                    .where((s) => s.category == name)
+                    .length,
+                onAdd: (name) => _storyController.addCategory(name),
+                onRename: (oldName, newName) =>
+                    _storyController.renameCategory(oldName, newName),
+                onDelete: (name) => _storyController.deleteCategory(name),
+                onReorder: (oldIndex, newIndex) =>
+                    _storyController.reorderCategories(oldIndex, newIndex),
+              ),
+              context: context,
+            ),
+            tooltip: '管理分组',
+          ),
+        ],
+      );
+    });
   }
 
   @override

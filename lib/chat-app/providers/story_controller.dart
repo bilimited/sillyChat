@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
+import '../models/category_config.dart';
 import '../models/story_model.dart';
 import 'character_controller.dart';
 import 'setting_controller.dart';
@@ -9,12 +10,16 @@ class StoryController extends GetxController {
   final RxList<StoryModel> stories = <StoryModel>[].obs;
   final String fileName = 'stories.json';
 
+  final String categoryConfigFileName = 'story_categories.json';
+  final RxList<CategoryConfig> categoryConfigs = <CategoryConfig>[].obs;
+
   StoryModel? get defaultStory => stories.isEmpty ? null : stories[0];
 
   @override
   void onInit() {
     super.onInit();
     loadStories();
+    loadCategoryConfigs();
   }
 
   // 从本地加载故事数据
@@ -60,6 +65,85 @@ class StoryController extends GetxController {
       Get.snackbar("保存故事数据失败", "$e");
       print('保存故事数据失败: $e');
     }
+  }
+
+  // 加载分组配置
+  Future<void> loadCategoryConfigs() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$categoryConfigFileName');
+      if (await file.exists()) {
+        final String contents = await file.readAsString();
+        final List<dynamic> jsonList = json.decode(contents);
+        categoryConfigs.value = jsonList
+            .map((json) => CategoryConfig.fromJson(json))
+            .toList();
+      }
+    } catch (e) {
+      print('加载故事分组配置失败: $e');
+    }
+  }
+
+  // 保存分组配置
+  Future<void> saveCategoryConfigs() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$categoryConfigFileName');
+      final String jsonString = json.encode(
+        categoryConfigs.map((c) => c.toJson()).toList(),
+      );
+      await file.writeAsString(jsonString);
+    } catch (e) {
+      print('保存故事分组配置失败: $e');
+    }
+  }
+
+  // 添加分组
+  Future<void> addCategory(String name) async {
+    if (categoryConfigs.any((c) => c.name == name)) return;
+    final order = categoryConfigs.isEmpty
+        ? 0
+        : categoryConfigs.map((c) => c.order).reduce((a, b) => a > b ? a : b) + 1;
+    categoryConfigs.add(CategoryConfig(name: name, order: order));
+    await saveCategoryConfigs();
+  }
+
+  // 重命名分组，级联更新故事
+  Future<void> renameCategory(String oldName, String newName) async {
+    if (oldName == newName) return;
+    final index = categoryConfigs.indexWhere((c) => c.name == oldName);
+    if (index >= 0) {
+      categoryConfigs[index].name = newName;
+    }
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].category == oldName) {
+        stories[i].category = newName;
+      }
+    }
+    await saveCategoryConfigs();
+    await saveStories();
+  }
+
+  // 删除分组，将下属故事的 category 清空
+  Future<void> deleteCategory(String name) async {
+    categoryConfigs.removeWhere((c) => c.name == name);
+    for (int i = 0; i < stories.length; i++) {
+      if (stories[i].category == name) {
+        stories[i].category = '';
+      }
+    }
+    await saveCategoryConfigs();
+    await saveStories();
+  }
+
+  // 重新排序分组
+  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    final item = categoryConfigs.removeAt(oldIndex);
+    categoryConfigs.insert(newIndex, item);
+    for (int i = 0; i < categoryConfigs.length; i++) {
+      categoryConfigs[i].order = i;
+    }
+    await saveCategoryConfigs();
   }
 
   // 添加新故事

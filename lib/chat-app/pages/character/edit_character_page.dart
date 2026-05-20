@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_gallery.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
@@ -266,11 +267,70 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           childrenPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           children: [
-            TextFormField(
-              controller: _categoryController,
-              decoration: const InputDecoration(
-                  labelText: '分类', hintText: '例如：动漫、原创、历史'),
-            ),
+            Obx(() {
+              final configs = _characterController.categoryConfigs.toList()
+                ..sort((a, b) => a.order.compareTo(b.order));
+              final currentValue = _categoryController.text;
+              final isInConfig =
+                  configs.any((c) => c.name == currentValue);
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue:
+                          currentValue.isNotEmpty && isInConfig
+                              ? currentValue
+                              : null,
+                      decoration: const InputDecoration(
+                        labelText: '分类',
+                        hintText: '默认',
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('默认'),
+                        ),
+                        ...configs.map(
+                          (c) => DropdownMenuItem<String>(
+                            value: c.name,
+                            child: Text(c.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          _categoryController.text = v ?? '',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.label_outline, size: 20),
+                    onPressed: () => customNavigate(
+                      CategoryManagePage(
+                        title: '联系人分组',
+                        categories: _characterController.categoryConfigs,
+                        entityCount: (name) => _characterController
+                            .getCharactersByCategory(name)
+                            .where((c) => c.bindStoryId == null)
+                            .length,
+                        onAdd: (name) =>
+                            _characterController.addCategory(name),
+                        onRename: (oldName, newName) =>
+                            _characterController.renameCategory(
+                                oldName, newName),
+                        onDelete: (name) =>
+                            _characterController.deleteCategory(name),
+                        onReorder: (oldIndex, newIndex) =>
+                            _characterController.reorderCategories(
+                                oldIndex, newIndex),
+                      ),
+                      context: context,
+                    ),
+                    tooltip: '管理分组',
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: 16),
             DropdownButtonFormField<MessageStyle>(
               value: _character?.messageStyle,

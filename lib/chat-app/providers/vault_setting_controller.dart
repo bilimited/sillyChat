@@ -79,36 +79,36 @@ class VaultSettingController extends GetxController {
       ApiModel(
           id: 1,
           apiKey: '',
-          displayName: 'displayName',
-          modelName: 'modelName',
+          displayName: 'deepseek',
+          modelName: '',
           url: 'url',
           provider: ServiceType.deepseek),
       ApiModel(
           id: 2,
           apiKey: '',
-          displayName: 'displayName',
-          modelName: 'modelName',
+          displayName: 'siliconflow',
+          modelName: '',
           url: 'url',
           provider: ServiceType.siliconflow),
       ApiModel(
           id: 3,
           apiKey: '',
-          displayName: 'displayName',
-          modelName: 'modelName',
+          displayName: 'google',
+          modelName: '',
           url: 'url',
           provider: ServiceType.google),
       ApiModel(
           id: 4,
           apiKey: '',
-          displayName: 'displayName',
-          modelName: 'modelName',
+          displayName: 'kimi',
+          modelName: '',
           url: 'url',
           provider: ServiceType.kimi),
       ApiModel(
           id: 5,
           apiKey: '',
-          displayName: 'displayName',
-          modelName: 'modelName',
+          displayName: 'openai',
+          modelName: '',
           url: 'url',
           provider: ServiceType.openai),
     ]);
@@ -169,10 +169,6 @@ class VaultSettingController extends GetxController {
             displaySettingModel.value.CustomFontPath ?? "");
       }
 
-      // updateTheme(
-      //     themename: displaySettingModel.value.schemeName,
-      //     fontName: displaySettingModel.value.GlobalFont);
-
       updateThemeStardard(
           color: displaySettingModel.value.themeColor,
           fontName: displaySettingModel.value.GlobalFont);
@@ -217,9 +213,6 @@ class VaultSettingController extends GetxController {
         theme, fontName ?? displaySettingModel.value.GlobalFont);
     themeNight.value = SillyChatThemeBuilder.buildNight(
         theme, fontName ?? displaySettingModel.value.GlobalFont);
-
-    // themeLight.value = SillyChatThemeBuilder.buildStandardLight(Colors.purpleAccent, fontName ?? displaySettingModel.value.GlobalFont);
-    // themeNight.value = SillyChatThemeBuilder.buildStandardNight(Colors.purpleAccent, fontName ?? displaySettingModel.value.GlobalFont);
   }
 
   void updateThemeStardard({String? fontName, Color? color}) {
@@ -265,11 +258,6 @@ class VaultSettingController extends GetxController {
 
   ApiModel? getApiById(int id) {
     return apis.firstWhereOrNull((a) => a.id == id);
-    // if (api == null) {
-    //   return apis.firstWhereOrNull((a) => a.id == defaultApiId.value);
-    // } else {
-    //   return api;
-    // }
   }
 
   static VaultSettingController of() {

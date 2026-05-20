@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -51,7 +52,7 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   // 搜索和分组逻辑
-  Map<String, List<CharacterModel>> get _filteredAndGroupedContacts {
+  List<MapEntry<String, List<CharacterModel>>> get _filteredAndGroupedContacts {
     final allCharacters = _searchText.value.isEmpty
         ? characterController.getAllCharacters()
         : characterController.characters
@@ -66,15 +67,64 @@ class _ContactsPageState extends State<ContactsPage> {
                     .contains(_searchText.value.toLowerCase()))
             .toList();
 
-    return allCharacters.fold(<String, List<CharacterModel>>{}, (map, contact) {
+    final map = allCharacters.fold(<String, List<CharacterModel>>{}, (map, contact) {
       map.putIfAbsent(contact.category, () => []);
       map[contact.category]!.add(contact);
       return map;
     });
+
+    // 按 categoryConfigs 排序
+    final configNames = characterController.categoryConfigs
+        .map((c) => c.name)
+        .toList();
+    final entries = map.entries.toList();
+    entries.sort((a, b) {
+      final aIsDefault = a.key.isEmpty || a.key == '默认';
+      final bIsDefault = b.key.isEmpty || b.key == '默认';
+      if (aIsDefault && !bIsDefault) return 1;
+      if (!aIsDefault && bIsDefault) return -1;
+
+      final aIdx = configNames.indexOf(a.key);
+      final bIdx = configNames.indexOf(b.key);
+      if (aIdx >= 0 && bIdx >= 0) return aIdx.compareTo(bIdx);
+      if (aIdx >= 0) return -1;
+      if (bIdx >= 0) return 1;
+      return a.key.compareTo(b.key);
+    });
+    return entries;
   }
 
   void _showAddCharacterDialog(BuildContext context) {
     customNavigate(const EditCharacterPage(), context: context);
+  }
+
+  void _openCategoryManage(BuildContext context) {
+    customNavigate(
+      CategoryManagePage(
+        title: '联系人分组',
+        categories: characterController.categoryConfigs,
+        entityCount: (name) {
+          if (name.isEmpty || name == '默认') {
+            return characterController.characters
+                .where((c) =>
+                    c.bindStoryId == null &&
+                    (c.category.isEmpty || c.category == '默认'))
+                .length;
+          }
+          return characterController
+              .getCharactersByCategory(name)
+              .where((c) => c.bindStoryId == null)
+              .length;
+        },
+        onAdd: (name) => characterController.addCategory(name),
+        onRename: (oldName, newName) =>
+            characterController.renameCategory(oldName, newName),
+        onDelete: (name) => characterController.deleteCategory(name),
+        onReorder: (oldIndex, newIndex) =>
+            characterController.reorderCategories(oldIndex, newIndex),
+      ),
+      context: context,
+    );
   }
 
   void _openChat(CharacterModel contact) {
@@ -472,6 +522,14 @@ class _ContactsPageState extends State<ContactsPage> {
               actions: [
                 IconButton(
                   icon: Icon(
+                    Icons.label_outline,
+                    color: theme.colorScheme.onSurface,
+                  ), 
+                  onPressed: () => _openCategoryManage(context),
+                  tooltip: '管理分组',
+                ),
+                IconButton(
+                  icon: Icon(
                     _getViewModeIcon(),
                     color: theme.colorScheme.onSurface,
                   ),
@@ -519,7 +577,7 @@ class _ContactsPageState extends State<ContactsPage> {
             padding: const EdgeInsets.only(bottom: 80.0),
             itemCount: groupedContacts.length,
             itemBuilder: (context, index) {
-              final entry = groupedContacts.entries.elementAt(index);
+              final entry = groupedContacts[index];
               final groupKey = entry.key;
               final contacts = entry.value;
 

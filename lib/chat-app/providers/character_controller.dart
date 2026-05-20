@@ -3,11 +3,15 @@ import 'dart:io';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
+import '../models/category_config.dart';
 import '../models/character_model.dart';
 
 class CharacterController extends GetxController {
   final RxList<CharacterModel> characters = <CharacterModel>[].obs;
   final String fileName = 'characters.json';
+
+  final String categoryConfigFileName = 'contact_categories.json';
+  final RxList<CategoryConfig> categoryConfigs = <CategoryConfig>[].obs;
 
   Rx<CharacterModel?> characterCilpBoard = Rx(null);
 
@@ -52,6 +56,7 @@ class CharacterController extends GetxController {
   void onInit() {
     super.onInit();
     loadCharacters();
+    loadCategoryConfigs();
   }
 
   // 从本地加载角色数据
@@ -101,6 +106,85 @@ class CharacterController extends GetxController {
       Get.snackbar('角色数据保存失败', '$e');
       rethrow;
     }
+  }
+
+  // 加载分组配置
+  Future<void> loadCategoryConfigs() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$categoryConfigFileName');
+      if (await file.exists()) {
+        final String contents = await file.readAsString();
+        final List<dynamic> jsonList = json.decode(contents);
+        categoryConfigs.value = jsonList
+            .map((json) => CategoryConfig.fromJson(json))
+            .toList();
+      }
+    } catch (e) {
+      print('加载联系人分组配置失败: $e');
+    }
+  }
+
+  // 保存分组配置
+  Future<void> saveCategoryConfigs() async {
+    try {
+      final directory = await Get.find<SettingController>().getVaultPath();
+      final file = File('${directory}/$categoryConfigFileName');
+      final String jsonString = json.encode(
+        categoryConfigs.map((c) => c.toJson()).toList(),
+      );
+      await file.writeAsString(jsonString);
+    } catch (e) {
+      print('保存联系人分组配置失败: $e');
+    }
+  }
+
+  // 添加分组
+  Future<void> addCategory(String name) async {
+    if (categoryConfigs.any((c) => c.name == name)) return;
+    final order = categoryConfigs.isEmpty
+        ? 0
+        : categoryConfigs.map((c) => c.order).reduce((a, b) => a > b ? a : b) + 1;
+    categoryConfigs.add(CategoryConfig(name: name, order: order));
+    await saveCategoryConfigs();
+  }
+
+  // 重命名分组，级联更新角色
+  Future<void> renameCategory(String oldName, String newName) async {
+    if (oldName == newName) return;
+    final index = categoryConfigs.indexWhere((c) => c.name == oldName);
+    if (index >= 0) {
+      categoryConfigs[index].name = newName;
+    }
+    for (int i = 0; i < characters.length; i++) {
+      if (characters[i].category == oldName) {
+        characters[i].category = newName;
+      }
+    }
+    await saveCategoryConfigs();
+    await saveCharacters();
+  }
+
+  // 删除分组，将下属角色的 category 清空
+  Future<void> deleteCategory(String name) async {
+    categoryConfigs.removeWhere((c) => c.name == name);
+    for (int i = 0; i < characters.length; i++) {
+      if (characters[i].category == name) {
+        characters[i].category = '';
+      }
+    }
+    await saveCategoryConfigs();
+    await saveCharacters();
+  }
+
+  // 重新排序分组 TODO:有问题
+  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    final item = categoryConfigs.removeAt(oldIndex);
+    categoryConfigs.insert(newIndex, item);
+    for (int i = 0; i < categoryConfigs.length; i++) {
+      categoryConfigs[i].order = i;
+    }
+    await saveCategoryConfigs();
   }
 
   // 添加新角色

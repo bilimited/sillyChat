@@ -360,7 +360,7 @@ class ChatSessionController extends GetxController {
         return;
       } else if (chat.mode == ChatMode.auto) {
         await for (var content in _getResponse(
-            //overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
+            overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
             )) {
           _handleAIResult(content, chat.assistantId ?? -1);
         }
@@ -379,7 +379,7 @@ class ChatSessionController extends GetxController {
     }
 
     await for (var content in _getResponse(
-      //overrideOption: assistant.bindOption,
+      overrideOption: assistant.bindOption,
       overrideAssistant: assistant,
     )) {
       _handleAIResult(content, assistant.id);
@@ -444,7 +444,6 @@ class ChatSessionController extends GetxController {
     }
 
     if (chat.mode == ChatMode.auto) {
-      // TODO:有时会无法retry，似乎是因为mode不正常，重新设置mode即可
       await for (var content in _getResponse(
         overrideOption: chat.assistant.bindOption,
       )) {
@@ -454,7 +453,7 @@ class ChatSessionController extends GetxController {
     } else if (chat.mode == ChatMode.group && message != null) {
       final CharacterController controller = Get.find();
       await for (var content in _getResponse(
-        //overrideOption: message.sender.bindOption,
+        overrideOption: message.sender.bindOption,
         overrideAssistant: controller.getCharacterById(message.senderId),
       )) {
         _handleAIResult(content, message.senderId, existedMessage: message);
@@ -616,7 +615,6 @@ class ChatSessionController extends GetxController {
 
     await for (String token in handler.requestTokenStream(options)) {
       yield token;
-      //LLMMessageBuffer.refresh();
     }
     backGroundTasks--;
   }
