@@ -17,7 +17,7 @@ import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/simple_chat_file_page.dart';
 import 'package:flutter_example/chat-app/pages/welcome_page.dart';
-import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -25,11 +25,12 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
-import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
+
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
+import 'package:flutter_example/chat-app/widgets/chat/new_chat_screen.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
 import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
@@ -797,7 +798,16 @@ class _ChatPageState extends State<ChatPage> {
       children: [
         Expanded(
           child: chat.messages.isEmpty
-              ? _buildNewChatScreen()
+              ? NewChatScreen(
+                  chat: chat,
+                  onAvatarTap: () {
+                    customNavigate(
+                        EditCharacterPage(
+                          characterId: chat.bindCharacter!.id,
+                        ),
+                        context: context);
+                  },
+                )
               : useWebview
                   ? _buildWebviewMessageList()
                   : _buildFlutterMessageList(),
@@ -1114,100 +1124,6 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(leading: _buildDrawerButton()),
       body: WelcomePage(),
-    );
-  }
-
-  Widget _buildNewChatScreen() {
-    final theme = Theme.of(context);
-    return TweenAnimationBuilder<Offset>(
-      tween: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero),
-      duration: const Duration(milliseconds: 450),
-      curve: Curves.easeOutCirc,
-      builder: (context, offset, child) {
-        final opacity = (1 - (offset.dy / 0.2)).clamp(0.0, 1.0);
-        return FractionalTranslation(
-          translation: offset,
-          child: Opacity(opacity: opacity, child: child),
-        );
-      },
-      child: Padding(
-        padding: EdgeInsets.only(bottom: 128, left: 30, right: 30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (chat.bindCharacter != null) ...[
-              InkWell(
-                child: AvatarImage.round(chat.bindCharacter!.avatar, 44),
-                onTap: () {
-                  customNavigate(
-                      EditCharacterPage(
-                        characterId: chat.bindCharacter!.id,
-                      ),
-                      context: context);
-                },
-              ),
-              SizedBox(
-                height: 16,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    chat.bindCharacter!.roleName,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 6),
-                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 5),
-                    decoration: BoxDecoration(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      chat.bindCharacter!.bindOption?.name ??
-                          ChatOptionController.of().defaultOption.name,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  )
-                ],
-              ),
-              Row(
-                children: [Text("A|B")],
-              )
-            ] else if (chat.bindStory != null) ...[
-              Text.rich(
-                TextSpan(
-                  children: [
-                    const TextSpan(text: '点击右下角'),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Icon(
-                          Icons.group_outlined, // 群聊图标
-                          size: 16,
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ),
-                    const TextSpan(text: '让AI角色发送一条消息\n'),
-                    const TextSpan(text: '或者直接输入消息并发送'),
-                  ],
-                ),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: theme.colorScheme.outline,
-                ),
-              )
-            ] else
-              Text("如果你看到这个,一定是出了什么bug。")
-          ],
-        ),
-      ),
     );
   }
 
