@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import '../../models/character_model.dart';
 
 class CharacterWheel extends StatelessWidget {

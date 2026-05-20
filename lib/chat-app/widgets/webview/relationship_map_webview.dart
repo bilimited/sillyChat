@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
@@ -118,14 +118,14 @@ class _ChatWebviewState extends State<RelationshipMapWebview> {
               initialSettings: InAppWebViewSettings(
                 resourceCustomSchemes: ['imgs'],
                 transparentBackground: !SillyChatApp.isDesktop(), // 诡异bug
-                
-                    // 禁止 WebView 自带的缩放，完全把手势交给 JS 处理
-                supportZoom: false, 
+
+                // 禁止 WebView 自带的缩放，完全把手势交给 JS 处理
+                supportZoom: false,
                 // 禁止显示原生的缩放控件
                 displayZoomControls: false,
                 builtInZoomControls: false,
                 // 确保视口设置生效
-                useWideViewPort: true, 
+                useWideViewPort: true,
                 loadWithOverviewMode: true,
               ),
               onLoadResourceWithCustomScheme: (controller, request) async {

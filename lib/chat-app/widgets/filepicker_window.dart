@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_example/chat-app/widgets/alert_card.dart';
+import 'package:flutter_example/chat-app/widgets/common/alert_card.dart';
 import 'package:get/get.dart';
 
 /// 可配置的导入参数
@@ -17,8 +17,8 @@ class ImportParam {
 /// [fileName] 导入的文件名
 /// [fileContent] 导入的文件文本内容
 /// [selectedParams] 用户选择的导入参数ID列表
-typedef OnImport = void Function(
-    String fileName, String fileContent, List<String> selectedParams,String filePath);
+typedef OnImport = void Function(String fileName, String fileContent,
+    List<String> selectedParams, String filePath);
 
 /// 导入多个文件全部完成时的回调函数
 typedef OnSuccess = void Function(int fileCount, List<String> selectedParams);
@@ -63,7 +63,7 @@ class FileImporter {
 
       try {
         final String fileContent = await file.readAsString();
-        _showImportDialog(context, fileName, fileContent,filePath);
+        _showImportDialog(context, fileName, fileContent, filePath);
       } catch (e) {
         Get.snackbar('文件读取错误', '$e');
       }
@@ -75,7 +75,6 @@ class FileImporter {
           final file = File(f.path!);
           final content = await file.readAsString();
           fileContents.add(content);
-          
         } catch (e) {
           Get.snackbar('文件读取错误', '$e');
         }
@@ -84,8 +83,8 @@ class FileImporter {
     } else {}
   }
 
-  void _showImportDialog(
-      BuildContext context, String fileName, String fileContent, String filePath) {
+  void _showImportDialog(BuildContext context, String fileName,
+      String fileContent, String filePath) {
     List<ImportParam> dialogParams = paramList
         .map((p) =>
             ImportParam(id: p.id, name: p.name, isSelected: p.isSelected))
@@ -147,11 +146,13 @@ class FileImporter {
                         .toList();
 
                     if (!multiple) {
-                      onImport(fileName, fileContent, selectedParamIds,filePath);
+                      onImport(
+                          fileName, fileContent, selectedParamIds, filePath);
                     } else {
                       for (int index = 0; index < fileNames.length; index++) {
                         final name = fileNames[index];
-                        onImport(name, fileContents[index], selectedParamIds,filePaths[index]);
+                        onImport(name, fileContents[index], selectedParamIds,
+                            filePaths[index]);
                       }
                       if (onAllSuccess != null) {
                         onAllSuccess!(fileNames.length, selectedParamIds);

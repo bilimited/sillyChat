@@ -17,6 +17,7 @@ import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/simple_chat_file_page.dart';
 import 'package:flutter_example/chat-app/pages/welcome_page.dart';
+import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -24,14 +25,14 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
 import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
-import 'package:flutter_example/chat-app/widgets/sizeAnimated.dart';
-import 'package:flutter_example/chat-app/widgets/toggleChip.dart';
+import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
+import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
 import 'package:flutter_example/chat-app/widgets/webview/statusbar_webview.dart';
 import 'package:flutter_example/main.dart';
@@ -1164,7 +1165,8 @@ class _ChatPageState extends State<ChatPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      chat.bindCharacter!.category,
+                      chat.bindCharacter!.bindOption?.name ??
+                          ChatOptionController.of().defaultOption.name,
                       style: TextStyle(
                           fontSize: 12,
                           color:
@@ -1173,11 +1175,12 @@ class _ChatPageState extends State<ChatPage> {
                   )
                 ],
               ),
+              Row(
+                children: [Text("A|B")],
+              )
             ] else if (chat.bindStory != null) ...[
               Text.rich(
-                
                 TextSpan(
-                  
                   children: [
                     const TextSpan(text: '点击右下角'),
                     WidgetSpan(

@@ -4,7 +4,7 @@ import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:get/get.dart';
 
@@ -53,7 +53,8 @@ class ChatListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gradColor = theme.colorScheme.primaryContainer.blend(theme.colorScheme.surface,70);
+    final gradColor =
+        theme.colorScheme.primaryContainer.blend(theme.colorScheme.surface, 70);
 
     if (chat == null) {
       ChatController.of.buildIndex(path);
@@ -66,17 +67,10 @@ class ChatListItem extends StatelessWidget {
       child: Obx(() => Container(
             decoration: selected
                 ? BoxDecoration(
-                  
-                  gradient: LinearGradient(
-                    stops: [
-                      0.4,1.0
-                    ],
-                    colors: [
-                    gradColor,
-                    theme.colorScheme.surface
-                  ]),
-                  
-                    )
+                    gradient: LinearGradient(
+                        stops: [0.4, 1.0],
+                        colors: [gradColor, theme.colorScheme.surface]),
+                  )
                 : null,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -86,7 +80,8 @@ class ChatListItem extends StatelessWidget {
                       ? StackAvatar(avatarUrls: chat!.getAllAvatars())
                       : isQuickChat
                           ? CircleAvatar(
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
                               radius: 24,
                               child: Icon(
                                 Icons.chat_bubble_outline_rounded,

@@ -14,8 +14,8 @@ import 'package:flutter_example/chat-app/pages/settings/prompt_format_setting_pa
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
-import 'package:flutter_example/chat-app/widgets/alert_card.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
+import 'package:flutter_example/chat-app/widgets/common/alert_card.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';

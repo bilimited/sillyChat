@@ -12,10 +12,10 @@ import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
-import 'package:flutter_example/chat-app/widgets/sticky_overlay_container.dart';
+import 'package:flutter_example/chat-app/widgets/common/sticky_overlay_container.dart';
 import 'package:flutter_markdown_plus_latex/flutter_markdown_plus_latex.dart';
 
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/chat/custom_codeblock_widget.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/main.dart';

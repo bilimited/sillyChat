@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 
 class StackAvatar extends StatelessWidget {
   final List<String> avatarUrls;

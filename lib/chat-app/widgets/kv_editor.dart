@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.dart';
 import 'package:flutter_example/main.dart';
 
 // KeyValueEditor 组件

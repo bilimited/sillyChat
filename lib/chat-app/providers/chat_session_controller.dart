@@ -138,7 +138,6 @@ class ChatSessionController extends GetxController {
         .obs;
     // 异步加载，显示进度条
 
-
     loadChat();
   }
 
@@ -471,7 +470,8 @@ class ChatSessionController extends GetxController {
             VaultSettingController.of().miscSetting.value.autotitleOption)) {
       title += token;
     }
-    chat.name = title;
+    final reg = RegExp(r'<think>.*?</think>', dotAll: true);
+    chat.name = title.replaceAll(reg, '');
     _chat.refresh();
     isGeneratingTitle.value = false;
 
@@ -571,8 +571,6 @@ class ChatSessionController extends GetxController {
     ChatOptionModel? overrideOption,
     CharacterModel? overrideAssistant = null,
   }) async* {
-
-
     late List<LLMMessage> messages;
 
     messages = Promptbuilder(chat, overrideOption)

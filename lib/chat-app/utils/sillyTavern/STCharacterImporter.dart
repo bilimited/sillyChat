@@ -6,7 +6,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STLorebookImporter.dart';
-import 'package:flutter_example/chat-app/widgets/alert_card.dart';
+import 'package:flutter_example/chat-app/widgets/common/alert_card.dart';
 import 'package:get/get.dart';
 
 abstract class STCharacterImporter {

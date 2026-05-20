@@ -22,8 +22,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
-import 'package:flutter_example/chat-app/widgets/custom_bottom_bar.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:marquee/marquee.dart';
@@ -211,8 +210,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
             backgroundColor: Colors.transparent,
             type: BottomNavigationBarType.fixed,
             items: [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.history), label: '最近'),
+              BottomNavigationBarItem(icon: Icon(Icons.history), label: '最近'),
               BottomNavigationBarItem(icon: Icon(Icons.people), label: '角色'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.store_mall_directory), label: '故事'),

@@ -8,7 +8,7 @@ import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STLorebookImporter.dart';
-import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/filepicker_window.dart';
 import 'package:get/get.dart';
 
 class ImportFromSillytavernPage extends StatelessWidget {

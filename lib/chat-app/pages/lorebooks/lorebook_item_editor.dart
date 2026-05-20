@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
-import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
-import 'package:flutter_example/chat-app/widgets/option_input.dart';
+import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/common/option_input.dart';
 
 class LoreBookItemEditorPage extends StatefulWidget {
   final LorebookItemModel? item;

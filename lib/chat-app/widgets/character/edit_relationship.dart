@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/expandable_text_field.dart';
+import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.dart';
 import 'package:flutter_example/chat-app/widgets/webview/relationship_map_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
@@ -255,8 +255,12 @@ class _EditRelationshipState extends State<EditRelationship> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add,),
-              SizedBox(width: 8,),
+              Icon(
+                Icons.add,
+              ),
+              SizedBox(
+                width: 8,
+              ),
               Text("添加关系"),
             ],
           ),
@@ -278,9 +282,17 @@ class _EditRelationshipState extends State<EditRelationship> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.bubble_chart,color: theme.colorScheme.onSurface,),
-              SizedBox(width: 8,),
-              Text("查看关系网",style: TextStyle(color: theme.colorScheme.onSurface),),
+              Icon(
+                Icons.bubble_chart,
+                color: theme.colorScheme.onSurface,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text(
+                "查看关系网",
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
             ],
           ),
         )

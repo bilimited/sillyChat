@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STLorebookImporter.dart';
-import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/filepicker_window.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
@@ -230,7 +230,6 @@ class LoreBookManagerPage extends StatelessWidget {
                           },
                         )),
                   ),
-
                 ),
               ];
             },

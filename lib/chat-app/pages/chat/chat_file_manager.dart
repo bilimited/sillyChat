@@ -8,7 +8,7 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/BreadcrumbNavigation.dart';
+import 'package:flutter_example/chat-app/widgets/breadcrumb_navigation.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_list_item.dart';
 import 'package:flutter_example/chat-app/widgets/chat/folder_item.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
@@ -285,14 +285,8 @@ class _FileManagerWidgetState extends State<FileManagerWidget> {
         }
       },
       child: Scaffold(
-        // bottomNavigationBar: CustomBottomBar(
-        //   centerButton: SizedBox.shrink(),
-        // ),
-        // backgroundColor: Colors.transparent,
         appBar: _buildAppBar(),
         body: _buildFileList(),
-        // floatingActionButton:
-        //     _isMultiSelectMode ? null : _buildFloatingActionButton(),
       ),
     );
   }

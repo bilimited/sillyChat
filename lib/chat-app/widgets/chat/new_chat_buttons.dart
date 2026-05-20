@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:path/path.dart' as p;
 
@@ -27,4 +27,3 @@ class NewChatButtons extends StatelessWidget {
     );
   }
 }
-

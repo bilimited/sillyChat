@@ -10,7 +10,7 @@ import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/chat/member_selector.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
@@ -293,8 +293,9 @@ class _StoryFormPageState extends State<StoryFormPage>
                 ...tempChars.map((char) => ListTile(
                       leading: AvatarImage.round(char.avatar, 18),
                       title: Text(char.roleName),
-                      subtitle:
-                          char.brief?.isNotEmpty == true ? Text(char.brief!) : null,
+                      subtitle: char.brief?.isNotEmpty == true
+                          ? Text(char.brief!)
+                          : null,
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline),
                         onPressed: () => _deleteTempCharacter(char.id),

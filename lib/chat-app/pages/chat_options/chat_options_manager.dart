@@ -5,7 +5,7 @@ import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dar
 import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
-import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/filepicker_window.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
 import '../../providers/chat_option_controller.dart';

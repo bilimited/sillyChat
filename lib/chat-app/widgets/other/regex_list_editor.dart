@@ -5,7 +5,7 @@ import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_regex.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STRegexImporter.dart';
-import 'package:flutter_example/chat-app/widgets/filePickerWindow.dart';
+import 'package:flutter_example/chat-app/widgets/filepicker_window.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 

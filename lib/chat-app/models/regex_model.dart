@@ -49,14 +49,6 @@ class RegexModel {
       }
     });
     return replaceJsRegex(pattern, input, replacement);
-    // final regex = RegExp(pattern);
-    // return input.replaceAllMapped(regex, (match) {
-    //   String result = replacement;
-    //   for (int i = 1; i < match.groupCount + 1; i++) {
-    //     result = result.replaceAll('\$$i', match.group(i) ?? '');
-    //   }
-    //   return result;
-    // });
   }
 
   /// [disableDepthCalc] :无视楼层，适用于新消息

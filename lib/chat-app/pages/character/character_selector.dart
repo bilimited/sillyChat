@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/widgets/AvatarImage.dart';
+import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
@@ -55,7 +55,8 @@ class _CharacterSelectorState extends State<CharacterSelector> {
           ),
           Expanded(
             child: Obx(() {
-              final availableCharacters = characterController.getAllCharacters()
+              final availableCharacters = characterController
+                  .getAllCharacters()
                   .where((char) => !(widget.excludeCharacters
                           ?.any((excluded) => excluded.id == char.id) ??
                       false))
