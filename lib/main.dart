@@ -108,10 +108,9 @@ class SillyChatApp extends StatelessWidget {
     Get.find<PromptController>().prompts.value = [];
     await Get.find<PromptController>().loadPrompts();
 
-    // ChatIndex在切换仓库时不会被加载。它会重新生成以自动清理
-    // TODO:改为只有同步时重新生成
     Get.find<ChatController>().chats.value = [];
     ChatController.of.chatIndex.clear();
+    ChatController.of.recentChats.clear();
     ChatController.of.currentPath.value = '';
     ChatController.of.currentChat.value = ChatSessionController.uninitialized();
     if (ChatController.of.pageController.hasClients) {

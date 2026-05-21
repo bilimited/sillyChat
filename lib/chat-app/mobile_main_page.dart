@@ -10,7 +10,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/recent_chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
-import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
+import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/other/api_selector.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
@@ -63,17 +63,10 @@ class _MainPageMobileState extends State<MainPageMobile> {
       scaffoldKey: _scaffoldKey,
     ),
     StoryManagementPage(),
-    // ChatOptionsManagerPage(
-    //   scaffoldKey: _scaffoldKey,
-    // ),
     LoreBookManagerPage(
       scaffoldKey: _scaffoldKey,
     ),
     SettingPage()
-
-    // ApiManagerPage(
-    //   scaffoldKey: _scaffoldKey,
-    // ),
   ];
 
   Widget _buildTopIconBtn(IconData icon, int index) {

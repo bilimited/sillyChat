@@ -10,7 +10,7 @@ import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/log_page.dart';
-import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manager.dart';
+import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/vault_manager.dart';

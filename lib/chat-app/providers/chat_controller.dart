@@ -216,6 +216,9 @@ class ChatController extends GetxController {
       }
       recentChats.assignAll(loaded);
       print('加载最近聊天成功，共 ${recentChats.length} 条');
+      if(recentChats.isNotEmpty){
+        openChat(recentChats[0].path);
+      }
     } catch (e) {
       print('加载最近聊天失败: $e');
     }
