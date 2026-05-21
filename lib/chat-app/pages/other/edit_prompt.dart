@@ -250,7 +250,7 @@ class _EditPromptPageState extends State<EditPromptPage> {
                             color: Colors.green, fontWeight: FontWeight.bold),
                       ),
                       RegexPatternTextStyle(
-                        regexPattern: r'{{userbrief}}',
+                        regexPattern: r'{{userbrief}}|{{extraprompt}}',
                         textStyle: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold),
                       ),

@@ -49,9 +49,10 @@ class InitApp {
     ]);
     final id = DateTime.now().millisecondsSinceEpoch;
     final emptyOption = ChatOptionModel.base(name: '空白预设').copyWith(false,id: id);
-
-    ChatOptionController.of().addChatOption(emptyOption);
+    
     ChatOptionController.of().addChatOption(ChatOptionModel.roleplay().copyWith(false,id: id+1));
+    ChatOptionController.of().addChatOption(emptyOption);
+    
 
     final char = CharacterModel.empty().copyWith(
       roleName: "默认助手",

@@ -23,75 +23,6 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     _loadVaultFolders();
   }
 
-  Future<void> migrateFiles({
-    required String sourcePath,
-    required String destinationPath,
-  }) async {
-    try {
-      final sourceDir = Directory(sourcePath);
-      final destinationDir = Directory(destinationPath);
-
-      if (!await sourceDir.exists()) {
-        throw Exception("源路径不存在: $sourcePath");
-      }
-
-      // 1. 如果目标路径存在，则清空
-      if (await destinationDir.exists()) {
-        await for (final entity in destinationDir.list()) {
-          if (entity is File) {
-            await entity.delete();
-          } else if (entity is Directory) {
-            await entity.delete(recursive: true);
-          }
-        }
-      } else {
-        // 如果目标路径不存在，则创建
-        await destinationDir.create(recursive: true);
-      }
-
-      // 2. 获取所有源文件以计算总数
-      final allFiles = await sourceDir
-          .list(recursive: true)
-          .where((entity) => entity is File)
-          .toList();
-      final totalFiles = allFiles.length;
-      if (totalFiles == 0) {
-        return;
-      }
-
-      // 3. 逐个复制文件并更新进度
-      await for (final entity in sourceDir.list(recursive: true)) {
-        if (entity is File) {
-          final relativePath = p.relative(entity.path, from: sourcePath);
-          final newPath = p.join(destinationPath, relativePath);
-
-          // 确保目标文件的目录存在
-          final newFile = File(newPath);
-          await newFile.parent.create(recursive: true);
-
-          await entity.copy(newPath);
-        } else if (entity is Directory) {
-          // 如果是空目录，也需要创建
-          final relativePath = p.relative(entity.path, from: sourcePath);
-          final newDirPath = p.join(destinationPath, relativePath);
-          final newDir = Directory(newDirPath);
-          if (!await newDir.exists()) {
-            await newDir.create(recursive: true);
-          }
-        }
-      }
-
-      await _loadVaultFolders();
-      // SettingController.of.setCurrentVaultName('');
-      SillyChatApp.restart();
-
-      SillyChatApp.snackbar(context, '迁移已完成!');
-    } catch (e) {
-      SillyChatApp.snackbar(context, "文件迁移失败: $e");
-      rethrow;
-    }
-  }
-
   Future<void> _loadVaultFolders() async {
     final directory = await SettingController.of.getRootPath();
     final baseDir = '${directory.path}/SillyChat';
@@ -176,7 +107,6 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     }
 
     await _loadVaultFolders();
-    Get.snackbar('成功', '项目创建成功');
   }
 
   void _showCreateVaultDialog() {
@@ -338,56 +268,25 @@ class _VaultManagerPageState extends State<VaultManagerPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('项目管理'),
-        actions: [
-          IconButton(
-              onPressed: () async {
-                if (await SettingController.of
-                    .isExternalStorageDirectoryExists()) {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('迁移应用数据'),
-                        content: Text('该操作将会把应用数据从内部储存迁移到外部储存。'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('取消'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              migrateFiles(
-                                  sourcePath: await SettingController.of
-                                      .getOldVaultPath(),
-                                  destinationPath: await SettingController.of
-                                      .getVaultPath());
-                            },
-                            child: Text('确认迁移',
-                                style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                } else {
-                  SillyChatApp.snackbar(context, '不需要迁移');
-                }
-              },
-              icon: Icon(Icons.folder_copy))
-        ],
+        actions: [],
       ),
       body: ListView.builder(
-        itemCount: vaultFolders.length + 1,
+        itemCount: vaultFolders.length + 2,
         itemBuilder: (context, index) {
           if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text('这个页面还没有经过充分测试，所以有点危险，请谨慎使用。',
+                  style: TextStyle(fontSize: 13)),
+            );
+          } else if (index == 1) {
             return ListTile(
               leading: Icon(Icons.folder_open),
               title: Text('根目录'),
               onTap: () => _showConfirmationDialog(''),
             );
           }
-          final folderName = vaultFolders[index - 1];
+          final folderName = vaultFolders[index - 2];
           return ListTile(
             leading: Icon(Icons.folder),
             title: Text(folderName),

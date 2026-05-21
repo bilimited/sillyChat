@@ -355,7 +355,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     hint: const Text('选择聊天预设'),
                     items: [
                       const DropdownMenuItem(
-                          value: null, child: Text('无 (使用默认)')),
+                          value: null, child: Text('无 (使用默认，即第一个预设)')),
                       ...Get.find<ChatOptionController>()
                           .chatOptions
                           .map((opt) => DropdownMenuItem(

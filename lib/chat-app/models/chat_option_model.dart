@@ -171,6 +171,8 @@ factory ChatOptionModel.roleplay({String? name}) {
 {{description}}
 
 {{lore after_em}}
+
+{{extraprompt}}
 ''',
         role: 'system',
         name: '作者注释内容',
@@ -273,7 +275,7 @@ factory ChatOptionModel.roleplay({String? name}) {
           PromptModel(id: id, 
           content: '''现在的时间是: {{time}}
 
-{{folderremark}}''', role: 'system', name: 'Base'),
+{{extraprompt}}''', role: 'system', name: 'Base'),
           PromptModel(
               id: id+1,
               content: 'messageList',

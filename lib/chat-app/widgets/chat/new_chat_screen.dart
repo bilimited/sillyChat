@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/story/story_form_page.dart';
+import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
@@ -59,6 +60,8 @@ class NewChatScreen extends StatelessWidget {
             _MetaText(icon: Icons.settings_outlined, label: presetName),
             if (loreCount > 0)
               _MetaText(icon: Icons.book_outlined, label: '$loreCount 本世界书'),
+            if(character.id == CharacterController.of.myId)
+            _MetaText(icon: Icons.person, label: "你自己"),
           ],
         ),
       ],
