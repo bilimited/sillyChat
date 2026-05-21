@@ -1,8 +1,13 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigExporter.dart';
 import 'package:flutter_example/chat-app/widgets/other/prompt_editor.dart';
 import 'package:flutter_example/chat-app/widgets/other/regex_list_editor.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
 import '../../models/chat_option_model.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/chat_option_controller.dart';
@@ -47,6 +52,36 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleExportST() async {
+    try {
+      final option = ChatOptionModel(
+        id: isEditing
+            ? widget.option!.id
+            : DateTime.now().millisecondsSinceEpoch,
+        name: _nameController.text,
+        requestOptions: _requestOptions,
+        prompts: _prompts,
+        regex: _regexs,
+      );
+
+      final jsonStr = STConfigExporter.export(option);
+      final safeName = _nameController.text.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      final defaultFileName = '$safeName.json';
+
+      final selectedDir = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: '选择保存位置',
+      );
+
+      if (selectedDir == null) return;
+
+      final destFile = File(p.join(selectedDir, defaultFileName));
+      await destFile.writeAsString(jsonStr);
+      Get.snackbar('导出成功', '已保存至 ${destFile.path}');
+    } catch (e) {
+      Get.snackbar('导出失败', '$e');
+    }
   }
 
   void _handleSave() {
@@ -106,6 +141,11 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
             appBar: AppBar(
               title: Text(isEditing ? '编辑预设' : '新建预设'),
               actions: [
+                IconButton(
+                  onPressed: _handleExportST,
+                  icon: const Icon(Icons.file_upload_outlined),
+                  tooltip: '导出为 SillyTavern 预设',
+                ),
                 IconButton(
                     onPressed: _handleCopy, icon: const Icon(Icons.copy)),
               ],

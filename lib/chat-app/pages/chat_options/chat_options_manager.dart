@@ -1,11 +1,16 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/pages/other/prompt_manager.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
+import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigExporter.dart';
 import 'package:flutter_example/chat-app/widgets/common/app_option_card.dart';
 import 'package:flutter_example/chat-app/widgets/common/info_chip.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
 import '../../providers/chat_option_controller.dart';
 import '../../models/chat_option_model.dart';
 
@@ -126,6 +131,16 @@ class ChatOptionsManagerPage extends StatelessWidget {
             ),
           ),
           AppCardOptionItem<String>(
+            value: 'export_st',
+            child: const Row(
+              children: [
+                Icon(Icons.file_upload_outlined),
+                SizedBox(width: 12),
+                Text('导出 ST'),
+              ],
+            ),
+          ),
+          AppCardOptionItem<String>(
             value: 'delete',
             child: Row(
               children: [
@@ -143,6 +158,8 @@ class ChatOptionsManagerPage extends StatelessWidget {
           if (value == 'edit') {
             customNavigate(
                 EditChatOptionPage(option: option), context: context);
+          } else if (value == 'export_st') {
+            _onExportST(option, context);
           } else if (value == 'delete') {
             _onDelete(context, index);
           }
@@ -153,6 +170,26 @@ class ChatOptionsManagerPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _onExportST(ChatOptionModel option, BuildContext context) async {
+    try {
+      final jsonStr = STConfigExporter.export(option);
+      final safeName = option.name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      final defaultFileName = '$safeName.json';
+
+      final selectedDir = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: '选择保存位置',
+      );
+
+      if (selectedDir == null) return;
+
+      final destFile = File(p.join(selectedDir, defaultFileName));
+      await destFile.writeAsString(jsonStr);
+      Get.snackbar('导出成功', '已保存至 ${destFile.path}');
+    } catch (e) {
+      Get.snackbar('导出失败', '$e');
+    }
   }
 
   void _onDelete(BuildContext context, int index) {
