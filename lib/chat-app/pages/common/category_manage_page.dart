@@ -158,6 +158,7 @@ class _CategoryManagePageState extends State<CategoryManagePage> {
                       return _CategoryTile(
                         key: ValueKey(config.name),
                         config: config,
+                        index: index,
                         count: count,
                         colorScheme: colorScheme,
                         onRename: () => _rename(config),
@@ -176,6 +177,7 @@ class _CategoryManagePageState extends State<CategoryManagePage> {
 
 class _CategoryTile extends StatelessWidget {
   final CategoryConfig config;
+  final int index;
   final int count;
   final ColorScheme colorScheme;
   final VoidCallback onRename;
@@ -184,6 +186,7 @@ class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     super.key,
     required this.config,
+    required this.index,
     required this.count,
     required this.colorScheme,
     required this.onRename,
@@ -196,7 +199,7 @@ class _CategoryTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         leading: ReorderableDragStartListener(
-          index: config.order,
+          index: index,
           child: const Icon(Icons.drag_handle, size: 22),
         ),
         title: Text(config.name),

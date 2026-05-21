@@ -138,6 +138,9 @@ class StoryController extends GetxController {
 
   // 重新排序分组
   Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
     final item = categoryConfigs.removeAt(oldIndex);
     categoryConfigs.insert(newIndex, item);
     for (int i = 0; i < categoryConfigs.length; i++) {
