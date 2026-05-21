@@ -1,17 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
-import 'package:flutter_example/chat-app/models/chat_option_model.dart';
-import 'package:flutter_example/chat-app/pages/other/api_edit.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
-import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
+import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigImporter.dart';
@@ -39,8 +35,10 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   final _introController = TextEditingController();
 
   // API 设置
+  ApiModel? _selectedApi;
   String? _selectedModel;
-  bool _isCustomModel = false;
+  List<String> _fetchedModels = [];
+  bool _isFetchingModels = false;
   final _apiKeyController = TextEditingController();
 
   // 导入配置
@@ -91,25 +89,38 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     }
   }
 
-  // 点击“更多”模型的处理
-  void _onMoreModelsTapped() async {
-    final api =
-        await customNavigate<ApiModel?>(ApiEditPage(), context: context);
-    if (api != null) {
-      setState(() {
-        _isCustomModel = true;
-        _selectedModel = api.modelName;
-      });
+  // 拉取远端模型列表
+  Future<void> _fetchModels() async {
+    if (_selectedApi == null) return;
+    if (_apiKeyController.text.isEmpty) {
+      SillyChatApp.snackbarErr(context, '请先填写API Key!');
+      return;
     }
+    setState(() => _isFetchingModels = true);
+    final list = await Servicehandlerfactory.getHandler(_selectedApi!.provider)
+        .fetchModelList(_apiKeyController.text);
+    if (list.isNotEmpty) {
+      SillyChatApp.snackbar(context, '获取成功，共${list.length}个模型');
+      setState(() {
+        _fetchedModels = list.toSet().toList();
+      });
+    } else {
+      SillyChatApp.snackbar(context, '获取失败或为空');
+    }
+    setState(() => _isFetchingModels = false);
   }
 
   // 引导页完成后的统一数据处理
   void _onOnboardingComplete() async {
+    if (_selectedApi == null) {
+      SillyChatApp.snackbar(context, '未选择服务商!');
+      return;
+    }
     if (_selectedModel == null) {
       SillyChatApp.snackbar(context, '未选择模型!');
       return;
     }
-    if (_apiKeyController.text.isEmpty && !_isCustomModel) {
+    if (_apiKeyController.text.isEmpty) {
       SillyChatApp.snackbar(context, '未输入API Key!');
       return;
     }
@@ -128,10 +139,21 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
       characters.addCharacter(user);
 
+      // 更新选中Api的Key和模型
+      final updatedApi = _selectedApi!.copyWith(
+        apiKey: _apiKeyController.text,
+        modelName: _selectedModel!,
+        models: _fetchedModels.isNotEmpty
+            ? _fetchedModels
+            : [_selectedModel!],
+      );
+      await vault.updateApi(updatedApi);
+      vault.defaultApiId.value = updatedApi.id;
+      vault.defaultModelName.value = _selectedModel!;
+
       vault.isShowOnBoardPage.value = false;
 
       if (_presetFile != null && _presetFile!.path != null) {
-        //导入预设：自动使用第一个api
         final content = await File(_presetFile!.path!).readAsString();
         STConfigImporter.fromJson(json.decode(content), _presetFile!.name);
       }
@@ -230,97 +252,97 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   // 构建 API 设置页面
   Widget _buildApiPage() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final vault = VaultSettingController.of();
+    final apis = vault.apis;
     final textTheme = Theme.of(context).textTheme;
-
-    Widget modelButton(String name, String value) {
-      final isSelected = _selectedModel == value;
-      return InkWell(
-        onTap: () => setState(() {
-          _selectedModel = value;
-          _isCustomModel = false;
-        }),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color:
-                isSelected ? colorScheme.primaryContainer : colorScheme.surface,
-            border: Border.all(
-                color: isSelected ? colorScheme.primary : colorScheme.outline),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            name,
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-                color: isSelected
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-          ),
-        ),
-      );
-    }
-
-    Widget moreButton() {
-      final isSelected = _isCustomModel;
-      return InkWell(
-        onTap: _onMoreModelsTapped,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color:
-                isSelected ? colorScheme.primaryContainer : colorScheme.surface,
-            border: Border.all(
-                color: isSelected ? colorScheme.primary : colorScheme.outline),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            _isCustomModel ? _selectedModel ?? '未知模型' : '更多',
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-                color: isSelected
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-          ),
-        ),
-      );
-    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("选择一个模型", style: textTheme.labelLarge),
+          // 选择服务商
+          Text("选择服务商", style: textTheme.labelLarge),
           const SizedBox(height: 8),
-          modelButton('Gemini 2.5-Pro', 'gemini-2.5-pro'),
-          const SizedBox(height: 8),
-          modelButton('Gemini 2.5-Flash', 'gemini-2.5-flash'),
-          const SizedBox(height: 8),
-          modelButton('DeepSeek-Chat(官方)', 'deepseek-chat'),
-          const SizedBox(height: 8),
-          modelButton('DeepSeek-V3(硅基流动)', 'deepseek-ai/DeepSeek-V3'),
-          const SizedBox(height: 8),
-          moreButton(),
-          const SizedBox(height: 12),
-          if (!_isCustomModel) ...[
-            Text("输入你的 API Key", style: textTheme.labelLarge),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _apiKeyController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                hintText: 'API-KEY',
-                prefixIcon: Icon(Icons.key),
-              ),
+          DropdownButtonFormField<int>(
+            value: _selectedApi != null
+                ? apis.indexWhere((a) => a.id == _selectedApi!.id)
+                : null,
+            decoration: const InputDecoration(
+              hintText: '请选择服务商',
             ),
-          ]
+            items: apis.asMap().entries.map((entry) {
+              final api = entry.value;
+              final handler =
+                  Servicehandlerfactory.getHandler(api.provider);
+              return DropdownMenuItem<int>(
+                value: entry.key,
+                child: Text(
+                  '${api.displayName} (${handler.name})',
+                  style: textTheme.bodyMedium,
+                ),
+              );
+            }).toList(),
+            onChanged: (index) {
+              if (index == null) return;
+              setState(() {
+                _selectedApi = apis[index];
+                _selectedModel = null;
+                _fetchedModels = [];
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // API Key 输入
+          Text("API Key", style: textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _apiKeyController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              hintText: 'API-KEY',
+              prefixIcon: Icon(Icons.key),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 获取模型按钮
+          if (_selectedApi != null)
+            FilledButton.tonalIcon(
+              onPressed: _isFetchingModels ? null : _fetchModels,
+              icon: _isFetchingModels
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child:
+                          CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.cloud_download_outlined, size: 18),
+              label: const Text('获取模型'),
+            ),
+
+          // 模型选择
+          if (_fetchedModels.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text("选择模型", style: textTheme.labelLarge),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _selectedModel,
+              decoration: const InputDecoration(
+                hintText: '请选择模型',
+              ),
+              items: _fetchedModels.map((model) {
+                return DropdownMenuItem<String>(
+                  value: model,
+                  child: Text(model, style: textTheme.bodyMedium),
+                );
+              }).toList(),
+              onChanged: (model) {
+                setState(() => _selectedModel = model);
+              },
+            ),
+          ],
         ],
       ),
     );

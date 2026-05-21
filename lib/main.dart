@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/main_page.dart';
 import 'package:flutter_example/chat-app/mobile_main_page.dart';
 import 'package:flutter_example/chat-app/pages/other/on_boarding_page.dart';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
@@ -104,23 +105,29 @@ class SillyChatApp extends StatelessWidget {
   final LoreBookController loreBooks = Get.put(LoreBookController());
   final StoryController stories = Get.put(StoryController());
 
+  static List<BaseController> getAllControllers() {
+    return [
+      Get.find<SettingController>(),
+      Get.find<VaultSettingController>(),
+      Get.find<PromptController>(),
+      Get.find<CharacterController>(),
+      Get.find<ChatController>(),
+      Get.find<ChatOptionController>(),
+      Get.find<LoreBookController>(),
+      Get.find<StoryController>(),
+    ];
+  }
+
+
   static Future<void> waitAllReadyAndNotify() async {
     isAppLoading.value = true;
     try {
-      await Future.wait([
-        Get.find<SettingController>().ready,
-        Get.find<VaultSettingController>().ready,
-        Get.find<PromptController>().ready,
-        Get.find<CharacterController>().ready,
-        Get.find<ChatController>().ready,
-        Get.find<ChatOptionController>().ready,
-        Get.find<LoreBookController>().ready,
-        Get.find<StoryController>().ready,
-      ]);
+      getAllControllers().forEach((e) => e.markNotReady());
+      await Future.wait(getAllControllers().map((e) => e.ready));
       // 所有 Controller 初始化完成后，在这里执行后续逻辑
       debugPrint("All controllers are ready");
 
-      if(VaultSettingController.of().isFirstOpen.value){
+      if (VaultSettingController.of().isFirstOpen.value) {
         debugPrint("首次进入应用。。。");
         debugPrintStack();
         await InitApp.initData();
@@ -129,15 +136,13 @@ class SillyChatApp extends StatelessWidget {
     } catch (e, s) {
       debugPrint("waitAllReadyAndNotify error: $e");
       debugPrint("$s");
-    } finally {
-
-    }
+    } finally {}
   }
 
   static Future<void> restart() async {
     SettingController.vaultPath = await SettingController.of.getVaultPath();
 
-    waitAllReadyAndNotify();
+    isAppLoading.value = true;
 
     Get.find<CharacterController>().characters.value = [];
     await Get.find<CharacterController>().loadCharacters();
@@ -163,6 +168,13 @@ class SillyChatApp extends StatelessWidget {
 
     Get.find<StoryController>().stories.value = [];
     await Get.find<StoryController>().loadStories();
+
+          if (VaultSettingController.of().isFirstOpen.value) {
+        debugPrint("首次进入应用。。。");
+        debugPrintStack();
+        await InitApp.initData();
+      }
+      isAppLoading.value = false;
   }
 
   static String getVersion() {
@@ -254,6 +266,8 @@ class SillyChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vaultSettings = VaultSettingController.of();
+    final setting = SettingController.of;
     return Obx(() => GetMaterialApp(
           title: 'Silly Chat',
           theme: vaultSettings.themeLight.value,

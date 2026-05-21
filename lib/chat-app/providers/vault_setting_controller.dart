@@ -41,7 +41,7 @@ class VaultSettingController extends BaseController {
   late Rx<MiscSettingModel> miscSetting = MiscSettingModel(
           autoTitle_enabled: false,
           autoTitle_level: 1,
-          autotitleOption: MiscSettingModel.defaultAutoTitleOption,
+          autotitleOption: MiscSettingModel.defaultAutoTitleOption, 
           summaryOption: MiscSettingModel.defaultSummaryOption,
           simulateUserOption: MiscSettingModel.defaultSimulateUserOption,
           genMemOption: MiscSettingModel.defaultGenMemOption)
