@@ -162,7 +162,8 @@ class Openaiservicehandler extends Servicehandler {
 
     String key = api.apiKey;
     String model = api.modelName;
-    String url = api.url + '/chat/completions';
+    
+    String url = api.url.isEmpty? baseUrl+ '/chat/completions' : api.url + '/chat/completions';
     final dioInstance = aihandler.dioInstance;
 
     // 构建请求数据

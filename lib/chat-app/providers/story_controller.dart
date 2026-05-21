@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
 import '../models/category_config.dart';
 import '../models/story_model.dart';
 import 'character_controller.dart';
+import 'chat_controller.dart';
 import 'setting_controller.dart';
 
 class StoryController extends BaseController {
@@ -21,6 +23,7 @@ class StoryController extends BaseController {
     super.onInit();
     await loadStories();
     await loadCategoryConfigs();
+    await _migrateExtraFolders();
     markReady();
   }
 
@@ -183,6 +186,120 @@ class StoryController extends BaseController {
     stories.insert(newIndex, story);
     update();
     saveStories();
+  }
+
+  Future<void> _migrateExtraFolders() async {
+    try {
+      final vaultPath = await Get.find<SettingController>().getVaultPath();
+      final chatsDir = Directory(p.join(vaultPath, 'chats'));
+
+      if (!chatsDir.existsSync()) return;
+
+      final entries = chatsDir.listSync();
+      const knownDirs = {'roles', 'stories'};
+
+      final extraDirs = entries
+          .whereType<Directory>()
+          .where((d) => !knownDirs.contains(p.basename(d.path)))
+          .toList();
+
+      final looseFiles = entries.whereType<File>().toList();
+
+      if (extraDirs.isEmpty && looseFiles.isEmpty) return;
+
+      await ChatController.of.ready;
+
+      for (final extraDir in extraDirs) {
+        await _migrateDirectory(extraDir, vaultPath); 
+      }
+
+      if (looseFiles.isNotEmpty) {
+        await _createStoryFromFiles('未分类', looseFiles, vaultPath);
+      }
+    } catch (e) {
+      print('数据迁移失败: $e');
+    }
+  }
+
+  Future<void> _migrateDirectory(Directory dir, String vaultPath) async {
+    final entries = dir.listSync();
+    final subDirs = entries.whereType<Directory>().toList();
+    final files = entries.whereType<File>().toList();
+
+    for (final subDir in subDirs) {
+      await _migrateDirectory(subDir, vaultPath);
+    }
+
+    if (files.isEmpty) {
+      if (dir.existsSync()) {
+        try {
+          dir.deleteSync();
+        } catch (_) {} 
+      }
+      return;
+    }
+
+    await _createStoryFromFiles(p.basename(dir.path), files, vaultPath);
+
+    if (dir.existsSync()) {
+      try {
+        dir.deleteSync(recursive: true);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _createStoryFromFiles(
+      String name, List<File> files, String vaultPath) async {
+    final story = StoryModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: name,
+      remark: '',
+      story_prompt: '',
+      category: '从旧版本导入'
+    );
+    stories.add(story);
+
+    final targetDirPath = p.join(vaultPath, 'chats', 'stories', story.id);
+    final targetDir = Directory(targetDirPath);
+    if (!targetDir.existsSync()) {
+      targetDir.createSync(recursive: true);
+    }
+
+    final chatController = ChatController.of;
+
+    for (final file in files) {
+      final oldPath = p.canonicalize(file.path);
+      final fileName = p.basename(file.path);
+      var newPath = p.canonicalize(p.join(targetDirPath, fileName));
+
+      int counter = 2;
+      while (File(newPath).existsSync()) {
+        final baseName = p.basenameWithoutExtension(fileName);
+        final extension = p.extension(fileName);
+        newPath = p.canonicalize(
+            p.join(targetDirPath, '$baseName($counter)$extension'));
+        counter++;
+      }
+
+      await file.rename(newPath);
+
+      final meta = chatController.chatIndex[oldPath];
+      if (meta != null) {
+        chatController.chatIndex.remove(oldPath);
+        chatController.chatIndex[newPath] = meta.copyWith(path: newPath);
+      }
+
+      for (int i = 0; i < chatController.recentChats.length; i++) {
+        if (p.equals(p.canonicalize(chatController.recentChats[i].path), oldPath)) {
+          chatController.recentChats[i] =
+              chatController.recentChats[i].copyWith(path: newPath);
+        }
+      }
+    }
+
+    await saveStories();
+    await chatController.saveChatIndex();
+    await chatController.saveRecentChats();
   }
 
   static StoryController of() {
