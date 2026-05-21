@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
@@ -58,7 +59,10 @@ class InitApp {
     final char = CharacterModel.empty().copyWith(
       roleName: "默认助手",
       bindOption: PackageValue(emptyOption.id),
-      firstMessage: "欢迎使用SillyChat。\n点击左上角按钮打开菜单"
+      archive: Constants.DEFAULT_AGENT_PROMPT,
+      firstMessage: """你好，我是 SillyChat 内置助手 👋  
+我可以帮你快速找到功能入口，比如切换 API、导入 SillyTavern 内容、查找预设，或者介绍这个应用的基本用法。  
+如果你不知道从哪里开始，也可以直接问我：“怎么切换模型？”或者“预设在哪？”"""
     );
     CharacterController.of.addCharacter(char);
 

@@ -275,7 +275,11 @@ factory ChatOptionModel.roleplay({String? name}) {
           PromptModel(id: id, 
           content: '''现在的时间是: {{time}}
 
-{{extraprompt}}''', role: 'system', name: 'Base'),
+{{archive}}
+{{extraprompt}}
+
+用户名称:{{user}}
+''', role: 'system', name: 'Base'),
           PromptModel(
               id: id+1,
               content: 'messageList',
