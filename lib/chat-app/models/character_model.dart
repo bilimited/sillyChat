@@ -43,7 +43,7 @@ enum MessageStyle {
   String toJson() => toString().split('.').last;
 }
 
-class CharacterModel {
+class CharacterModel { 
   final int id;
   MessageStyle messageStyle = MessageStyle.common;
 

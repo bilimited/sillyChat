@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/pages/log_page.dart';
 import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/regex/edit_global_regex.dart';
 import 'package:flutter_example/chat-app/pages/settings/appearance_page.dart';
+import 'package:flutter_example/chat-app/pages/settings/import_export_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/import_from_sillytavern_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/misc_setting_page.dart';
 import 'package:flutter_example/chat-app/pages/settings/other_setting_page.dart';
@@ -352,6 +353,12 @@ class _SettingPageState extends State<SettingPage>
             subtitle: '查看应用内运行日志（主要是API请求记录）',
             icon: Icons.clear_all,
             onTap: () => customNavigate(LogPage(), context: context),
+          ),
+          _buildSettingTile(
+            title: '导入导出',
+            subtitle: '导出和导入仓库数据备份',
+            icon: Icons.import_export,
+            onTap: () => customNavigate(const ImportExportPage(), context: context),
           ),
           _buildSettingTile(
             title: '其他设置',
