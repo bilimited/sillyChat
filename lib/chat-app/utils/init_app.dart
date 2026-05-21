@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
@@ -49,7 +50,7 @@ class InitApp {
     ]);
     final id = DateTime.now().millisecondsSinceEpoch;
     final emptyOption = ChatOptionModel.base(name: '空白预设').copyWith(false,id: id);
-    
+
     ChatOptionController.of().addChatOption(ChatOptionModel.roleplay().copyWith(false,id: id+1));
     ChatOptionController.of().addChatOption(emptyOption);
     
@@ -63,6 +64,7 @@ class InitApp {
 
     final (chat,fp) = await ChatController.of.createChatForCharacter(char);
     ChatController.of.openChat(fp);
+    ChatController.of.pushRecentChat(fp, ChatMetaModel.fromChatModel(chat, fp));
 
     await VaultSettingController.of().saveSettings();
     await ChatOptionController.of().saveChatOptions();

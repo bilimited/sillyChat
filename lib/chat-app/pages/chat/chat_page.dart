@@ -16,7 +16,6 @@ import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/simple_chat_file_page.dart';
-import 'package:flutter_example/chat-app/pages/welcome_page.dart';
 
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
@@ -493,17 +492,17 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     // 防遮挡设计
-    return 
-    // chat.messages.isEmpty || message == chat.messages.first
-    //     ? Column(
-    //         children: [
-    //           SizedBox(
-    //             height: 104,
-    //           ),
-    //           messageBubble,
-    //         ],
-    //       )
-    //     : 
+    return
+        // chat.messages.isEmpty || message == chat.messages.first
+        //     ? Column(
+        //         children: [
+        //           SizedBox(
+        //             height: 104,
+        //           ),
+        //           messageBubble,
+        //         ],
+        //       )
+        //     :
         messageBubble;
   }
 
@@ -767,7 +766,7 @@ class _ChatPageState extends State<ChatPage> {
                                 style: sessionController.aiState.style),
                             messages.length == 0 ? null : messages[0])
                         : const SizedBox.shrink());
-                  } else if(index == messages.length + 1){
+                  } else if (index == messages.length + 1) {
                     return NewChatScreen(chat: chat);
                   } else {
                     return Builder(builder: (context) {
@@ -1120,9 +1119,11 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildEmptyScreen() {
     return Scaffold(
-      appBar: AppBar(leading: _buildDrawerButton()),
-      body: WelcomePage(),
-    );
+        appBar: AppBar(leading: _buildDrawerButton()),
+        body: Center(
+            child:
+                Text("如果你看到了这个，一定是出了点啥问题。请点击左上角菜单按钮创建新聊天吧。")) //WelcomePage(),
+        );
   }
 
   Widget _buildCharacterWheelOverlay() {

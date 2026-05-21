@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
-import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
@@ -84,10 +83,6 @@ class ChatModel {
       return null;
     }
   }
-
-  FolderSettingModel? get folderSettingModel => folderSettingPath != null
-      ? ChatController.of.getFolderSetting(folderSettingPath!)
-      : null;
 
   String? get backgroundOrCharBackground =>
       backgroundImage ?? assistant.backgroundImage ?? null;

@@ -188,8 +188,6 @@ class ChatSessionController extends BaseController {
       _chat.value = ChatModel.fromJson(data);
       //chat.fileId = 0; // fileId字段已弃用
       chat.file = chatFile;
-      chat.folderSettingPath =
-          ChatController.of.getFolderSettingByChatPath(chatPath).$2;
     } else {
       //Get.snackbar('聊天加载失败.', '聊天文件不存在');
     }

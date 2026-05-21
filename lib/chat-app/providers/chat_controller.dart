@@ -7,7 +7,6 @@ import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
-import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
@@ -70,9 +69,6 @@ class ChatController extends BaseController {
   static const int recentChatLimit = 50;
   final RxList<ChatMetaModel> recentChats = <ChatMetaModel>[].obs;
 
-  final RxMap<String, FolderSettingModel> folderSettings =
-      <String, FolderSettingModel>{}.obs;
-
   // 已打开的聊天
   final RxMap<String, ChatSessionController?> openedChat =
       <String, ChatSessionController>{}.obs;
@@ -91,8 +87,6 @@ class ChatController extends BaseController {
 
     await loadChatIndex();
     await loadRecentChats();
-
-    folderSettings.value = await getAllFolderSetting();
 
     ever(fileDeleteEvent, (ev) {
       if (ev == null) return;
@@ -277,43 +271,6 @@ class ChatController extends BaseController {
     }
   }
 
-  (FolderSettingModel? setting, String? bestDir, String? bestKey)
-      getFolderSettingByChatPath(String chatPath) {
-    // 1. 获取聊天文件所在的文件夹路径 (例如: A/B/C)
-    String chatDir = p.canonicalize(p.dirname(chatPath));
-
-    String? bestKey;
-    String? deepestMatchDir;
-
-    folderSettings.keys.forEach((key) {
-      // 1. 获取该配置所属的目录并规范化
-      final currentDir = p.canonicalize(p.dirname(key));
-
-      // 2. 判断 currentDir 是否是 chatDir 的父目录或就是同一个目录
-      bool isParent =
-          p.equals(currentDir, chatDir) || p.isWithin(currentDir, chatDir);
-
-      if (isParent) {
-        // 3. 如果是父目录，则比较深度（路径越长，层级越深，距离文件越近）
-        if (deepestMatchDir == null ||
-            currentDir.length > deepestMatchDir!.length) {
-          deepestMatchDir = currentDir;
-          bestKey = key;
-        }
-      }
-    });
-
-    if (bestKey == null) {
-      return (null, null, null);
-    }
-
-    return (
-      folderSettings[bestKey],
-      deepestMatchDir,
-      bestKey
-    ); // 如果整条路径都没有找到设置，返回 null
-  }
-
   // 更新一条聊天索引，用于在保存聊天的同时调用
   Future<void> updateChatMeta(String path, ChatMetaModel chatMeta) async {
     chatIndex[p.canonicalize(path)] = chatMeta;
@@ -321,69 +278,8 @@ class ChatController extends BaseController {
     await saveChatIndex();
   }
 
-  bool isFolderSettingExist(String path) {
-    path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
-    return folderSettings.containsKey(p.canonicalize(path));
-  }
 
-  Future<void> createFolderSetting(String path) async {
-    path = p.join(path, Constants.FOLDER_SETTING_FILE_NAME);
-    File f = File(path);
-    f.createSync();
 
-    final setting = FolderSettingModel(id: Uuid().v8g(), path: path);
-    folderSettings[p.canonicalize(path)] = setting;
-
-    f.writeAsStringSync(json.encode(setting.toJson()));
-
-    print("创建了一个FolderSetting!");
-  }
-
-  Future<void> removeFolderSetting(String path) async {
-    path = p.canonicalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
-    File f = File(path);
-    f.deleteSync();
-
-    folderSettings.remove(path);
-  }
-
-  FolderSettingModel? getFolderSetting(String path) {
-    path = p.canonicalize(p.join(path, Constants.FOLDER_SETTING_FILE_NAME));
-    return folderSettings[path];
-  }
-
-  Future<void> saveFolderSetting(FolderSettingModel setting) async {
-    folderSettings[p.canonicalize(setting.path)] = setting;
-
-    File f = File(setting.path);
-    f.writeAsStringSync(json.encode(setting.toJson()));
-  }
-
-  Future<Map<String, FolderSettingModel>> getAllFolderSetting() async {
-    final directory = await Get.find<SettingController>().getVaultPath();
-    final path = p.join(directory, Constants.CHAT_FOLDER_NAME);
-    // List<FolderSettingModel> settings = [];
-    Map<String, FolderSettingModel> settings = {};
-
-    try {
-      final dir = Directory(p.canonicalize(path));
-      if (!await dir.exists()) return {};
-
-      await for (final entity
-          in dir.list(recursive: true, followLinks: false)) {
-        if (entity is File && Fileutils.isFolderSettingFile(entity.path)) {
-          final filePath = p.canonicalize(entity.path);
-          final file = File(filePath);
-          final setting =
-              FolderSettingModel.fromJson(json.decode(file.readAsStringSync()));
-          settings[filePath] = setting;
-        }
-      }
-    } catch (e) {
-      print('扫描文件夹设置失败: $e');
-    }
-    return settings;
-  }
 
   ChatMetaModel? getIndex(String _path) {
     final meta = chatIndex[p.canonicalize(_path)];
