@@ -1,17 +1,11 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
-import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
 import 'package:flutter_example/chat-app/pages/character/contacts_page.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_file_manager.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/recent_chat_page.dart';
-import 'package:flutter_example/chat-app/pages/chat/search_page.dart';
-import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_manage_page.dart';
-import 'package:flutter_example/chat-app/pages/other/api_manager.dart';
 import 'package:flutter_example/chat-app/pages/other/api_selector.dart';
 import 'package:flutter_example/chat-app/pages/settings/setting_page.dart';
 import 'package:flutter_example/chat-app/pages/story/story_management_page.dart';
@@ -22,7 +16,6 @@ import 'package:flutter_example/chat-app/providers/chat_session_controller.dart'
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
 import 'package:marquee/marquee.dart';

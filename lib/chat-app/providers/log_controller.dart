@@ -1,4 +1,5 @@
 // log_controller.dart
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:get/get.dart';
 
 enum LogLevel {
@@ -28,7 +29,7 @@ class LogEntry {
       });
 }
 
-class LogController extends GetxController {
+class LogController extends BaseController {
   static LogController get to => Get.find<LogController>();
 
   final RxList<LogEntry> _logs = <LogEntry>[].obs;

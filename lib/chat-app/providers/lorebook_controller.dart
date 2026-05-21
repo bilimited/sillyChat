@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:get/get.dart';
 
-class LoreBookController extends GetxController {
+class LoreBookController extends BaseController {
   final RxList<LorebookModel> lorebooks = <LorebookModel>[].obs;
 
   final Rx<LorebookItemModel?> lorebookItemClipboard =
@@ -21,9 +22,10 @@ class LoreBookController extends GetxController {
   final String fileName = 'lorebooks.json';
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    loadLorebooks();
+    await loadLorebooks();
+    markReady();
   }
 
   // 加载世界书和激活的世界书ID

@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/models/folder_setting_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
@@ -24,7 +25,7 @@ import 'package:path/path.dart' as p;
 
 // 聊天索引和聊天文件综合管理器
 // TODO:把关于聊天的文件操作都塞到这里。
-class ChatController extends GetxController {
+class ChatController extends BaseController {
   final RxList<ChatModel> chats = <ChatModel>[].obs;
 
   final String fileName = 'chats.json';
@@ -88,8 +89,8 @@ class ChatController extends GetxController {
   void onInit() async {
     super.onInit();
 
-    loadChatIndex();
-    loadRecentChats();
+    await loadChatIndex();
+    await loadRecentChats();
 
     folderSettings.value = await getAllFolderSetting();
 
@@ -98,6 +99,8 @@ class ChatController extends GetxController {
       chatIndex.remove(ev!.filePath);
       removeRecentChatByPath(ev.filePath);
     });
+
+    markReady();
   }
 
   /// ----迁移用

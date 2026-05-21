@@ -6,10 +6,12 @@ import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/models/settings/misc_setting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/models/settings/prompt_setting_model.dart';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/themes.dart';
 import 'package:flutter_example/chat-app/utils/fontManager.dart';
+import 'package:flutter_example/chat-app/utils/init_app.dart';
 import 'package:flutter_example/chat-app/widgets/theme_selector.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
@@ -17,7 +19,7 @@ import 'dart:io';
 import '../models/api_model.dart';
 
 // 库配置
-class VaultSettingController extends GetxController {
+class VaultSettingController extends BaseController {
   final String vaultSettingFileName = 'settings.json';
 
   final RxList<ApiModel> apis = <ApiModel>[].obs;
@@ -46,6 +48,7 @@ class VaultSettingController extends GetxController {
       .obs;
 
   final RxBool isShowOnBoardPage = false.obs;
+  final RxBool isFirstOpen = false.obs; // 该项目是否第一次启动
 
   late Rx<PromptSettingModel> promptSettingModel = PromptSettingModel().obs;
 
@@ -72,47 +75,10 @@ class VaultSettingController extends GetxController {
   void onInit() async {
     super.onInit();
     await loadSettings();
+    markReady();
   }
 
-  void addInitData() {
-    apis.addAll([
-      ApiModel(
-          id: 1,
-          apiKey: '',
-          displayName: 'deepseek',
-          modelName: '',
-          url: 'url',
-          provider: ServiceType.deepseek),
-      ApiModel(
-          id: 2,
-          apiKey: '',
-          displayName: 'siliconflow',
-          modelName: '',
-          url: 'url',
-          provider: ServiceType.siliconflow),
-      ApiModel(
-          id: 3,
-          apiKey: '',
-          displayName: 'google',
-          modelName: '',
-          url: 'url',
-          provider: ServiceType.google),
-      ApiModel(
-          id: 4,
-          apiKey: '',
-          displayName: 'kimi',
-          modelName: '',
-          url: 'url',
-          provider: ServiceType.kimi),
-      ApiModel(
-          id: 5,
-          apiKey: '',
-          displayName: 'openai',
-          modelName: '',
-          url: 'url',
-          provider: ServiceType.openai),
-    ]);
-  }
+
 
   // 从本地加载设置
   Future<void> loadSettings() async {
@@ -158,8 +124,9 @@ class VaultSettingController extends GetxController {
       } else {
         // 文件不存在：证明初次启动
         isShowOnBoardPage.value = true;
+        isFirstOpen.value = true;
+        debugPrint("检测到初次启动");
         displaySettingModel.value = ChatDisplaySettingModel();
-        addInitData();
       }
 
       if (displaySettingModel.value.CustomFontPath != null &&

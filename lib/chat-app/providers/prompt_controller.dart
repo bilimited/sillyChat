@@ -1,18 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:get/get.dart';
 import '../models/prompt_model.dart';
 
-class PromptController extends GetxController {
+class PromptController extends BaseController {
   final RxList<PromptModel> prompts = <PromptModel>[].obs;
   final String fileName = 'prompts.json';
 
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    loadPrompts();
+    await loadPrompts();
+    markReady();
   }
 
   // 从本地加载提示词数据

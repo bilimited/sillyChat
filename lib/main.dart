@@ -17,7 +17,7 @@ import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/test.dart';
+import 'package:flutter_example/chat-app/utils/init_app.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart'
     hide AndroidResource;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -47,7 +47,7 @@ void main() async {
   await SettingController.loadVaultName();
   SillyChatApp.packageInfo = await PackageInfo.fromPlatform();
   runApp(SillyChatApp());
-  SettingController.loadInitialData();
+  //await SettingController.loadInitialData();
 
   if (Platform.isAndroid) {
     initBackgroundService();
@@ -59,6 +59,8 @@ void main() async {
 
     return false;
   };
+  // 显示加载界面
+  await SillyChatApp.waitAllReadyAndNotify();
 }
 
 Future<void> initBackgroundService() async {
@@ -88,6 +90,8 @@ class SillyChatApp extends StatelessWidget {
 
   static late PackageInfo packageInfo;
 
+  static RxBool isAppLoading = true.obs;
+
   SillyChatApp({super.key});
   final SettingController setting = Get.put(SettingController());
   final VaultSettingController vaultSettings =
@@ -100,8 +104,40 @@ class SillyChatApp extends StatelessWidget {
   final LoreBookController loreBooks = Get.put(LoreBookController());
   final StoryController stories = Get.put(StoryController());
 
+  static Future<void> waitAllReadyAndNotify() async {
+    isAppLoading.value = true;
+    try {
+      await Future.wait([
+        Get.find<SettingController>().ready,
+        Get.find<VaultSettingController>().ready,
+        Get.find<PromptController>().ready,
+        Get.find<CharacterController>().ready,
+        Get.find<ChatController>().ready,
+        Get.find<ChatOptionController>().ready,
+        Get.find<LoreBookController>().ready,
+        Get.find<StoryController>().ready,
+      ]);
+      // 所有 Controller 初始化完成后，在这里执行后续逻辑
+      debugPrint("All controllers are ready");
+
+      if(VaultSettingController.of().isFirstOpen.value){
+        debugPrint("首次进入应用。。。");
+        debugPrintStack();
+        await InitApp.initData();
+      }
+      isAppLoading.value = false;
+    } catch (e, s) {
+      debugPrint("waitAllReadyAndNotify error: $e");
+      debugPrint("$s");
+    } finally {
+
+    }
+  }
+
   static Future<void> restart() async {
     SettingController.vaultPath = await SettingController.of.getVaultPath();
+
+    waitAllReadyAndNotify();
 
     Get.find<CharacterController>().characters.value = [];
     await Get.find<CharacterController>().loadCharacters();
@@ -230,11 +266,15 @@ class SillyChatApp extends StatelessWidget {
                     .copyWith(textScaler: TextScaler.linear(0.95)),
                 child: child!);
           },
-          home: vaultSettings.isShowOnBoardPage.value
-              ? OnBoardingPage()
-              : isDesktop()
-                  ? const MainPage()
-                  : const MainPageMobile(),
+          home: isAppLoading.value
+              ? Scaffold(
+                  body: SizedBox.shrink(),
+                )
+              : vaultSettings.isShowOnBoardPage.value
+                  ? OnBoardingPage()
+                  : isDesktop()
+                      ? const MainPage()
+                      : const MainPageMobile(),
         ));
   }
 }

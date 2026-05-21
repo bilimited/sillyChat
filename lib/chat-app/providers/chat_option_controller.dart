@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:get/get.dart';
 import '../models/chat_option_model.dart';
 import 'setting_controller.dart';
 
-class ChatOptionController extends GetxController {
+class ChatOptionController extends BaseController {
   final RxList<ChatOptionModel> chatOptions = <ChatOptionModel>[].obs;
   final String fileName = 'chat_options.json';
 
@@ -12,9 +13,10 @@ class ChatOptionController extends GetxController {
       chatOptions.isEmpty ? ChatOptionModel.roleplay() : chatOptions[0];
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    loadChatOptions();
+    await loadChatOptions();
+    markReady();
   }
 
   // 从本地加载聊天选项数据

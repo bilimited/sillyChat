@@ -193,10 +193,10 @@ class CharacterModel {
   factory CharacterModel.empty() {
     return CharacterModel(
         id: DateTime.now().microsecondsSinceEpoch,
-        remark: 'remark',
+        remark: '',
         roleName: 'roleName',
-        avatar: 'avatar',
-        category: 'category');
+        avatar: '',
+        category: '');
   }
 
   CharacterModel copyWith({

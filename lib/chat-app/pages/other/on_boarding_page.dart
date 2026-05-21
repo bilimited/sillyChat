@@ -134,10 +134,6 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
         //导入预设：自动使用第一个api
         final content = await File(_presetFile!.path!).readAsString();
         STConfigImporter.fromJson(json.decode(content), _presetFile!.name);
-      } else {
-        // 不导入预设：创建一个空预设，使用第一个Api
-        await ChatOptionController.of()
-            .addChatOption(ChatOptionModel.roleplay());
       }
 
       if (_characterCardImage != null) {

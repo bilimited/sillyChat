@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:get/get.dart';
 import '../models/category_config.dart';
 import '../models/story_model.dart';
 import 'character_controller.dart';
 import 'setting_controller.dart';
 
-class StoryController extends GetxController {
+class StoryController extends BaseController {
   final RxList<StoryModel> stories = <StoryModel>[].obs;
   final String fileName = 'stories.json';
 
@@ -16,10 +17,11 @@ class StoryController extends GetxController {
   StoryModel? get defaultStory => stories.isEmpty ? null : stories[0];
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    loadStories();
-    loadCategoryConfigs();
+    await loadStories();
+    await loadCategoryConfigs();
+    markReady();
   }
 
   // 从本地加载故事数据

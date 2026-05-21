@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
 import '../models/category_config.dart';
 import '../models/character_model.dart';
 
-class CharacterController extends GetxController {
+class CharacterController extends BaseController {
   final RxList<CharacterModel> characters = <CharacterModel>[].obs;
   final String fileName = 'characters.json';
 
@@ -53,10 +54,11 @@ class CharacterController extends GetxController {
   }
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    loadCharacters();
-    loadCategoryConfigs();
+    await loadCharacters();
+    await loadCategoryConfigs();
+    markReady();
   }
 
   // 从本地加载角色数据
@@ -96,6 +98,7 @@ class CharacterController extends GetxController {
     try {
       final directory = await Get.find<SettingController>().getVaultPath();
       final file = File('${directory}/$fileName');
+      
 
       final String jsonString = json.encode(
         characters.map((char) => char.toJson()).toList(),
