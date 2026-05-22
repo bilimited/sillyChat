@@ -48,8 +48,13 @@ abstract class Promptformatter {
       String prompt, CharacterModel character) {
     prompt = prompt.replaceAll(
         RegExp(r'\{\{char\}\}', caseSensitive: false), character.roleName);
+
     prompt = prompt.replaceAll('{{brief}}', character.brief ?? "");
-    prompt = prompt.replaceAll('{{archive}}', character.archive);
+    prompt = prompt.replaceAll(
+        '{{archive}}',
+        character.archive.isNotEmpty
+            ? character.archive
+            : (character.brief ?? ""));
 
     return prompt;
   }

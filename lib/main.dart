@@ -154,6 +154,7 @@ class SillyChatApp extends StatelessWidget {
     ChatController.of.recentChats.clear();
     ChatController.of.currentPath.value = '';
     ChatController.of.currentChat.value = ChatSessionController.uninitialized();
+    ChatController.of.loadRecentChats();
     if (ChatController.of.pageController.hasClients) {
       ChatController.of.pageController.animateToPage(0,
           duration: Durations.medium1, curve: Curves.easeInOut);

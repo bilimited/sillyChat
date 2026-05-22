@@ -199,6 +199,11 @@ class ChatSessionController extends BaseController {
   }
 
   Future<void> saveChat() async {
+
+    final seen = <int>{};
+    // 简单去重
+    chat.characterIds.retainWhere((e) => seen.add(e));
+
     final createPath = chat.pathToCreate;
     onChatUpdate(chat);
 
@@ -372,10 +377,6 @@ class ChatSessionController extends BaseController {
   /// 仅群聊模式下可用
   /// 让AI直接发送一条消息，无需输入问题
   Future<void> onGroupMessage(CharacterModel assistant) async {
-    // 将发送者的ID自动添加到成员列表中
-    if (!chat.characterIds.contains(assistant.id)) {
-      chat.characterIds.add(assistant.id);
-    }
 
     await for (var content in _getResponse(
       overrideOption: assistant.bindOption,

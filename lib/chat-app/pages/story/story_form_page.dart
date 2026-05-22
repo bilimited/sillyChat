@@ -202,11 +202,14 @@ class _StoryFormPageState extends State<StoryFormPage>
     ));
   }
 
-  void _onCreateAndBindLorebook() {
+  void _onCreateAndBindLorebook() async {
     final lb = LorebookModel.emptyWorldBook();
     _lorebookController.addLorebook(lb);
     setState(() => _lorebookIds.add(lb.id));
-    customNavigate(LoreBookEditorPage(lorebook: lb), context: context);
+    await customNavigate(LoreBookEditorPage(lorebook: lb), context: context);
+        setState(() {
+      
+    });
   }
 
   // --- Tab views ---
@@ -295,7 +298,7 @@ class _StoryFormPageState extends State<StoryFormPage>
                       leading: AvatarImage.round(char.avatar, 18),
                       title: Text(char.roleName),
                       subtitle: char.brief?.isNotEmpty == true
-                          ? Text(char.brief!)
+                          ? Text(char.brief!,maxLines: 1,)
                           : null,
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline),

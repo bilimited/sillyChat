@@ -525,11 +525,14 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     ));
   }
 
-  void _onCreateLorebook() {
+  void _onCreateLorebook() async {
     final lb = LorebookModel.emptyCharacterBook();
     _lorebookController.addLorebook(lb);
     setState(() => _character?.lorebookIds.add(lb.id));
-    customNavigate(LoreBookEditorPage(lorebook: lb), context: context);
+    await customNavigate(LoreBookEditorPage(lorebook: lb), context: context);
+    setState(() {
+      
+    });
   }
 
   void _onCreateMemory() {
