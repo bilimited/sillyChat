@@ -55,7 +55,6 @@ class ImportExportPage extends StatelessWidget {
       return;
     }
 
-    // Step 1: Compress vault into temp ZIP
     final vaultName = p.basename(vaultPath);
     final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final zipFileName = '${vaultName}_$dateStr.zip';
@@ -93,29 +92,49 @@ class ImportExportPage extends StatelessWidget {
       return;
     }
 
-    // Step 2: Let user choose save location
-    final selectedDir = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: '选择保存位置',
-    );
+    // Android 用 saveFile()，桌面端用 getDirectoryPath()
+    if (Platform.isAndroid || Platform.isIOS) {
+      // saveFile 会弹出系统文件保存对话框，无需手动申请权限
+      final savePath = await FilePicker.platform.saveFile(
+        dialogTitle: '选择保存位置',
+        fileName: zipFileName,
+        type: FileType.custom,
+        allowedExtensions: ['zip'],
+        bytes: await File(tempZipPath).readAsBytes(), // 部分平台需要传 bytes
+      );
 
-    if (selectedDir == null) {
-      await tempDir.delete(recursive: true);
-      return;
-    }
-
-    // Step 3: Copy to chosen directory
-    try {
-      final destFile = File(p.join(selectedDir, zipFileName));
-      await File(tempZipPath).copy(destFile.path);
-      await tempDir.delete(recursive: true);
-
-      final fileSize = await destFile.length();
-      Get.snackbar('导出成功', '已保存至 ${destFile.path} (${_getSizeString(fileSize)})');
-    } catch (e) {
       try {
         await tempDir.delete(recursive: true);
       } catch (_) {}
-      Get.snackbar('导出失败', '$e');
+
+      if (savePath == null) return; // 用户取消
+
+      Get.snackbar('导出成功', '已保存至 $savePath');
+    } else {
+      // 桌面端原逻辑
+      final selectedDir = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: '选择保存位置',
+      );
+
+      if (selectedDir == null) {
+        await tempDir.delete(recursive: true);
+        return;
+      }
+
+      try {
+        final destFile = File(p.join(selectedDir, zipFileName));
+        await File(tempZipPath).copy(destFile.path);
+        await tempDir.delete(recursive: true);
+
+        final fileSize = await destFile.length();
+        Get.snackbar(
+            '导出成功', '已保存至 ${destFile.path} (${_getSizeString(fileSize)})');
+      } catch (e) {
+        try {
+          await tempDir.delete(recursive: true);
+        } catch (_) {}
+        Get.snackbar('导出失败', '$e');
+      }
     }
   }
 
@@ -153,7 +172,8 @@ class ImportExportPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认导入'),
-        content: Text('文件大小: ${_getSizeString(fileSize)}\n\n导入将覆盖当前仓库中的所有数据，是否继续？'),
+        content:
+            Text('文件大小: ${_getSizeString(fileSize)}\n\n导入将覆盖当前仓库中的所有数据，是否继续？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -235,13 +255,15 @@ class ImportExportPage extends StatelessWidget {
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: colorScheme.onPrimaryContainer, size: 28),
+                  child: Icon(icon,
+                      color: colorScheme.onPrimaryContainer, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ],
@@ -266,7 +288,8 @@ class ImportExportPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       )
                     : const ButtonStyle(
-                        padding: WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 12)),
+                        padding: WidgetStatePropertyAll(
+                            EdgeInsets.symmetric(vertical: 12)),
                       ),
               ),
             ),
