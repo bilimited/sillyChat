@@ -582,68 +582,71 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     return PopScope(
       onPopInvokedWithResult: (didPop, result) => _save(),
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(isEditPlayer ? '编辑用户' : (isEditMode ? '编辑角色' : '新建角色')),
-          bottom: (isEditPlayer || isTemporaryCharacter)
-              ? null
-              : TabBar(controller: _tabController, tabs: const [
-                  Tab(text: '基本信息'),
-                  Tab(text: '其他设置'),
-                  Tab(text: '关系')
-                ]),
-          actions: isEditPlayer
-              ? []
-              : [
-                  if (isTemporaryCharacter && isEditMode)
-                    IconButton(
-                        icon: const Icon(Icons.publish),
-                        tooltip: '转为全局角色',
-                        onPressed: _promoteToGlobal),
-                  if (!isTemporaryCharacter)
-                    IconButton(
-                        icon: const Icon(Icons.image_outlined),
-                        onPressed: () => customNavigate(
-                            CharacterGalleryPage(
-                                path:
-                                    "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
-                            context: context)),
-                  if (!isTemporaryCharacter)
-                    IconButton(
-                        icon: const Icon(Icons.copy_all),
-                        onPressed: () {
-                          if (_character != null) {
-                            _characterController.characterCilpBoard.value =
-                                _character!.copyWith(
-                                    roleName: '${_character!.roleName}_副本');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('已复制到剪贴板')));
-                          }
-                        }),
-                  if (isEditMode)
-                    IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: _deleteCharacter),
-                ],
+          appBar: AppBar(
+            title: Text(isEditPlayer ? '编辑用户' : (isEditMode ? '编辑角色' : '新建角色')),
+            bottom: (isEditPlayer || isTemporaryCharacter)
+                ? null
+                : TabBar(controller: _tabController, tabs: const [
+                    Tab(text: '基本信息'),
+                    Tab(text: '其他设置'),
+                    Tab(text: '关系')
+                  ]),
+            actions: isEditPlayer
+                ? []
+                : [
+                    if (isTemporaryCharacter && isEditMode)
+                      IconButton(
+                          icon: const Icon(Icons.publish),
+                          tooltip: '转为全局角色',
+                          onPressed: _promoteToGlobal),
+                    if (!isTemporaryCharacter)
+                      IconButton(
+                          icon: const Icon(Icons.image_outlined),
+                          onPressed: () => customNavigate(
+                              CharacterGalleryPage(
+                                  path:
+                                      "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
+                              context: context)),
+                    if (!isTemporaryCharacter)
+                      IconButton(
+                          icon: const Icon(Icons.copy_all),
+                          onPressed: () {
+                            if (_character != null) {
+                              _characterController.characterCilpBoard.value =
+                                  _character!.copyWith(
+                                      roleName: '${_character!.roleName}_副本');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('已复制到剪贴板')));
+                            }
+                          }),
+                    if (isEditMode)
+                      IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: _deleteCharacter),
+                  ],
+          ),
+          body: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: isEditPlayer
+                  ? _buildPlayerSetting()
+                  : isTemporaryCharacter
+                      ? _buildBasicInfoTab()
+                      : TabBarView(controller: _tabController, children: [
+                          _buildBasicInfoTab(),
+                          _buildSettingsTab(),
+                          Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: EditRelationship(
+                                  character: _character,
+                                  relations: _character?.relations ?? {},
+                                  onChanged: (r) =>
+                                      setState(() => _character?.relations = r))),
+                        ]),
+            ),
+          ),
         ),
-        body: Form(
-          key: _formKey,
-          child: isEditPlayer
-              ? _buildPlayerSetting()
-              : isTemporaryCharacter
-                  ? _buildBasicInfoTab()
-                  : TabBarView(controller: _tabController, children: [
-                      _buildBasicInfoTab(),
-                      _buildSettingsTab(),
-                      Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: EditRelationship(
-                              character: _character,
-                              relations: _character?.relations ?? {},
-                              onChanged: (r) =>
-                                  setState(() => _character?.relations = r))),
-                    ]),
-        ),
-      ),
+      
     );
   }
 

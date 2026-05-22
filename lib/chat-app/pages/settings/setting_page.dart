@@ -366,7 +366,9 @@ class _SettingPageState extends State<SettingPage>
             icon: Icons.more_horiz,
             onTap: () => customNavigate(OtherSettingsPage(), context: context),
           ),
+          
         ]),
+        SizedBox(height: 64,),
       ],
     );
   }

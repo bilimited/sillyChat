@@ -522,14 +522,16 @@ class _StoryFormPageState extends State<StoryFormPage>
             ],
           ),
         ),
-        body: Form(
-          key: _formKey,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildBasicInfoTab(),
-              _buildAdvancedTab(),
-            ],
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildBasicInfoTab(),
+                _buildAdvancedTab(),
+              ],
+            ),
           ),
         ),
       ),

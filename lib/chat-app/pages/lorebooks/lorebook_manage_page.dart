@@ -71,22 +71,6 @@ class LoreBookManagerPage extends StatelessWidget {
         final filteredLorebooks =
             allLorebooks.where((lb) => lb.type == _selectedType.value).toList();
 
-        if (filteredLorebooks.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  '暂无${_getTypeLabel(_selectedType.value)}',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          );
-        }
-
         return NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
@@ -113,7 +97,19 @@ class LoreBookManagerPage extends StatelessWidget {
               ),
             ];
           },
-          body: ReorderableListView.builder(
+          body: filteredLorebooks.isEmpty ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  '暂无${_getTypeLabel(_selectedType.value)}',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ) : ReorderableListView.builder(
             padding: const EdgeInsets.only(top: 8, bottom: 80,left: 8,right: 8),
             itemCount: filteredLorebooks.length,
             onReorder: (int oldIndex, int newIndex) {
