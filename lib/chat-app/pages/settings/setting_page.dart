@@ -18,6 +18,8 @@ import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/common/alert_card.dart';
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
+import 'package:flutter_example/chat-app/widgets/settings/settings_nav_tile.dart';
+import 'package:flutter_example/chat-app/widgets/settings/settings_section.dart';
 import 'package:get/get.dart';
 import '../../providers/setting_controller.dart';
 import '../../providers/vault_setting_controller.dart';
@@ -30,9 +32,7 @@ class SettingPage extends StatefulWidget {
   State<SettingPage> createState() => _SettingPageState();
 }
 
-class _SettingPageState extends State<SettingPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _SettingPageState extends State<SettingPage> {
   late CharacterController _characterController = CharacterController.of;
   final SettingController _settingController = Get.find();
   final VaultSettingController _vaultSettingController = Get.find();
@@ -43,7 +43,6 @@ class _SettingPageState extends State<SettingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     webDav.init();
   }
 
@@ -117,8 +116,6 @@ class _SettingPageState extends State<SettingPage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // const Text(),
-            // SizedBox(height: 15,),
             ModernAlertCard(
               type: ModernAlertCardType.warning,
               title: '上传将覆盖云端数据，是否继续？',
@@ -160,16 +157,6 @@ class _SettingPageState extends State<SettingPage>
     });
   }
 
-  String getSizeString(int byteSize) {
-    if (byteSize < 1024) {
-      return '$byteSize B';
-    } else if (byteSize < 1024 * 1024) {
-      return '${(byteSize / 1024).toStringAsFixed(2)} KB';
-    } else {
-      return '${(byteSize / (1024 * 1024)).toStringAsFixed(2)} MB';
-    }
-  }
-
   Future<void> _downloadAll() async {
     await webDav.init();
     await webDav.downloadAllData(context);
@@ -185,127 +172,72 @@ class _SettingPageState extends State<SettingPage>
     }
   }
 
-  Widget _buildSettingsGroup({required List<Widget> children}) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: children.asMap().entries.map((entry) {
-          int idx = entry.key;
-          Widget child = entry.value;
-          // 自动在项之间添加分割线
-          if (idx > 0) {
-            return Column(
-              children: [
-                const Divider(height: 1, indent: 20, endIndent: 20),
-                child,
-              ],
-            );
-          }
-          return child;
-        }).toList(),
-      ),
-    );
-  }
-
-  /// 构建通用的设置行
-  Widget _buildSettingTile({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-    Widget? leadingOverride,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      leading: leadingOverride ??
-          Icon(icon, color: Theme.of(context).colorScheme.secondary),
-      onTap: onTap,
-      title: Text(
-        title,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      trailing:
-          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-    );
-  }
-
   Widget _buildGeneralTab() {
     return ListView(
       key: _pageKey,
       padding: const EdgeInsets.all(16.0),
       children: [
         // 1. 账户与仓库
-        _buildSettingsGroup(children: [
-          Obx(() => _buildSettingTile(
+        SettingsSection(children: [
+          Obx(() => SettingsNavTile(
                 title: _characterController.me.roleName,
                 subtitle: '切换主控角色',
-                icon: Icons.person, // 这里的 icon 会被 leadingOverride 覆盖
-                leadingOverride:
-                    AvatarImage.round(_characterController.me.avatar, 20),
+                icon: Icons.person,
+                leading: AvatarImage.round(_characterController.me.avatar, 20),
                 onTap: _showCharacterSelectDialog,
               )),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '仓库管理',
             subtitle: '在不同仓库中独立管理应用数据',
             icon: Icons.cabin,
             onTap: () => customNavigate(VaultManagerPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: 'API管理',
             subtitle: '管理API服务商',
             icon: Icons.api,
             onTap: () => customNavigate(ApiManagerPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '预设管理',
             subtitle: '管理聊天预设',
             icon: Icons.dashboard,
             onTap: () =>
                 customNavigate(ChatOptionsManagerPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '文件管理器',
             subtitle: '打开旧版文件管理器',
             icon: Icons.file_copy,
             onTap: () => customNavigate(ChatManagePage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '从SillyTarvern导入',
             subtitle: '从酒馆导入角色卡、预设和世界书等数据',
             icon: Icons.wine_bar,
             onTap: () {
               customNavigate(ImportFromSillytavernPage(), context: context);
             },
-            // onTap: () =>
-            //     customNavigate(ChatOptionsManagerPage(), context: context),
           ),
         ]),
 
         // 2. 界面与格式
-        _buildSettingsGroup(children: [
-          _buildSettingTile(
+        SettingsSection(children: [
+          SettingsNavTile(
             title: '聊天界面设置',
             subtitle: '编辑聊天界面的样式，包括气泡、头像、背景等',
             icon: Icons.color_lens,
             onTap: () =>
                 customNavigate(AppearanceSettingsPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '格式设置',
             subtitle: '编辑连续输出时的格式、群聊消息的格式等',
             icon: Icons.format_align_center,
             onTap: () =>
                 customNavigate(PromptFormatSettingsPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '杂项设置',
             subtitle: '编辑自动生成标题、生成摘要和AI帮答的相关设置',
             icon: Icons.miscellaneous_services,
@@ -314,8 +246,8 @@ class _SettingPageState extends State<SettingPage>
         ]),
 
         // 3. 增强功能
-        _buildSettingsGroup(children: [
-          _buildSettingTile(
+        SettingsSection(children: [
+          SettingsNavTile(
             title: '全局正则',
             subtitle: '编辑全局正则表达式',
             icon: Icons.pattern,
@@ -325,20 +257,20 @@ class _SettingPageState extends State<SettingPage>
         ]),
 
         // 4. 云端同步
-        _buildSettingsGroup(children: [
-          _buildSettingTile(
+        SettingsSection(children: [
+          SettingsNavTile(
             title: 'WebDAV 配置',
             subtitle: '连接到你的WebDav网盘或服务器以同步数据。',
             icon: Icons.cloud_queue,
             onTap: _setupWebDav,
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '上传到云端',
             subtitle: '将本地数据上传到WebDav云储存',
             icon: Icons.cloud_upload_outlined,
             onTap: _uploadAll,
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '从云端导入',
             subtitle: '从云端下载数据，本地数据将会被覆盖。',
             icon: Icons.cloud_download_outlined,
@@ -347,28 +279,28 @@ class _SettingPageState extends State<SettingPage>
         ]),
 
         // 5. 系统
-        _buildSettingsGroup(children: [
-          _buildSettingTile(
+        SettingsSection(children: [
+          SettingsNavTile(
             title: '查看日志',
             subtitle: '查看应用内运行日志（主要是API请求记录）',
             icon: Icons.clear_all,
             onTap: () => customNavigate(LogPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '导入导出',
             subtitle: '导出和导入仓库数据备份',
             icon: Icons.import_export,
-            onTap: () => customNavigate(const ImportExportPage(), context: context),
+            onTap: () =>
+                customNavigate(const ImportExportPage(), context: context),
           ),
-          _buildSettingTile(
+          SettingsNavTile(
             title: '其他设置',
             subtitle: '乱七八糟的设置',
             icon: Icons.more_horiz,
             onTap: () => customNavigate(OtherSettingsPage(), context: context),
           ),
-          
         ]),
-        SizedBox(height: 64,),
+        const SizedBox(height: 64),
       ],
     );
   }
@@ -376,7 +308,6 @@ class _SettingPageState extends State<SettingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 移除原有的 appBar: InnerAppBar(...)
       body: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return <Widget>[
@@ -395,10 +326,9 @@ class _SettingPageState extends State<SettingPage>
             ).createShader(bounds);
           },
           blendMode: BlendMode.dstIn,
-          // 关键：内部 ListView 的 padding 需要调整，因为它不再直接顶着屏幕顶端
           child: MediaQuery.removePadding(
             context: context,
-            removeTop: true, // 移除顶部安全距离，交给 NestedScrollView 处理
+            removeTop: true,
             child: _buildGeneralTab(),
           ),
         ),

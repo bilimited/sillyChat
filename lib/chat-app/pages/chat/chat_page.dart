@@ -96,7 +96,7 @@ class _ChatPageState extends State<ChatPage> {
   bool get isGroupMode => mode == ChatMode.group;
 
   // 是否为新聊天
-  bool get isNewChat => chat.id == -1;
+  bool get isNewChat => chat.id == -1; 
   // 在创建新聊天中是否可以发送消息。userId延迟初始化。
   bool get canCreateNewChat => chat.assistantId != null;
 

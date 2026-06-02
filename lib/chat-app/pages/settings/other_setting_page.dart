@@ -1,19 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
-import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
-import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
-import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/FileUtils.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/main.dart';
-import 'package:get/get.dart';
-
 import 'package:path/path.dart' as p;
 
 class OtherSettingsPage extends StatelessWidget {
@@ -101,12 +93,6 @@ class OtherSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 通过GetX查找已初始化的VaultSettingController实例
-    final VaultSettingController controller =
-        Get.find<VaultSettingController>();
-    // 获取响应式的自动标题设置模型
-    final settings = controller.miscSetting;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('其他设置'),
@@ -134,54 +120,4 @@ class OtherSettingsPage extends StatelessWidget {
     );
   }
 
-  /// 辅助方法，用于构建数字输入的设置项UI。
-  Widget _buildNumberSection({
-    required BuildContext context,
-    required String title,
-    required String description,
-    required int initialValue,
-    required ValueChanged<int> onChanged,
-    required VoidCallback onSave,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4.0, bottom: 4.0),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-          child: Text(
-            description,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ),
-        TextFormField(
-          initialValue: initialValue.toString(),
-          keyboardType: TextInputType.number,
-          // 只允许输入数字
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (value) {
-            // 将字符串转换为整数，如果解析失败则默认为0
-            onChanged(int.tryParse(value) ?? 0);
-          },
-          onTapOutside: (event) {
-            FocusScope.of(context).unfocus();
-            onSave();
-          },
-          onFieldSubmitted: (value) {
-            onSave();
-          },
-          decoration: const InputDecoration(
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-          ),
-        ),
-      ],
-    );
-  }
 }
