@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
@@ -15,9 +14,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/FileUtils.dart';
 import 'package:get/get.dart';
-import 'package:uuid/uuid.dart';
 import '../models/chat_model.dart';
 
 import 'package:path/path.dart' as p;
@@ -97,64 +94,6 @@ class ChatController extends BaseController {
     markReady();
   }
 
-  /// ----迁移用
-  @Deprecated('仅迁移用')
-  String getFileName(int fileId) {
-    return 'chats_$fileId.json';
-  }
-
-  @Deprecated('仅迁移用')
-  final RxInt currentFileId = 1.obs;
-
-  @Deprecated('仅迁移用')
-  Future<void> loadChats() async {
-    try {
-      final directory = await Get.find<SettingController>().getVaultPath();
-      final firstFile = File('${directory}/${getFileName(1)}');
-
-      int maxFileId = 1;
-      int totalChats = 0;
-
-      while (true) {
-        final file = File('${directory}/${getFileName(maxFileId)}');
-        if (!await file.exists()) break;
-
-        final String contents = await file.readAsString();
-        final List<dynamic> jsonList = json.decode(contents);
-        final List<ChatModel> fileChats = jsonList.map((json) {
-          final chat = ChatModel.fromJson(json);
-          chat.fileId = maxFileId; // 设置fileId
-          return chat;
-        }).toList();
-
-        chats.addAll(fileChats);
-        totalChats += fileChats.length;
-        maxFileId++;
-      }
-
-      currentFileId.value = maxFileId - 1;
-    } catch (e) {
-      print('加载聊天数据失败: $e');
-      throw e;
-    }
-  }
-
-  Future<void> debug_moveAllChats() async {
-    final directory = await Get.find<SettingController>().getVaultPath();
-    if (chats.isEmpty) {
-      Get.snackbar('迁移失败', '没有旧版本数据');
-      return;
-    }
-
-    for (final chat in chats) {
-      final f = await createUniqueFile(
-          originalPath: '${directory}/chats/${chat.name}.chat',
-          recursive: true);
-      await f.writeAsString(json.encode(chat.toJson()));
-    }
-
-    Get.snackbar('迁移成功!', 'message');
-  }
 
   // 加载聊天索引
   Future<void> loadChatIndex() async {
@@ -166,7 +105,7 @@ class ChatController extends BaseController {
         final Map<String, dynamic> jsonList = json.decode(contents);
         jsonList.forEach((key, json) {
           chatIndex[key] =
-              ChatMetaModel.fromJson(json, p.canonicalize(file.path));
+              ChatMetaModel.fromJson(json, p.canonicalize(key));
         });
       } else {}
     } catch (e) {
@@ -278,9 +217,6 @@ class ChatController extends BaseController {
     await saveChatIndex();
   }
 
-
-
-
   ChatMetaModel? getIndex(String _path) {
     final meta = chatIndex[p.canonicalize(_path)];
     return meta?.copyWith(path: p.canonicalize(_path));
@@ -311,7 +247,6 @@ class ChatController extends BaseController {
   }
 
   /// [path] 要创建聊天的绝对路径。不包含文件名。
-  /// TODO:添加事件监听实现自动更新聊天列表
   Future<String> createChat(ChatModel chat, String path) async {
     final fullPath = p.canonicalize(
         p.join(path, '${chat.name}-${DateTime.now().hashCode}.chat'));

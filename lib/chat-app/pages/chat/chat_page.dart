@@ -793,21 +793,7 @@ class _ChatPageState extends State<ChatPage> {
     return Column(
       children: [
         Expanded(
-          child: _buildFlutterMessageList(),
-          // chat.messages.isEmpty
-          //     ? NewChatScreen(
-          //         chat: chat,
-          //         onAvatarTap: () {
-          //           customNavigate(
-          //               EditCharacterPage(
-          //                 characterId: chat.bindCharacter!.id,
-          //               ),
-          //               context: context);
-          //         },
-          //       )
-          //     : useWebview
-          //         ? _buildWebviewMessageList()
-          //         : _buildFlutterMessageList(),
+          child: useWebview ? _buildWebviewMessageList() : _buildFlutterMessageList(),
         ),
 
         // 输入框

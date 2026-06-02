@@ -162,12 +162,6 @@ class CharacterModel {
         [];
 
     char.archive = json['archive'] ?? ''; // 添加archive字段的解析
-    // 版本迁移
-    if (json['gender'] != null && json['age'] != null) {
-      String genderAge = '性别：${json['gender']}，年龄：${json['age']}\n';
-      char.archive = genderAge + (char.archive);
-      char.brief = genderAge + (char.brief ?? '');
-    }
     char.backgroundImage = json['backgroundImage'];
 
     if (json['relations'] != null) {

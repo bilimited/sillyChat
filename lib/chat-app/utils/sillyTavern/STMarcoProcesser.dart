@@ -37,7 +37,7 @@ class STMacroProcessor {
   /// 这个函数会持续查找并处理所有 setvar 宏，直到找不全为止
   static String _handleSetVar(String prompt, Map<String, String> varibles) {
     // 正则表达式匹配 {{setvar::key::value}}
-    final regex = RegExp(r'\{\{setvar::(.*?)::(.*?)\}\}');
+    final regex = RegExp(r'\{\{setvar::(.*?)::(.*?)\}\}', dotAll: true);
     String currentPrompt = prompt;
 
     // 使用 while 循环，因为 replaceFirst 只替换第一个匹配项
@@ -50,8 +50,8 @@ class STMacroProcessor {
         final fullMatch = match.group(0);
 
         if (key != null && value != null && fullMatch != null) {
-          // 设置变量
-          varibles[key] = value;
+          // 设置变量（trim 去除换行/空白带来的干扰字符）
+          varibles[key.trim()] = value.trim();
           // 从 prompt 中删除该宏字符串
           currentPrompt = currentPrompt.replaceFirst(fullMatch, '');
         }
@@ -65,7 +65,7 @@ class STMacroProcessor {
   /// 这个函数会持续查找并处理所有 addvar 宏，直到找不全为止
   static String _handleAddVar(String prompt, Map<String, String> vars) {
     // 正则表达式匹配 {{addvar::key::value}}
-    final regex = RegExp(r'\{\{addvar::(.*?)::(.*?)\}\}');
+    final regex = RegExp(r'\{\{addvar::(.*?)::(.*?)\}\}', dotAll: true);
     String currentPrompt = prompt;
 
     while (regex.hasMatch(currentPrompt)) {
@@ -76,9 +76,10 @@ class STMacroProcessor {
         final fullMatch = match.group(0);
 
         if (key != null && value != null && fullMatch != null) {
+          final trimmedKey = key.trim();
           // 检查变量是否已存在，如果不存在则添加
-          if (!vars.containsKey(key)) {
-            vars[key] = value;
+          if (!vars.containsKey(trimmedKey)) {
+            vars[trimmedKey] = value.trim();
           }
           // 从 prompt 中删除该宏字符串
           currentPrompt = currentPrompt.replaceFirst(fullMatch, '');
@@ -91,12 +92,12 @@ class STMacroProcessor {
   /// 处理 {{getvar::key}}
   static String _handleGetVar(String prompt, Map<String, String> varibles) {
     // 正则表达式匹配 {{getvar::key}}
-    final regex = RegExp(r'\{\{getvar::(.*?)\}\}');
+    final regex = RegExp(r'\{\{getvar::(.*?)\}\}', dotAll: true);
     return prompt.replaceAllMapped(regex, (match) {
       final key = match.group(1);
       if (key != null) {
         // 返回变量值，如果变量不存在，则返回空字符串
-        return varibles[key] ?? '';
+        return varibles[key.trim()] ?? '';
       }
       return '';
     });

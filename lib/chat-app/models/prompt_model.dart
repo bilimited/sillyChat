@@ -6,7 +6,7 @@ class PromptModel {
   DateTime updateDate;
   String name;
 
-  bool isInChat = false;
+  bool isInChat = false; // 是否插入到聊天
 
   bool isEnable = true;
 
