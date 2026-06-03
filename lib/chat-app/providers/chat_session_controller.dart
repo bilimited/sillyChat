@@ -510,27 +510,8 @@ class ChatSessionController extends BaseController {
     MessageModel? message = msgList[indexToRetry];
 
     // 判断是重新生成，还是直接回复
-    if (message.isAssistant || message.role == MessageRole.tool) {
-      // 移除目标消息及其上方的工具调用链：
-      // ... → assistant(toolCalls) → tool result(s) → assistant(final)
-      // 从目标消息开始向上遍历，移除所有连续的 tool/assistant-with-toolCalls 消息
-      final toRemove = <MessageModel>[];
-      int i = indexToRetry;
-      while (i >= 0) {
-        final prev = msgList[i];
-        if (prev.role == MessageRole.tool ||
-            (prev.role == MessageRole.assistant &&
-                prev.toolCalls != null &&
-                prev.toolCalls!.isNotEmpty)) {
-          toRemove.add(prev);
-          i--;
-        } else {
-          break;
-        }
-      }
-      // 加上目标消息本身
-      toRemove.add(message);
-      await removeMessages(toRemove);
+    if (message.isAssistant) {
+      removeMessage(message.time);
     } else {
       message = null;
     }
@@ -688,7 +669,6 @@ class ChatSessionController extends BaseController {
         currentAssistant: assistantId));
 
     StringBuffer fullResponse = StringBuffer();
-    StringBuffer currentIterationText = StringBuffer();
     int toolCallIterations = 0;
     const int maxToolCallIterations = 10;
 
@@ -704,7 +684,6 @@ class ChatSessionController extends BaseController {
 
       final List<ToolCall> collectedToolCalls = [];
       StringBuffer preToolCallText = StringBuffer();
-      currentIterationText.clear();
 
       await for (final chunk
           in aiState.aihandler.requestTokenStream(options)) {
@@ -713,19 +692,16 @@ class ChatSessionController extends BaseController {
         if (chunk.isThinkingStart) {
           preToolCallText.write('<think>');
           fullResponse.write('<think>');
-          currentIterationText.write('<think>');
           setAIState(
               oldState.copyWith(LLMBuffer: fullResponse.toString()));
         } else if (chunk.isThinkingEnd) {
           preToolCallText.write('</think>');
           fullResponse.write('</think>');
-          currentIterationText.write('</think>');
           setAIState(
               oldState.copyWith(LLMBuffer: fullResponse.toString()));
         } else if (chunk.isText) {
           preToolCallText.write(chunk.content);
           fullResponse.write(chunk.content);
-          currentIterationText.write(chunk.content);
           setAIState(
               oldState.copyWith(LLMBuffer: fullResponse.toString()));
         } else if (chunk.isToolCall) {
@@ -745,24 +721,12 @@ class ChatSessionController extends BaseController {
 
       toolCallIterations++;
 
-      // 将 assistant 消息（含 tool_calls）追加到 API 消息列表
+      // 将 assistant 消息（含 tool_calls）追加到消息列表
       messages.add(LLMMessage(
         content: preToolCallText.toString(),
         role: 'assistant',
         toolCalls: collectedToolCalls,
       ));
-
-      // 持久化 assistant-with-toolCalls 消息到聊天记录
-      await addMessage(message: MessageModel(
-        id: DateTime.now().microsecondsSinceEpoch,
-        content: preToolCallText.toString(),
-        senderId: assistantId,
-        time: DateTime.now(),
-        role: MessageRole.assistant,
-        style: assistant.messageStyle,
-        alternativeContent: [null],
-        toolCalls: collectedToolCalls,
-      ), useRegex: false);
 
       // 执行每个工具并将结果追加为 tool 消息
       for (final tc in collectedToolCalls) {
@@ -779,18 +743,6 @@ class ChatSessionController extends BaseController {
           role: 'tool',
           toolCallId: tc.id,
         ));
-
-        // 持久化工具结果消息到聊天记录
-        await addMessage(message: MessageModel(
-          id: DateTime.now().microsecondsSinceEpoch,
-          content: result,
-          senderId: assistantId,
-          time: DateTime.now(),
-          role: MessageRole.tool,
-          style: assistant.messageStyle,
-          alternativeContent: [null],
-          toolCallId: tc.id,
-        ), useRegex: false);
       }
 
       // 重置 preToolCallText（下一轮迭代可能产生新的文本）
@@ -811,8 +763,7 @@ class ChatSessionController extends BaseController {
 
     setAIState(aiState.copyWith(isGenerating: false));
 
-    // 只 yield 最后一轮迭代的文本（工具调用之前的文本已持久化在 toolCalls 消息中）
-    final result = currentIterationText.toString();
+    final result = fullResponse.toString();
     if (result.isEmpty) {
       yield '（工具调用已完成，但模型未返回文本回复）';
     } else {

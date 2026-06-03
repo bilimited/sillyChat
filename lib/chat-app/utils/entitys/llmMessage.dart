@@ -48,9 +48,7 @@ class LLMMessage {
         content: msg.content,
         role: msg.role.toString().split('.').last,
         fileDirs: msg.resPath,
-        senderId: msg.senderId,
-        toolCalls: msg.toolCalls,
-        toolCallId: msg.toolCallId);
+        senderId: msg.senderId);
   }
 
   /// 从 PromptModel 创建
