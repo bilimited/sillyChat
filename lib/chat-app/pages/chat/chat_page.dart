@@ -99,7 +99,7 @@ class _ChatPageState extends State<ChatPage> {
   // 在创建新聊天中是否可以发送消息。userId延迟初始化。
   bool get canCreateNewChat => chat.assistantId != null;
 
-  bool get useWebview => false;
+  bool get useWebview => true;
 
   List<LorebookItemModel> get manualItems {
     final global = Get.find<LoreBookController>().globalActivitedLoreBooks;

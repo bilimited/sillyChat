@@ -75,6 +75,8 @@ class ChatSessionController extends BaseController {
 
   Function(ChatModel) onChatUpdate = (cm) {};
   Worker? aiStateListener;
+  Worker? _messageEventWorker;
+  String _previousLLMBuffer = "";
 
   /**
    * [chatPath] : 聊天文件的完整路径
@@ -223,22 +225,51 @@ class ChatSessionController extends BaseController {
   }
 
   void bindWebController(WebSessionController controller) {
-    const int? maxMessages = 10;
-
-    aiStateListener = ever(_aiState, (state) {
-      controller.onStateChange(state);
+    // ---- Incremental message sync (P1) ----
+    // Fires on every message add/update/delete. Only active after
+    // bindWebController is called, which happens from onWebViewCreated
+    // (after loadChat completes), so initial file load never triggers these.
+    _messageEventWorker = ever(messageEvent, (ev) {
+      if (ev == null) return;
+      switch (ev.type) {
+        case MessageEventType.add:
+          final index = chat.messages.length - 1;
+          controller.onMessageAdded(ev.message, index);
+          break;
+        case MessageEventType.update:
+          controller.onMessageUpdated(ev.message);
+          break;
+        case MessageEventType.delete:
+          controller.onMessageRemoved(ev.message);
+          break;
+      }
     });
 
-    onChatUpdate = (chat) {
-      if (maxMessages != null && chat.messages.length > maxMessages) {
-        controller.onChatChange(chat.copyWith(
-            messages:
-                chat.messages.sublist(chat.messages.length - maxMessages)));
+    // ---- AI state listener with delta streaming (P1) ----
+    aiStateListener = ever(_aiState, (state) {
+      if (state.isGenerating) {
+        // During streaming: push metadata-only state + token delta
+        final newBuffer = state.LLMBuffer;
+        if (newBuffer.length > _previousLLMBuffer.length) {
+          final token = newBuffer.substring(_previousLLMBuffer.length);
+          controller.onTokenAppend(token);
+        }
+        _previousLLMBuffer = newBuffer;
+
+        // Metadata-only: exclude the full LLMBuffer
+        controller.onStateChange(state, includeBuffer: false);
       } else {
-        controller.onChatChange(chat);
+        // Generation ended: push full state with buffer for reconciliation
+        controller.onStateChange(state, includeBuffer: true);
+        _previousLLMBuffer = "";
       }
+    });
+
+    // ---- Full chat sync (initial load + resync) ----
+    // No truncation — send full message history. JS handles rendering.
+    onChatUpdate = (chat) {
+      controller.onChatChange(chat);
     };
-    //_onChatUpdate(chat);
   }
 
   Future<void> updateTokens() async {
@@ -255,7 +286,13 @@ class ChatSessionController extends BaseController {
   void closeWebController() {
     if (aiStateListener != null) {
       aiStateListener!.dispose();
+      aiStateListener = null;
     }
+    if (_messageEventWorker != null) {
+      _messageEventWorker!.dispose();
+      _messageEventWorker = null;
+    }
+    _previousLLMBuffer = "";
     onChatUpdate = (chat) {};
   }
 

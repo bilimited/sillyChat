@@ -5,12 +5,12 @@
 
     <!-- 聊天滚动区域 -->
     <div class="chat-scroll-area" ref="scrollContainer">
-      
+
       <!-- 消息列表 -->
       <div class="message-list">
-        <div 
-          v-for="msg in displayMessages" 
-          :key="msg.id" 
+        <div
+          v-for="msg in displayMessages"
+          :key="msg.id"
           class="message-item"
           :class="msg.role === 'user' ? 'message-user' : 'message-ai'"
         >
@@ -25,12 +25,12 @@
             <div class="sender-name" v-if="msg.role !== 'user'">
               {{ getCharacterName(msg.sender) }}
             </div>
-            
+
             <div class="bubble">
               <!-- Markdown 渲染 -->
               <div class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
             </div>
-            
+
             <!-- 消息时间 -->
             <div class="time">{{ formatTime(msg.time) }}</div>
           </div>
@@ -77,7 +77,7 @@ const md = new MarkdownIt({
 
 // --- State ---
 const chatData = ref(null);
-const characters = ref([]); 
+const characters = ref([]);
 const appState = ref({
   isGenerating: false,
   LLMBuffer: '',
@@ -106,10 +106,10 @@ const renderMarkdown = (text) => {
 };
 
 const getAvatar = (senderId) => {
-  
+
   const char = characterMap.value[senderId];
-  if (char && char.avatar) return `imgs:///${char.avatar}`; 
-  
+  if (char && char.avatar) return `imgs:///${char.avatar}`;
+
   if (senderId === -1 && chatData.value?.avatar) return chatData.value.avatar;
 
   return 'imgs:///default_avatar.png';
@@ -142,42 +142,125 @@ const handleScrollPreservation = async (updateAction) => {
   }
   const el = scrollContainer.value;
   const previousScrollTop = el.scrollTop;
-  
+
   updateAction();
-  
+
   await nextTick();
   el.scrollTop = previousScrollTop;
+};
+
+// 辅助：检查是否在底部（用于流式输出自动跟随）
+const isNearBottom = (el) => {
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
 };
 
 // --- Lifecycle ---
 
 onMounted(() => {
-  // 1. 订阅聊天更新
+  // 1. 订阅完整聊天更新（初始加载 + 重同步）
   appApi.subscribeChat((newChat) => {
     handleScrollPreservation(() => {
       chatData.value = newChat;
+      // 首次加载后重置流式缓冲区
+      appState.value = { ...appState.value, LLMBuffer: '' };
     });
   });
 
-  // 2. 订阅流式状态
+  // 2. 订阅状态更新
+  //    流式期间：metadata-only（不含 LLMBuffer），内容由 onTokenAppend 管理
+  //    流式结束后：包含完整 LLMBuffer，用于最终调和
   appApi.subscribeState((newState) => {
     const el = scrollContainer.value;
-    const isAtBottom = el ? (el.scrollHeight - el.scrollTop - el.clientHeight < 50) : false;
-    
-    appState.value = newState;
-    
-    // 如果在底部，则跟随滚动
-    if (isAtBottom && appState.value.isGenerating) {
-        nextTick(() => { if(el) el.scrollTop = el.scrollHeight; });
+    const atBottom = el ? isNearBottom(el) : false;
+
+    if (newState.isGenerating) {
+      // Metadata-only during streaming — merge, keep incrementally-built LLMBuffer
+      appState.value = {
+        ...appState.value,
+        // 只在初始状态推送或恢复推送时用传入的 buffer
+        LLMBuffer: (newState.LLMBuffer !== undefined && appState.value.LLMBuffer === '')
+          ? newState.LLMBuffer
+          : appState.value.LLMBuffer,
+        GenerateState: newState.GenerateState,
+        isGenerating: newState.isGenerating,
+        currentAssistant: newState.currentAssistant,
+        style: newState.style,
+      };
+    } else {
+      // Generation ended — full reconciliation with complete buffer
+      appState.value = {
+        ...appState.value,
+        LLMBuffer: newState.LLMBuffer ?? '',
+        GenerateState: newState.GenerateState,
+        isGenerating: false,
+        currentAssistant: newState.currentAssistant,
+        style: newState.style,
+      };
+    }
+
+    if (atBottom && appState.value.isGenerating) {
+      nextTick(() => { if(el) el.scrollTop = el.scrollHeight; });
     }
   });
 
-  // 3. 初始化
+  // 3. 订阅增量消息事件 (P1)
+  appApi.subscribeMessageAdded(({ message, index }) => {
+    if (!chatData.value) return;
+    handleScrollPreservation(() => {
+      const messages = [...chatData.value.messages];
+      // 使用 splice 按指定索引插入，保持响应式
+      messages.splice(index, 0, message);
+      chatData.value = { ...chatData.value, messages };
+    });
+  });
+
+  appApi.subscribeMessageUpdated((updatedMessage) => {
+    if (!chatData.value) return;
+    handleScrollPreservation(() => {
+      const messages = chatData.value.messages.map(
+        m => (m.id === updatedMessage.id && m.time === updatedMessage.time)
+          ? updatedMessage
+          : m
+      );
+      chatData.value = { ...chatData.value, messages };
+    });
+  });
+
+  appApi.subscribeMessageRemoved((removedMessage) => {
+    if (!chatData.value) return;
+    handleScrollPreservation(() => {
+      const messages = chatData.value.messages.filter(
+        m => !(m.id === removedMessage.id && m.time === removedMessage.time)
+      );
+      chatData.value = { ...chatData.value, messages };
+    });
+  });
+
+  // 4. 订阅流式 token 追加 (P1)
+  appApi.subscribeTokenAppend((token) => {
+    if (appState.value.isGenerating) {
+      appState.value = {
+        ...appState.value,
+        LLMBuffer: appState.value.LLMBuffer + token
+      };
+      // 自动跟随滚动
+      const el = scrollContainer.value;
+      if (el) {
+        const atBottom = isNearBottom(el);
+        if (atBottom) {
+          nextTick(() => { if(el) el.scrollTop = el.scrollHeight; });
+        }
+      }
+    }
+  });
+
+  // 5. 初始化：获取角色列表后通知 Dart 就绪
   const initData = () => {
     console.log('Flutter Platform Ready');
     appApi.fetchAllCharacters().then((chars) => {
       characters.value = chars || [];
-      appApi.fetchChat(); 
+      // 通知 Dart：JS 已就绪，Dart 会主动推送初始聊天数据和状态
+      appApi.notifyReady();
     });
   };
 
@@ -210,7 +293,7 @@ html, body, #app {
 }
 
 .app-bar-spacer {
-  height: var(--app-bar-height, 80px); 
+  height: var(--app-bar-height, 80px);
   flex-shrink: 0;
 }
 
@@ -218,10 +301,10 @@ html, body, #app {
   flex: 1;
   overflow-y: auto;
   padding: 0 16px;
-  scrollbar-width: none; 
+  scrollbar-width: none;
 }
 .chat-scroll-area::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .message-list {
@@ -368,7 +451,7 @@ html, body, #app {
 }
 
 /* 列表样式 */
-:deep(.markdown-body ul), 
+:deep(.markdown-body ul),
 :deep(.markdown-body ol) {
   padding-left: 20px;
   margin: 0.5em 0;

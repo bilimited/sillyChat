@@ -77,6 +77,7 @@ class _ChatWebviewState extends State<ChatWebview> {
 
   @override
   void dispose() {
+    webSessionController.dispose();
     session.closeWebController();
     super.dispose();
   }

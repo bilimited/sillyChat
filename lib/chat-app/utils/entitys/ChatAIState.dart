@@ -37,14 +37,17 @@ class ChatAIState {
         style: style ?? this.style);
   }
 
-  toJson() {
-    return {
+  Map<String, dynamic> toJson({bool includeBuffer = true}) {
+    final map = <String, dynamic>{
       "id": id,
-      "LLMBuffer": LLMBuffer,
       "GenerateState": GenerateState,
       "isGenerating": isGenerating,
       "style": style.index,
       "currentAssistant": currentAssistant,
     };
+    if (includeBuffer) {
+      map["LLMBuffer"] = LLMBuffer;
+    }
+    return map;
   }
 }
