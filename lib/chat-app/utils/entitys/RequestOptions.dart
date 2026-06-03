@@ -2,6 +2,7 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/PackageValue.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 
 class LLMRequestOptions {
@@ -23,6 +24,12 @@ class LLMRequestOptions {
   final bool isMergeMessageList;
   final ChatCompressionSettings chatCompressionSettings;
 
+  /// 工具定义列表 — 发送给 API 的 tools 数组
+  final List<ToolDefinition>? tools;
+
+  /// 工具选择策略 — "auto", "none", "required" 或指定函数的 Map
+  final dynamic toolChoice;
+
   ApiModel? get api => VaultSettingController.of().getApiById(apiId);
 
   const LLMRequestOptions({
@@ -41,6 +48,8 @@ class LLMRequestOptions {
     this.isStreaming = true,
     this.modelName,
     ChatCompressionSettings? chatCompressionSettings,
+    this.tools,
+    this.toolChoice,
   }) : chatCompressionSettings =
             chatCompressionSettings ?? const ChatCompressionSettings();
 
@@ -65,6 +74,10 @@ class LLMRequestOptions {
           ? ChatCompressionSettings.fromJson(json['chat_compression_settings'])
           : null,
       modelName: json['modelName'],
+      tools: (json['tools'] as List<dynamic>?)
+          ?.map((e) => ToolDefinition.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      toolChoice: json['tool_choice'],
     );
   }
 
@@ -83,7 +96,10 @@ class LLMRequestOptions {
       'is_merge_message_list': isMergeMessageList,
       'is_streaming': isStreaming,
       'chat_compression_settings': chatCompressionSettings.toJson(),
-      'modelName': modelName
+      'modelName': modelName,
+      if (tools != null)
+        'tools': tools!.map((t) => t.toJson()).toList(),
+      if (toolChoice != null) 'tool_choice': toolChoice,
     };
   }
 
@@ -103,6 +119,8 @@ class LLMRequestOptions {
     bool? isStreaming,
     ChatCompressionSettings? chatCompressionSettings,
     PackageValue<String?>? modelName,
+    List<ToolDefinition>? tools,
+    dynamic toolChoice,
   }) {
     return LLMRequestOptions(
       messages: messages ?? this.messages,
@@ -120,7 +138,9 @@ class LLMRequestOptions {
       isStreaming: isStreaming ?? this.isStreaming,
       chatCompressionSettings:
           chatCompressionSettings ?? this.chatCompressionSettings,
-      modelName: modelName !=null ? modelName.value : this.modelName,
+      modelName: modelName != null ? modelName.value : this.modelName,
+      tools: tools ?? this.tools,
+      toolChoice: toolChoice ?? this.toolChoice,
     );
   }
 }

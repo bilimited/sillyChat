@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/tool_call_detail_page.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
@@ -636,6 +637,102 @@ class _MessageBubbleState extends State<MessageBubble> {
           );
   }
 
+  /// 工具结果消息：紧凑单行，点击查看详情
+  Widget _buildToolResultBubble() {
+    final colors = Theme.of(context).colorScheme;
+    final preview = message.content.length > 60
+        ? '${message.content.substring(0, 60)}...'
+        : message.content;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () => customNavigate(
+            ToolCallDetailPage(toolResult: message),
+            context: context,
+          ),
+          child: Container(
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.85),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.handyman_outlined, size: 13, color: colors.outline),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    preview,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      color: colors.outline,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.chevron_right,
+                    size: 14, color: colors.outline.withOpacity(0.5)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 工具调用卡片：紧凑单行，点击查看详情
+  Widget _buildToolCallCard() {
+    final colors = Theme.of(context).colorScheme;
+    final toolNames =
+        message.toolCalls!.map((tc) => tc.functionName).join(', ');
+
+    return GestureDetector(
+      onTap: () => customNavigate(
+        ToolCallDetailPage(toolCalls: message.toolCalls),
+        context: context,
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(top: 4, bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colors.primaryContainer.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.build, size: 12, color: colors.primary.withOpacity(0.7)),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                toolNames,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  color: colors.primary.withOpacity(0.8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right,
+                size: 14, color: colors.primary.withOpacity(0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessageBubbleBody(String content) {
     final colors = Theme.of(context).colorScheme;
 
@@ -786,7 +883,14 @@ class _MessageBubbleState extends State<MessageBubble> {
       afterThink = regex.process(afterThink);
     }
 
+      if (message.role == MessageRole.tool) {
+        return _buildToolResultBubble();
+      }
+
     return Obx(() {
+      // 工具结果消息：紧凑、等宽字体显示
+
+
       var gestureDetector = Listener(
         // onTap: widget.onTap,
         // onLongPress: widget.onLongPress,
@@ -855,6 +959,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                                     ThinkWidget(
                                         isThinking: isThinking,
                                         thinkContent: thinkContent),
+                                  // 工具调用卡片（assistant 消息中包含 toolCalls 时显示）
+                                  if (message.toolCalls != null &&
+                                      message.toolCalls!.isNotEmpty)
+                                    _buildToolCallCard(),
                                   // 主消息气泡
                                   _buildMessageBubbleBody(afterThink),
                                   // SizedBox(height: 8.0),

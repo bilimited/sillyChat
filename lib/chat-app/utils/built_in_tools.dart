@@ -1,0 +1,57 @@
+/// 内置工具注册中心
+///
+/// 在应用启动时调用 [BuiltInTools.registerAll] 注册所有默认工具。
+/// 需要确保 [ToolRegistry] 已初始化。
+///
+/// 使用方式：
+/// ```dart
+/// BuiltInTools.registerAll();
+/// ```
+
+import 'package:flutter_example/chat-app/utils/tool_registry.dart';
+
+class BuiltInTools {
+  static bool _registered = false;
+
+  /// 注册所有内置工具。
+  /// 多次调用安全——仅在首次调用时实际注册。
+  static void registerAll() {
+    if (_registered) return;
+    _registered = true;
+
+    _registerTestTool();
+  }
+
+  /// 测试工具：模型每次调用后返回调用次数，用于验证 Tool Call 端到端流程。
+  static void _registerTestTool() {
+    int callCount = 0;
+
+    ToolRegistry.instance.register(
+      name: 'test_tool',
+      description: '一个测试工具。调用后将返回调用次数。可以用于验证工具调用功能是否正常。',
+      parameters: {
+        'type': 'object',
+        'properties': {
+          'message': {
+            'type': 'string',
+            'description': '任意消息内容',
+          },
+        },
+      }, 
+      executor: (args) async {
+        callCount++;
+        final msg = args['message'] as String?;
+        final extra = msg != null && msg.isNotEmpty ? '，收到的消息: "$msg"' : '';
+        return '你成功调用工具$callCount次$extra';
+      },
+    );
+  }
+
+  /// 注销所有内置工具。
+  /// 在仓库切换或应用重置时调用。
+  static void unregisterAll() {
+    if (!_registered) return;
+    _registered = false;
+    ToolRegistry.instance.unregister('test_tool');
+  }
+}

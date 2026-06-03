@@ -9,6 +9,7 @@ Silly Chat 是一款 AI 角色扮演聊天应用，支持与 AI 角色进行一�
 - [故事管理](stories.md) — 创建群聊故事场景，管理多角色互动
 - [世界书](lorebooks.md) — 上下文注入系统，自动在对话中插入相关知识
 - [对话预设与提示词](presets.md) — 配置 AI 行为、提示词模板和请求参数
+- [Agent 与工具调用](tool-calls.md) — AI 工具调用/Tool Call 支持，Agent 执行循环
 - [API 管理](api-providers.md) — 配置多个 AI 服务提供商
 - [宏系统与正则规则](macros-and-regex.md) — 变量替换、正则文本处理
 - [外观设置](appearance.md) — 主题、字体、头像样式等外观定制
@@ -26,3 +27,4 @@ Silly Chat 是一款 AI 角色扮演聊天应用，支持与 AI 角色进行一�
 | **世界书 (Lorebook)** | 按关键词触发的知识条目集合，在对话中自动插入相关内容以增强 AI 的上下文感知。 |
 | **对话预设 (Chat Option)** | 一组 AI 行为配置，包括提示词模板、模型参数、正则规则等。 |
 | **提示词 (Prompt)** | 发送给 AI 的系统级指令片段。 |
+| **工具调用 (Tool Call)** | AI 模型调用外部函数的能力，由 ToolRegistry 管理已注册的工具，支持 Agent 式交互循环。 |

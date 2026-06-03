@@ -2,6 +2,7 @@ import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 
 abstract class Servicehandler {
   final String baseUrl;
@@ -25,7 +26,8 @@ abstract class Servicehandler {
   Future<bool> testConnectivity();
 
   // 发送API请求，同时包含了结果处理
-  Stream<String> request(
+  // 返回 LLMResponseChunk 流，可以是文本增量或工具调用
+  Stream<LLMResponseChunk> request(
       Aihandler aihandler, LLMRequestOptions options, ApiModel api);
 
   // 将中间消息格式转换为服务商专用数据格式

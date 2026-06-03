@@ -18,6 +18,7 @@ import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/story_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
+import 'package:flutter_example/chat-app/utils/built_in_tools.dart';
 import 'package:flutter_example/chat-app/utils/init_app.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart'
     hide AndroidResource;
@@ -126,6 +127,8 @@ class SillyChatApp extends StatelessWidget {
       await Future.wait(getAllControllers().map((e) => e.ready));
       // 所有 Controller 初始化完成后，在这里执行后续逻辑
       debugPrint("All controllers are ready");
+
+      BuiltInTools.registerAll();
 
       if (VaultSettingController.of().isFirstOpen.value) {
         debugPrint("首次进入应用。。。");

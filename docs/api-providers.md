@@ -4,14 +4,16 @@ Silly Chat 支持连接多种 AI 服务提供商，每个提供商可以配置�
 
 ## 支持的 AI 提供商
 
-| 提供商 | 说明 |
-|------|------|
-| **OpenAI** | 支持 GPT-3.5、GPT-4、GPT-4o 等模型 |
-| **DeepSeek** | DeepSeek 系列模型 |
-| **SiliconFlow** | SiliconFlow 提供的模型服务 |
-| **Google / Gemini** | Gemini 系列模型（Gemini 2.5 Pro、Flash、1.5 系列等） |
-| **Kimi / Moonshot** | 月之暗面 Kimi 模型 |
-| **自定义 OpenAI 兼容** | 任何兼容 OpenAI API 格式的自定义服务端点 |
+| 提供商 | 说明 | Tool Call |
+|------|------|:---:|
+| **OpenAI** | 支持 GPT-3.5、GPT-4、GPT-4o 等模型 | ✅ |
+| **DeepSeek** | DeepSeek 系列模型 | ✅ |
+| **SiliconFlow** | SiliconFlow 提供的模型服务 | ✅ |
+| **Google / Gemini** | Gemini 系列模型（Gemini 2.5 Pro、Flash、1.5 系列等） | ❌ |
+| **Kimi / Moonshot** | 月之暗面 Kimi 模型 | ✅ |
+| **自定义 OpenAI 兼容** | 任何兼容 OpenAI API 格式的自定义服务端点 | ✅ |
+
+> OpenAI 兼容服务商通过 `OpenAIServiceHandler` 自动继承 Tool Call 支持。详见 [Agent 与工具调用](tool-calls.md)。
 
 ## API 配置属性
 

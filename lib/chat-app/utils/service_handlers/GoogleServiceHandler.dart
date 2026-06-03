@@ -8,6 +8,7 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/error_handler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 import 'package:dio/dio.dart' as dio;
@@ -146,7 +147,7 @@ class Googleservicehandler extends Servicehandler {
   }
 
   @override
-  Stream<String> request(
+  Stream<LLMResponseChunk> request(
       Aihandler aihandler, LLMRequestOptions options, ApiModel api) async* {
     final streamingUrl =
         "https://generativelanguage.googleapis.com/v1beta/models/${api.modelName}:streamGenerateContent?key=${api.apiKey}&alt=sse";
@@ -215,21 +216,22 @@ class Googleservicehandler extends Servicehandler {
         result += text;
         return result;
       })) {
-        yield chunk;
+        yield LLMResponseChunk.text(chunk);
       }
     } else {
       Map<String, dynamic> responseData = response.data as Map<String, dynamic>;
       LogController.log(json.encode(responseData), LogLevel.info,
           type: LogType.json, title: "Gemini响应");
       if (responseData['candidates'][0]['finishReason'] != 'STOP') {
-        yield '回答被掐断了,原因：${responseData['candidates'][0]['finishReason']}';
+        yield LLMResponseChunk.text(
+            '回答被掐断了,原因：${responseData['candidates'][0]['finishReason']}');
         return;
       }
 
       final parts =
           responseData['candidates'][0]['content']['parts'] as List<dynamic>;
       for (final item in parts) {
-        yield item['text'] ?? '';
+        yield LLMResponseChunk.text(item['text'] ?? '');
       }
     }
   }

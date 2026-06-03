@@ -9,9 +9,19 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/utils/AIHandler.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandler.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
+
+/// 流式传输中累积中工具调用的内部辅助类
+class _PendingToolCall {
+  String? id;
+  String? name;
+  final StringBuffer arguments = StringBuffer();
+
+  bool get isComplete => id != null && name != null;
+}
 
 class Openaiservicehandler extends Servicehandler {
   const Openaiservicehandler(
@@ -106,6 +116,25 @@ class Openaiservicehandler extends Servicehandler {
 
   @override
   parseMessage(LLMMessage message) async {
+    // 工具结果消息：role == "tool"
+    if (message.role == 'tool' && message.toolCallId != null) {
+      return {
+        "role": "tool",
+        "tool_call_id": message.toolCallId,
+        "content": message.content,
+      };
+    }
+
+    // 助理消息包含工具调用
+    if (message.toolCalls != null && message.toolCalls!.isNotEmpty) {
+      return {
+        "role": "assistant",
+        "content": message.content.isEmpty ? null : message.content,
+        "tool_calls": message.toolCalls!.map((tc) => tc.toJson()).toList(),
+      };
+    }
+
+    // 普通消息（支持图片附件）
     if (message.fileDirs.isNotEmpty) {
       // 先单独计算所有 image_url（压缩并 base64 编码），然后再构建返回内容
       final List<dynamic> imageContents = [];
@@ -136,7 +165,7 @@ class Openaiservicehandler extends Servicehandler {
     final List<dynamic> messages =
         await Future.wait(options.messages.map((msg) => parseMessage(msg)));
 
-    return {
+    final body = <String, dynamic>{
       'messages': messages,
       'max_tokens': options.maxTokens,
       'temperature': options.temperature,
@@ -144,10 +173,22 @@ class Openaiservicehandler extends Servicehandler {
       'presence_penalty': options.presencePenalty,
       'frequency_penalty': options.frequencyPenalty,
     };
+
+    // 添加工具定义
+    if (options.tools != null && options.tools!.isNotEmpty) {
+      body['tools'] = options.tools!.map((t) => t.toJson()).toList();
+    }
+
+    // 添加工具选择策略
+    if (options.toolChoice != null) {
+      body['tool_choice'] = options.toolChoice;
+    }
+
+    return body;
   }
 
   @override
-  Stream<String> request(
+  Stream<LLMResponseChunk> request(
       Aihandler aihandler, LLMRequestOptions options, ApiModel api) async* {
     aihandler.onGenerateStateChange('正在准备...');
 
@@ -162,8 +203,10 @@ class Openaiservicehandler extends Servicehandler {
 
     String key = api.apiKey;
     String model = api.modelName;
-    
-    String url = api.url.isEmpty? baseUrl+ '/chat/completions' : api.url + '/chat/completions';
+
+    String url = api.url.isEmpty
+        ? baseUrl + '/chat/completions'
+        : api.url + '/chat/completions';
     final dioInstance = aihandler.dioInstance;
 
     // 构建请求数据
@@ -212,57 +255,181 @@ class Openaiservicehandler extends Servicehandler {
       data: requestData,
     );
 
-    bool cot = false;
     aihandler.onGenerateStateChange('正在生成...');
     if (options.isStreaming) {
-      await for (var chunk in aihandler.parseSseStream(rs, (json) {
-        if ((json['choices'] is List) && (json['choices'] as List).isEmpty) {
-          return '';
-        }
-        final delta = json['choices'][0]['delta'] as Map<String, dynamic>?;
-        if (delta == null) return '';
+      yield* _handleStreamingResponse(rs);
+    } else {
+      yield* _handleNonStreamingResponse(rs);
+    }
+  }
 
-        // 优先返回 reasoning_content（思维链），如果没有则返回 content
-        final reasoningContent = delta['reasoning_content'] as String? ?? '';
+  /// 处理流式响应 — 支持文本增量、思维链和工具调用的增量累积
+  Stream<LLMResponseChunk> _handleStreamingResponse(dio.Response rs) async* {
+    String buffer = '';
+    bool cot = false;
+    final pendingToolCalls = <int, _PendingToolCall>{};
+
+    await for (var decodedData in utf8.decoder.bind(rs.data.stream)) {
+      buffer += decodedData;
+
+      while (buffer.contains('\n')) {
+        var index = buffer.indexOf('\n');
+        var line = buffer.substring(0, index).trim();
+        buffer = buffer.substring(index + 1);
+
+        if (!line.startsWith('data: ')) continue;
+        line = line.substring(5).trim();
+        if (line.isEmpty) continue;
+        if (line == '[DONE]') {
+          // 流结束，发送所有未完成的工具调用
+          for (final pending in pendingToolCalls.values) {
+            if (pending.isComplete) {
+              yield LLMResponseChunk.tool(
+                ToolCall(
+                  id: pending.id!,
+                  functionName: pending.name!,
+                  arguments: pending.arguments.toString(),
+                ),
+                finishReason: 'tool_calls',
+              );
+            }
+          }
+          pendingToolCalls.clear();
+          break;
+        }
+
+        final jsonData = jsonDecode(line) as Map<String, dynamic>;
+
+        if ((jsonData['choices'] is List) &&
+            (jsonData['choices'] as List).isEmpty) {
+          continue;
+        }
+
+        final delta =
+            jsonData['choices'][0]['delta'] as Map<String, dynamic>?;
+        if (delta == null) continue;
+
+        // ----- 处理工具调用增量 -----
+        final toolCallsDelta = delta['tool_calls'] as List?;
+        if (toolCallsDelta != null) {
+          for (final tcDelta in toolCallsDelta) {
+            final idx = (tcDelta['index'] as int?) ?? 0;
+            final pending = pendingToolCalls.putIfAbsent(
+                idx, () => _PendingToolCall());
+
+            if (tcDelta['id'] != null) {
+              pending.id = tcDelta['id'] as String;
+            }
+            final func = tcDelta['function'] as Map<String, dynamic>?;
+            if (func != null) {
+              if (func['name'] != null) {
+                pending.name = func['name'] as String;
+              }
+              if (func['arguments'] != null) {
+                pending.arguments.write(func['arguments'] as String);
+              }
+            }
+          }
+        }
+
+        // ----- 检查 finish_reason -----
+        final finishReason =
+            jsonData['choices'][0]['finish_reason'] as String?;
+
+        if (finishReason == 'tool_calls') {
+          // 工具调用完成，发送所有累积的工具调用
+          for (final pending in pendingToolCalls.values) {
+            if (pending.isComplete) {
+              yield LLMResponseChunk.tool(
+                ToolCall(
+                  id: pending.id!,
+                  functionName: pending.name!,
+                  arguments: pending.arguments.toString(),
+                ),
+                finishReason: 'tool_calls',
+              );
+            }
+          }
+          pendingToolCalls.clear();
+          continue;
+        }
+
+        // ----- 处理文本内容（含思维链） -----
+        final reasoningContent =
+            delta['reasoning_content'] as String? ?? '';
         final content = delta['content'] as String? ?? '';
 
-        String result = '';
-        if (reasoningContent != '' && !cot) {
-          result += '<think>';
+        if (reasoningContent.isNotEmpty && !cot) {
+          yield const LLMResponseChunk(isThinkingStart: true);
           cot = true;
         }
-        if (reasoningContent != '') {
-          result += reasoningContent;
+        if (reasoningContent.isNotEmpty) {
+          yield LLMResponseChunk.thinking(reasoningContent);
         }
-        if (reasoningContent == '' && cot) {
-          result += r'</think>';
+        if (reasoningContent.isEmpty && cot) {
+          yield const LLMResponseChunk(isThinkingEnd: true);
           cot = false;
         }
-        if (reasoningContent == '' && !cot) {
-          result += content;
+        if (reasoningContent.isEmpty && !cot && content.isNotEmpty) {
+          yield LLMResponseChunk.text(content);
         }
-
-        return result;
-      })) {
-        yield chunk;
       }
-    } else {
-      Map<String, dynamic> responseData = rs.data as Map<String, dynamic>;
-      LogController.log(json.encode(responseData), LogLevel.info,
-          type: LogType.json, title: "OpenAI响应");
+    }
 
-      final message =
-          responseData['choices'][0]['message'] as Map<String, dynamic>?;
-      if (message == null) {
-        yield '未发现可用消息';
-        return;
+    // 流结束后，发送所有未完成的工具调用（兜底）
+    for (final pending in pendingToolCalls.values) {
+      if (pending.isComplete) {
+        yield LLMResponseChunk.tool(
+          ToolCall(
+            id: pending.id!,
+            functionName: pending.name!,
+            arguments: pending.arguments.toString(),
+          ),
+          finishReason: 'tool_calls',
+        );
       }
+    }
+  }
 
-      // 优先返回 reasoning_content（思维链），如果没有则返回 content
-      final reasoningContent = message['reasoning_content'] as String?;
-      final content = message['content'] as String?;
+  /// 处理非流式响应 — 支持工具调用和文本内容
+  Stream<LLMResponseChunk> _handleNonStreamingResponse(dio.Response rs) async* {
+    Map<String, dynamic> responseData = rs.data as Map<String, dynamic>;
+    LogController.log(json.encode(responseData), LogLevel.info,
+        type: LogType.json, title: "OpenAI响应");
 
-      yield reasoningContent ?? content ?? '未发现可用消息';
+    final message =
+        responseData['choices'][0]['message'] as Map<String, dynamic>?;
+    if (message == null) {
+      yield LLMResponseChunk.text('未发现可用消息');
+      return;
+    }
+
+    // 处理工具调用
+    final toolCallsJson = message['tool_calls'] as List?;
+    if (toolCallsJson != null && toolCallsJson.isNotEmpty) {
+      for (final tcJson in toolCallsJson) {
+        yield LLMResponseChunk.tool(
+          ToolCall.fromJson(tcJson as Map<String, dynamic>),
+          finishReason: 'tool_calls',
+        );
+      }
+    }
+
+    // 处理文本内容
+    final reasoningContent = message['reasoning_content'] as String?;
+    final content = message['content'] as String?;
+
+    if (reasoningContent != null && reasoningContent.isNotEmpty) {
+      yield const LLMResponseChunk(isThinkingStart: true);
+      yield LLMResponseChunk.thinking(reasoningContent);
+      yield const LLMResponseChunk(isThinkingEnd: true);
+    }
+
+    if (content != null && content.isNotEmpty) {
+      yield LLMResponseChunk.text(content);
+    } else if ((toolCallsJson == null || toolCallsJson.isEmpty) &&
+        (reasoningContent == null || reasoningContent.isEmpty)) {
+      yield LLMResponseChunk.text('未发现可用消息');
     }
   }
 

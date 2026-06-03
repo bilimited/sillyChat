@@ -113,14 +113,14 @@ class _ApiEditPageState extends State<ApiEditPage> {
     String testModel = modelList.isNotEmpty ? modelList.first : modelName;
     if (testModel.isEmpty) testModel = 'gpt-3.5-turbo'; // 兜底防止报错
 
-    await for (String token in handler.requestTest(
+    await for (final chunk in handler.requestTest(
         _apiKeyController.text,
         testModel,
         _selectedProvider.defaultUrl.isEmpty
             ? _urlController.text
             : _selectedProvider.defaultUrl,
         _selectedProvider)) {
-      if (token.isNotEmpty) {
+      if (chunk.isText && chunk.content!.isNotEmpty) {
         handler.interrupt();
         break;
       }

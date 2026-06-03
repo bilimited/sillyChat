@@ -18,11 +18,11 @@ class ChatAIState {
     this.style = MessageStyle.common,
     this.isGenerating = false,
     this.currentAssistant = -1,
-    required this.aihandler,
+    required this.aihandler, 
   });
-
+ 
   ChatAIState copyWith({
-    String? LLMBuffer,
+    String? LLMBuffer, 
     String? GenerateState,
     bool? isGenerating,
     int? currentAssistant,

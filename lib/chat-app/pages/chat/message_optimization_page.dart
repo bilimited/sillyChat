@@ -385,9 +385,15 @@ class _MessageOptimizationPageState extends State<MessageOptimizationPage> {
       );
       final StringBuffer result = StringBuffer();
 
-      await for (String token
+      await for (final chunk
           in aiState.aihandler.requestTokenStream(requestOptions)) {
-        result.write(token);
+        if (chunk.isThinkingStart) {
+          result.write('<think>');
+        } else if (chunk.isThinkingEnd) {
+          result.write('</think>');
+        } else if (chunk.isText) {
+          result.write(chunk.content);
+        }
         // 实时更新显示内容
         message.content = result.toString();
         widget.sessionController.setAIState(aiState.copyWith(

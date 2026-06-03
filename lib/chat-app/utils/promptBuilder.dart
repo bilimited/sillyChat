@@ -1,6 +1,7 @@
 import 'package:flutter_example/chat-app/models/api_model.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
@@ -71,6 +72,25 @@ class Promptbuilder {
             .forEach((regex) {
           content = regex.process(content);
         });
+
+        // 工具结果消息：直接映射为 role:tool
+        if (msg.role == MessageRole.tool) {
+          return LLMMessage(
+              content: content,
+              role: 'tool',
+              fileDirs: msg.resPath,
+              senderId: msg.senderId,
+              toolCallId: msg.toolCallId);
+        }
+        // 包含工具调用的 assistant 消息
+        if (msg.toolCalls != null && msg.toolCalls!.isNotEmpty) {
+          return LLMMessage(
+              content: content,
+              role: 'assistant',
+              fileDirs: msg.resPath,
+              senderId: msg.senderId,
+              toolCalls: msg.toolCalls);
+        }
 
         // 合并消息列表：在一切消息前添加名称
         if (requestOptions.isMergeMessageList) {
@@ -297,15 +317,21 @@ class Promptbuilder {
     // messages.sort((a, b) => a.senderId.compareTo(b.senderId));
 
     // 合并相邻的，相同role的Message
+    // 注意：工具消息（role:tool 或包含 toolCalls）不能合并，因为每个工具
+    // 调用/结果各自携带独立的 toolCallId/toolCalls 元数据
     List<LLMMessage> mergedMessages = [];
     for (final msg in messages) {
-      if (mergedMessages.isEmpty || mergedMessages.last.role != msg.role) {
+      final skipMerge = msg.role == 'tool' ||
+          mergedMessages.isEmpty ||
+          mergedMessages.last.role != msg.role ||
+          mergedMessages.last.toolCalls != null ||
+          msg.toolCalls != null;
+      if (skipMerge) {
         mergedMessages.add(msg);
       } else {
         mergedMessages.last = mergedMessages.last.copyWith(
             content: mergedMessages.last.content + '\n' + msg.content,
             fileDirs: [...mergedMessages.last.fileDirs, ...msg.fileDirs]);
-        //mergedMessages.last.content += '\n' + msg.content;
       }
     }
     return mergedMessages;

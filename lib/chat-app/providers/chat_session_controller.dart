@@ -20,8 +20,11 @@ import 'package:flutter_example/chat-app/utils/chat/token_calc.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
+import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
+import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:path/path.dart' as p;
 import 'package:get/get.dart';
 
@@ -467,8 +470,14 @@ class ChatSessionController extends BaseController {
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);
 
     String result = "";
-    await for (String token in aiState.aihandler.requestTokenStream(options)) {
-      result += token;
+    await for (final chunk in aiState.aihandler.requestTokenStream(options)) {
+      if (chunk.isThinkingStart) {
+        result += '<think>';
+      } else if (chunk.isThinkingEnd) {
+        result += '</think>';
+      } else if (chunk.isText) {
+        result += chunk.content!;
+      }
     }
     print(result);
     final lines = result
@@ -501,8 +510,27 @@ class ChatSessionController extends BaseController {
     MessageModel? message = msgList[indexToRetry];
 
     // 判断是重新生成，还是直接回复
-    if (message.isAssistant) {
-      removeMessage(message.time);
+    if (message.isAssistant || message.role == MessageRole.tool) {
+      // 移除目标消息及其上方的工具调用链：
+      // ... → assistant(toolCalls) → tool result(s) → assistant(final)
+      // 从目标消息开始向上遍历，移除所有连续的 tool/assistant-with-toolCalls 消息
+      final toRemove = <MessageModel>[];
+      int i = indexToRetry;
+      while (i >= 0) {
+        final prev = msgList[i];
+        if (prev.role == MessageRole.tool ||
+            (prev.role == MessageRole.assistant &&
+                prev.toolCalls != null &&
+                prev.toolCalls!.isNotEmpty)) {
+          toRemove.add(prev);
+          i--;
+        } else {
+          break;
+        }
+      }
+      // 加上目标消息本身
+      toRemove.add(message);
+      await removeMessages(toRemove);
     } else {
       message = null;
     }
@@ -630,24 +658,28 @@ class ChatSessionController extends BaseController {
   /// 在当前聊天上下文下生成AI回复
   /// [overrideOption] 若设为空，则使用全局默认预设（所有预设中的第一个）
   /// [overrideAssistant] 若设为空，则使用聊天设置的AI角色生成回复
+  ///
+  /// 支持自动工具调用循环：
+  /// 1. 发送请求（附带已注册的工具定义）
+  /// 2. 如果模型返回 tool_calls，执行工具并将结果发回
+  /// 3. 重复直到模型返回纯文本回复
   Stream<String> _getResponse({
     ChatOptionModel? overrideOption,
     CharacterModel? overrideAssistant = null,
   }) async* {
-    late List<LLMMessage> messages;
-
-    messages = Promptbuilder(chat, overrideOption)
-        .getLLMMessageList(sender: overrideAssistant);
-
-    final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
-    LLMRequestOptions options = reqOptions.copyWith(messages: messages);
-
     final assistantId = overrideAssistant == null
         ? (chat.assistantId ?? -1)
         : overrideAssistant.id;
     final assistant = overrideAssistant == null
         ? CharacterController.of.getCharacterById(chat.assistantId ?? -1)
         : overrideAssistant;
+
+    // 构建初始消息列表（只构建一次，后续迭代直接追加工具消息）
+    List<LLMMessage> messages = Promptbuilder(chat, overrideOption)
+        .getLLMMessageList(sender: overrideAssistant);
+
+    final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
+
     setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
@@ -655,15 +687,150 @@ class ChatSessionController extends BaseController {
         style: assistant.messageStyle,
         currentAssistant: assistantId));
 
-    await for (String token in aiState.aihandler.requestTokenStream(options)) {
-      final oldState = aiState;
+    StringBuffer fullResponse = StringBuffer();
+    StringBuffer currentIterationText = StringBuffer();
+    int toolCallIterations = 0;
+    const int maxToolCallIterations = 10;
 
-      setAIState(oldState.copyWith(LLMBuffer: oldState.LLMBuffer + token));
-      //LLMMessageBuffer.refresh();
+    while (toolCallIterations < maxToolCallIterations) {
+      // 每次循环都重新构建 options（因为 messages 在变化）
+      LLMRequestOptions options = reqOptions.copyWith(
+        messages: messages,
+        // 如果有已注册的工具且调用方未显式设置 tools，则自动注入
+        tools: reqOptions.tools ?? (ToolRegistry.instance.hasTools
+            ? ToolRegistry.instance.definitions
+            : null),
+      );
+
+      final List<ToolCall> collectedToolCalls = [];
+      StringBuffer preToolCallText = StringBuffer();
+      currentIterationText.clear();
+
+      await for (final chunk
+          in aiState.aihandler.requestTokenStream(options)) {
+        final oldState = aiState;
+
+        if (chunk.isThinkingStart) {
+          preToolCallText.write('<think>');
+          fullResponse.write('<think>');
+          currentIterationText.write('<think>');
+          setAIState(
+              oldState.copyWith(LLMBuffer: fullResponse.toString()));
+        } else if (chunk.isThinkingEnd) {
+          preToolCallText.write('</think>');
+          fullResponse.write('</think>');
+          currentIterationText.write('</think>');
+          setAIState(
+              oldState.copyWith(LLMBuffer: fullResponse.toString()));
+        } else if (chunk.isText) {
+          preToolCallText.write(chunk.content);
+          fullResponse.write(chunk.content);
+          currentIterationText.write(chunk.content);
+          setAIState(
+              oldState.copyWith(LLMBuffer: fullResponse.toString()));
+        } else if (chunk.isToolCall) {
+          collectedToolCalls.add(chunk.toolCall!);
+          LogController.log(
+            '工具调用: ${chunk.toolCall!.functionName}(${chunk.toolCall!.arguments})',
+            LogLevel.info,
+            title: 'Tool Call',
+          );
+        }
+      }
+
+      // 没有工具调用，生成完成
+      if (collectedToolCalls.isEmpty) {
+        break;
+      }
+
+      toolCallIterations++;
+
+      // 将 assistant 消息（含 tool_calls）追加到 API 消息列表
+      messages.add(LLMMessage(
+        content: preToolCallText.toString(),
+        role: 'assistant',
+        toolCalls: collectedToolCalls,
+      ));
+
+      // 持久化 assistant-with-toolCalls 消息到聊天记录
+      await addMessage(message: MessageModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        content: preToolCallText.toString(),
+        senderId: assistantId,
+        time: DateTime.now(),
+        role: MessageRole.assistant,
+        style: assistant.messageStyle,
+        alternativeContent: [null],
+        toolCalls: collectedToolCalls,
+      ), useRegex: false);
+
+      // 执行每个工具并将结果追加为 tool 消息
+      for (final tc in collectedToolCalls) {
+        setAIState(aiState.copyWith(
+            GenerateState: '正在执行: ${tc.functionName}...'));
+        final result = await _executeToolCall(tc);
+        LogController.log(
+          '工具结果: ${tc.functionName} → $result',
+          LogLevel.info,
+          title: 'Tool Result',
+        );
+        messages.add(LLMMessage(
+          content: result,
+          role: 'tool',
+          toolCallId: tc.id,
+        ));
+
+        // 持久化工具结果消息到聊天记录
+        await addMessage(message: MessageModel(
+          id: DateTime.now().microsecondsSinceEpoch,
+          content: result,
+          senderId: assistantId,
+          time: DateTime.now(),
+          role: MessageRole.tool,
+          style: assistant.messageStyle,
+          alternativeContent: [null],
+          toolCallId: tc.id,
+        ), useRegex: false);
+      }
+
+      // 重置 preToolCallText（下一轮迭代可能产生新的文本）
+      preToolCallText.clear();
+
+      setAIState(aiState.copyWith(
+          GenerateState: '正在生成...',
+          LLMBuffer: fullResponse.toString()));
+    }
+
+    if (toolCallIterations >= maxToolCallIterations) {
+      LogController.log(
+        '工具调用达到最大迭代次数 $maxToolCallIterations，强制终止',
+        LogLevel.warning,
+        title: 'Tool Call',
+      );
     }
 
     setAIState(aiState.copyWith(isGenerating: false));
-    yield aiState.LLMBuffer;
+
+    // 只 yield 最后一轮迭代的文本（工具调用之前的文本已持久化在 toolCalls 消息中）
+    final result = currentIterationText.toString();
+    if (result.isEmpty) {
+      yield '（工具调用已完成，但模型未返回文本回复）';
+    } else {
+      yield result;
+    }
+  }
+
+  /// 执行单个工具调用
+  Future<String> _executeToolCall(ToolCall tc) async {
+    final executor = ToolRegistry.instance.getExecutor(tc.functionName);
+    if (executor == null) {
+      return '错误：未找到工具 "${tc.functionName}"';
+    }
+    try {
+      return await executor(tc.parsedArguments);
+    } catch (e) {
+      return '错误：执行工具 "${tc.functionName}" 时发生异常: $e';
+    }
   }
 
   /// 在后台生成回复
@@ -673,12 +840,19 @@ class ChatSessionController extends BaseController {
     late List<LLMMessage> messages;
 
     messages = Promptbuilder(chat, overrideOption).getLLMMessageList();
-
+ 
     final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
     LLMRequestOptions options = reqOptions.copyWith(messages: messages);
 
-    await for (String token in handler.requestTokenStream(options)) {
-      yield token;
+    await for (final chunk in handler.requestTokenStream(options)) {
+      if (chunk.isThinkingStart) {
+        yield '<think>';
+      } else if (chunk.isThinkingEnd) {
+        yield '</think>';
+      } else if (chunk.isText) {
+        yield chunk.content!;
+      }
+      // 后台任务中忽略工具调用
     }
     backGroundTasks--;
   }

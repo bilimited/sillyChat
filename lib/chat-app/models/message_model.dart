@@ -1,5 +1,6 @@
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 
 // enum MessageType { common, narration }
 
@@ -25,7 +26,7 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 //   }
 // }
 
-enum MessageRole { user, assistant, system }
+enum MessageRole { user, assistant, system, tool }
 
 extension MessageRoleExtension on MessageRole {
   static MessageRole fromString(String name) {
@@ -64,6 +65,12 @@ class MessageModel {
   bool get isHidden => visbility == MessageVisbility.hidden;
   String? bookmark;
 
+  /// 工具调用列表（仅 role==assistant 且模型调用了工具时有值）
+  final List<ToolCall>? toolCalls;
+
+  /// 工具调用 ID（仅 role==tool 时有值，对应回 ToolCall.id）
+  final String? toolCallId;
+
   CharacterModel get sender =>
       CharacterController.of.getCharacterById(senderId);
 
@@ -78,6 +85,8 @@ class MessageModel {
       //this.resPath = const [],
       this.visbility = MessageVisbility.common,
       this.bookmark,
+      this.toolCalls,
+      this.toolCallId,
       required this.alternativeContent,
       List<String>? resPath})
       : this.resPath = resPath ?? [];
@@ -110,7 +119,11 @@ class MessageModel {
         alternativeContent = (json['alternativeContent'] as List<dynamic>?)
                 ?.map((e) => e as String?)
                 .toList() ??
-            [null];
+            [null],
+        toolCalls = (json['toolCalls'] as List<dynamic>?)
+            ?.map((e) => ToolCall.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        toolCallId = json['toolCallId'] as String?;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -124,6 +137,9 @@ class MessageModel {
         'bookmark': bookmark,
         'resPath': resPath,
         'alternativeContent': alternativeContent,
+        if (toolCalls != null)
+          'toolCalls': toolCalls!.map((tc) => tc.toJson()).toList(),
+        if (toolCallId != null) 'toolCallId': toolCallId,
       };
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
@@ -148,6 +164,10 @@ class MessageModel {
               ?.map((e) => e as String?)
               .toList() ??
           [null],
+      toolCalls: (map['toolCalls'] as List<dynamic>?)
+          ?.map((e) => ToolCall.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      toolCallId: map['toolCallId'] as String?,
     );
   }
 
@@ -165,6 +185,8 @@ class MessageModel {
     String? bookmark,
     MessageVisbility? visbility,
     List<String?>? alternativeContent,
+    List<ToolCall>? toolCalls,
+    String? toolCallId,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -179,6 +201,8 @@ class MessageModel {
       visbility: visbility ?? this.visbility,
       bookmark: bookmark ?? this.bookmark,
       alternativeContent: alternativeContent ?? this.alternativeContent,
+      toolCalls: toolCalls ?? this.toolCalls,
+      toolCallId: toolCallId ?? this.toolCallId,
     );
   }
 }

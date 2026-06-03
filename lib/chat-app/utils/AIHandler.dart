@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/error_handler.dart';
 import 'package:flutter_example/chat-app/utils/service_handlers/ServiceHandlerFactory.dart';
 import 'package:get/get.dart';
@@ -85,14 +86,14 @@ class Aihandler {
   }
 
   Future<void> request(
-      void Function(String) callback, LLMRequestOptions options) async {
-    await for (String token in requestTokenStream(options)) {
-      callback(token);
+      void Function(LLMResponseChunk) callback, LLMRequestOptions options) async {
+    await for (final chunk in requestTokenStream(options)) {
+      callback(chunk);
     }
   }
 
-  Stream<String> requestTest(String apiKey, String modelName, String url,
-      ServiceType provider) async* {
+  Stream<LLMResponseChunk> requestTest(String apiKey, String modelName,
+      String url, ServiceType provider) async* {
     try {
       isInterrupt = false;
       isError = false;
@@ -107,7 +108,7 @@ class Aihandler {
       initDio();
       final handler = Servicehandlerfactory.getHandler(provider);
 
-      await for (final token in handler.request(
+      await for (final chunk in handler.request(
           this,
           LLMRequestOptions(messages: [
             LLMMessage(
@@ -120,7 +121,7 @@ class Aihandler {
               modelName: modelName,
               url: url,
               provider: provider))) {
-        yield token;
+        yield chunk;
       }
     } on dio.DioException catch (e) {
       isError = true;
@@ -137,7 +138,7 @@ class Aihandler {
     isBusy = false;
   }
 
-  Stream<String> requestTokenStream(LLMRequestOptions options) async* {
+  Stream<LLMResponseChunk> requestTokenStream(LLMRequestOptions options) async* {
     try {
       isInterrupt = false;
       isError = false;
@@ -176,8 +177,8 @@ class Aihandler {
       initDio();
       final handler = Servicehandlerfactory.getHandler(api.provider);
 
-      await for (final token in handler.request(this, options, api)) {
-        yield token;
+      await for (final chunk in handler.request(this, options, api)) {
+        yield chunk;
       }
     } on dio.DioException catch (e) {
       isError = true;

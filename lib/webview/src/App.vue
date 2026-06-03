@@ -10,7 +10,10 @@
           :key="msg.id"
           class="message-item"
           :class="[
-            msg.role === 'user' ? 'message-user' : 'message-ai',
+            msg.role === 'user' ? 'message-user' :
+            msg.role === 'tool' ? 'message-tool' :
+            'message-ai',
+            msg.toolCalls && msg.toolCalls.length > 0 ? 'message-toolcall' : '',
             { 'message-selected': selectedMessage?.time === msg.time },
           ]"
           @click="toggleSelect(msg)"
@@ -36,9 +39,25 @@
               />
             </template>
 
-            <!-- 正常展示 → Markdown 渲染 -->
+            <!-- 正常展示 -->
             <div v-else class="bubble">
-              <div class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+              <!-- 工具结果消息：等宽字体紧凑显示 -->
+              <template v-if="msg.role === 'tool'">
+                <div class="tool-result-label">Tool Result</div>
+                <div class="tool-result-content">{{ msg.content }}</div>
+              </template>
+              <!-- 工具调用卡片（assistant 消息包含 toolCalls 时） -->
+              <template v-else>
+                <div class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                <div v-if="msg.toolCalls && msg.toolCalls.length > 0" class="tool-calls-card">
+                  <div class="tool-calls-label">Function Calls</div>
+                  <div v-for="tc in msg.toolCalls" :key="tc.id" class="tool-call-item">
+                    <span class="tool-icon">&#x1f6e0;</span>
+                    <span class="tool-fn-name">{{ tc.functionName }}</span>
+                    <span class="tool-args">({{ formatToolArgs(tc.arguments) }})</span>
+                  </div>
+                </div>
+              </template>
             </div>
 
             <!-- 消息时间 -->
@@ -295,12 +314,24 @@ const formatTime = (isoTime) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// 检查是否是最后一条助手消息
+// 格式化工具调用参数为可读字符串
+const formatToolArgs = (argsStr) => {
+  try {
+    const parsed = JSON.parse(argsStr);
+    return Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(', ');
+  } catch {
+    return argsStr;
+  }
+};
+
+// 检查是否是最后一条助手消息（含工具调用链中的消息）
 const isLastAssistantMessage = (msg) => {
   if (!chatData.value || !msg) return false;
   const msgs = chatData.value.messages;
   if (msgs.length === 0) return false;
-  return msgs[msgs.length - 1].id === msg.id && msg.role === 'assistant';
+  const last = msgs[msgs.length - 1];
+  return last.id === msg.id &&
+    (msg.role === 'assistant' || msg.role === 'tool');
 };
 
 // 备选文本当前索引
@@ -840,5 +871,75 @@ onUnmounted(() => {
 
 .message-user .inline-editor {
   max-width: 100%;
+}
+
+/* ---- Tool message (role: tool) ---- */
+.message-tool {
+  flex-direction: row;
+}
+.message-tool .bubble-wrapper {
+  align-items: flex-start;
+  margin-left: 10px;
+}
+.message-tool .bubble {
+  background-color: var(--bubble-bg-tool, rgba(128,128,128,0.08));
+  color: var(--bubble-text-tool);
+  border-left: 3px solid var(--tool-accent, #9e9e9e);
+  border-top-left-radius: 2px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: calc(12px * var(--font-scale));
+  padding: 8px 12px;
+}
+
+.tool-result-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--time-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.tool-result-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--tool-content-color);
+}
+
+/* ---- Tool calls card inside assistant message ---- */
+.tool-calls-card {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--toolcall-bg, rgba(var(--theme-r, 66), var(--theme-g, 133), var(--theme-b, 244), 0.08));
+  border-radius: 6px;
+  border: 1px solid var(--toolcall-border, rgba(var(--theme-r, 66), var(--theme-g, 133), var(--theme-b, 244), 0.2));
+}
+
+.tool-calls-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--time-color);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.tool-call-item {
+  font-size: 11px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 1px 0;
+  color: var(--toolcall-text);
+}
+
+.tool-fn-name {
+  font-weight: 600;
+}
+
+.tool-args {
+  color: var(--toolcall-args-color);
+  font-size: 10px;
+}
+
+.message-tool .message-toolbar {
+  align-self: flex-start;
 }
 </style>
