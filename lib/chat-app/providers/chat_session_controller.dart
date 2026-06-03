@@ -23,6 +23,7 @@ import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
+import 'package:flutter_example/chat-app/utils/tool_call_tag.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
 import 'package:flutter_example/chat-app/providers/log_controller.dart';
 import 'package:path/path.dart' as p;
@@ -718,7 +719,7 @@ class ChatSessionController extends BaseController {
       if (collectedToolCalls.isEmpty) {
         break;
       }
-
+ 
       toolCallIterations++;
 
       // 将 assistant 消息（含 tool_calls）追加到消息列表
@@ -743,6 +744,9 @@ class ChatSessionController extends BaseController {
           role: 'tool',
           toolCallId: tc.id,
         ));
+
+        // 将工具调用结果序列化为标签，持久化到消息正文中
+        fullResponse.write(ToolCallTag.buildTag(tc, result));
       }
 
       // 重置 preToolCallText（下一轮迭代可能产生新的文本）

@@ -11,6 +11,7 @@ import 'package:flutter_example/chat-app/utils/LoreBookUtil.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/promptFormatter.dart';
+import 'package:flutter_example/chat-app/utils/tool_call_tag.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 import 'package:get/get.dart';
 
@@ -61,7 +62,7 @@ class Promptbuilder {
 
     return [
       //...sysPrompts,
-      ...msgIndexes.map((i) {
+      ...msgIndexes.expand((i) {
         final msg = chat.messages[i];
         String content = _propressMessage(msg.content, requestOptions);
 
@@ -72,9 +73,10 @@ class Promptbuilder {
           content = regex.process(content);
         });
 
+        LLMMessage baseMessage;
         // 合并消息列表：在一切消息前添加名称
         if (requestOptions.isMergeMessageList) {
-          return LLMMessage(
+          baseMessage = LLMMessage(
               content:
                   promptSetting.groupFormatter.replaceAll('<message>', content),
               role: msg.senderId == (sender?.id ?? chat.assistantId)
@@ -84,18 +86,15 @@ class Promptbuilder {
               senderId: msg.senderId);
           // 不合并消息列表，聊天模式
         } else if (sender == null) {
-          return LLMMessage(
+          baseMessage = LLMMessage(
               content: content,
               role: msg.isAssistant ? "assistant" : "user",
               fileDirs: msg.resPath,
               senderId: msg.senderId);
           // 不合并消息列表，群聊模式
         } else {
-          return LLMMessage(
+          baseMessage = LLMMessage(
               content:
-                  // msg.senderId == sender.id
-                  //     ? content
-                  //     :
                   promptSetting.groupFormatter
                       .replaceAll(
                           '<char>',
@@ -107,6 +106,9 @@ class Promptbuilder {
               fileDirs: msg.resPath,
               senderId: msg.senderId);
         }
+
+        // 展开 ToolCallResult 标签为多条 LLMMessage
+        return ToolCallTag.expandToolCallResults(baseMessage);
       })
     ];
   }
@@ -299,7 +301,12 @@ class Promptbuilder {
     // 合并相邻的，相同role的Message
     List<LLMMessage> mergedMessages = [];
     for (final msg in messages) {
-      if (mergedMessages.isEmpty || mergedMessages.last.role != msg.role) {
+      if (mergedMessages.isEmpty ||
+          mergedMessages.last.role != msg.role ||
+          mergedMessages.last.toolCalls != null ||
+          msg.toolCalls != null ||
+          mergedMessages.last.toolCallId != null ||
+          msg.toolCallId != null) {
         mergedMessages.add(msg);
       } else {
         mergedMessages.last = mergedMessages.last.copyWith(

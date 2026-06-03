@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/utils/image_utils.dart';
+import 'package:flutter_example/chat-app/utils/tool_call_tag.dart';
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/stack_avatar.dart';
 import 'package:get/get.dart';
@@ -113,11 +114,13 @@ class ChatListItem extends StatelessWidget {
                       // 如果有标签则显示标签，否则显示最近消息
                       if (chat != null)
                         Text(
-                          chat!.lastMessage
-                              .replaceAll(
-                                  RegExp(r'<think>.*?</think>', dotAll: true),
-                                  '')
-                              .replaceAll('\n', ''),
+                          ToolCallTag.stripTags(
+                            chat!.lastMessage
+                                .replaceAll(
+                                    RegExp(r'<think>.*?</think>', dotAll: true),
+                                    '')
+                                .replaceAll('\n', ''),
+                          ),
                           style: TextStyle(
                             color: theme.colorScheme.outline,
                             fontSize: 14,

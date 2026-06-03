@@ -28,139 +28,89 @@ class _ThinkWidgetState extends State<ThinkWidget> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 字体配置，用于估算高度
-    const double fontSize = 13.0;
-    const double lineHeight = 1.5;
-    // 4行的大致高度
-    const double collapsedHeight = fontSize * lineHeight * 3;
-
-    return InkWell(
-      onTap: _toggleExpanded,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.only(left: 8),
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              color: colors.outline.withOpacity(0.5),
-              width: 2,
-            ),
-          ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.grey[100],
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: colors.outlineVariant.withOpacity(0.3),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- 顶部标题栏 ---
-
-            Row(
-              children: [
-                if (widget.isThinking)
-                  Row(
-                    children: [
-                      Text(
-                        "思考中",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.outline,
-                          fontWeight: FontWeight.bold,
-                        ),
+      ),
+      child: InkWell(
+        onTap: _toggleExpanded,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row — the only visible part when collapsed
+              Row(
+                children: [
+                  Icon(
+                    Icons.psychology_outlined,
+                    size: 13,
+                    color: colors.outline,
+                  ),
+                  const SizedBox(width: 4),
+                  if (widget.isThinking)
+                    SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: colors.outline,
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.outline,
-                        ),
-                      ),
-                    ],
-                  )
-                else
+                    ),
+                  if (widget.isThinking) const SizedBox(width: 4),
                   Text(
-                    "思考过程:",
+                    widget.isThinking ? '思考中' : '思考过程',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: colors.outline,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                const Spacer(), // 将按钮推到右侧（可选）
-              ],
-            ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: 14,
+                      color: colors.outline,
+                    ),
+                  ),
+                ],
+              ),
 
-            // --- 带有动画的内容区域 ---
-            // AnimatedSize 自动处理子组件高度变化时的过渡动画
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                // AnimatedSwitcher 处理两种显示模式（完整 vs 收起）之间的淡入淡出
+              // Expandable body
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
                 child: _isExpanded
-                    ? _buildExpandedContent(colors, fontSize, lineHeight)
-                    : _buildCollapsedContent(
-                        colors, collapsedHeight, fontSize, lineHeight),
+                    ? Container(
+                        key: const ValueKey('think_expanded'),
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(
+                            top: 4, bottom: 2, right: 4),
+                        child: Text(
+                          widget.thinkContent.trim(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: colors.outline,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 构建展开状态的内容 (Key用于AnimatedSwitcher识别变化)
-  Widget _buildExpandedContent(
-      ColorScheme colors, double fontSize, double lineHeight) {
-    return Container(
-      key: const ValueKey('expanded'),
-      width: double.infinity, // 撑满宽度
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        widget.thinkContent.trim(),
-        style: TextStyle(
-          fontSize: fontSize,
-          height: lineHeight,
-          color: colors.outline,
-        ),
-      ),
-    );
-  }
-
-  // 构建收起状态的内容 (Key用于AnimatedSwitcher识别变化)
-  Widget _buildCollapsedContent(
-      ColorScheme colors, double height, double fontSize, double lineHeight) {
-    return Container(
-      key: const ValueKey('collapsed'),
-      height: height, // 固定高度
-      margin: const EdgeInsets.only(top: 4),
-      // ShaderMask 实现顶部渐隐效果
-      child: ShaderMask(
-        shaderCallback: (Rect bounds) {
-          return const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black, Colors.black],
-            stops: [0.0, 0.3, 1.0],
-          ).createShader(bounds);
-        },
-        blendMode: BlendMode.dstIn,
-        child: Container(
-          alignment: Alignment.bottomLeft, // 内容底部对齐
-          // 使用反向滚动视图显示最后几行
-          child: SingleChildScrollView(
-            reverse: true,
-            physics: const NeverScrollableScrollPhysics(),
-            child: Text(
-              widget.thinkContent.trim().replaceAll('\n\n', '\n'),
-              style: TextStyle(
-                fontSize: fontSize,
-                height: lineHeight,
-                color: colors.outline,
-              ),
-            ),
+            ],
           ),
         ),
       ),

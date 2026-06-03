@@ -18,6 +18,7 @@ import 'package:flutter_markdown_plus_latex/flutter_markdown_plus_latex.dart';
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/chat/custom_codeblock_widget.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
+import 'package:flutter_example/chat-app/widgets/chat/tool_call_result_widget.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -147,6 +148,24 @@ class FontColorBuilder extends MarkdownElementBuilder {
     }
     return null;
   }
+}
+
+/// 消息内容片段的类型
+enum _ContentSegmentType { text, think, toolCallResult }
+
+/// 消息内容片段 — 将消息内容拆分为不同类型的片段
+class _ContentSegment {
+  final _ContentSegmentType type;
+  final String content;
+  final Map<String, String>? attributes; // toolCallResult: id, name, args
+  final bool isThinking; // think: 是否为未闭合的思考块（流式输出中）
+
+  const _ContentSegment({
+    required this.type,
+    required this.content,
+    this.attributes,
+    this.isThinking = false,
+  });
 }
 
 class CodeBlockBuilder extends MarkdownElementBuilder {
@@ -279,6 +298,83 @@ class _MessageBubbleState extends State<MessageBubble> {
   @override
   void initState() {
     super.initState();
+  }
+
+  /// 解析消息内容为片段列表：文本、<think>思考块、<ToolCallResult>工具调用块
+  ///
+  /// 支持多个思考块和工具调用块穿插在文本中。
+  /// 会检测末尾未闭合的 <think> 标签（流式输出中）。
+  List<_ContentSegment> _parseContentSegments(String content) {
+    final segments = <_ContentSegment>[];
+
+    // 组合正则：同时匹配完整的 <think> 和 <ToolCallResult> 标签
+    // group(1): think 内容；group(2): id；group(3): name；group(4): args；group(5): result
+    final tagRegex = RegExp(
+      r'<think>(.*?)</think>|'
+      r'''<ToolCallResult\s+id="([^"]*)"\s+name="([^"]*)"\s+args='([^']*)'>(.*?)</ToolCallResult>''',
+      dotAll: true,
+    );
+
+    int lastEnd = 0;
+    for (final match in tagRegex.allMatches(content)) {
+      // 标签之前的文本
+      if (match.start > lastEnd) {
+        final text = content.substring(lastEnd, match.start);
+        if (text.isNotEmpty) {
+          segments.add(_ContentSegment(
+              type: _ContentSegmentType.text, content: text));
+        }
+      }
+
+      if (match.group(1) != null) {
+        // 完整的 <think> 块
+        segments.add(_ContentSegment(
+          type: _ContentSegmentType.think,
+          content: match.group(1) ?? '',
+        ));
+      } else {
+        // 完整的 <ToolCallResult> 块
+        segments.add(_ContentSegment(
+          type: _ContentSegmentType.toolCallResult,
+          content: match.group(5) ?? '',
+          attributes: {
+            'id': match.group(2) ?? '',
+            'name': match.group(3) ?? '',
+            'args': match.group(4) ?? '',
+          },
+        ));
+      }
+
+      lastEnd = match.end;
+    }
+
+    // 处理最后一个标签之后的剩余内容
+    if (lastEnd < content.length) {
+      final remaining = content.substring(lastEnd);
+
+      // 检查是否有未闭合的 <think> 标签（流式输出中）
+      final unclosedThink =
+          RegExp(r'<think>(.*)', dotAll: true).firstMatch(remaining);
+      if (unclosedThink != null) {
+        if (unclosedThink.start > 0) {
+          segments.add(_ContentSegment(
+              type: _ContentSegmentType.text,
+              content: remaining.substring(0, unclosedThink.start)));
+        }
+        segments.add(_ContentSegment(
+          type: _ContentSegmentType.think,
+          content: unclosedThink.group(1) ?? '',
+          isThinking: true,
+        ));
+      } else {
+        if (remaining.isNotEmpty) {
+          segments.add(_ContentSegment(
+              type: _ContentSegmentType.text, content: remaining));
+        }
+      }
+    }
+
+    return segments;
   }
 
   Widget _buildMessageAvatar() {
@@ -555,12 +651,8 @@ class _MessageBubbleState extends State<MessageBubble> {
               ],
             ),
           )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message.resPath.isNotEmpty) _buildMessageImage(),
-              SelectionArea(
-                child: MarkdownBody(
+        : SelectionArea(
+            child: MarkdownBody(
                   data: content,
                   onTapLink: (text, href, title) {
                     _launchURL(href ?? '');
@@ -630,41 +722,60 @@ class _MessageBubbleState extends State<MessageBubble> {
                   softLineBreak: true,
                   shrinkWrap: true,
                   inlineSyntaxes: [],
-                ),
-              ),
-            ],
+            ),
           );
   }
 
-  Widget _buildMessageBubbleBody(String content) {
-    final colors = Theme.of(context).colorScheme;
-
+  /// 构建消息片段容器 — 渲染所有内容片段（文本气泡、思考块、工具调用结果）
+  Widget _buildSegmentsContainer(List<_ContentSegment> segments) {
     return StickyOverlayContainer(
       overlay: widget.buildBottomButtons(widget.isSelected, message),
       alignment: isMe ? Alignment.bottomRight : Alignment.bottomLeft,
       margin: EdgeInsets.zero,
       child: SizedBox(
-        // 1. 强制子组件水平占满
         width: double.infinity,
         child: AnimatedPadding(
-          duration: Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCirc,
           padding: widget.isSelected
-              ? EdgeInsetsGeometry.only(bottom: 24)
+              ? const EdgeInsetsGeometry.only(bottom: 24)
               : EdgeInsetsGeometry.zero,
           child: Stack(
             children: [
-              // 2. 使用 Align 确保气泡根据发送者身份靠左或靠右，且不被强制拉伸
               Align(
                 alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                child: _buildBubbleSwitcher(content, colors),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  children: [
+                    // 图片附件（只在第一处渲染一次）
+                    if (message.resPath.isNotEmpty) _buildMessageImage(),
+                    // 渲染各个内容片段
+                    ...segments.map((seg) => _buildSegmentWidget(seg)),
+                    // 空消息且加载中时显示占位
+                    if (segments.isEmpty && isLoading)
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 200),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.state?.GenerateState ?? '加载中',
+                              style: TextStyle(color: colors.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
               if (isLoading)
-                Positioned(
+                const Positioned(
                   left: 0,
                   right: 0,
                   top: 0,
-                  child: const LinearProgressIndicator(
+                  child: LinearProgressIndicator(
                     backgroundColor: Colors.transparent,
                   ),
                 ),
@@ -673,6 +784,26 @@ class _MessageBubbleState extends State<MessageBubble> {
         ),
       ),
     );
+  }
+
+  /// 根据片段类型构建对应的 Widget
+  Widget _buildSegmentWidget(_ContentSegment seg) {
+    switch (seg.type) {
+      case _ContentSegmentType.text:
+        return _buildBubbleSwitcher(seg.content, colors);
+      case _ContentSegmentType.think:
+        return ThinkWidget(
+          isThinking: seg.isThinking,
+          thinkContent: seg.content,
+        );
+      case _ContentSegmentType.toolCallResult:
+        return ToolCallResultWidget(
+          id: seg.attributes?['id'] ?? '',
+          name: seg.attributes?['name'] ?? '',
+          args: seg.attributes?['args'] ?? '',
+          result: seg.content,
+        );
+    }
   }
 
 // 提取气泡样式判断，保持代码整洁
@@ -752,39 +883,25 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    String thinkContent = '';
-    String afterThink = '';
-    bool isThinking = false;
-
     final isHideName = widget.lastMessage != null &&
         widget.lastMessage!.senderId == message.senderId;
 
     final regexs = widget.chat.vaildRegexs;
 
-    // 内置正则：渲染<think>
-    if (message.content.contains('<think>')) {
-      int startIndex = message.content.indexOf('<think>') + 7;
-      int endIndex = message.content.indexOf('</think>');
+    // 解析消息内容为片段：文本、<think>思考块、<ToolCallResult>工具调用块
+    final rawSegments = _parseContentSegments(message.content);
 
-      if (endIndex == -1) {
-        // Only has opening <think>
-        thinkContent = message.content.substring(startIndex);
-        afterThink = '';
-        isThinking = true;
-      } else {
-        // Has both <think> and </think>
-        thinkContent = message.content.substring(startIndex, endIndex);
-        afterThink = message.content.substring(endIndex + 8);
+    // 仅对文本片段应用正则规则（思考块和工具调用块的内容不受正则影响）
+    final segments = rawSegments.map((seg) {
+      if (seg.type != _ContentSegmentType.text) return seg;
+      var text = seg.content;
+      for (final regex in regexs
+          .where((reg) => reg.onRender)
+          .where((reg) => reg.isAvailable(widget.chat, message))) {
+        text = regex.process(text);
       }
-    } else {
-      afterThink = message.content;
-    }
-
-    for (final regex in regexs
-        .where((reg) => reg.onRender)
-        .where((reg) => reg.isAvailable(widget.chat, message))) {
-      afterThink = regex.process(afterThink);
-    }
+      return _ContentSegment(type: _ContentSegmentType.text, content: text);
+    }).toList();
 
     return Obx(() {
       var gestureDetector = Listener(
@@ -850,13 +967,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                                 children: [
                                   if (!isHideName) _buildMessageUserName(),
 
-                                  if (thinkContent.isNotEmpty)
-                                    //思考过程块
-                                    ThinkWidget(
-                                        isThinking: isThinking,
-                                        thinkContent: thinkContent),
-                                  // 主消息气泡
-                                  _buildMessageBubbleBody(afterThink),
+                                  // 渲染消息片段：思考块、工具调用结果、文本气泡
+                                  _buildSegmentsContainer(segments),
                                   // SizedBox(height: 8.0),
                                   // widget.buildBottomButtons(
                                   //     widget.isSelected, message),
