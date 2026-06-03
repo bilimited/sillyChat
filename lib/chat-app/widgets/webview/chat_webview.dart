@@ -11,10 +11,17 @@ import 'package:mime/mime.dart'; // 推荐引入 mime 包来动态获取 content
 
 class ChatWebview extends StatefulWidget {
   const ChatWebview(
-      {super.key, required this.session, required this.onMessageEmit});
+      {super.key,
+      required this.session,
+      required this.onMessageEmit,
+      this.onWebSessionCreated});
   final ChatSessionController session;
 
   final Function(dynamic args) onMessageEmit;
+
+  /// Called when the WebSessionController is created, passing it back
+  /// so the parent can call push methods (theme, display settings, scroll, etc.)
+  final void Function(WebSessionController)? onWebSessionCreated;
 
   @override
   State<ChatWebview> createState() => _ChatWebviewState();
@@ -67,6 +74,7 @@ class _ChatWebviewState extends State<ChatWebview> {
         onWebViewCreated: (controller) {
           _webViewController = controller;
           webSessionController.onWebViewCreated(controller);
+          widget.onWebSessionCreated?.call(webSessionController);
         },
         onConsoleMessage: (controller, consoleMessage) {
           print(consoleMessage);

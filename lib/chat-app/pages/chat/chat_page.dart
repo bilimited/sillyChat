@@ -34,6 +34,7 @@ import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dar
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
 import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
+import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
@@ -131,6 +132,9 @@ class _ChatPageState extends State<ChatPage> {
 
   bool _showWheel = false;
 
+  // WebView session controller — used to push theme/display changes
+  WebSessionController? _webSessionController;
+
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
@@ -145,6 +149,11 @@ class _ChatPageState extends State<ChatPage> {
         SillyChatApp.showChangelogDialog(context: context);
         SettingController.of.updateVersion();
       }
+    });
+
+    // Watch dark mode changes and push to WebView
+    ever(SettingController.of.isDarkMode, (bool isDark) {
+      _webSessionController?.onThemeChange(isDark ? 'dark' : 'light');
     });
 
     _registerController(widget.sessionController);
@@ -676,8 +685,117 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildWebviewMessageList() {
     return ChatWebview(
       session: widget.sessionController,
-      onMessageEmit: (args) {},
+      onMessageEmit: _onWebviewMessageEmit,
+      onWebSessionCreated: (controller) {
+        _webSessionController = controller;
+        // Push initial theme — prefer user setting over system brightness
+        final isDark = SettingController.of.isDarkMode.value;
+        controller.onThemeChange(isDark ? 'dark' : 'light');
+        // Push display settings
+        controller.onDisplaySettingsChange(
+            _settingController.displaySettingModel.value.toJson());
+      },
     );
+  }
+
+  /// Handle emitMessage actions forwarded from WebSessionController.
+  /// These are actions that need Flutter UI context (clipboard, navigation, dialogs, etc.)
+  void _onWebviewMessageEmit(dynamic args) {
+    if (args is! Map) return;
+    final action = args['action'] as String?;
+    final data = args['data'] as Map<String, dynamic>?;
+
+    switch (action) {
+      case 'copyMessage':
+        final text = data?['text'] as String? ?? '';
+        Clipboard.setData(ClipboardData(text: text));
+        SillyChatApp.snackbar(context, '复制成功');
+        break;
+
+      case 'pasteMessages':
+        final timeStr = data?['time'] as String?;
+        final position = data?['position'] as String?;
+        if (timeStr != null && position != null) {
+          final messagesToPaste = _chatController.messageToPaste;
+          if (messagesToPaste.isNotEmpty) {
+            final msgList = chat.messages;
+            final targetTime = DateTime.parse(timeStr);
+            final idx =
+                msgList.indexWhere((m) => m.time == targetTime);
+            if (idx != -1) {
+              final insertIdx = position == 'above' ? idx : idx + 1;
+              msgList.insertAll(insertIdx, messagesToPaste);
+              _updateChat();
+              setState(() {});
+            }
+          }
+        }
+        break;
+
+      case 'addImageToMessage':
+        final timeStr = data?['time'] as String?;
+        if (timeStr != null) {
+          _addImageToMessage(timeStr);
+        }
+        break;
+
+      case 'createBranch':
+        final timeStr = data?['time'] as String?;
+        if (timeStr != null) {
+          final targetTime = DateTime.parse(timeStr);
+          final msg = chat.messages
+              .firstWhereOrNull((m) => m.time == targetTime);
+          if (msg != null) _createBranchFrom(msg);
+        }
+        break;
+
+      case 'optimizeMessage':
+        final timeStr = data?['time'] as String?;
+        if (timeStr != null) {
+          final targetTime = DateTime.parse(timeStr);
+          final msg = chat.messages
+              .firstWhereOrNull((m) => m.time == targetTime);
+          if (msg != null) _showOptimizationDialog(msg);
+        }
+        break;
+
+      case 'messageMore':
+        final timeStr = data?['time'] as String?;
+        if (timeStr != null) {
+          final targetTime = DateTime.parse(timeStr);
+          final msg = chat.messages
+              .firstWhereOrNull((m) => m.time == targetTime);
+          if (msg != null) _showMoreMessageButton(msg);
+        }
+        break;
+
+      case 'scrollStateChanged':
+        final nearBottom = data?['isNearBottom'] as bool? ?? true;
+        if (_isUserReading == nearBottom) {
+          setState(() => _isUserReading = !nearBottom);
+        }
+        break;
+
+      default:
+        print('[ChatPage] Unhandled emitMessage action: $action');
+    }
+  }
+
+  /// Open image picker and add image to a specific message.
+  Future<void> _addImageToMessage(String timeStr) async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final time = DateTime.parse(timeStr);
+      final msg =
+          chat.messages.firstWhereOrNull((m) => m.time == time);
+      if (msg != null) {
+        setState(() {
+          msg.resPath.add(pickedFile.path);
+          _updateChat();
+        });
+      }
+    }
   }
 
   Widget _buildToBottomButton() {
@@ -801,20 +919,27 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _scrollToMessage(MessageModel message) {}
+  void _scrollToMessage(MessageModel message) {
+    if (useWebview) {
+      sessionController.scrollToMessage(message.id);
+    }
+    // Flutter scroll implementation would go here if needed
+  }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
+    if (useWebview) {
+      sessionController.scrollToBottom();
+    } else if (_scrollController.hasClients) {
       _scrollController.animateTo(0,
-          // index: chat.messages.length,
-          // alignment: -1,
           duration: Duration(milliseconds: 200),
           curve: Curves.easeOutQuad);
     }
   }
 
   void _jumpToBottom() {
-    if (_scrollController.hasClients) {
+    if (useWebview) {
+      sessionController.scrollToBottom();
+    } else if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
   }

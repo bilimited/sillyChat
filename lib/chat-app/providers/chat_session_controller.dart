@@ -77,6 +77,7 @@ class ChatSessionController extends BaseController {
   Worker? aiStateListener;
   Worker? _messageEventWorker;
   String _previousLLMBuffer = "";
+  WebSessionController? _webController;
 
   /**
    * [chatPath] : 聊天文件的完整路径
@@ -225,6 +226,8 @@ class ChatSessionController extends BaseController {
   }
 
   void bindWebController(WebSessionController controller) {
+    _webController = controller;
+
     // ---- Incremental message sync (P1) ----
     // Fires on every message add/update/delete. Only active after
     // bindWebController is called, which happens from onWebViewCreated
@@ -293,7 +296,18 @@ class ChatSessionController extends BaseController {
       _messageEventWorker = null;
     }
     _previousLLMBuffer = "";
+    _webController = null;
     onChatUpdate = (chat) {};
+  }
+
+  /// Tell WebView to scroll to the bottom of the message list.
+  void scrollToBottom() {
+    _webController?.scrollToBottom();
+  }
+
+  /// Tell WebView to scroll to a specific message by its id.
+  void scrollToMessage(int messageId) {
+    _webController?.scrollToMessage(messageId);
   }
 
   /// 在指定聊天中添加消息

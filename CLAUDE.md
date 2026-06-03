@@ -4,12 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build / Run / Test
 
+### Flutter
+
 ```bash
 # Get dependencies
 flutter pub get
 
 # Run code generation (freezed, json_serializable)
 flutter pub run build_runner build
+
+# Watch mode — regenerate on file changes (useful during development)
+flutter pub run build_runner watch
 
 # Analyze
 flutter analyze
@@ -24,6 +29,26 @@ flutter build apk --release --target-platform android-arm64
 flutter build windows --release
 ```
 
+### WebView Frontend (`lib/webview/`)
+
+The chat message rendering layer is a separate **Vite + Vue 3** project. It embeds inside Flutter via `flutter_inappwebview`.
+
+```bash
+cd lib/webview
+
+# Install dependencies (first time only)
+npm install
+
+# Start dev server (http://localhost:5173) — HMR, no Flutter restart needed
+npm run dev
+
+# Build production assets
+npm run build
+
+# Preview production build
+npm run preview
+```
+
 ## Project Overview
 
 SillyChat is a Flutter-based AI chat app inspired by NextChat and SillyTavern. Targets Android (primary) and Windows/Linux/macOS. Uses Material 3.
@@ -31,6 +56,20 @@ SillyChat is a Flutter-based AI chat app inspired by NextChat and SillyTavern. T
 - Flutter 3.35.5, Dart SDK ^3.5.4
 - Package name: `flutter_example` (legacy — do not rename)
 - Version: 1.18.0
+
+## Development Workflow
+
+**Flutter-only changes**: Run `flutter run` on a connected device/emulator. Hot restart works as usual.
+
+**WebView frontend changes**: The chat message UI is rendered by a Vue 3 app in `lib/webview/`. In debug mode, Flutter's `InAppWebView` loads `http://localhost:5173/`. Workflow:
+
+1. Start the Vite dev server: `cd lib/webview && npm run dev`
+2. Run the Flutter app: `flutter run`
+3. Edit Vue/JS/CSS in `lib/webview/src/` — Vite HMR applies changes instantly within the WebView, **no Flutter restart needed**
+
+**Full-stack changes**: Run both the Vite dev server and Flutter app simultaneously (two terminals).
+
+**Production**: WebView assets must be built (`npm run build`) and placed in `assets/webview/` before a Flutter release build.
 
 ## Architecture
 
@@ -111,6 +150,31 @@ Chats are individual `.chat` JSON files stored in `{vaultPath}/chats/roles/{char
 
 The app uses `flutter_inappwebview` for HTML-rendered content: message display (markdown with custom CSS), the relationship graph visualization (D3.js-based), and a status bar. WebView assets live in `assets/webview/`.
 
+In debug mode, the chat WebView loads from `http://localhost:5173/` (Vite dev server). In release, it loads built assets from the Flutter asset bundle served by `InAppLocalhostServer` (configured in `main.dart`).
+
+### WebView Frontend (`lib/webview/`)
+
+The chat message rendering layer is a standalone **Vite + Vue 3** project with three source files:
+
+| File | Purpose |
+|------|---------|
+| `src/App.vue` | Main Vue component: message list, streaming output, toolbar, theme switching, scroll control |
+| `src/api/api.js` | `BridgeAPI` class: Dart↔JS communication layer, subscribe/notify pattern, action methods |
+| `src/style.css` | Global styles including CSS custom properties for theming |
+
+**Key facts:**
+- Vue 3 Composition API (`<script setup>`), **markdown-it 14** for Markdown rendering
+- WebView theming uses **independent CSS custom properties** — completely decoupled from Flutter Material `ColorScheme`. Dart only pushes `"light"` / `"dark"` mode strings
+- Local images use a custom `imgs://` URL scheme intercepted by `chat_webview.dart` (see `onLoadResourceWithCustomScheme`)
+
+**Communication**: The Dart↔JS bridge uses two mechanisms:
+- **Dart → JS**: `webViewController.evaluateJavascript()` calls `window.onXxx(...)` global functions
+- **JS → Dart**: `window.flutter_inappwebview.callHandler('handlerName', ...args)` calls Dart-side handlers
+
+**Reference docs** (read when working on WebView bridge code):
+- `lib/webview/DEVELOPMENT.md` — Vue 3 frontend developer guide (subscriptions, data models, theming, how to add features)
+- `docs/webview-bridge.md` — complete Dart↔JS protocol specification (handshake lifecycle, every message type, streaming data flow, `emitMessage` actions)
+
 ### SillyTavern Compatibility
 
 Import supports character cards (PNG/JSON), world books, regex, and presets from SillyTavern format. The import code lives in `lib/chat-app/utils/sillyTavern/`. Compatibility is experimental — the project doesn't aim for full ST feature parity.
@@ -122,3 +186,8 @@ Import supports character cards (PNG/JSON), world books, regex, and presets from
 - Timestamps as IDs: integer IDs are typically `DateTime.now().microsecondsSinceEpoch`, not UUIDs. The `uuid` package is available but rarely used.
 - Desktop detection is hardcoded to `false` in `SillyChatApp.isDesktop()` — the app currently runs in mobile layout on all platforms.
 - Android release builds should use `--target-platform android-arm64` to keep APK size down.
+- **Custom fonts**: `LexendDeca` (300/400/600/700/900 weights) and `MiSans` (500/700). Defined in `pubspec.yaml` under `flutter.fonts`.
+- **`imgs://` URL scheme**: WebView loads local avatar/image files via `imgs:///path/to/file`. Intercepted by `ChatWebview.onLoadResourceWithCustomScheme()` which resolves paths and returns file bytes with MIME type.
+- **`build_runner watch`** is preferred over `build_runner build` during development when editing classes annotated with `@freezed` or `@JsonSerializable` — it regenerates code on file save.
+- **WebView debugging on Android**: Debug builds automatically enable `WebContentsDebuggingEnabled`. Connect Chrome DevTools at `chrome://inspect` to inspect the WebView.
+- **`InAppLocalhostServer`**: Configured in `main.dart` to serve `assets/` directory, used by release builds to serve WebView static files.

@@ -1,10 +1,7 @@
 <template>
   <div class="app-container">
-    <!-- 顶部预留 AppBar 空间 -->
-    <!-- <div class="app-bar-spacer"></div> -->
-
     <!-- 聊天滚动区域 -->
-    <div class="chat-scroll-area" ref="scrollContainer">
+    <div class="chat-scroll-area" ref="scrollContainer" @scroll="onScroll">
 
       <!-- 消息列表 -->
       <div class="message-list">
@@ -12,17 +9,18 @@
           v-for="msg in displayMessages"
           :key="msg.id"
           class="message-item"
-          :class="msg.role === 'user' ? 'message-user' : 'message-ai'"
+          :class="[msg.role === 'user' ? 'message-user' : 'message-ai', { 'message-selected': selectedMessage?.time === msg.time }]"
+          @click="toggleSelect(msg)"
         >
           <!-- 头像 -->
-          <div class="avatar">
+          <div class="avatar" v-if="showAvatar">
             <img :src="getAvatar(msg.sender)" alt="avatar" @error="handleImgError">
           </div>
 
           <!-- 消息气泡 -->
           <div class="bubble-wrapper">
             <!-- 发送者名字 -->
-            <div class="sender-name" v-if="msg.role !== 'user'">
+            <div class="sender-name" v-if="msg.role !== 'user' && showAssistantName">
               {{ getCharacterName(msg.sender) }}
             </div>
 
@@ -32,17 +30,55 @@
             </div>
 
             <!-- 消息时间 -->
-            <div class="time">{{ formatTime(msg.time) }}</div>
+            <div class="time" v-if="showMessageTime">{{ formatTime(msg.time) }}</div>
+
+            <!-- 消息底部工具栏 -->
+            <div class="message-toolbar" v-if="selectedMessage?.time === msg.time" @click.stop>
+              <button class="toolbar-btn" title="编辑" @click="onEdit(msg)">
+                ✏️
+              </button>
+              <button class="toolbar-btn" title="复制" @click="onCopy(msg)">
+                📋
+              </button>
+              <button class="toolbar-btn" title="删除" @click="onDelete(msg)">
+                🗑️
+              </button>
+              <button
+                v-if="isLastAssistantMessage(msg)"
+                class="toolbar-btn"
+                title="重试"
+                @click="onRetry()"
+              >
+                🔄
+              </button>
+              <template v-if="msg.alternativeContent && msg.alternativeContent.length > 1">
+                <span class="toolbar-divider"></span>
+                <button class="toolbar-btn" title="上一版本" @click="onSwitchAlternative(msg, 'left')">
+                  ◀
+                </button>
+                <span class="alternative-indicator">
+                  {{ alternativeIndex(msg) + 1 }}/{{ msg.alternativeContent.length }}
+                </span>
+                <button class="toolbar-btn" title="下一版本" @click="onSwitchAlternative(msg, 'right')">
+                  ▶
+                </button>
+              </template>
+              <span class="toolbar-divider"></span>
+              <button class="toolbar-btn" title="更多" @click="onMore(msg)">
+                ⋯
+              </button>
+              <span class="char-count" v-if="msg.role === 'assistant'">{{ msg.content.length }}字</span>
+            </div>
           </div>
         </div>
 
         <!-- 正在生成时的临时消息 (流式输出) -->
         <div v-if="appState.isGenerating" class="message-item message-ai generating">
-           <div class="avatar">
+           <div class="avatar" v-if="showAvatar">
             <img :src="getAvatar(appState.currentAssistant)" alt="avatar">
           </div>
           <div class="bubble-wrapper">
-             <div class="sender-name">{{ getCharacterName(appState.currentAssistant) }}</div>
+             <div class="sender-name" v-if="showAssistantName">{{ getCharacterName(appState.currentAssistant) }}</div>
              <div class="bubble">
                <!-- 流式 Markdown 渲染 -->
                <div class="markdown-body streaming-content">
@@ -62,17 +98,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import MarkdownIt from 'markdown-it';
 import appApi from './api/api.js';
 
 // --- Markdown Setup ---
 const md = new MarkdownIt({
-  html: false,        // 禁用 HTML 标签以防 XSS (如果信任数据源可开启)
-  xhtmlOut: false,    // 使用 '/' 关闭单标签 (<br />).
-  breaks: true,       // 将换行符转换为 <br>
-  linkify: true,      // 自动链接 URL
-  typographer: true,  // 启用一些语言中立的替换 + 引号美化
+  html: false,
+  xhtmlOut: false,
+  breaks: true,
+  linkify: true,
+  typographer: true,
 });
 
 // --- State ---
@@ -84,6 +120,19 @@ const appState = ref({
   GenerateState: '',
   currentAssistant: -1
 });
+const selectedMessage = ref(null);
+
+// Display settings defaults
+const displaySettings = ref({
+  AvatarSize: 25,
+  ContentFontScale: 1,
+  MessageBubbleBorderRadius: 16,
+  AvatarBorderRadius: 8,
+  displayUserName: true,
+  displayAssistantName: true,
+  displayMessageDate: false,
+  themeColor: 0xFF2196F3, // default Material blue
+});
 
 // DOM Ref
 const scrollContainer = ref(null);
@@ -91,22 +140,115 @@ const scrollContainer = ref(null);
 // --- Computed ---
 const displayMessages = computed(() => chatData.value?.messages || []);
 
+const showAvatar = computed(() => displaySettings.value.AvatarSize > 0);
+const showAssistantName = computed(() => displaySettings.value.displayAssistantName);
+const showMessageTime = computed(() => displaySettings.value.displayMessageDate);
+
 const characterMap = computed(() => {
   const map = {};
   characters.value.forEach(c => map[c.id] = c);
   return map;
 });
 
+// --- Helpers ---
+
+/**
+ * Parse a Flutter Color.value (0xAARRGGBB) into { r, g, b }.
+ */
+function parseFlutterColor(value) {
+  const a = (value >> 24) & 0xFF;
+  const r = (value >> 16) & 0xFF;
+  const g = (value >> 8) & 0xFF;
+  const b = value & 0xFF;
+  return { r, g, b, a };
+}
+
+/**
+ * Convert { r, g, b } to a CSS hsl() string.
+ */
+function rgbToHsl(r, g, b) {
+  const rf = r / 255, gf = g / 255, bf = b / 255;
+  const max = Math.max(rf, gf, bf), min = Math.min(rf, gf, bf);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rf: h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6; break;
+      case gf: h = ((bf - rf) / d + 2) / 6; break;
+      case bf: h = ((rf - gf) / d + 4) / 6; break;
+    }
+  }
+
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100),
+  };
+}
+
+// --- CSS Variables ---
+function applyDisplaySettings(settings) {
+  if (!settings) return;
+  displaySettings.value = settings;
+
+  const root = document.documentElement;
+  root.style.setProperty('--avatar-size', (settings.AvatarSize || 25) + 'px');
+  root.style.setProperty('--avatar-border-radius',
+    (settings.avatarStyle === 0 ? '50%' : (settings.AvatarBorderRadius || 8) + 'px'));
+  root.style.setProperty('--font-scale', (settings.ContentFontScale || 1));
+  root.style.setProperty('--bubble-radius', (settings.MessageBubbleBorderRadius || 16) + 'px');
+
+  // Parse themeColor and set accent CSS variables
+  const tc = settings.themeColor;
+  if (tc !== undefined && tc !== null) {
+    const { r, g, b } = parseFlutterColor(tc);
+    const hsl = rgbToHsl(r, g, b);
+
+    // Primary accent
+    root.style.setProperty('--theme-h', hsl.h);
+    root.style.setProperty('--theme-s', hsl.s + '%');
+    root.style.setProperty('--theme-l', hsl.l + '%');
+    root.style.setProperty('--theme-color', `rgb(${r},${g},${b})`);
+
+    // Lighter variant (hover / subtle bg)
+    const lightL = Math.min(hsl.l + 30, 88);
+    root.style.setProperty('--theme-light-l', lightL + '%');
+    root.style.setProperty('--theme-light', `hsl(${hsl.h},${hsl.s}%,${lightL}%)`);
+
+    // Darker variant (active / pressed)
+    const darkL = Math.max(hsl.l - 15, 15);
+    root.style.setProperty('--theme-dark-l', darkL + '%');
+    root.style.setProperty('--theme-dark', `hsl(${hsl.h},${hsl.s}%,${darkL}%)`);
+
+    // Adaptive foreground (white on dark/saturated, dark on light)
+    const fgL = hsl.l > 60 ? 15 : 95;
+    root.style.setProperty('--theme-fg', `hsl(${hsl.h},${hsl.s}%,${fgL}%)`);
+  }
+}
+
+function applyTheme(themeData) {
+  if (!themeData) return;
+  const mode = themeData.mode || 'light';
+  if (mode === 'dark') {
+    document.documentElement.classList.add('theme-dark');
+  } else {
+    document.documentElement.classList.remove('theme-dark');
+  }
+}
+
+// --- Theme & display settings are applied via CSS variables on <html> ---
+
 // --- Methods ---
 
-// 渲染 Markdown
 const renderMarkdown = (text) => {
   if (!text) return '';
   return md.render(text);
 };
 
 const getAvatar = (senderId) => {
-
   const char = characterMap.value[senderId];
   if (char && char.avatar) return `imgs:///${char.avatar}`;
 
@@ -122,7 +264,6 @@ const getCharacterName = (senderId) => {
 };
 
 const handleImgError = (e) => {
-  // 避免无限循环
   if (e.target.src !== 'https://via.placeholder.com/50') {
      e.target.src = 'https://via.placeholder.com/50';
   }
@@ -132,6 +273,20 @@ const formatTime = (isoTime) => {
   if (!isoTime) return '';
   const date = new Date(isoTime);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+// 检查是否是最后一条助手消息
+const isLastAssistantMessage = (msg) => {
+  if (!chatData.value || !msg) return false;
+  const msgs = chatData.value.messages;
+  if (msgs.length === 0) return false;
+  return msgs[msgs.length - 1].id === msg.id && msg.role === 'assistant';
+};
+
+// 备选文本当前索引
+const alternativeIndex = (msg) => {
+  if (!msg.alternativeContent) return 0;
+  return msg.alternativeContent.findIndex(e => e === null);
 };
 
 // 滚动保持逻辑
@@ -149,35 +304,111 @@ const handleScrollPreservation = async (updateAction) => {
   el.scrollTop = previousScrollTop;
 };
 
-// 辅助：检查是否在底部（用于流式输出自动跟随）
+// 辅助：检查是否在底部
 const isNearBottom = (el) => {
   return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+};
+
+// --- Message selection & toolbar ---
+const toggleSelect = (msg) => {
+  if (selectedMessage.value?.time === msg.time) {
+    selectedMessage.value = null;
+  } else {
+    selectedMessage.value = msg;
+  }
+};
+
+const onEdit = (msg) => {
+  const newContent = prompt('编辑消息内容：', msg.content);
+  if (newContent !== null && newContent !== msg.content) {
+    appApi.editMessage(msg.time, newContent);
+  }
+  selectedMessage.value = null;
+};
+
+const onCopy = (msg) => {
+  appApi.copyMessage(msg.content);
+  selectedMessage.value = null;
+};
+
+const onDelete = (msg) => {
+  if (confirm('确定要删除这条消息吗？')) {
+    appApi.deleteMessage(msg.time);
+  }
+  selectedMessage.value = null;
+};
+
+const onRetry = () => {
+  appApi.retry(1);
+  selectedMessage.value = null;
+};
+
+const onSwitchAlternative = (msg, direction) => {
+  appApi.switchAlternative(msg.time, direction);
+  // Don't clear selection — user may want to switch multiple times
+};
+
+const onMore = (msg) => {
+  // Opens Flutter BottomSheet via onMessageEmit callback
+  appApi.messageMore(msg.time);
+  selectedMessage.value = null;
+};
+
+// --- Scroll listener ---
+let scrollDebounceTimer = null;
+const onScroll = () => {
+  if (!scrollContainer.value) return;
+  // Debounce to avoid flooding Dart
+  if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
+  scrollDebounceTimer = setTimeout(() => {
+    const near = isNearBottom(scrollContainer.value);
+    appApi.notifyScrollState(near);
+  }, 150);
+};
+
+// --- Perform scroll to bottom ---
+const doScrollToBottom = () => {
+  if (!scrollContainer.value) return;
+  scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+};
+
+// --- Perform scroll to specific message ---
+const doScrollToMessage = (msgId) => {
+  if (!scrollContainer.value) return;
+  // Find the message element by traversing rendered DOM
+  // Messages are rendered in order; we locate by data attribute or position
+  const msgs = chatData.value?.messages || [];
+  const idx = msgs.findIndex(m => m.id === msgId);
+  if (idx === -1) return;
+
+  const el = scrollContainer.value;
+  // Estimate position: each message item is roughly similar in typical height
+  // Better approach: use a data attribute
+  const target = el.querySelector(`[data-msg-id="${msgId}"]`);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 };
 
 // --- Lifecycle ---
 
 onMounted(() => {
-  // 1. 订阅完整聊天更新（初始加载 + 重同步）
+  // 1. Subscribe to full chat updates
   appApi.subscribeChat((newChat) => {
     handleScrollPreservation(() => {
       chatData.value = newChat;
-      // 首次加载后重置流式缓冲区
       appState.value = { ...appState.value, LLMBuffer: '' };
     });
   });
 
-  // 2. 订阅状态更新
-  //    流式期间：metadata-only（不含 LLMBuffer），内容由 onTokenAppend 管理
-  //    流式结束后：包含完整 LLMBuffer，用于最终调和
+  // 2. Subscribe to state updates
   appApi.subscribeState((newState) => {
     const el = scrollContainer.value;
     const atBottom = el ? isNearBottom(el) : false;
 
     if (newState.isGenerating) {
-      // Metadata-only during streaming — merge, keep incrementally-built LLMBuffer
       appState.value = {
         ...appState.value,
-        // 只在初始状态推送或恢复推送时用传入的 buffer
         LLMBuffer: (newState.LLMBuffer !== undefined && appState.value.LLMBuffer === '')
           ? newState.LLMBuffer
           : appState.value.LLMBuffer,
@@ -187,7 +418,6 @@ onMounted(() => {
         style: newState.style,
       };
     } else {
-      // Generation ended — full reconciliation with complete buffer
       appState.value = {
         ...appState.value,
         LLMBuffer: newState.LLMBuffer ?? '',
@@ -203,12 +433,11 @@ onMounted(() => {
     }
   });
 
-  // 3. 订阅增量消息事件 (P1)
+  // 3. Subscribe to incremental message events (P1)
   appApi.subscribeMessageAdded(({ message, index }) => {
     if (!chatData.value) return;
     handleScrollPreservation(() => {
       const messages = [...chatData.value.messages];
-      // 使用 splice 按指定索引插入，保持响应式
       messages.splice(index, 0, message);
       chatData.value = { ...chatData.value, messages };
     });
@@ -236,14 +465,13 @@ onMounted(() => {
     });
   });
 
-  // 4. 订阅流式 token 追加 (P1)
+  // 4. Subscribe to streaming token append (P1)
   appApi.subscribeTokenAppend((token) => {
     if (appState.value.isGenerating) {
       appState.value = {
         ...appState.value,
         LLMBuffer: appState.value.LLMBuffer + token
       };
-      // 自动跟随滚动
       const el = scrollContainer.value;
       if (el) {
         const atBottom = isNearBottom(el);
@@ -254,12 +482,30 @@ onMounted(() => {
     }
   });
 
-  // 5. 初始化：获取角色列表后通知 Dart 就绪
+  // 5. Subscribe to theme changes
+  appApi.subscribeTheme((themeData) => {
+    applyTheme(themeData);
+  });
+
+  // 6. Subscribe to display settings changes
+  appApi.subscribeDisplaySettings((settings) => {
+    applyDisplaySettings(settings);
+  });
+
+  // 7. Subscribe to scroll control
+  appApi.subscribeScrollToBottom(() => {
+    nextTick(() => doScrollToBottom());
+  });
+
+  appApi.subscribeScrollToMessage((msgId) => {
+    nextTick(() => doScrollToMessage(msgId));
+  });
+
+  // 8. Initialize: fetch characters then notify Dart
   const initData = () => {
     console.log('Flutter Platform Ready');
     appApi.fetchAllCharacters().then((chars) => {
       characters.value = chars || [];
-      // 通知 Dart：JS 已就绪，Dart 会主动推送初始聊天数据和状态
       appApi.notifyReady();
     });
   };
@@ -269,6 +515,10 @@ onMounted(() => {
   } else {
     window.addEventListener('flutterInAppWebViewPlatformReady', initData);
   }
+});
+
+onUnmounted(() => {
+  if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
 });
 </script>
 
@@ -283,6 +533,82 @@ html, body, #app {
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+/* ============================================================
+   CSS 自定义属性（主题变量）
+   默认 light 模式；.theme-dark 覆盖为 dark 模式
+   ============================================================ */
+
+:root {
+  --bubble-bg-ai: #ffffff;
+  --bubble-bg-user: #95ec69;
+  --bubble-text-ai: #333333;
+  --bubble-text-user: #000000;
+  --bubble-shadow: rgba(0,0,0,0.1);
+  --sender-name-color: #555555;
+  --time-color: #888888;
+  --status-text-color: #999999;
+  --code-bg: #f6f8fa;
+  --code-border: #e1e4e8;
+  --inline-code-bg: rgba(27,31,35,0.05);
+  --blockquote-border: #dfe2e5;
+  --blockquote-color: #6a737d;
+  --toolbar-bg: #f0f0f0;
+  --toolbar-border: rgba(0,0,0,0.1);
+  --toolbar-text: #333333;
+  --cursor-color: #333333;
+  --avatar-bg: #dddddd;
+
+  --avatar-size: 40px;
+  --avatar-border-radius: 50%;
+  --font-scale: 1;
+  --bubble-radius: 12px;
+
+  /* Theme accent defaults (Material blue 500) — overwritten by JS */
+  --theme-h: 207;
+  --theme-s: 90%;
+  --theme-l: 48%;
+  --theme-color: hsl(207, 90%, 48%);
+  --theme-light-l: 78%;
+  --theme-light: hsl(207, 90%, 78%);
+  --theme-dark-l: 33%;
+  --theme-dark: hsl(207, 90%, 33%);
+  --theme-fg: hsl(207, 90%, 95%);
+
+  /* Semantic aliases */
+  --link-color: var(--theme-dark);
+  --link-hover-color: var(--theme-color);
+  --alt-indicator-color: var(--theme-color);
+  --toolbar-btn-hover-bg: var(--theme-light);
+}
+
+html.theme-dark {
+  --bubble-bg-ai: #2a2a2a;
+  --bubble-bg-user: #1a5c2a;
+  --bubble-text-ai: #e0e0e0;
+  --bubble-text-user: #ffffff;
+  --bubble-shadow: rgba(0,0,0,0.3);
+  --sender-name-color: #aaaaaa;
+  --time-color: #888888;
+  --status-text-color: #777777;
+  --code-bg: #1e1e1e;
+  --code-border: #444444;
+  --inline-code-bg: rgba(255,255,255,0.08);
+  --blockquote-border: #555555;
+  --blockquote-color: #aaaaaa;
+  --toolbar-bg: #333333;
+  --toolbar-border: rgba(255,255,255,0.15);
+  --toolbar-text: #e0e0e0;
+  --cursor-color: #e0e0e0;
+  --avatar-bg: #444444;
+
+  /* Theme accent — same hue but adjusted luminance for dark bg */
+  --link-color: hsl(var(--theme-h), var(--theme-s), 70%);
+  --link-hover-color: hsl(var(--theme-h), var(--theme-s), 80%);
+  --alt-indicator-color: hsl(var(--theme-h), var(--theme-s), 70%);
+  --toolbar-btn-hover-bg: hsl(var(--theme-h), var(--theme-s), 15%);
+  --theme-fg: hsl(var(--theme-h), var(--theme-s), 95%);
+}
 </style>
 
 <style scoped>
@@ -290,11 +616,6 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   height: 100vh;
-}
-
-.app-bar-spacer {
-  height: var(--app-bar-height, 80px);
-  flex-shrink: 0;
 }
 
 .chat-scroll-area {
@@ -323,16 +644,17 @@ html, body, #app {
   display: flex;
   align-items: flex-start;
   max-width: 100%;
+  cursor: pointer;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: var(--avatar-border-radius);
   overflow: hidden;
   flex-shrink: 0;
-  background-color: #ddd;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: var(--avatar-bg);
+  box-shadow: 0 2px 4px var(--bubble-shadow);
 }
 
 .avatar img {
@@ -344,29 +666,29 @@ html, body, #app {
 .bubble-wrapper {
   display: flex;
   flex-direction: column;
-  max-width: 80%; /* 稍微加宽以容纳代码块 */
+  max-width: 80%;
 }
 
 .sender-name {
-  font-size: 12px;
-  color: #555;
+  font-size: calc(12px * var(--font-scale));
+  color: var(--sender-name-color);
   margin-bottom: 4px;
   margin-left: 4px;
 }
 
 .bubble {
   text-align: left;
-  padding: 8px 14px; /* 稍微减少上下padding，交给 markdown 元素控制 */
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: var(--bubble-radius);
+  font-size: calc(15px * var(--font-scale));
   position: relative;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  overflow: hidden; /* 防止内容（如大图或代码）溢出圆角 */
+  box-shadow: 0 1px 2px var(--bubble-shadow);
+  overflow: hidden;
 }
 
 .time {
-  font-size: 10px;
-  color: #888;
+  font-size: calc(10px * var(--font-scale));
+  color: var(--time-color);
   margin-top: 4px;
   margin-left: 4px;
 }
@@ -380,8 +702,8 @@ html, body, #app {
   margin-left: 10px;
 }
 .message-ai .bubble {
-  background-color: #ffffff;
-  color: #333;
+  background-color: var(--bubble-bg-ai);
+  color: var(--bubble-text-ai);
   border-top-left-radius: 2px;
 }
 
@@ -394,15 +716,15 @@ html, body, #app {
   margin-right: 10px;
 }
 .message-user .bubble {
-  background-color: #95ec69;
-  color: #000;
+  background-color: var(--bubble-bg-user);
+  color: var(--bubble-text-user);
   border-top-right-radius: 2px;
 }
 
 /* 状态文本 */
 .status-text {
-  font-size: 10px;
-  color: #999;
+  font-size: calc(10px * var(--font-scale));
+  color: var(--status-text-color);
   margin-top: 2px;
 }
 
@@ -410,7 +732,7 @@ html, body, #app {
 .cursor {
   display: inline-block;
   font-weight: bold;
-  color: #333;
+  color: var(--theme-color);
   margin-left: 2px;
   animation: blink 1s step-end infinite;
 }
@@ -420,16 +742,80 @@ html, body, #app {
   50% { opacity: 0; }
 }
 
-/* --- Markdown Styles (Scoped Deep) --- */
-/* 使用 :deep() 因为 v-html 渲染的内容不会自动应用 scoped 样式 */
+/* ============================================================
+   消息底部工具栏
+   ============================================================ */
+.message-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background-color: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px var(--bubble-shadow);
+  white-space: nowrap;
+}
 
+.message-ai .message-toolbar {
+  align-self: flex-start;
+}
+
+.message-user .message-toolbar {
+  align-self: flex-end;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--toolbar-text);
+  transition: background-color 0.15s;
+}
+.toolbar-btn:hover {
+  background-color: var(--toolbar-btn-hover-bg);
+}
+.toolbar-btn:active {
+  background-color: rgba(128,128,128,0.35);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--toolbar-border);
+  margin: 0 4px;
+}
+
+.alternative-indicator {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--alt-indicator-color);
+  min-width: 28px;
+  text-align: center;
+}
+
+.char-count {
+  font-size: 10px;
+  color: var(--time-color);
+  margin-left: 4px;
+}
+
+/* --- Markdown Styles (Scoped Deep) --- */
 :deep(.markdown-body) {
   line-height: 1.6;
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   word-wrap: break-word;
 }
 
-/* 去除首尾元素的 margin，完美适配气泡 */
 :deep(.markdown-body > *:first-child) {
   margin-top: 0;
 }
@@ -441,35 +827,28 @@ html, body, #app {
   margin: 0.5em 0;
 }
 
-/* 链接样式 */
 :deep(.markdown-body a) {
-  color: #007bff;
+  color: var(--link-color);
   text-decoration: none;
 }
 :deep(.markdown-body a:hover) {
+  color: var(--link-hover-color);
   text-decoration: underline;
 }
 
-/* 列表样式 */
 :deep(.markdown-body ul),
 :deep(.markdown-body ol) {
   padding-left: 20px;
   margin: 0.5em 0;
 }
 
-/* 代码块样式 */
 :deep(.markdown-body pre) {
-  background-color: #f6f8fa;
+  background-color: var(--code-bg);
   border-radius: 6px;
   padding: 10px;
-  overflow-x: auto; /* 允许横向滚动 */
+  overflow-x: auto;
   margin: 0.5em 0;
-  border: 1px solid #e1e4e8;
-}
-/* 针对 User 绿色气泡的代码块微调，使其不那么突兀 */
-.message-user :deep(.markdown-body pre) {
-  background-color: rgba(0,0,0,0.05);
-  border-color: rgba(0,0,0,0.1);
+  border: 1px solid var(--code-border);
 }
 
 :deep(.markdown-body code) {
@@ -477,29 +856,19 @@ html, body, #app {
   font-size: 0.9em;
 }
 
-/* 行内代码 */
 :deep(.markdown-body :not(pre) > code) {
-  background-color: rgba(27,31,35,0.05);
+  background-color: var(--inline-code-bg);
   padding: 0.2em 0.4em;
   border-radius: 3px;
 }
-.message-user :deep(.markdown-body :not(pre) > code) {
-  background-color: rgba(0,0,0,0.1); /* 在绿色背景下深一点 */
-}
 
-/* 引用块 */
 :deep(.markdown-body blockquote) {
   margin: 0.5em 0;
   padding-left: 10px;
-  border-left: 3px solid #dfe2e5;
-  color: #6a737d;
-}
-.message-user :deep(.markdown-body blockquote) {
-  border-left-color: rgba(0,0,0,0.2);
-  color: rgba(0,0,0,0.6);
+  border-left: 3px solid var(--blockquote-border);
+  color: var(--blockquote-color);
 }
 
-/* 图片最大宽度限制 */
 :deep(.markdown-body img) {
   max-width: 100%;
   height: auto;
