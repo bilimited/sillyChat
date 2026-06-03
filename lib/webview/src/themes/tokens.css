@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Theme Tokens — CSS Custom Properties
+   SillyChat WebView's independent theme system. Decoupled from Flutter Material.
+
+   Structure:
+     1. Layout tokens        — sizes, radii, scale (theme-independent)
+     2. Light mode (:root)   — default color scheme
+     3. Dark mode            — .theme-dark overrides
+     4. Semantic accents     — derived from dynamic --theme-* variables (set by JS)
+
+   Dynamic variables (set by applyDisplaySettings() in App.vue):
+     --theme-h, --theme-s, --theme-l    — HSL components of Flutter themeColor
+     --theme-color                       — rgb() value
+     --theme-light, --theme-dark         — lighter/darker variants
+     --theme-fg                          — adaptive foreground (white or dark)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. Layout Tokens (theme-independent)
+   ========================================================================== */
+
+:root {
+  --avatar-size: 40px;
+  --avatar-border-radius: 50%;
+  --font-scale: 1;
+  --bubble-radius: 12px;
+}
+
+
+/* ==========================================================================
+   2. Light Mode (default)
+   ========================================================================== */
+
+:root {
+  /* ---- Bubble colors ---- */
+  /* AI bubble: neutral white card */
+  --bubble-bg-ai: #ffffff;
+  --bubble-text-ai: #333333;
+
+  /* User bubble: tinted with theme color (light pastel) */
+  --bubble-bg-user: hsl(var(--theme-h), var(--theme-s), 85%);
+  --bubble-text-user: hsl(var(--theme-h), 15%, 15%);
+
+  /* ---- Shadows ---- */
+  --bubble-shadow: rgba(0, 0, 0, 0.08);
+  --bubble-shadow-hover: rgba(0, 0, 0, 0.15);
+
+  /* ---- Text colors ---- */
+  --sender-name-color: #555555;
+  --time-color: #888888;
+  --status-text-color: #999999;
+
+  /* ---- Code ---- */
+  --code-bg: #f6f8fa;
+  --code-border: #e1e4e8;
+  --inline-code-bg: rgba(27, 31, 35, 0.05);
+  --inline-code-text: #1a1a1a;
+
+  /* ---- Blockquote ---- */
+  --blockquote-border: #dfe2e5;
+  --blockquote-color: #6a737d;
+
+  /* ---- Toolbar ---- */
+  --toolbar-bg: #f0f0f0;
+  --toolbar-border: rgba(0, 0, 0, 0.1);
+  --toolbar-text: #333333;
+
+  /* ---- Editor (inline message edit) ---- */
+  --editor-bg: #ffffff;
+  --editor-border: var(--theme-color);
+  --editor-text: #333333;
+  --editor-btn-bg: #f5f5f5;
+  --editor-btn-hover-bg: #e8e8e8;
+  --editor-btn-primary-bg: var(--theme-color);
+  --editor-btn-primary-text: #ffffff;
+  --editor-btn-primary-hover-bg: var(--theme-dark);
+
+  /* ---- Misc ---- */
+  --cursor-color: #333333;
+  --avatar-bg: #dddddd;
+  --avatar-border: rgba(0, 0, 0, 0.1);
+  --hover-overlay: rgba(0, 0, 0, 0.04);
+
+  /* ---- Message selection highlight ---- */
+  --message-selected-bg: transparent;
+}
+
+
+/* ==========================================================================
+   3. Dark Mode
+   ========================================================================== */
+
+html.theme-dark {
+  /* ---- Bubble colors ---- */
+  --bubble-bg-ai: #2a2a2a;
+  --bubble-text-ai: #e0e0e0;
+
+  /* User bubble: saturated theme color on dark background */
+  --bubble-bg-user: hsl(var(--theme-h), 55%, 28%);
+  --bubble-text-user: #ffffff;
+
+  /* ---- Shadows ---- */
+  --bubble-shadow: rgba(0, 0, 0, 0.3);
+  --bubble-shadow-hover: rgba(0, 0, 0, 0.5);
+
+  /* ---- Text colors ---- */
+  --sender-name-color: #aaaaaa;
+  --time-color: #888888;
+  --status-text-color: #777777;
+
+  /* ---- Code ---- */
+  --code-bg: #1e1e1e;
+  --code-border: #444444;
+  --inline-code-bg: rgba(255, 255, 255, 0.08);
+  --inline-code-text: #e0e0e0;
+
+  /* ---- Blockquote ---- */
+  --blockquote-border: #555555;
+  --blockquote-color: #aaaaaa;
+
+  /* ---- Toolbar ---- */
+  --toolbar-bg: #333333;
+  --toolbar-border: rgba(255, 255, 255, 0.15);
+  --toolbar-text: #e0e0e0;
+
+  /* ---- Editor (inline message edit) ---- */
+  --editor-bg: #1e1e1e;
+  --editor-border: var(--theme-color);
+  --editor-text: #e0e0e0;
+  --editor-btn-bg: #333333;
+  --editor-btn-hover-bg: #444444;
+  --editor-btn-primary-bg: var(--theme-color);
+  --editor-btn-primary-text: #ffffff;
+  --editor-btn-primary-hover-bg: var(--theme-dark);
+
+  /* ---- Misc ---- */
+  --cursor-color: #e0e0e0;
+  --avatar-bg: #444444;
+  --avatar-border: rgba(255, 255, 255, 0.1);
+  --hover-overlay: rgba(255, 255, 255, 0.04);
+
+  /* ---- Message selection highlight ---- */
+  --message-selected-bg: transparent;
+}
+
+
+/* ==========================================================================
+   4. Semantic Accent Aliases (derived from dynamic --theme-*)
+   ========================================================================== */
+
+:root {
+  /* These use the dynamic --theme-* variables set by applyDisplaySettings().
+     The static defaults below match Material Blue 500 so that the UI looks
+     reasonable even before Flutter pushes the actual themeColor. */
+
+  /* ---- Theme accent defaults (Material Blue 500) ---- */
+  --theme-h: 207;
+  --theme-s: 90%;
+  --theme-l: 48%;
+  --theme-color: hsl(207, 90%, 48%);
+  --theme-light-l: 78%;
+  --theme-light: hsl(207, 90%, 78%);
+  --theme-dark-l: 33%;
+  --theme-dark: hsl(207, 90%, 33%);
+  --theme-fg: hsl(207, 90%, 95%);
+
+  /* ---- Semantic usage ---- */
+  --link-color: var(--theme-dark);
+  --link-hover-color: var(--theme-color);
+  --alt-indicator-color: var(--theme-color);
+  --toolbar-btn-hover-bg: var(--theme-light);
+}
+
+/* Dark mode overrides for semantic aliases */
+html.theme-dark {
+  --link-color: hsl(var(--theme-h), var(--theme-s), 70%);
+  --link-hover-color: hsl(var(--theme-h), var(--theme-s), 80%);
+  --alt-indicator-color: hsl(var(--theme-h), var(--theme-s), 70%);
+  --toolbar-btn-hover-bg: hsl(var(--theme-h), var(--theme-s), 18%);
+  --theme-fg: hsl(var(--theme-h), var(--theme-s), 95%);
+}

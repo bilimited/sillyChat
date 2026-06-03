@@ -1,46 +1,33 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
-import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
+import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/models/settings/chat_displaysetting_model.dart';
-import 'package:flutter_example/chat-app/pages/character/character_selector.dart';
-import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
-import 'package:flutter_example/chat-app/pages/chat/edit_chat.dart';
-import 'package:flutter_example/chat-app/pages/chat/edit_message.dart';
+import 'package:flutter_example/chat-app/pages/chat/chat_message_list_view.dart';
+import 'package:flutter_example/chat-app/pages/chat/flutter_chat_message_list.dart';
 import 'package:flutter_example/chat-app/pages/chat/manage_message_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/message_optimization_page.dart';
 import 'package:flutter_example/chat-app/pages/chat/simple_chat_file_page.dart';
+import 'package:flutter_example/chat-app/pages/chat/webview_chat_message_list.dart';
 
 import 'package:flutter_example/chat-app/providers/chat_session_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
-import 'package:flutter_example/chat-app/utils/chat/goto_chat.dart';
-import 'package:flutter_example/chat-app/utils/chat/simulate_user_helper.dart';
+import 'package:flutter_example/chat-app/utils/customNav.dart';
 
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
-import 'package:flutter_example/chat-app/widgets/chat/message_bubble.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
-import 'package:flutter_example/chat-app/widgets/chat/new_chat_buttons.dart';
-import 'package:flutter_example/chat-app/widgets/chat/new_chat_screen.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
 import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
-import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
-import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import '../../models/message_model.dart';
 import '../../models/chat_model.dart';
 import '../../providers/chat_controller.dart';
 import '../../providers/character_controller.dart';
@@ -71,7 +58,11 @@ enum ChatMode { manual, auto, group }
 class _ChatPageState extends State<ChatPage> {
   late ChatSessionController sessionController;
 
-  final ScrollController _scrollController = ScrollController();
+  /// Scroll controller that bridges ChatPage to the active message list
+  /// implementation (Flutter or WebView). Each implementation wires its
+  /// concrete scroll behavior into this controller.
+  final MessageListScrollController _scrollCtrl =
+      MessageListScrollController();
 
   // 目前仅用于剪贴板
   final ChatController _chatController = Get.find<ChatController>();
@@ -88,19 +79,16 @@ class _ChatPageState extends State<ChatPage> {
   ChatModel get chat => sessionController.chat;
   ApiModel? get api => _settingController.getApiById(chat.requestOptions.apiId);
 
-  // 添加选中消息状态
-  MessageModel? _selectedMessage;
-
   ChatMode get mode => chat.mode ?? ChatMode.auto;
   bool get isAutoMode => mode == ChatMode.auto;
   bool get isGroupMode => mode == ChatMode.group;
 
   // 是否为新聊天
-  bool get isNewChat => chat.id == -1; 
+  bool get isNewChat => chat.id == -1;
   // 在创建新聊天中是否可以发送消息。userId延迟初始化。
   bool get canCreateNewChat => chat.assistantId != null;
 
-  bool get useWebview => true;
+  bool get useWebview => false;
 
   List<LorebookItemModel> get manualItems {
     final global = Get.find<LoreBookController>().globalActivitedLoreBooks;
@@ -108,7 +96,7 @@ class _ChatPageState extends State<ChatPage> {
     final stories = chat.bindStory?.loreBooks ?? [];
     Set<LorebookItemModel> lst = {};
     for (final lorebook in [...global, ...chars, ...stories]) {
-      for (final item in lorebook.items) {
+      for (final item in lorebook.items) { 
         if (item.activationType == ActivationType.manual) {
           lst.add(item);
         }
@@ -126,14 +114,11 @@ class _ChatPageState extends State<ChatPage> {
   bool _isUserReading = false;
 
   bool get isNearBottom =>
-      _scrollController.hasClients && _scrollController.offset < 40;
+      _scrollCtrl.scrollToBottom != null; // simplified
 
   bool _isRendering = false;
 
   bool _showWheel = false;
-
-  // WebView session controller — used to push theme/display changes
-  WebSessionController? _webSessionController;
 
   @override
   void setState(VoidCallback fn) {
@@ -149,11 +134,6 @@ class _ChatPageState extends State<ChatPage> {
         SillyChatApp.showChangelogDialog(context: context);
         SettingController.of.updateVersion();
       }
-    });
-
-    // Watch dark mode changes and push to WebView
-    ever(SettingController.of.isDarkMode, (bool isDark) {
-      _webSessionController?.onThemeChange(isDark ? 'dark' : 'light');
     });
 
     _registerController(widget.sessionController);
@@ -187,6 +167,7 @@ class _ChatPageState extends State<ChatPage> {
     } else {
       print('CONTROLLER$tag,没有销毁!');
     }
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -195,35 +176,70 @@ class _ChatPageState extends State<ChatPage> {
     sessionController.saveChat();
   }
 
-  // 显示编辑消息对话框
-  void _showEditDialog(MessageModel message) {
-    customNavigate(
-        EditMessagePage(sessionController: sessionController, message: message),
-        context: context);
+  // ─── WebView UI-context callbacks ─────────────────────────────────────
+  //
+  // These are invoked by WebviewChatMessageListView when the Vue frontend
+  // triggers actions that need Flutter UI context (Clipboard, Navigator,
+  // ImagePicker, dialogs). The Flutter message list handles these actions
+  // internally via its own BuildContext.
+
+  void _onCopyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    SillyChatApp.snackbar(context, '复制成功');
   }
 
-  void _showDeleteConfirmation(MessageModel message) {
-    final colors = Theme.of(context).colorScheme;
-    Get.dialog(
-      AlertDialog(
-        title: const Text('删除消息'),
-        content: const Text('确定要删除这条消息吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              sessionController.removeMessage(message.time);
-              setState(() => _selectedMessage = null);
-              Get.back();
-            },
-            child: Text('删除', style: TextStyle(color: colors.error)),
-          ),
-        ],
-      ),
-    );
+  void _onPasteMessages(String timeStr, String position) {
+    final messagesToPaste = _chatController.messageToPaste;
+    if (messagesToPaste.isEmpty) return;
+    final msgList = chat.messages;
+    final targetTime = DateTime.parse(timeStr);
+    final idx = msgList.indexWhere((m) => m.time == targetTime);
+    if (idx != -1) {
+      final insertIdx = position == 'above' ? idx : idx + 1;
+      msgList.insertAll(insertIdx, messagesToPaste);
+      _updateChat();
+      setState(() {});
+    }
+  }
+
+  Future<void> _onPickImageForMessage(String timeStr) async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final time = DateTime.parse(timeStr);
+      final msg = chat.messages.firstWhereOrNull((m) => m.time == time);
+      if (msg != null) {
+        setState(() {
+          msg.resPath.add(pickedFile.path);
+          _updateChat();
+        });
+      }
+    }
+  }
+
+  void _createBranchFrom(MessageModel fromWhere) async {
+    if (chat.file == null) {
+      return;
+    }
+    // 获取fromWhere在messages中的下标
+    final index = chat.messages.indexOf(fromWhere);
+    // 截取fromWhere之前的所有消息（包括fromWhere本身）
+    final branchMessages = chat.messages.sublist(0, index + 1);
+    final newChat = chat.copyWith(
+        isCopyFile: false, messages: branchMessages, name: '${chat.name}的分支');
+    // 简单的复制聊天方法
+    final fp =
+        await ChatController.of.createChat(newChat, p.dirname(chat.file!.path));
+    ChatController.of.openChat(fp);
+  }
+
+  void _showOptimizationDialog(MessageModel message) {
+    customNavigate(
+        MessageOptimizationPage(
+          sessionController: sessionController,
+          message: message,
+        ),
+        context: context);
   }
 
   // 显示更多消息操作（粘贴消息，书签、添加图片等等）
@@ -282,8 +298,6 @@ class _ChatPageState extends State<ChatPage> {
                   Get.back();
                   final pickedFile = await ImagePicker()
                       .pickImage(source: ImageSource.gallery);
-                  // final path =  await ImageUtils.selectAndCropImage(context,
-                  //     isCrop: false);
                   if (pickedFile != null) {
                     setState(() {
                       message.resPath.add(pickedFile.path);
@@ -324,225 +338,8 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // 显示消息优化对话框
-  void _showOptimizationDialog(MessageModel message) {
-    customNavigate(
-        MessageOptimizationPage(
-          sessionController: sessionController,
-          message: message,
-        ),
-        context: context);
-  }
+  // ─── Message sending ────────────────────────────────────────────────
 
-  // 选择消息时的底部操作菜单
-  Widget _buildMessageToolbar(bool isSelected, MessageModel message) {
-    return AnimatedOpacity(
-      opacity: isSelected ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      // 当不可见时，设置 ignoring 为 true，屏蔽所有点击事件
-      child: IgnorePointer(
-        ignoring: !isSelected,
-        child: _buildMessageToolbarCommon(message),
-      ),
-    );
-  }
-
-  Widget _buildMessageToolbarCommon(MessageModel message) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      // 增加内边距让内部紧凑
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        // 背景色：使用 surfaceContainer 或 surface
-        color: colorScheme.surfaceContainerLow,
-        // 圆角：营造面板感
-        borderRadius: BorderRadius.circular(10),
-        // 边框：可选，让边缘更清晰
-        border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.5), width: 0.5),
-        // 阴影：增加层次感，防止与文字混合
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // --- 核心操作区 ---
-          _buildCompactAction(
-              Icons.edit_outlined, '编辑', () => _showEditDialog(message)),
-          _buildCompactAction(Icons.copy_outlined, '复制', () async {
-            await Clipboard.setData(ClipboardData(text: message.content));
-            SillyChatApp.snackbar(context, '复制成功');
-          }),
-          _buildCompactAction(Icons.delete_outline, '删除',
-              () => _showDeleteConfirmation(message)),
-
-          // --- 条件按钮：重新生成 ---
-          if (sessionController.isLastMessage(message) &&
-              !sessionController.isGenerating)
-            _buildCompactAction(
-                Icons.refresh, '重试', () => sessionController.onRetry()),
-
-          // --- 条件按钮：切换版本 (Alternative Content) ---
-          if (message.alternativeContent.length > 1) ...[
-            const VerticalDivider(width: 12, indent: 8, endIndent: 8), // 垂直分割线
-            _buildCompactAction(Icons.chevron_left, null,
-                () => _switchAlternativeContent(message, false)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Text(
-                '${message.alternativeContent.indexWhere((e) => e == null) + 1}/${message.alternativeContent.length}',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary),
-              ),
-            ),
-            _buildCompactAction(Icons.chevron_right, null,
-                () => _switchAlternativeContent(message, true)),
-          ],
-
-          _buildCompactAction(
-              Icons.more_horiz, '更多', () => _showMoreMessageButton(message)),
-
-          // --- 后置信息：字数 ---
-          if (message.isAssistant) ...[
-            const SizedBox(width: 6),
-            Text(
-              '${message.content.length}字',
-              style: TextStyle(fontSize: 10, color: colorScheme.outline),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompactAction(IconData icon, String? label, VoidCallback onTap) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
-              // if (label != null) // 可选：如果希望极度紧凑，可以像微信一样长按才显示文字或只显示图标
-              //   Text(label,
-              //       style: TextStyle(
-              //           fontSize: 9, color: colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 切换消息备选文本。direction：false为左，true为右
-  void _switchAlternativeContent(MessageModel message, bool direction) {
-    if (message.alternativeContent.length <= 1) {
-      return;
-    }
-    // 获取当前null元素的位置
-    int nullIndex = message.alternativeContent.indexWhere((e) => e == null);
-    if (nullIndex == -1) return;
-
-    // 计算目标位置
-    int targetIndex;
-    if (direction) {
-      // 向右移动
-      targetIndex = (nullIndex + 1) % message.alternativeContent.length;
-    } else {
-      // 向左移动
-      targetIndex = (nullIndex - 1 + message.alternativeContent.length) %
-          message.alternativeContent.length;
-    }
-    print("target:$targetIndex");
-
-    // 移动null元素，并更新content
-    String oldContent = message.content;
-    message.content = message.alternativeContent[targetIndex] ?? '';
-    message.alternativeContent[nullIndex] = oldContent;
-    message.alternativeContent[targetIndex] = null;
-
-    sessionController.updateMessage(message.time, message);
-  }
-
-  // 消息气泡
-  Widget _buildMessageBubble(MessageModel message, MessageModel? lastMessage,
-      {int index = 0, bool isNarration = false}) {
-    var messageBubble = MessageBubble(
-      chat: chat,
-      message: message,
-      isSelected: _selectedMessage == message,
-      onTap: () {
-        setState(() {
-          _selectedMessage =
-              _selectedMessage?.time == message.time ? null : message;
-        });
-      },
-      index: index,
-      buildBottomButtons: _buildMessageToolbar,
-      onUpdateChat: _updateChat,
-      state: sessionController.aiState,
-    );
-
-    // 防遮挡设计
-    return
-        // chat.messages.isEmpty || message == chat.messages.first
-        //     ? Column(
-        //         children: [
-        //           SizedBox(
-        //             height: 104,
-        //           ),
-        //           messageBubble,
-        //         ],
-        //       )
-        //     :
-        messageBubble;
-  }
-
-  // 消息操作按钮小组件
-  Widget _buildActionButton({
-    required IconData icon,
-    required String? label,
-    required VoidCallback onTap,
-    Color? iconColor,
-  }) {
-    return
-        // isDesktop
-        //     ?
-        Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(
-            icon,
-            size: 18,
-            color: iconColor ?? Theme.of(context).colorScheme.outline,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 消息发送方法
   void _sendMessage(String text, List<String> selectedPath) async {
     if (text.isNotEmpty) {
       if (isNewChat) {
@@ -557,22 +354,6 @@ class _ChatPageState extends State<ChatPage> {
         _isUserReading = false;
       });
     }
-  }
-
-  void _createBranchFrom(MessageModel fromWhere) async {
-    if (chat.file == null) {
-      return;
-    }
-    // 获取fromWhere在messages中的下标
-    final index = chat.messages.indexOf(fromWhere);
-    // 截取fromWhere之前的所有消息（包括fromWhere本身）
-    final branchMessages = chat.messages.sublist(0, index + 1);
-    final newChat = chat.copyWith(
-        isCopyFile: false, messages: branchMessages, name: chat.name + '的分支');
-    // 简单的复制聊天方法
-    final fp =
-        await ChatController.of.createChat(newChat, p.dirname(chat.file!.path));
-    ChatController.of.openChat(fp);
   }
 
   void _genMemory() async {
@@ -608,6 +389,8 @@ class _ChatPageState extends State<ChatPage> {
     }
     setState(() {});
   }
+
+  // ─── Input bar ──────────────────────────────────────────────────────
 
   Widget _buildInputBar() {
     return Container(
@@ -682,121 +465,52 @@ class _ChatPageState extends State<ChatPage> {
         }));
   }
 
-  Widget _buildWebviewMessageList() {
-    return ChatWebview(
-      session: widget.sessionController,
-      onMessageEmit: _onWebviewMessageEmit,
-      onWebSessionCreated: (controller) {
-        _webSessionController = controller;
-        // Push initial theme — prefer user setting over system brightness
-        final isDark = SettingController.of.isDarkMode.value;
-        controller.onThemeChange(isDark ? 'dark' : 'light');
-        // Push display settings
-        controller.onDisplaySettingsChange(
-            _settingController.displaySettingModel.value.toJson());
-      },
+  // ─── Main content (message list + input) ────────────────────────────
+
+  Widget _buildMainContent() {
+    return Column(
+      children: [
+        Expanded(
+          child: useWebview
+              ? WebviewChatMessageListView(
+                  sessionController: sessionController,
+                  scrollController: _scrollCtrl,
+                  onReadingStateChanged: (bool isReading) {
+                    setState(() => _isUserReading = isReading);
+                  },
+                  onCopyToClipboard: _onCopyToClipboard,
+                  onPasteMessages: _onPasteMessages,
+                  onPickImageForMessage: _onPickImageForMessage,
+                  onCreateBranch: _createBranchFrom,
+                  onOptimizeMessage: _showOptimizationDialog,
+                  onMoreActions: _showMoreMessageButton,
+                )
+              : FlutterChatMessageListView(
+                  sessionController: sessionController,
+                  scrollController: _scrollCtrl,
+                  onReadingStateChanged: (bool isReading) {
+                    setState(() => _isUserReading = isReading);
+                  },
+                ),
+        ),
+
+        // 输入框
+        _buildInputBar(),
+      ],
     );
   }
 
-  /// Handle emitMessage actions forwarded from WebSessionController.
-  /// These are actions that need Flutter UI context (clipboard, navigation, dialogs, etc.)
-  void _onWebviewMessageEmit(dynamic args) {
-    if (args is! Map) return;
-    final action = args['action'] as String?;
-    final data = args['data'] as Map<String, dynamic>?;
+  // ─── Scroll control (delegates to active message list) ──────────────
 
-    switch (action) {
-      case 'copyMessage':
-        final text = data?['text'] as String? ?? '';
-        Clipboard.setData(ClipboardData(text: text));
-        SillyChatApp.snackbar(context, '复制成功');
-        break;
-
-      case 'pasteMessages':
-        final timeStr = data?['time'] as String?;
-        final position = data?['position'] as String?;
-        if (timeStr != null && position != null) {
-          final messagesToPaste = _chatController.messageToPaste;
-          if (messagesToPaste.isNotEmpty) {
-            final msgList = chat.messages;
-            final targetTime = DateTime.parse(timeStr);
-            final idx =
-                msgList.indexWhere((m) => m.time == targetTime);
-            if (idx != -1) {
-              final insertIdx = position == 'above' ? idx : idx + 1;
-              msgList.insertAll(insertIdx, messagesToPaste);
-              _updateChat();
-              setState(() {});
-            }
-          }
-        }
-        break;
-
-      case 'addImageToMessage':
-        final timeStr = data?['time'] as String?;
-        if (timeStr != null) {
-          _addImageToMessage(timeStr);
-        }
-        break;
-
-      case 'createBranch':
-        final timeStr = data?['time'] as String?;
-        if (timeStr != null) {
-          final targetTime = DateTime.parse(timeStr);
-          final msg = chat.messages
-              .firstWhereOrNull((m) => m.time == targetTime);
-          if (msg != null) _createBranchFrom(msg);
-        }
-        break;
-
-      case 'optimizeMessage':
-        final timeStr = data?['time'] as String?;
-        if (timeStr != null) {
-          final targetTime = DateTime.parse(timeStr);
-          final msg = chat.messages
-              .firstWhereOrNull((m) => m.time == targetTime);
-          if (msg != null) _showOptimizationDialog(msg);
-        }
-        break;
-
-      case 'messageMore':
-        final timeStr = data?['time'] as String?;
-        if (timeStr != null) {
-          final targetTime = DateTime.parse(timeStr);
-          final msg = chat.messages
-              .firstWhereOrNull((m) => m.time == targetTime);
-          if (msg != null) _showMoreMessageButton(msg);
-        }
-        break;
-
-      case 'scrollStateChanged':
-        final nearBottom = data?['isNearBottom'] as bool? ?? true;
-        if (_isUserReading == nearBottom) {
-          setState(() => _isUserReading = !nearBottom);
-        }
-        break;
-
-      default:
-        print('[ChatPage] Unhandled emitMessage action: $action');
-    }
+  void _scrollToMessage(MessageModel message) {
+    _scrollCtrl.scrollToMessage?.call(message.id);
   }
 
-  /// Open image picker and add image to a specific message.
-  Future<void> _addImageToMessage(String timeStr) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final time = DateTime.parse(timeStr);
-      final msg =
-          chat.messages.firstWhereOrNull((m) => m.time == time);
-      if (msg != null) {
-        setState(() {
-          msg.resPath.add(pickedFile.path);
-          _updateChat();
-        });
-      }
-    }
+  void _scrollToBottom() {
+    _scrollCtrl.scrollToBottom?.call();
   }
+
+  // ─── "To bottom" floating button ────────────────────────────────────
 
   Widget _buildToBottomButton() {
     final colorScheme = Theme.of(context).colorScheme;
@@ -816,22 +530,21 @@ class _ChatPageState extends State<ChatPage> {
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              // 使用 InkWell 替代 IconButton，获得更灵活的控制
               onTap: () {
                 _scrollToBottom();
                 setState(() {
                   _isUserReading = false;
                 });
               },
-              customBorder: const CircleBorder(), // 确保涟漪效果是圆形的
+              customBorder: const CircleBorder(),
               child: Container(
-                width: 32, // 明确指定宽度
-                height: 32, // 明确指定高度
-                alignment: Alignment.center, // 居中图标
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
                   color: colorScheme.primary,
-                  size: 20, // 图标大小
+                  size: 20,
                 ),
               ),
             ),
@@ -841,108 +554,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildFlutterMessageList() {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: 0.0,
-        maxHeight: double.infinity,
-      ),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification notification) {
-            if (notification is UserScrollNotification) {
-              // 在 reverse: true 下，ScrollDirection.forward 意味着手指往下拉（看旧消息）
-              if (notification.direction == ScrollDirection.forward) {
-                setState(() => _isUserReading = true);
-              }
-            }
-
-            return false;
-          },
-          child: Obx(() {
-            final messages = chat.messages.reversed.toList();
-            // 聊天正文
-            return ListView.builder(
-                controller: _scrollController,
-                reverse: true,
-                itemCount: messages.length + 1 + 1,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    //正在（新）生成的Message，永远位于底部
-                    return Obx(() => sessionController.aiState.isGenerating
-                        ? _buildMessageBubble(
-                            MessageModel(
-                                id: -9999,
-                                content: sessionController.aiState.LLMBuffer,
-                                senderId:
-                                    sessionController.aiState.currentAssistant,
-                                time: DateTime.now(),
-                                alternativeContent: [null],
-                                style: sessionController.aiState.style),
-                            messages.length == 0 ? null : messages[0])
-                        : const SizedBox.shrink());
-                  } else if (index == messages.length + 1) {
-                    return NewChatScreen(chat: chat);
-                  } else {
-                    return Builder(builder: (context) {
-                      final i = index - 1;
-
-                      final message = messages[i];
-                      return _buildMessageBubble(message,
-                          i < messages.length - 1 ? messages[i + 1] : null,
-                          index: i,
-                          isNarration: message.style == MessageStyle.narration);
-                    });
-                  }
-                }
-                //},
-                );
-          }),
-        ),
-      ),
-    );
-  }
-
-  // 消息正文+输入框
-  Widget _buildMainContent() {
-    return Column(
-      children: [
-        Expanded(
-          child: useWebview ? _buildWebviewMessageList() : _buildFlutterMessageList(),
-        ),
-
-        // 输入框
-        _buildInputBar(),
-      ],
-    );
-  }
-
-  void _scrollToMessage(MessageModel message) {
-    if (useWebview) {
-      sessionController.scrollToMessage(message.id);
-    }
-    // Flutter scroll implementation would go here if needed
-  }
-
-  void _scrollToBottom() {
-    if (useWebview) {
-      sessionController.scrollToBottom();
-    } else if (_scrollController.hasClients) {
-      _scrollController.animateTo(0,
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeOutQuad);
-    }
-  }
-
-  void _jumpToBottom() {
-    if (useWebview) {
-      sessionController.scrollToBottom();
-    } else if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
-    }
-  }
+  // ─── App bar ────────────────────────────────────────────────────────
 
   PreferredSizeWidget? _buildAppBar() {
     final colors = Theme.of(context).colorScheme;
@@ -951,15 +563,14 @@ class _ChatPageState extends State<ChatPage> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            color: Colors.transparent, // 必须是透明的
+            color: Colors.transparent,
           ),
         ),
       ),
       leading: _buildDrawerButton(),
       toolbarHeight: isDesktop ? 66 : null,
       scrolledUnderElevation: isDesktop ? 0 : 0,
-      backgroundColor:
-          Colors.transparent, //isDesktop ? colors.surfaceContainerHigh : null,
+      backgroundColor: Colors.transparent,
 
       title: InkWell(
         onTap: () {
@@ -1037,7 +648,7 @@ class _ChatPageState extends State<ChatPage> {
                       directoryPath: p.dirname(chat.file?.path ?? '')),
                   context: context);
             },
-            icon: Icon(Icons.history)),
+            icon: const Icon(Icons.history)),
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
@@ -1059,11 +670,9 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMoreVertButton() {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert),
+      icon: const Icon(Icons.more_vert),
       onSelected: (value) async {
-        // 处理菜单项点击
         if (value == 'local_summary') {
-          // 执行操作1
           sessionController.doLocalSummary();
         } else if (value == 'gen_memory') {
           _genMemory();
@@ -1093,8 +702,8 @@ class _ChatPageState extends State<ChatPage> {
                 color: Theme.of(context).iconTheme.color,
                 size: 22,
               ),
-              SizedBox(width: 12),
-              Text('生成标题'),
+              const SizedBox(width: 12),
+              const Text('生成标题'),
             ],
           ),
         ),
@@ -1107,8 +716,8 @@ class _ChatPageState extends State<ChatPage> {
                 color: Theme.of(context).iconTheme.color,
                 size: 22,
               ),
-              SizedBox(width: 12),
-              Text('聊天内总结'),
+              const SizedBox(width: 12),
+              const Text('聊天内总结'),
             ],
           ),
         ),
@@ -1121,8 +730,8 @@ class _ChatPageState extends State<ChatPage> {
                 color: Theme.of(context).iconTheme.color,
                 size: 22,
               ),
-              SizedBox(width: 12),
-              Text('最近聊天'),
+              const SizedBox(width: 12),
+              const Text('最近聊天'),
             ],
           ),
         ),
@@ -1130,10 +739,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  // ─── Background image ───────────────────────────────────────────────
+
   Widget _buildBackgroundImage() {
     return Stack(
       children: [
-        // 1. 背景图片
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -1144,7 +754,6 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
         ),
-        // 2. 模糊层
         Positioned.fill(
           child: BackdropFilter(
             filter: ImageFilter.blur(
@@ -1155,7 +764,6 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
         ),
-        // 3. 半透明遮罩层
         Positioned.fill(
           child: Container(
             color: Theme.of(context)
@@ -1168,6 +776,8 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  // ─── Layout ─────────────────────────────────────────────────────────
+
   Widget _buildMobile(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
@@ -1175,7 +785,6 @@ class _ChatPageState extends State<ChatPage> {
       extendBodyBehindAppBar: true,
       backgroundColor: colors.surface,
 
-      // APPBar
       appBar: _buildAppBar(),
       body: Container(
         child: Stack(
@@ -1195,7 +804,6 @@ class _ChatPageState extends State<ChatPage> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      // floatingActionButton: _buildFloatingButtonOverlay(),
       backgroundColor: colors.surfaceContainerHigh,
 
       body: Stack(
@@ -1213,7 +821,7 @@ class _ChatPageState extends State<ChatPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          CircularProgressIndicator(), // 圆形进度指示器 [1]
+          CircularProgressIndicator(),
         ],
       ),
     );
@@ -1224,7 +832,7 @@ class _ChatPageState extends State<ChatPage> {
         onPressed: () {
           widget.scaffoldKey?.currentState?.openDrawer();
         },
-        icon: Icon(Icons.menu));
+        icon: const Icon(Icons.menu));
   }
 
   Widget _buildEmptyScreen() {
@@ -1232,7 +840,7 @@ class _ChatPageState extends State<ChatPage> {
         appBar: AppBar(leading: _buildDrawerButton()),
         body: Center(
             child:
-                Text("如果你看到了这个，一定是出了点啥问题。请点击左上角菜单按钮创建新聊天吧。")) //WelcomePage(),
+                const Text("如果你看到了这个，一定是出了点啥问题。请点击左上角菜单按钮创建新聊天吧。")),
         );
   }
 
@@ -1260,12 +868,9 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Obx(() => AnimatedSwitcher(
-          // 1. 设置动画的持续时间
           duration: const Duration(milliseconds: 500),
 
-          // 2. 提供一个 transitionBuilder 来自定义动画效果 (可选，但推荐)
           transitionBuilder: (Widget child, Animation<double> animation) {
-            // 使用 FadeTransition 实现淡入淡出效果
             return FadeTransition(opacity: animation, child: child);
           },
 

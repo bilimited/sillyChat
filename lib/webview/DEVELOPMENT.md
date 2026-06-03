@@ -37,11 +37,15 @@ lib/webview/
 ├── vite.config.js          # Vite 配置
 ├── DEVELOPMENT.md          # 本文档
 └── src/
-    ├── main.js             # Vue 应用入口
-    ├── style.css           # 全局样式
-    ├── App.vue             # 主组件（消息列表、工具栏、流式渲染）
-    └── api/
-        └── api.js          # BridgeAPI — 与 Flutter 通信的完整封装
+    ├── main.js             # Vue 应用入口 (imports tokens.css → style.css → App.vue)
+    ├── style.css           # 全局 reset / base 样式
+    ├── App.vue             # 主组件（消息列表、工具栏、流式渲染、行内编辑）
+    ├── api/
+    │   └── api.js          # BridgeAPI — 与 Flutter 通信的完整封装
+    ├── components/
+    │   └── MessageEditor.vue  # 行内消息编辑器（textarea + 快捷键）
+    └── themes/
+        └── tokens.css      # CSS 自定义属性（light/dark 双模式 + 主题色语义别名）
 ```
 
 ---
@@ -290,40 +294,60 @@ interface DisplaySettings {
 
 ## 主题系统
 
-WebView 维护独立的 CSS 主题系统，不依赖 Flutter 的 Material 主题。
+WebView 维护独立的 CSS 主题系统，不依赖 Flutter 的 Material 主题。所有 CSS 自定义属性集中在 `src/themes/tokens.css`，由 `main.js` 导入。
+
+### 文件职责
+
+| 文件 | 职责 |
+|------|------|
+| `src/themes/tokens.css` | 所有 CSS 自定义属性定义（light/dark 双模式 + 主题色派生变量） |
+| `src/style.css` | 全局 reset 和 base 样式 |
+| `App.vue`（scoped） | 组件样式，引用 tokens.css 定义的变量 |
+| `App.vue`（`applyDisplaySettings`） | JS 运行时覆盖 `--theme-*` 动态变量 |
 
 ### 昼夜模式
 
-Flutter 通过 `onThemeChange({ mode: "light" | "dark" })` 通知模式切换。`App.vue` 中的 `applyTheme()` 会在 `<html>` 元素上添加/移除 `.theme-dark` CSS 类。
+Flutter 通过 `onThemeChange({ mode: "light" | "dark" })` 通知模式切换。`App.vue` 中的 `applyTheme()` 在 `<html>` 上添加/移除 `.theme-dark` 类，触发 `tokens.css` 中的 dark 模式覆盖。
 
-```css
-/* 默认 light 模式 */
-:root {
-  --bubble-bg-ai: #ffffff;
-  --bubble-text-ai: #333333;
-  /* ... */
-}
+### 变量分层
 
-/* dark 模式覆盖 */
-html.theme-dark {
-  --bubble-bg-ai: #2a2a2a;
-  --bubble-text-ai: #e0e0e0;
-  /* ... */
-}
+```
+tokens.css
+  ├─ Layout tokens      — --avatar-size, --font-scale, --bubble-radius
+  ├─ Light mode (:root) — 所有颜色变量（浅色默认值）
+  ├─ Dark mode (.theme-dark) — 覆盖颜色变量（深色值）
+  └─ Semantic accents   — --theme-* 默认值 + --link-color 等语义别名
 ```
 
 ### 主题色 (Theme Color)
 
-`themeColor` 来自 `DisplaySettings`，由 `applyDisplaySettings()` 解析为 CSS 自定义属性：
+`themeColor` 来自 `DisplaySettings`，由 `applyDisplaySettings()` 解析并通过 `root.style.setProperty()` **运行时写入** `<html>`：
 
-| CSS 变量 | 说明 |
-|----------|------|
-| `--theme-h`, `--theme-s`, `--theme-l` | 主题色的 HSL 分量 |
-| `--theme-color` | 主题色 RGB 值 |
-| `--theme-light` | 主题色提亮 30%（hover 状态背景） |
-| `--theme-dark` | 主题色变暗 15%（active 状态） |
+| CSS 变量 | 来源 | 说明 |
+|----------|------|------|
+| `--theme-h`, `--theme-s`, `--theme-l` | JS 运行时 | 主题色的 HSL 分量 |
+| `--theme-color` | JS 运行时 | 主题色 RGB 值 |
+| `--theme-light` | JS 运行时 | 主题色提亮 30%（hover 状态背景） |
+| `--theme-dark` | JS 运行时 | 主题色变暗 15%（active 状态） |
+| `--theme-fg` | JS 运行时 | 自适应前景色（深色主题用白字，浅色主题用黑字） |
 
-语义别名（在 `:root` 和 `html.theme-dark` 中分别定义）：
+### 气泡颜色推导
+
+用户消息气泡颜色**不再硬编码为绿色**，而是从主题色自动推导：
+
+```css
+/* light 模式 — 浅色粉彩 */
+--bubble-bg-user: hsl(var(--theme-h), var(--theme-s), 85%);
+--bubble-text-user: hsl(var(--theme-h), 15%, 15%);
+
+/* dark 模式 — 深色饱和 */
+--bubble-bg-user: hsl(var(--theme-h), 55%, 28%);
+--bubble-text-user: #ffffff;
+```
+
+无论 Flutter 侧设置什么主题色，用户气泡都会自动跟随。
+
+### 语义别名（在 `tokens.css` 中统一管理）
 
 | CSS 变量 | 用途 |
 |----------|------|
@@ -331,27 +355,18 @@ html.theme-dark {
 | `--link-hover-color` | 链接 hover 颜色 |
 | `--alt-indicator-color` | 备选回复版本指示器颜色 |
 | `--toolbar-btn-hover-bg` | 工具栏按钮 hover 背景 |
+| `--editor-bg / --editor-border / ...` | 行内编辑器配色 |
 
 ### 在样式中使用
 
 ```css
-/* 直接使用 */
-.my-accent {
-  color: var(--theme-color);
-}
-
 /* 使用语义别名（推荐） */
-.markdown-body a {
-  color: var(--link-color);
-}
-.markdown-body a:hover {
-  color: var(--link-hover-color);
-}
+.markdown-body a { color: var(--link-color); }
 
 /* 使用 HSL 分量做精细调整 */
-.custom-tint {
-  background: hsl(var(--theme-h), var(--theme-s), 90%);
-}
+.custom-tint { background: hsl(var(--theme-h), var(--theme-s), 90%); }
+
+/* 添加新的颜色变量：在 tokens.css 的对应模式区块中声明 */
 ```
 
 ---

@@ -9,7 +9,10 @@
           v-for="msg in displayMessages"
           :key="msg.id"
           class="message-item"
-          :class="[msg.role === 'user' ? 'message-user' : 'message-ai', { 'message-selected': selectedMessage?.time === msg.time }]"
+          :class="[
+            msg.role === 'user' ? 'message-user' : 'message-ai',
+            { 'message-selected': selectedMessage?.time === msg.time },
+          ]"
           @click="toggleSelect(msg)"
         >
           <!-- 头像 -->
@@ -24,8 +27,17 @@
               {{ getCharacterName(msg.sender) }}
             </div>
 
-            <div class="bubble">
-              <!-- Markdown 渲染 -->
+            <!-- 正在编辑此消息 → 行内编辑器 -->
+            <template v-if="editingMessageTime === msg.time">
+              <MessageEditor
+                :message="msg"
+                @save="onEditSave"
+                @cancel="onEditCancel"
+              />
+            </template>
+
+            <!-- 正常展示 → Markdown 渲染 -->
+            <div v-else class="bubble">
               <div class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
             </div>
 
@@ -101,6 +113,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import MarkdownIt from 'markdown-it';
 import appApi from './api/api.js';
+import MessageEditor from './components/MessageEditor.vue';
 
 // --- Markdown Setup ---
 const md = new MarkdownIt({
@@ -121,6 +134,7 @@ const appState = ref({
   currentAssistant: -1
 });
 const selectedMessage = ref(null);
+const editingMessageTime = ref(null);
 
 // Display settings defaults
 const displaySettings = ref({
@@ -150,7 +164,7 @@ const characterMap = computed(() => {
   return map;
 });
 
-// --- Helpers ---
+// --- Color utilities ---
 
 /**
  * Parse a Flutter Color.value (0xAARRGGBB) into { r, g, b }.
@@ -164,7 +178,7 @@ function parseFlutterColor(value) {
 }
 
 /**
- * Convert { r, g, b } to a CSS hsl() string.
+ * Convert { r, g, b } to { h, s, l }.
  */
 function rgbToHsl(r, g, b) {
   const rf = r / 255, gf = g / 255, bf = b / 255;
@@ -189,7 +203,12 @@ function rgbToHsl(r, g, b) {
   };
 }
 
-// --- CSS Variables ---
+// --- CSS Variable application ---
+
+/**
+ * Write dynamic theme accent variables to <html>.
+ * Theme color comes from Flutter DisplaySettings.themeColor.
+ */
 function applyDisplaySettings(settings) {
   if (!settings) return;
   displaySettings.value = settings;
@@ -201,13 +220,12 @@ function applyDisplaySettings(settings) {
   root.style.setProperty('--font-scale', (settings.ContentFontScale || 1));
   root.style.setProperty('--bubble-radius', (settings.MessageBubbleBorderRadius || 16) + 'px');
 
-  // Parse themeColor and set accent CSS variables
+  // Parse themeColor and set accent CSS variables (used by tokens.css)
   const tc = settings.themeColor;
   if (tc !== undefined && tc !== null) {
     const { r, g, b } = parseFlutterColor(tc);
     const hsl = rgbToHsl(r, g, b);
 
-    // Primary accent
     root.style.setProperty('--theme-h', hsl.h);
     root.style.setProperty('--theme-s', hsl.s + '%');
     root.style.setProperty('--theme-l', hsl.l + '%');
@@ -229,6 +247,10 @@ function applyDisplaySettings(settings) {
   }
 }
 
+/**
+ * Toggle .theme-dark class on <html>.
+ * This activates the dark-mode overrides in themes/tokens.css.
+ */
 function applyTheme(themeData) {
   if (!themeData) return;
   const mode = themeData.mode || 'light';
@@ -238,8 +260,6 @@ function applyTheme(themeData) {
     document.documentElement.classList.remove('theme-dark');
   }
 }
-
-// --- Theme & display settings are applied via CSS variables on <html> ---
 
 // --- Methods ---
 
@@ -311,6 +331,10 @@ const isNearBottom = (el) => {
 
 // --- Message selection & toolbar ---
 const toggleSelect = (msg) => {
+  // Cancel editing if clicking elsewhere
+  if (editingMessageTime.value && editingMessageTime.value !== msg.time) {
+    editingMessageTime.value = null;
+  }
   if (selectedMessage.value?.time === msg.time) {
     selectedMessage.value = null;
   } else {
@@ -318,14 +342,25 @@ const toggleSelect = (msg) => {
   }
 };
 
+// --- Inline editing ---
 const onEdit = (msg) => {
-  const newContent = prompt('编辑消息内容：', msg.content);
-  if (newContent !== null && newContent !== msg.content) {
-    appApi.editMessage(msg.time, newContent);
-  }
+  editingMessageTime.value = msg.time;
   selectedMessage.value = null;
 };
 
+const onEditSave = (newContent) => {
+  const msg = displayMessages.value.find(m => m.time === editingMessageTime.value);
+  if (msg && newContent !== msg.content) {
+    appApi.editMessage(msg.time, newContent);
+  }
+  editingMessageTime.value = null;
+};
+
+const onEditCancel = () => {
+  editingMessageTime.value = null;
+};
+
+// --- Other toolbar actions ---
 const onCopy = (msg) => {
   appApi.copyMessage(msg.content);
   selectedMessage.value = null;
@@ -345,7 +380,6 @@ const onRetry = () => {
 
 const onSwitchAlternative = (msg, direction) => {
   appApi.switchAlternative(msg.time, direction);
-  // Don't clear selection — user may want to switch multiple times
 };
 
 const onMore = (msg) => {
@@ -358,7 +392,6 @@ const onMore = (msg) => {
 let scrollDebounceTimer = null;
 const onScroll = () => {
   if (!scrollContainer.value) return;
-  // Debounce to avoid flooding Dart
   if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
   scrollDebounceTimer = setTimeout(() => {
     const near = isNearBottom(scrollContainer.value);
@@ -375,16 +408,7 @@ const doScrollToBottom = () => {
 // --- Perform scroll to specific message ---
 const doScrollToMessage = (msgId) => {
   if (!scrollContainer.value) return;
-  // Find the message element by traversing rendered DOM
-  // Messages are rendered in order; we locate by data attribute or position
-  const msgs = chatData.value?.messages || [];
-  const idx = msgs.findIndex(m => m.id === msgId);
-  if (idx === -1) return;
-
-  const el = scrollContainer.value;
-  // Estimate position: each message item is roughly similar in typical height
-  // Better approach: use a data attribute
-  const target = el.querySelector(`[data-msg-id="${msgId}"]`);
+  const target = scrollContainer.value.querySelector(`[data-msg-id="${msgId}"]`);
   if (target) {
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -395,6 +419,8 @@ const doScrollToMessage = (msgId) => {
 onMounted(() => {
   // 1. Subscribe to full chat updates
   appApi.subscribeChat((newChat) => {
+    // Full re-sync cancels any in-progress edit
+    editingMessageTime.value = null;
     handleScrollPreservation(() => {
       chatData.value = newChat;
       appState.value = { ...appState.value, LLMBuffer: '' };
@@ -433,7 +459,7 @@ onMounted(() => {
     }
   });
 
-  // 3. Subscribe to incremental message events (P1)
+  // 3. Subscribe to incremental message events
   appApi.subscribeMessageAdded(({ message, index }) => {
     if (!chatData.value) return;
     handleScrollPreservation(() => {
@@ -445,6 +471,10 @@ onMounted(() => {
 
   appApi.subscribeMessageUpdated((updatedMessage) => {
     if (!chatData.value) return;
+    // If the updated message is currently being edited, cancel the edit
+    if (editingMessageTime.value === updatedMessage.time) {
+      editingMessageTime.value = null;
+    }
     handleScrollPreservation(() => {
       const messages = chatData.value.messages.map(
         m => (m.id === updatedMessage.id && m.time === updatedMessage.time)
@@ -465,7 +495,7 @@ onMounted(() => {
     });
   });
 
-  // 4. Subscribe to streaming token append (P1)
+  // 4. Subscribe to streaming token append
   appApi.subscribeTokenAppend((token) => {
     if (appState.value.isGenerating) {
       appState.value = {
@@ -522,96 +552,12 @@ onUnmounted(() => {
 });
 </script>
 
-<style>
-/* 全局设置 */
-html, body, #app {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: transparent !important;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* ============================================================
-   CSS 自定义属性（主题变量）
-   默认 light 模式；.theme-dark 覆盖为 dark 模式
-   ============================================================ */
-
-:root {
-  --bubble-bg-ai: #ffffff;
-  --bubble-bg-user: #95ec69;
-  --bubble-text-ai: #333333;
-  --bubble-text-user: #000000;
-  --bubble-shadow: rgba(0,0,0,0.1);
-  --sender-name-color: #555555;
-  --time-color: #888888;
-  --status-text-color: #999999;
-  --code-bg: #f6f8fa;
-  --code-border: #e1e4e8;
-  --inline-code-bg: rgba(27,31,35,0.05);
-  --blockquote-border: #dfe2e5;
-  --blockquote-color: #6a737d;
-  --toolbar-bg: #f0f0f0;
-  --toolbar-border: rgba(0,0,0,0.1);
-  --toolbar-text: #333333;
-  --cursor-color: #333333;
-  --avatar-bg: #dddddd;
-
-  --avatar-size: 40px;
-  --avatar-border-radius: 50%;
-  --font-scale: 1;
-  --bubble-radius: 12px;
-
-  /* Theme accent defaults (Material blue 500) — overwritten by JS */
-  --theme-h: 207;
-  --theme-s: 90%;
-  --theme-l: 48%;
-  --theme-color: hsl(207, 90%, 48%);
-  --theme-light-l: 78%;
-  --theme-light: hsl(207, 90%, 78%);
-  --theme-dark-l: 33%;
-  --theme-dark: hsl(207, 90%, 33%);
-  --theme-fg: hsl(207, 90%, 95%);
-
-  /* Semantic aliases */
-  --link-color: var(--theme-dark);
-  --link-hover-color: var(--theme-color);
-  --alt-indicator-color: var(--theme-color);
-  --toolbar-btn-hover-bg: var(--theme-light);
-}
-
-html.theme-dark {
-  --bubble-bg-ai: #2a2a2a;
-  --bubble-bg-user: #1a5c2a;
-  --bubble-text-ai: #e0e0e0;
-  --bubble-text-user: #ffffff;
-  --bubble-shadow: rgba(0,0,0,0.3);
-  --sender-name-color: #aaaaaa;
-  --time-color: #888888;
-  --status-text-color: #777777;
-  --code-bg: #1e1e1e;
-  --code-border: #444444;
-  --inline-code-bg: rgba(255,255,255,0.08);
-  --blockquote-border: #555555;
-  --blockquote-color: #aaaaaa;
-  --toolbar-bg: #333333;
-  --toolbar-border: rgba(255,255,255,0.15);
-  --toolbar-text: #e0e0e0;
-  --cursor-color: #e0e0e0;
-  --avatar-bg: #444444;
-
-  /* Theme accent — same hue but adjusted luminance for dark bg */
-  --link-color: hsl(var(--theme-h), var(--theme-s), 70%);
-  --link-hover-color: hsl(var(--theme-h), var(--theme-s), 80%);
-  --alt-indicator-color: hsl(var(--theme-h), var(--theme-s), 70%);
-  --toolbar-btn-hover-bg: hsl(var(--theme-h), var(--theme-s), 15%);
-  --theme-fg: hsl(var(--theme-h), var(--theme-s), 95%);
-}
-</style>
-
 <style scoped>
+/* ==========================================================================
+   Component Styles — App.vue
+   Theme tokens (CSS custom properties) are in themes/tokens.css.
+   ========================================================================== */
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -639,12 +585,18 @@ html.theme-dark {
   height: 20px;
 }
 
-/* 消息布局 */
+/* ---- Message layout ---- */
 .message-item {
   display: flex;
   align-items: flex-start;
   max-width: 100%;
   cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+}
+
+.message-item.message-selected {
+  /* Subtle selection feedback — the toolbar is the primary indicator */
 }
 
 .avatar {
@@ -693,7 +645,7 @@ html.theme-dark {
   margin-left: 4px;
 }
 
-/* AI 样式 */
+/* ---- AI message ---- */
 .message-ai {
   flex-direction: row;
 }
@@ -707,7 +659,7 @@ html.theme-dark {
   border-top-left-radius: 2px;
 }
 
-/* User 样式 */
+/* ---- User message — uses theme-derived bubble colors ---- */
 .message-user {
   flex-direction: row-reverse;
 }
@@ -721,14 +673,14 @@ html.theme-dark {
   border-top-right-radius: 2px;
 }
 
-/* 状态文本 */
+/* ---- Status text (streaming) ---- */
 .status-text {
   font-size: calc(10px * var(--font-scale));
   color: var(--status-text-color);
   margin-top: 2px;
 }
 
-/* 光标 */
+/* ---- Streaming cursor ---- */
 .cursor {
   display: inline-block;
   font-weight: bold;
@@ -742,9 +694,7 @@ html.theme-dark {
   50% { opacity: 0; }
 }
 
-/* ============================================================
-   消息底部工具栏
-   ============================================================ */
+/* ---- Message toolbar ---- */
 .message-toolbar {
   display: flex;
   align-items: center;
@@ -756,6 +706,13 @@ html.theme-dark {
   border-radius: 10px;
   box-shadow: 0 2px 8px var(--bubble-shadow);
   white-space: nowrap;
+  /* Animate in */
+  animation: toolbar-in 0.15s ease-out;
+}
+
+@keyframes toolbar-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .message-ai .message-toolbar {
@@ -809,7 +766,7 @@ html.theme-dark {
   margin-left: 4px;
 }
 
-/* --- Markdown Styles (Scoped Deep) --- */
+/* ---- Markdown rendered content (deep styles) ---- */
 :deep(.markdown-body) {
   line-height: 1.6;
   font-size: calc(15px * var(--font-scale));
@@ -874,5 +831,14 @@ html.theme-dark {
   height: auto;
   border-radius: 4px;
   margin: 0.5em 0;
+}
+
+/* ---- Inline editor integration ---- */
+.message-ai .inline-editor {
+  max-width: 100%;
+}
+
+.message-user .inline-editor {
+  max-width: 100%;
 }
 </style>
