@@ -34,7 +34,6 @@ import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dar
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
 import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
 import 'package:flutter_example/chat-app/widgets/webview/chat_webview.dart';
-import 'package:flutter_example/chat-app/widgets/webview/statusbar_webview.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';

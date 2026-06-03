@@ -55,7 +55,8 @@ class ChatSessionController extends BaseController {
   Aihandler _autoTitleHandler = Aihandler();
   Aihandler _summaryHandler = Aihandler();
 
-  Rx<NewMessageEvent?> newMessageEvent = Rx(null);
+  // 消息变更就发出事件
+  Rx<MessageEvent?> messageEvent = Rx(null);
 
   ChatAIState get aiState =>
       _aiState.value; //=> Get.find<ChatController>().getAIState(file.path);
@@ -111,8 +112,8 @@ class ChatSessionController extends BaseController {
         close();
       }
     });
-    ever(newMessageEvent, (ev) {
-      if (ev == null) {
+    ever(messageEvent, (ev) {
+      if (ev == null || ev.type != MessageEventType.add) {
         return;
       }
       print('收到新消息...${ev.message.content}');
@@ -199,7 +200,6 @@ class ChatSessionController extends BaseController {
   }
 
   Future<void> saveChat() async {
-
     final seen = <int>{};
     // 简单去重
     chat.characterIds.retainWhere((e) => seen.add(e));
@@ -215,14 +215,11 @@ class ChatSessionController extends BaseController {
       await ChatController.of.updateChatMeta(file!.path, meta);
       print('save Chat');
       // 异步执行Token计算
-      // TODO:添加防抖
       updateTokens();
     } else if (createPath != null) {
       final fullPath = await ChatController.of.createChat(chat, createPath);
       chatPath = fullPath;
-    } else {
-      //Get.snackbar('聊天${file?.path ?? '<未创建>'}保存失败.', '聊天文件不存在');
-    }
+    } else {}
   }
 
   void bindWebController(WebSessionController controller) {
@@ -284,7 +281,8 @@ class ChatSessionController extends BaseController {
     chat.lastMessage = lastMessage != null ? lastMessage : message.content;
     chat.time = message.time.toString();
 
-    newMessageEvent.value = NewMessageEvent(message, chat);
+    messageEvent.value =
+        MessageEvent(message, chat, type: MessageEventType.add);
 
     _chat.refresh();
     await saveChat();
@@ -292,12 +290,19 @@ class ChatSessionController extends BaseController {
 
   // 在指定聊天中删除消息
   Future<void> removeMessage(DateTime messageTime) async {
+    final MessageModel? messageToDelete =
+        chat.messages.firstWhereOrNull((msg) => msg.time == messageTime);
     chat.messages.removeWhere((msg) => msg.time == messageTime);
     if (chat.messages.isNotEmpty) {
       final lastMsg = chat.messages.last;
       chat.lastMessage = lastMsg.content;
       chat.time = lastMsg.time.toString();
     }
+    if (messageToDelete != null) {
+      messageEvent.value =
+          MessageEvent(messageToDelete, chat, type: MessageEventType.delete);
+    }
+
     _chat.refresh();
     await saveChat();
   }
@@ -308,6 +313,9 @@ class ChatSessionController extends BaseController {
       chat.lastMessage = messages.last.content;
       chat.time = messages.last.time.toString();
     }
+    messages.forEach((msg) {
+      messageEvent.value = MessageEvent(msg, chat, type: MessageEventType.add);
+    });
 
     await saveChat();
     _chat.refresh();
@@ -320,6 +328,10 @@ class ChatSessionController extends BaseController {
       chat.lastMessage = lastMsg.content;
       chat.time = lastMsg.time.toString();
     }
+    messages.forEach((msg) {
+      messageEvent.value =
+          MessageEvent(msg, chat, type: MessageEventType.delete);
+    });
     await saveChat();
     _chat.refresh();
   }
@@ -334,6 +346,8 @@ class ChatSessionController extends BaseController {
         chat.lastMessage = updatedMessage.content;
         chat.time = updatedMessage.time.toString();
       }
+      messageEvent.value =
+          MessageEvent(updatedMessage, chat, type: MessageEventType.update);
       await saveChat();
       _chat.refresh();
     }
@@ -364,8 +378,8 @@ class ChatSessionController extends BaseController {
         return;
       } else if (chat.mode == ChatMode.auto) {
         await for (var content in _getResponse(
-            overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
-            )) {
+          overrideOption: chat.assistant.bindOption, // 我也看不懂当时为什么要这么写
+        )) {
           _handleAIResult(content, chat.assistantId ?? -1);
         }
       } else {
@@ -377,7 +391,6 @@ class ChatSessionController extends BaseController {
   /// 仅群聊模式下可用
   /// 让AI直接发送一条消息，无需输入问题
   Future<void> onGroupMessage(CharacterModel assistant) async {
-
     await for (var content in _getResponse(
       overrideOption: assistant.bindOption,
       overrideAssistant: assistant,

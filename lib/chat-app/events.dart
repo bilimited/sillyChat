@@ -14,9 +14,16 @@ class FileCreatedEvent extends AppEvent {
   FileCreatedEvent(this.filePath);
 }
 
-class NewMessageEvent extends AppEvent {
+enum MessageEventType {
+  add,
+  update,
+  delete
+}
+
+class MessageEvent extends AppEvent {
+  final MessageEventType type;
   final MessageModel message;
   final ChatModel chat;
 
-  NewMessageEvent(this.message, this.chat);
+  MessageEvent(this.message, this.chat, {this.type=MessageEventType.add});
 }

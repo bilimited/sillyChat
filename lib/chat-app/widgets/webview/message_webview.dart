@@ -3,6 +3,9 @@ import 'package:flutter_example/chat-app/providers/web_session_controller.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
 
+/**
+ * 一个单独的用于预览HTML代码的页面。
+ */
 class MessageWebview extends StatefulWidget {
   const MessageWebview({
     super.key,
