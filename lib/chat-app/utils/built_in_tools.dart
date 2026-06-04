@@ -44,9 +44,9 @@ class BuiltInTools {
           },
         },
       }, 
-      executor: (args) async {
+      executor: (ctx) async {
         callCount++;
-        final msg = args['message'] as String?;
+        final msg = ctx['message'] as String?;
         final extra = msg != null && msg.isNotEmpty ? '，收到的消息: "$msg"' : '';
         return '你成功调用工具$callCount次$extra';
       },

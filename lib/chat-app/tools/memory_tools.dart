@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/story_controller.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call_context.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 import 'package:get/get.dart';
 
@@ -31,37 +32,54 @@ const _toolNames = [
 CharacterController get _charCtrl => Get.find<CharacterController>();
 StoryController get _storyCtrl => Get.find<StoryController>();
 
-/// 根据 target_type 和 target_id 获取 MemoryModel 并返回保存函数。
-/// 返回 (memory, saveFn, ownerName)。
-(Map<String, dynamic>, String Function())? _resolveMemory(
-    String targetType, dynamic targetId) {
-  if (targetType == 'character') {
-    final id = targetId is int ? targetId : int.tryParse(targetId.toString());
-    if (id == null) return null;
-    final char = _charCtrl.getCharacterById(id);
-    if (char.id != id) return null;
-    final memory = char.memory ?? MemoryModel();
-    char.memory = memory;
-    return (
-      {'memory': memory, 'id': id, 'type': 'character'},
-      () {
-        _charCtrl.updateCharacter(char);
-        return char.roleName;
-      },
-    );
-  } else if (targetType == 'story') {
-    final story = _storyCtrl.getStoryById(targetId.toString());
-    if (story == null) return null;
+/// 从当前聊天上下文自动解析到的记忆访问句柄。
+class _MemoryAccess {
+  final MemoryModel memory;
+  final String targetType; // 'character' | 'story'
+  final String targetName;
+  final void Function() save;
+
+  _MemoryAccess({
+    required this.memory,
+    required this.targetType,
+    required this.targetName,
+    required this.save,
+  });
+}
+
+/// 从当前聊天上下文自动解析 MemoryModel。
+///
+/// 优先故事（ctx.chat.bindStory），其次角色（ctx.chat.bindCharacter）。
+/// 返回 null 表示当前聊天未绑定任何角色或故事。
+_MemoryAccess? _resolveFromContext(ToolCallContext ctx) {
+  final chat = ctx.chat;
+
+  // 1) 故事聊天
+  final story = chat.bindStory;
+  if (story != null) {
     final memory = story.memory ?? MemoryModel();
     story.memory = memory;
-    return (
-      {'memory': memory, 'id': targetId, 'type': 'story'},
-      () {
-        _storyCtrl.updateStory(story);
-        return story.name;
-      },
+    return _MemoryAccess(
+      memory: memory,
+      targetType: 'story',
+      targetName: story.name,
+      save: () => _storyCtrl.updateStory(story),
     );
   }
+
+  // 2) 角色聊天
+  final char = chat.bindCharacter;
+  if (char != null) {
+    final memory = char.memory ?? MemoryModel();
+    char.memory = memory;
+    return _MemoryAccess(
+      memory: memory,
+      targetType: 'character',
+      targetName: char.roleName,
+      save: () => _charCtrl.updateCharacter(char),
+    );
+  }
+
   return null;
 }
 
@@ -72,37 +90,20 @@ StoryController get _storyCtrl => Get.find<StoryController>();
 void _registerListMemoryEntries() {
   ToolRegistry.instance.register(
     name: 'list_memory_entries',
-    description: '列出指定角色或故事的记忆条目。',
+    description: '列出当前聊天所属角色或故事的全部记忆条目。',
     parameters: {
       'type': 'object',
-      'properties': {
-        'target_type': {
-          'type': 'string',
-          'description': '目标类型：character（角色）或 story（故事）',
-          'enum': ['character', 'story'],
-        },
-        'target_id': {
-          'description':
-              '目标 ID。角色 ID 为整数，故事 ID 为字符串。',
-        },
-      },
-      'required': ['target_type', 'target_id'],
+      'properties': {},
     },
-    executor: (args) async {
-      final targetType = args['target_type'] as String;
-      final targetId = args['target_id'];
+    executor: (ctx) async {
+      final a = _resolveFromContext(ctx);
+      if (a == null) return '当前聊天未绑定角色或故事，无法访问记忆。';
 
-      final resolved = _resolveMemory(targetType, targetId);
-      if (resolved == null) {
-        return '未找到 $targetType（id: $targetId）。';
+      if (a.memory.entries.isEmpty) {
+        return '${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"还没有任何记忆条目。';
       }
 
-      final memory = resolved.$1['memory'] as MemoryModel;
-      if (memory.entries.isEmpty) {
-        return '该 $targetType 还没有任何记忆条目。';
-      }
-
-      final result = memory.entries.map((e) => {
+      final result = a.memory.entries.map((e) => {
             'id': e.id,
             'content': e.content,
             'created_at': e.createdAt.toIso8601String(),
@@ -110,9 +111,9 @@ void _registerListMemoryEntries() {
           }).toList();
 
       return jsonEncode({
-        'target_type': targetType,
-        'target_id': targetId.toString(),
-        'total': memory.entries.length,
+        'target_type': a.targetType,
+        'target_name': a.targetName,
+        'total': a.memory.entries.length,
         'entries': result,
       });
     },
@@ -122,18 +123,10 @@ void _registerListMemoryEntries() {
 void _registerCreateMemoryEntry() {
   ToolRegistry.instance.register(
     name: 'create_memory_entry',
-    description: '为指定角色或故事创建一条记忆条目。',
+    description: '为当前聊天所属角色或故事创建一条新的记忆条目。',
     parameters: {
       'type': 'object',
       'properties': {
-        'target_type': {
-          'type': 'string',
-          'description': '目标类型：character 或 story',
-          'enum': ['character', 'story'],
-        },
-        'target_id': {
-          'description': '目标 ID。',
-        },
         'content': {
           'type': 'string',
           'description': '记忆正文内容',
@@ -143,29 +136,24 @@ void _registerCreateMemoryEntry() {
           'description': '是否启用。默认 true。',
         },
       },
-      'required': ['target_type', 'target_id', 'content'],
+      'required': ['content'],
     },
-    executor: (args) async {
-      final targetType = args['target_type'] as String;
-      final targetId = args['target_id'];
-      final content = args['content'] as String;
-      final isActive = args['is_active'] as bool? ?? true;
+    executor: (ctx) async {
+      final a = _resolveFromContext(ctx);
+      if (a == null) return '当前聊天未绑定角色或故事，无法创建记忆。';
 
-      final resolved = _resolveMemory(targetType, targetId);
-      if (resolved == null) {
-        return '未找到 $targetType（id: $targetId）。';
-      }
+      final content = ctx['content'] as String;
+      final isActive = ctx['is_active'] as bool? ?? true;
 
-      final memory = resolved.$1['memory'] as MemoryModel;
       final entry = MemoryEntryModel(
         id: DateTime.now().microsecondsSinceEpoch,
         content: content,
         isActive: isActive,
       );
 
-      memory.entries.add(entry);
-      final ownerName = resolved.$2();
-      return '已为 $targetType "$ownerName" 创建记忆条目（id: ${entry.id}）。';
+      a.memory.entries.add(entry);
+      a.save();
+      return '已为${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"创建记忆条目（id: ${entry.id}）。';
     },
   );
 }
@@ -173,18 +161,10 @@ void _registerCreateMemoryEntry() {
 void _registerUpdateMemoryEntry() {
   ToolRegistry.instance.register(
     name: 'update_memory_entry',
-    description: '修改指定角色或故事的一条记忆条目。只需传要修改的字段。',
+    description: '修改当前聊天所属角色或故事的一条记忆条目。只需传要修改的字段。',
     parameters: {
       'type': 'object',
       'properties': {
-        'target_type': {
-          'type': 'string',
-          'description': '目标类型：character 或 story',
-          'enum': ['character', 'story'],
-        },
-        'target_id': {
-          'description': '目标 ID。',
-        },
         'entry_id': {
           'type': 'integer',
           'description': '记忆条目 ID',
@@ -198,39 +178,29 @@ void _registerUpdateMemoryEntry() {
           'description': '是否启用（不传则保持不变）',
         },
       },
-      'required': ['target_type', 'target_id', 'entry_id'],
+      'required': ['entry_id'],
     },
-    executor: (args) async {
-      final targetType = args['target_type'] as String;
-      final targetId = args['target_id'];
-      final entryId = args['entry_id'] as int;
+    executor: (ctx) async {
+      final a = _resolveFromContext(ctx);
+      if (a == null) return '当前聊天未绑定角色或故事，无法修改记忆。';
 
-      final resolved = _resolveMemory(targetType, targetId);
-      if (resolved == null) {
-        return '未找到 $targetType（id: $targetId）。';
-      }
+      final entryId = ctx['entry_id'] as int;
+      final index = a.memory.entries.indexWhere((e) => e.id == entryId);
+      if (index == -1) return '未找到 id 为 $entryId 的记忆条目。';
 
-      final memory = resolved.$1['memory'] as MemoryModel;
-      final index = memory.entries.indexWhere((e) => e.id == entryId);
-      if (index == -1) {
-        return '未找到 id 为 $entryId 的记忆条目。';
-      }
-
-      final oldEntry = memory.entries[index];
+      final oldEntry = a.memory.entries[index];
       final newEntry = oldEntry.copyWith(
-        content: args['content'] as String?,
-        isActive: args['is_active'] as bool?,
+        content: ctx['content'] as String?,
+        isActive: ctx['is_active'] as bool?,
       );
 
-      memory.entries[index] = newEntry;
-      final ownerName = resolved.$2();
-
+      a.memory.entries[index] = newEntry;
+      a.save();
+ 
       final changes = <String>[];
-      if (args['content'] != null) changes.add('正文已更新');
-      if (args['is_active'] != null) {
-        changes.add('激活状态 → ${newEntry.isActive}');
-      }
-      return '已更新 $targetType "$ownerName" 的记忆条目（${changes.join("，")}）。';
+      if (ctx['content'] != null) changes.add('正文已更新');
+      if (ctx['is_active'] != null) changes.add('激活状态 → ${newEntry.isActive}');
+      return '已更新${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"的记忆条目（${changes.join("，")}）。';
     },
   );
 }
@@ -238,44 +208,28 @@ void _registerUpdateMemoryEntry() {
 void _registerDeleteMemoryEntry() {
   ToolRegistry.instance.register(
     name: 'delete_memory_entry',
-    description: '删除指定角色或故事的一条记忆条目。此操作不可撤销。',
+    description: '删除当前聊天所属角色或故事的一条记忆条目。此操作不可撤销。',
     parameters: {
       'type': 'object',
       'properties': {
-        'target_type': {
-          'type': 'string',
-          'description': '目标类型：character 或 story',
-          'enum': ['character', 'story'],
-        },
-        'target_id': {
-          'description': '目标 ID。',
-        },
         'entry_id': {
           'type': 'integer',
           'description': '要删除的记忆条目 ID',
         },
       },
-      'required': ['target_type', 'target_id', 'entry_id'],
+      'required': ['entry_id'],
     },
-    executor: (args) async {
-      final targetType = args['target_type'] as String;
-      final targetId = args['target_id'];
-      final entryId = args['entry_id'] as int;
+    executor: (ctx) async {
+      final a = _resolveFromContext(ctx);
+      if (a == null) return '当前聊天未绑定角色或故事，无法删除记忆。';
 
-      final resolved = _resolveMemory(targetType, targetId);
-      if (resolved == null) {
-        return '未找到 $targetType（id: $targetId）。';
-      }
+      final entryId = ctx['entry_id'] as int;
+      final entry = a.memory.entries.firstWhereOrNull((e) => e.id == entryId);
+      if (entry == null) return '未找到 id 为 $entryId 的记忆条目，无需删除。';
 
-      final memory = resolved.$1['memory'] as MemoryModel;
-      final entry = memory.entries.firstWhereOrNull((e) => e.id == entryId);
-      if (entry == null) {
-        return '未找到 id 为 $entryId 的记忆条目，无需删除。';
-      }
-
-      memory.entries.removeWhere((e) => e.id == entryId);
-      final ownerName = resolved.$2();
-      return '已从 $targetType "$ownerName" 中删除记忆条目（id: $entryId）。';
+      a.memory.entries.removeWhere((e) => e.id == entryId);
+      a.save();
+      return '已从${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"中删除记忆条目（id: $entryId）。';
     },
   );
 }

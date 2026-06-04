@@ -22,6 +22,7 @@ import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
 import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call_context.dart';
 import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 import 'package:flutter_example/chat-app/utils/tool_call_tag.dart';
@@ -799,7 +800,8 @@ class ChatSessionController extends BaseController {
       return '错误：未找到工具 "${tc.functionName}"';
     }
     try {
-      return await executor(tc.parsedArguments);
+      final ctx = ToolCallContext(args: tc.parsedArguments, chat: chat);
+      return await executor(ctx);
     } catch (e) {
       return '错误：执行工具 "${tc.functionName}" 时发生异常: $e';
     }

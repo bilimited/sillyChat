@@ -74,7 +74,13 @@ class Lorebookutil {
   }
 
   /// 从 Character.memory 和 Story.memory 中收集激活的记忆条目，
-  /// 包装为虚拟 LorebookItemModel（position = "memory"）
+  /// 包装为虚拟 LorebookItemModel（position = "memory"）。
+  ///
+  /// 每条记忆用边界和日期包裹，帮助 LLM 区分不同条目：
+  /// ```
+  /// 【记忆 · 2024-01-15 14:30】
+  /// 内容文本...
+  /// ```
   List<LorebookItemModel> _getMemoryItems() {
     final List<MemoryEntryModel> memoryEntries = [];
 
@@ -91,14 +97,21 @@ class Lorebookutil {
           story!.memory!.entries.where((e) => e.isActive));
     }
 
-    return memoryEntries.map((entry) => LorebookItemModel(
-      id: entry.id,
-      name: 'memory-${entry.id}',
-      content: entry.content,
-      isActive: true,
-      activationType: ActivationType.always,
-      position: 'memory',
-    )).toList();
+    return memoryEntries.map((entry) {
+      final dateStr =
+          '${entry.createdAt.year}-${entry.createdAt.month.toString().padLeft(2, '0')}-${entry.createdAt.day.toString().padLeft(2, '0')} '
+          '${entry.createdAt.hour.toString().padLeft(2, '0')}:${entry.createdAt.minute.toString().padLeft(2, '0')}';
+      final wrappedContent = '【记忆 · $dateStr】\n${entry.content}';
+
+      return LorebookItemModel(
+        id: entry.id,
+        name: 'memory-${entry.id}',
+        content: wrappedContent,
+        isActive: true,
+        activationType: ActivationType.always,
+        position: 'memory',
+      );
+    }).toList();
   }
 
   // Step 6: 替换Prompt Message中的<lore id=x>

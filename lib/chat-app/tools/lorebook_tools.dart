@@ -61,9 +61,9 @@ void _registerListLorebooks() {
         },
       },
     },
-    executor: (args) async {
+    executor: (ctx) async {
       var list = _ctrl.lorebooks.toList();
-      final typeFilter = args['type'] as String?;
+      final typeFilter = ctx['type'] as String?;
       if (typeFilter != null) {
         final t = LorebookType.values.firstWhere(
           (e) => e.name == typeFilter,
@@ -109,9 +109,9 @@ void _registerCreateLorebook() {
       },
       'required': ['name'],
     },
-    executor: (args) async {
-      final name = args['name'] as String;
-      final typeStr = args['type'] as String? ?? 'world';
+    executor: (ctx) async {
+      final name = ctx['name'] as String;
+      final typeStr = ctx['type'] as String? ?? 'world';
       final type = LorebookType.values.firstWhere(
         (e) => e.name == typeStr,
         orElse: () => LorebookType.world,
@@ -155,15 +155,15 @@ void _registerUpdateLorebook() {
       },
       'required': ['id'],
     },
-    executor: (args) async {
-      final id = args['id'] as int;
+    executor: (ctx) async {
+      final id = ctx['id'] as int;
       final lorebook = _ctrl.getLorebookById(id);
       if (lorebook == null) {
         return '未找到 id 为 $id 的世界书。';
       }
 
-      final newName = args['name'] as String?;
-      final typeStr = args['type'] as String?;
+      final newName = ctx['name'] as String?;
+      final typeStr = ctx['type'] as String?;
       LorebookType? newType;
       if (typeStr != null) {
         newType = LorebookType.values.firstWhere(
@@ -200,8 +200,8 @@ void _registerDeleteLorebook() {
       },
       'required': ['id'],
     },
-    executor: (args) async {
-      final id = args['id'] as int;
+    executor: (ctx) async {
+      final id = ctx['id'] as int;
       final lorebook = _ctrl.getLorebookById(id);
       if (lorebook == null) {
         return '未找到 id 为 $id 的世界书，无需删除。';
@@ -232,8 +232,8 @@ void _registerListLorebookItems() {
       },
       'required': ['lorebook_id'],
     },
-    executor: (args) async {
-      final lorebookId = args['lorebook_id'] as int;
+    executor: (ctx) async {
+      final lorebookId = ctx['lorebook_id'] as int;
       final lorebook = _ctrl.getLorebookById(lorebookId);
       if (lorebook == null) {
         return '未找到 id 为 $lorebookId 的世界书。';
@@ -285,11 +285,11 @@ void _registerSearchLorebookItems() {
       },
       'required': ['lorebook_id', 'keyword'],
     },
-    executor: (args) async {
-      final lorebookId = args['lorebook_id'] as int;
-      final keyword = (args['keyword'] as String).toLowerCase();
-      final page = (args['page'] as int?) ?? 1;
-      final pageSize = ((args['page_size'] as int?) ?? 10).clamp(1, 50);
+    executor: (ctx) async {
+      final lorebookId = ctx['lorebook_id'] as int;
+      final keyword = (ctx['keyword'] as String).toLowerCase();
+      final page = (ctx['page'] as int?) ?? 1;
+      final pageSize = ((ctx['page_size'] as int?) ?? 10).clamp(1, 50);
 
       final lorebook = _ctrl.getLorebookById(lorebookId);
       if (lorebook == null) {
@@ -357,11 +357,11 @@ void _registerCreateLorebookItem() {
       },
       'required': ['lorebook_id', 'name', 'content'],
     },
-    executor: (args) async {
-      final lorebookId = args['lorebook_id'] as int;
-      final name = args['name'] as String;
-      final content = args['content'] as String;
-      final isActive = args['is_active'] as bool? ?? true;
+    executor: (ctx) async {
+      final lorebookId = ctx['lorebook_id'] as int;
+      final name = ctx['name'] as String;
+      final content = ctx['content'] as String;
+      final isActive = ctx['is_active'] as bool? ?? true;
 
       final lorebook = _ctrl.getLorebookById(lorebookId);
       if (lorebook == null) {
@@ -422,9 +422,9 @@ void _registerUpdateLorebookItem() {
       },
       'required': ['lorebook_id', 'item_id'],
     },
-    executor: (args) async {
-      final lorebookId = args['lorebook_id'] as int;
-      final itemId = args['item_id'] as int;
+    executor: (ctx) async {
+      final lorebookId = ctx['lorebook_id'] as int;
+      final itemId = ctx['item_id'] as int;
 
       final lorebook = _ctrl.getLorebookById(lorebookId);
       if (lorebook == null) {
@@ -438,9 +438,9 @@ void _registerUpdateLorebookItem() {
 
       final oldItem = lorebook.items[index];
       final newItem = oldItem.copyWith(
-        name: args['name'] as String?,
-        content: args['content'] as String?,
-        isActive: args['is_active'] as bool?,
+        name: ctx['name'] as String?,
+        content: ctx['content'] as String?,
+        isActive: ctx['is_active'] as bool?,
       );
 
       final updatedItems = lorebook.items.toList();
@@ -448,9 +448,9 @@ void _registerUpdateLorebookItem() {
       await _ctrl.updateLorebook(lorebook.copyWith(items: updatedItems));
 
       final changes = <String>[];
-      if (args['name'] != null) changes.add('名称 → "${newItem.name}"');
-      if (args['content'] != null) changes.add('正文已更新');
-      if (args['is_active'] != null) {
+      if (ctx['name'] != null) changes.add('名称 → "${newItem.name}"');
+      if (ctx['content'] != null) changes.add('正文已更新');
+      if (ctx['is_active'] != null) {
         changes.add('激活状态 → ${newItem.isActive}');
       }
       return '已更新条目 "${newItem.name}"（${changes.join("，")}）。';
@@ -476,9 +476,9 @@ void _registerDeleteLorebookItem() {
       },
       'required': ['lorebook_id', 'item_id'],
     },
-    executor: (args) async {
-      final lorebookId = args['lorebook_id'] as int;
-      final itemId = args['item_id'] as int;
+    executor: (ctx) async {
+      final lorebookId = ctx['lorebook_id'] as int;
+      final itemId = ctx['item_id'] as int;
 
       final lorebook = _ctrl.getLorebookById(lorebookId);
       if (lorebook == null) {

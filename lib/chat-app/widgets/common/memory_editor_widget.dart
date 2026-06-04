@@ -30,7 +30,7 @@ class _MemoryEditorWidgetState extends State<MemoryEditorWidget> {
       context: context,
     );
     if (result == true && context.mounted) {
-      _emit(widget.memory);
+      _emit(widget.memory); 
     }
   }
 
@@ -102,9 +102,10 @@ class _MemoryEditorWidgetState extends State<MemoryEditorWidget> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
+                  onTap: () => _onEdit(entry),
                   title: Text(
                     entry.content,
-                    maxLines: 4,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       decoration:
@@ -122,10 +123,6 @@ class _MemoryEditorWidgetState extends State<MemoryEditorWidget> {
                         value: entry.isActive,
                         onChanged: (v) => _onToggle(entry, v),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        onPressed: () => _onEdit(entry),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline,

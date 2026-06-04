@@ -341,7 +341,7 @@ class Promptbuilder {
     // 默认的 mixin 模式（原有逻辑）
     return msglst.fold(LLMMessage(content: '', role: 'user', fileDirs: []),
         (res, msg) {
-      res.fileDirs.addAll(msg.fileDirs);
+      // res.fileDirs.addAll(msg.fileDirs);
       return LLMMessage(
           content: res.content + '\n' + msg.content,
           role: 'user',

@@ -51,8 +51,8 @@ void _registerSearchCharacters() {
       },
       'required': ['keyword'],
     },
-    executor: (args) async {
-      final keyword = (args['keyword'] as String).toLowerCase();
+    executor: (ctx) async {
+      final keyword = (ctx['keyword'] as String).toLowerCase();
 
       final matched = _ctrl.characters.where((c) {
         return c.roleName.toLowerCase().contains(keyword) ||
@@ -88,7 +88,7 @@ void _registerListCharacters() {
       'type': 'object',
       'properties': {},
     },
-    executor: (args) async {
+    executor: (ctx) async {
       // 排除临时角色（绑定到故事的角色）
       final list = _ctrl.characters.where((c) => c.bindStoryId == null).toList();
 
@@ -139,11 +139,11 @@ void _registerCreateCharacter() {
       },
       'required': ['role_name'],
     },
-    executor: (args) async {
-      final roleName = args['role_name'] as String;
-      final brief = args['brief'] as String?;
-      final archive = args['archive'] as String?;
-      final category = args['category'] as String? ?? '';
+    executor: (ctx) async {
+      final roleName = ctx['role_name'] as String;
+      final brief = ctx['brief'] as String?;
+      final archive = ctx['archive'] as String?;
+      final category = ctx['category'] as String? ?? '';
 
       final character = CharacterModel(
         id: DateTime.now().microsecondsSinceEpoch,
@@ -188,8 +188,8 @@ void _registerUpdateCharacter() {
       },
       'required': ['id'],
     },
-    executor: (args) async {
-      final id = args['id'] as int;
+    executor: (ctx) async {
+      final id = ctx['id'] as int;
       final character = _ctrl.getCharacterById(id);
 
       // getCharacterById 对不存在的 id 会返回 defaultCharacter (id=-1)
@@ -197,7 +197,7 @@ void _registerUpdateCharacter() {
         return '未找到 id 为 $id 的角色。';
       }
 
-      final newRoleName = args['role_name'] as String?;
+      final newRoleName = ctx['role_name'] as String?;
       String? newRemark;
       if (newRoleName != null) {
         // 当 roleName 变化时同步更新 remark
@@ -207,16 +207,16 @@ void _registerUpdateCharacter() {
       final updated = character.copyWith(
         roleName: newRoleName,
         remark: newRemark,
-        brief: args['brief'] as String?,
-        archive: args['archive'] as String?,
+        brief: ctx['brief'] as String?,
+        archive: ctx['archive'] as String?,
       );
 
       await _ctrl.updateCharacter(updated);
 
       final changes = <String>[];
       if (newRoleName != null) changes.add('角色名 → "$newRoleName"');
-      if (args['brief'] != null) changes.add('简略信息已更新');
-      if (args['archive'] != null) changes.add('完整人设已更新');
+      if (ctx['brief'] != null) changes.add('简略信息已更新');
+      if (ctx['archive'] != null) changes.add('完整人设已更新');
       return '已更新角色 "${updated.roleName}"（${changes.join("，")}）。';
     },
   );
@@ -236,8 +236,8 @@ void _registerDeleteCharacter() {
       },
       'required': ['id'],
     },
-    executor: (args) async {
-      final id = args['id'] as int;
+    executor: (ctx) async {
+      final id = ctx['id'] as int;
 
       // 保护内置角色
       if (id == -1 || id == 0 || id == -2) {

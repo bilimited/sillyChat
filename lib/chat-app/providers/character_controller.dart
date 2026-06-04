@@ -235,7 +235,7 @@ class CharacterController extends BaseController {
     await saveCategoryConfigs();
     await saveCharacters();
   }
-
+ 
   // 删除分组，将下属角色的 category 清空
   Future<void> deleteCategory(String name) async {
     categoryConfigs.removeWhere((c) => c.name == name);

@@ -1,7 +1,8 @@
 import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
+import 'package:flutter_example/chat-app/utils/entitys/tool_call_context.dart';
 
-/// 工具执行器签名：接收已解析的 JSON 参数，返回结果字符串
-typedef ToolExecutor = Future<String> Function(Map<String, dynamic> args);
+/// 工具执行器签名：接收 [ToolCallContext]，返回结果字符串
+typedef ToolExecutor = Future<String> Function(ToolCallContext ctx);
 
 /// 全局工具注册表（单例）
 ///
@@ -17,8 +18,8 @@ typedef ToolExecutor = Future<String> Function(Map<String, dynamic> args);
 ///     },
 ///     'required': ['city'],
 ///   },
-///   executor: (args) async {
-///     final city = args['city'] as String;
+///   executor: (ctx) async {
+///     final city = ctx['city'] as String;
 ///     return '${city}今天晴，气温 25°C';
 ///   },
 /// );
