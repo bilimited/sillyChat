@@ -108,7 +108,14 @@ class Promptbuilder {
         }
 
         // 展开 ToolCallResult 标签为多条 LLMMessage
-        return ToolCallTag.expandToolCallResults(baseMessage);
+        // 仅 assistant 消息进行展开，非 assistant 消息替换为简短占位符
+        if (baseMessage.role == 'assistant') {
+          return ToolCallTag.expandToolCallResults(baseMessage);
+        } else { 
+          final cleanedContent =
+              ToolCallTag.replaceTagsWithPlaceholder(baseMessage.content);
+          return [baseMessage.copyWith(content: cleanedContent)];
+        }
       })
     ];
   }

@@ -76,6 +76,13 @@ class ToolCallTag {
     return text.replaceAll(_tagRegex, '');
   }
 
+  /// 将文本中的 ToolCallResult 标签替换为简短占位符。
+  /// 用于非 assistant 消息中，避免展开 tool call 结构。
+  static String replaceTagsWithPlaceholder(String text,
+      {String placeholder = '*这里调用了一个工具*'}) {
+    return text.replaceAll(_tagRegex, placeholder);
+  }
+
   /// 解析 assistant 消息中的 ToolCallResult 标签，展开为标准 LLM 消息序列。
   ///
   /// 输入的 message 应为 `role: "assistant"` 的消息。
