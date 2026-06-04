@@ -3,7 +3,6 @@ import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
 enum LorebookType {
   world, // 全局世界书
   character, // 角色书
-  memory, // 记忆书
 }
 
 class LorebookModel {
@@ -63,16 +62,6 @@ class LorebookModel {
         scanDepth: 4,
         maxToken: 8000,
         type: LorebookType.character);
-  }
-
-  factory LorebookModel.emptyMemoryBook() {
-    return LorebookModel(
-        id: DateTime.now().microsecondsSinceEpoch,
-        name: '空白记忆书',
-        items: [],
-        scanDepth: 4,
-        maxToken: 8000,
-        type: LorebookType.memory);
   }
 
   // toJson

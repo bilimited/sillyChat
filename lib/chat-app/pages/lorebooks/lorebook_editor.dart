@@ -89,9 +89,7 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
       String pos = "before_char";
       if(_selectedType == LorebookType.character){
         pos = "after_char";
-      }else if(_selectedType == LorebookType.memory){{
-        pos = "memory";
-      }}
+      }
       // 新条目插入到顶部还是底部？通常底部，或者顶部以便编辑。这里默认底部。
       items.add(LorebookItemModel(
         id: DateTime.now().millisecondsSinceEpoch,
@@ -219,7 +217,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
               final map = {
                 LorebookType.world: '世界书',
                 LorebookType.character: '角色书',
-                LorebookType.memory: '记忆书',
               };
               SillyChatApp.snackbar(context, '已转换为${map[type] ?? '未知类型'}');
             },
@@ -231,10 +228,6 @@ class _LoreBookEditorPageState extends State<LoreBookEditorPage> {
               const PopupMenuItem(
                 value: LorebookType.character,
                 child: Text('转换为角色书'),
-              ),
-              const PopupMenuItem(
-                value: LorebookType.memory,
-                child: Text('转换为记忆书'),
               ),
             ],
           ),

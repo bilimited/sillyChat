@@ -22,8 +22,6 @@ class LoreBookManagerPage extends StatelessWidget {
         return '世界书';
       case LorebookType.character:
         return '角色书';
-      case LorebookType.memory:
-        return '记忆';
     }
   }
 
@@ -33,8 +31,6 @@ class LoreBookManagerPage extends StatelessWidget {
         return Icons.public;
       case LorebookType.character:
         return Icons.person;
-      case LorebookType.memory:
-        return Icons.history_edu;
     }
   }
 
@@ -46,9 +42,6 @@ class LoreBookManagerPage extends StatelessWidget {
         break;
       case LorebookType.character:
         lb = LorebookModel.emptyCharacterBook();
-        break;
-      case LorebookType.memory:
-        lb = LorebookModel.emptyMemoryBook();
         break;
     }
     await controller.addLorebook(lb);

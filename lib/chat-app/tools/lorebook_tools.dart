@@ -50,14 +50,14 @@ LoreBookController get _ctrl => Get.find<LoreBookController>();
 void _registerListLorebooks() {
   ToolRegistry.instance.register(
     name: 'list_lorebooks',
-    description: '列出所有世界书。可选按类型过滤（world / character / memory）。',
+    description: '列出所有世界书。可选按类型过滤（world / character）。',
     parameters: {
       'type': 'object',
       'properties': {
         'type': {
           'type': 'string',
-          'description': '可选的世界书类型过滤：world、character、memory。不传则返回全部。',
-          'enum': ['world', 'character', 'memory'],
+          'description': '可选的世界书类型过滤：world、character。不传则返回全部。',
+          'enum': ['world', 'character'],
         },
       },
     },
@@ -103,8 +103,8 @@ void _registerCreateLorebook() {
         },
         'type': {
           'type': 'string',
-          'description': '世界书类型：world（全局）、character（角色）、memory（记忆）。默认 world。',
-          'enum': ['world', 'character', 'memory'],
+          'description': '世界书类型：world（全局）、character（角色）。默认 world。',
+          'enum': ['world', 'character'],
         },
       },
       'required': ['name'],
@@ -149,8 +149,8 @@ void _registerUpdateLorebook() {
         },
         'type': {
           'type': 'string',
-          'description': '新的类型：world、character、memory（不传则保持不变）',
-          'enum': ['world', 'character', 'memory'],
+          'description': '新的类型：world、character（不传则保持不变）',
+          'enum': ['world', 'character'],
         },
       },
       'required': ['id'],

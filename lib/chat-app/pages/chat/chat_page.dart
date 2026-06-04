@@ -360,7 +360,7 @@ class _ChatPageState extends State<ChatPage> {
     if (sessionController
         .getAllCharactersInContext()
         .map((char) => CharacterController.of.getCharacterById(char))
-        .where((char) => char.canGenMemory)
+        .where((char) => char.memory != null && char.memory!.entries.any((e) => e.isActive))
         .isEmpty) {
       SillyChatApp.snackbar(context, "没有可以用于生成记忆的角色，请先给角色添加记忆库");
       return;

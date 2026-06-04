@@ -1,6 +1,6 @@
-import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
@@ -70,10 +70,7 @@ class CharacterModel {
         .toList();
   }
 
-  int? memoryBookId; // 记忆书ID
-  LorebookModel? get memoryBook =>
-      LoreBookController.of.getLorebookById(memoryBookId ?? -1);
-  bool get canGenMemory => memoryBook != null;
+  MemoryModel? memory; // 内联记忆
 
   int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
   String? bindStoryId; // 绑定的故事ID，非空表示临时角色
@@ -132,7 +129,7 @@ class CharacterModel {
       'messageStyle':
           messageStyle.toString().split('.').last, // 序列化messageStyle
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
-      'memoryBookId': memoryBookId, // 添加memoryBookId字段
+      'memory': memory?.toJson(), // 内联记忆
       'bindOption': bindOptionId, // 添加bindOption字段
       'bindStoryId': bindStoryId,
     };
@@ -154,7 +151,10 @@ class CharacterModel {
       firstMessage: json['firstMessage'],
     );
 
-    char.memoryBookId = json['memoryBookId'];
+    // 优先加载内联 memory，兼容旧 memoryBookId（迁移在 Controller 中处理）
+    if (json['memory'] != null) {
+      char.memory = MemoryModel.fromJson(json['memory'] as List<dynamic>?);
+    }
 
     char.moreFirstMessage = (json['moreFirstMessage'] as List<dynamic>?)
             ?.map((e) => e as String)
@@ -210,7 +210,7 @@ class CharacterModel {
     MessageStyle? messageStyle,
     PackageValue<int?>? bindOption,
     PackageValue<String?>? bindStoryId,
-    int? memoryBookId,
+    MemoryModel? memory,
   }) {
     var newChar = CharacterModel(
       id: id ?? DateTime.now().millisecondsSinceEpoch,
@@ -249,7 +249,7 @@ class CharacterModel {
       newChar.bindOptionId = this.bindOptionId;
     }
 
-    newChar.memoryBookId = memoryBookId ?? this.memoryBookId;
+    newChar.memory = memory ?? this.memory;
 
     if (bindStoryId != null) {
       newChar.bindStoryId = bindStoryId.value;

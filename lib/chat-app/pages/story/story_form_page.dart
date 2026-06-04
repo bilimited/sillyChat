@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/models/story_model.dart';
+import 'package:flutter_example/chat-app/widgets/common/memory_editor_widget.dart';
 import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/edit_character_page.dart';
 import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
@@ -45,13 +47,14 @@ class _StoryFormPageState extends State<StoryFormPage>
   late List<int> _characterIds;
   late List<int> _lorebookIds;
   int? _chatOptionId;
+  late MemoryModel _memory;
 
   bool get _isEditing => widget.initialStory != null;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
 
     final story = widget.initialStory;
     _storyId = story?.id ?? const Uuid().v4();
@@ -62,6 +65,7 @@ class _StoryFormPageState extends State<StoryFormPage>
     _characterIds = List<int>.from(story?.characterIds ?? []);
     _lorebookIds = List<int>.from(story?.lorebookIds ?? []);
     _chatOptionId = story?.chatOptionId;
+    _memory = story?.memory ?? MemoryModel();
 
     if (_chatOptionId != null &&
         !_chatOptionController.chatOptions.any((o) => o.id == _chatOptionId)) {
@@ -96,6 +100,7 @@ class _StoryFormPageState extends State<StoryFormPage>
         characterIds: _characterIds,
         lorebookIds: _lorebookIds,
         chatOptionId: _chatOptionId,
+        memory: _memory,
       );
       await _storyController.updateStory(updated);
     } else {
@@ -108,7 +113,7 @@ class _StoryFormPageState extends State<StoryFormPage>
         characterIds: _characterIds,
         lorebookIds: _lorebookIds,
         chatOptionId: _chatOptionId,
-      );
+      )..memory = _memory;
       await _storyController.addStory(newStory);
     }
   }
@@ -409,6 +414,13 @@ class _StoryFormPageState extends State<StoryFormPage>
     );
   }
 
+  Widget _buildMemoryTab() {
+    return MemoryEditorWidget(
+      memory: _memory,
+      onChanged: (updated) => setState(() => _memory = updated),
+    );
+  }
+
   void _showMemberSelector(BuildContext context) {
     Get.dialog(StatefulBuilder(
       builder: (dialogContext, dialogSetState) {
@@ -519,6 +531,7 @@ class _StoryFormPageState extends State<StoryFormPage>
             tabs: const [
               Tab(text: '基本信息'),
               Tab(text: '高级设置'),
+              Tab(text: '记忆'),
             ],
           ),
         ),
@@ -530,6 +543,7 @@ class _StoryFormPageState extends State<StoryFormPage>
               children: [
                 _buildBasicInfoTab(),
                 _buildAdvancedTab(),
+                _buildMemoryTab(),
               ],
             ),
           ),

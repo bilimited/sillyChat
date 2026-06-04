@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_gallery.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
@@ -14,7 +15,7 @@ import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
 import 'package:flutter_example/chat-app/widgets/character/edit_relationship.dart';
 import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.dart';
-import 'package:flutter_example/main.dart';
+import 'package:flutter_example/chat-app/widgets/common/memory_editor_widget.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
 import '../../providers/character_controller.dart';
@@ -61,7 +62,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       _character = _characterController.getCharacterById(widget.characterId!);
     }
     _tabController = TabController(
-      length: (isTemporaryCharacter || isEditPlayer) ? 1 : 3,
+      length: (isTemporaryCharacter || isEditPlayer) ? 1 : 4,
       vsync: this,
     );
 
@@ -133,7 +134,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..archive = _archiveController.text
       ..messageStyle = _character?.messageStyle ?? MessageStyle.common
       ..bindOptionId = _bindOption
-      ..memoryBookId = _character?.memoryBookId;
+      ..memory = _character?.memory;
   }
 
   Future<void> _save() async {
@@ -424,44 +425,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
             ),
           ],
         ),
-        SizedBox(
-          height: 16,
-        ),
-        // 3. 角色记忆
-        ExpansionTile(
-          shape: const Border(), // 去掉展开时的顶部和底部线条
-          collapsedShape: const Border(), // 去掉折叠时的线条
-          initiallyExpanded: true,
-          title: _buildSectionTitle('角色记忆'),
-          // leading: const Icon(Icons.memory_outlined),
-          childrenPadding: const EdgeInsets.all(8),
-          children: [
-            if (_character?.memoryBook == null)
-              Center(
-                child: TextButton.icon(
-                  onPressed: _onCreateMemory,
-                  label: const Text('为角色开启记忆本'),
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              )
-            else
-              ListTile(
-                title: Text(_character!.memoryBook?.name ?? ''),
-                subtitle:
-                    Text("共 ${_character!.memoryBook?.items?.length ?? 0} 条记忆"),
-                trailing: IconButton(
-                  icon:
-                      const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  onPressed: _onDeleteMemory,
-                ),
-                onTap: () => customNavigate(
-                    LoreBookEditorPage(
-                        lorebook: LoreBookController.of
-                            .getLorebookById(_character!.memoryBookId!)),
-                    context: context),
-              ),
-          ],
-        ),
       ],
     );
   }
@@ -491,6 +454,15 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 ],
               ),
       ),
+    );
+  }
+
+  Widget _buildMemoryTab() {
+    // 确保 memory 已初始化
+    _character?.memory ??= MemoryModel();
+    return MemoryEditorWidget(
+      memory: _character!.memory!,
+      onChanged: (updated) => setState(() => _character!.memory = updated),
     );
   }
 
@@ -535,30 +507,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     });
   }
 
-  void _onCreateMemory() {
-    final lb = LorebookModel.emptyMemoryBook()
-        .copyWith(name: "${_character?.roleName ?? '角色'}的记忆");
-    _lorebookController.addLorebook(lb);
-    setState(() => _character?.memoryBookId = lb.id);
-  }
-
-  void _onDeleteMemory() async {
-    final confirmed = await Get.dialog<bool>(AlertDialog(
-      title: const Text('确认删除'),
-      content: const Text('将永久清除角色记忆，是否继续？'),
-      actions: [
-        TextButton(
-            onPressed: () => Get.back(result: false), child: const Text('取消')),
-        TextButton(
-            onPressed: () => Get.back(result: true), child: const Text('确认')),
-      ],
-    ));
-    if (confirmed == true && _character?.memoryBookId != null) {
-      _lorebookController.deleteLorebook(_character!.memoryBookId!);
-      setState(() => _character!.memoryBookId = null);
-    }
-  }
-
   Future<void> _promoteToGlobal() async {
     final confirmed = await Get.dialog<bool>(AlertDialog(
       title: const Text('转为全局角色'),
@@ -589,7 +537,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                 : TabBar(controller: _tabController, tabs: const [
                     Tab(text: '基本信息'),
                     Tab(text: '其他设置'),
-                    Tab(text: '关系')
+                    Tab(text: '关系'),
+                    Tab(text: '记忆'),
                   ]),
             actions: isEditPlayer
                 ? []
@@ -642,6 +591,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                                   relations: _character?.relations ?? {},
                                   onChanged: (r) =>
                                       setState(() => _character?.relations = r))),
+                          _buildMemoryTab(),
                         ]),
             ),
           ),

@@ -167,7 +167,7 @@ void _registerUpdateCharacter() {
     description: '修改指定角色的信息。只需传要修改的字段。'
         'roleName 是角色名称，brief 是简略信息，archive 是完整人设信息。',
     parameters: {
-      'type': 'object',
+      'type': 'object', 
       'properties': {
         'id': {
           'type': 'integer',
@@ -177,7 +177,7 @@ void _registerUpdateCharacter() {
           'type': 'string',
           'description': '新的角色名称（不传则保持不变）',
         },
-        'brief': {
+        'brief': { 
           'type': 'string',
           'description': '新的简略信息（不传则保持不变）',
         },

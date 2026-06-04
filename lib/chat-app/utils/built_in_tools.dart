@@ -10,6 +10,7 @@
 
 import 'package:flutter_example/chat-app/tools/character_tools.dart';
 import 'package:flutter_example/chat-app/tools/lorebook_tools.dart';
+import 'package:flutter_example/chat-app/tools/memory_tools.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 
 class BuiltInTools {
@@ -24,6 +25,7 @@ class BuiltInTools {
     _registerTestTool();
     registerLoreBookTools();
     registerCharacterTools();
+    registerMemoryTools();
   }
 
   /// 测试工具：模型每次调用后返回调用次数，用于验证 Tool Call 端到端流程。
@@ -58,6 +60,7 @@ class BuiltInTools {
     _registered = false;
     unregisterCharacterTools();
     unregisterLoreBookTools();
+    unregisterMemoryTools();
     ToolRegistry.instance.unregister('test_tool');
   }
 }

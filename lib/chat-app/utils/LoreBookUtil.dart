@@ -2,6 +2,7 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
+import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -14,13 +15,14 @@ class Lorebookutil {
   final List<LLMMessage> messages;
   late List<LorebookModel> lorebooks;
   late ChatModel chat;
+  final CharacterModel? sender;
 
   final LoreBookController loreBookController = Get.find();
 
   Lorebookutil({
     required this.messages,
     required ChatModel chat,
-    required CharacterModel? sender,
+    required this.sender,
   }) {
     this.chat = chat;
     this.lorebooks = getLorebooks(chat, sender);
@@ -35,8 +37,6 @@ class Lorebookutil {
         [];
     final story = (chat.bindStory?.loreBooks ?? []);
 
-    final charMem = sender?.memoryBook;
-
     // 去除重复世界书
     final Set<int> uniqueIds = {};
     final List<LorebookModel> uniqueLorebooks = [];
@@ -44,7 +44,6 @@ class Lorebookutil {
       ...global,
       ...char,
       ...story,
-      if (charMem != null) charMem
     ]) {
       if (!uniqueIds.contains(lorebook.id)) {
         uniqueIds.add(lorebook.id);
@@ -62,12 +61,44 @@ class Lorebookutil {
     for (var lorebook in lorebooks) {
       activatedItems.addAll(_getActivatedItems(lorebook));
     }
+
+    // Step 2: 收集内联记忆条目（Character / Story），转换为虚拟 LorebookItemModel
+    activatedItems.addAll(_getMemoryItems());
+
     print("激活了 ${activatedItems.length} 个条目");
 
     /// 按照 priority 从小到大排序，priority 越小越靠前。
     activatedItems.sort((a, b) => a.priority.compareTo(b.priority));
 
     return activatedItems;
+  }
+
+  /// 从 Character.memory 和 Story.memory 中收集激活的记忆条目，
+  /// 包装为虚拟 LorebookItemModel（position = "memory"）
+  List<LorebookItemModel> _getMemoryItems() {
+    final List<MemoryEntryModel> memoryEntries = [];
+
+    // Character 记忆（发送者角色的记忆）
+    if (sender?.memory != null) {
+      memoryEntries.addAll(
+          sender!.memory!.entries.where((e) => e.isActive));
+    }
+
+    // Story 记忆
+    final story = chat.bindStory;
+    if (story?.memory != null) {
+      memoryEntries.addAll(
+          story!.memory!.entries.where((e) => e.isActive));
+    }
+
+    return memoryEntries.map((entry) => LorebookItemModel(
+      id: entry.id,
+      name: 'memory-${entry.id}',
+      content: entry.content,
+      isActive: true,
+      activationType: ActivationType.always,
+      position: 'memory',
+    )).toList();
   }
 
   // Step 6: 替换Prompt Message中的<lore id=x>

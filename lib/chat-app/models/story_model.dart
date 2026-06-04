@@ -1,5 +1,6 @@
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
+import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 
@@ -13,6 +14,8 @@ class StoryModel {
   List<int> characterIds;
   List<int> lorebookIds;
   Map<String, dynamic> metaData;
+
+  MemoryModel? memory; // 内联记忆
 
   ChatOptionModel? get chatOption =>
       ChatOptionController.of().getChatOptionById(chatOptionId ?? -1);
@@ -45,7 +48,9 @@ class StoryModel {
       characterIds: (json['characterIds'] as List<dynamic>?)?.cast<int>() ?? [],
       lorebookIds: (json['lorebookIds'] as List<dynamic>?)?.cast<int>() ?? [],
       metaData: json['metaData'] as Map<String, dynamic>? ?? {},
-    );
+    )..memory = json['memory'] != null
+        ? MemoryModel.fromJson(json['memory'] as List<dynamic>?)
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -59,6 +64,7 @@ class StoryModel {
       'characterIds': characterIds,
       'lorebookIds': lorebookIds,
       'metaData': metaData,
+      'memory': memory?.toJson(),
     };
   }
 
@@ -72,6 +78,7 @@ class StoryModel {
     List<int>? characterIds,
     List<int>? lorebookIds,
     Map<String, dynamic>? metaData,
+    MemoryModel? memory,
   }) {
     return StoryModel(
       id: id ?? this.id,
@@ -83,6 +90,6 @@ class StoryModel {
       characterIds: characterIds ?? this.characterIds,
       lorebookIds: lorebookIds ?? this.lorebookIds,
       metaData: metaData ?? this.metaData,
-    );
+    )..memory = memory ?? this.memory;
   }
 }
