@@ -153,7 +153,7 @@ class CharacterModel {
 
     // 优先加载内联 memory，兼容旧 memoryBookId（迁移在 Controller 中处理）
     if (json['memory'] != null) {
-      char.memory = MemoryModel.fromJson(json['memory'] as List<dynamic>?);
+      char.memory = MemoryModel.fromJson(json['memory']);
     }
 
     char.moreFirstMessage = (json['moreFirstMessage'] as List<dynamic>?)

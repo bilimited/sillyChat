@@ -19,6 +19,9 @@ abstract class Promptformatter {
         : characterController.getCharacterById(chat.userId!);
     var time = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
+    // TODO:区分角色级记忆和故事级记忆
+    final memory = chat.bindCharacter?.memory?.defaultMemory ?? chat.bindStory?.memory?.defaultMemory;
+
     prompt = prompt.replaceAll(
         RegExp(r'\{\{user\}\}', caseSensitive: false), user.roleName);
     prompt =
@@ -26,6 +29,7 @@ abstract class Promptformatter {
 
     prompt = prompt.replaceAll('{{userbrief}}', user.brief ?? '');
     prompt = prompt.replaceAll('{{description}}', chat.description ?? '');
+    prompt = prompt.replaceAll('{{memory}}|{{lore memory}}', memory ?? '');
     prompt = prompt.replaceAll(
         RegExp(r'\{\{lastuserMessage\}\}|\{\{lastmessage\}\}',
             caseSensitive: false),

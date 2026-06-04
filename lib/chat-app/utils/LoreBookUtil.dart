@@ -2,7 +2,6 @@ import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_model.dart';
 import 'package:flutter_example/chat-app/models/lorebook_item_model.dart';
-import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
@@ -56,14 +55,10 @@ class Lorebookutil {
 
   /// 世界书激活主流程
   List<LorebookItemModel> activateLorebooks() {
-    // Step 1: 对每个Lorebook单独处理
     List<LorebookItemModel> activatedItems = [];
     for (var lorebook in lorebooks) {
       activatedItems.addAll(_getActivatedItems(lorebook));
     }
-
-    // Step 2: 收集内联记忆条目（Character / Story），转换为虚拟 LorebookItemModel
-    activatedItems.addAll(_getMemoryItems());
 
     print("激活了 ${activatedItems.length} 个条目");
 
@@ -71,47 +66,6 @@ class Lorebookutil {
     activatedItems.sort((a, b) => a.priority.compareTo(b.priority));
 
     return activatedItems;
-  }
-
-  /// 从 Character.memory 和 Story.memory 中收集激活的记忆条目，
-  /// 包装为虚拟 LorebookItemModel（position = "memory"）。
-  ///
-  /// 每条记忆用边界和日期包裹，帮助 LLM 区分不同条目：
-  /// ```
-  /// 【记忆 · 2024-01-15 14:30】
-  /// 内容文本...
-  /// ```
-  List<LorebookItemModel> _getMemoryItems() {
-    final List<MemoryEntryModel> memoryEntries = [];
-
-    // Character 记忆（发送者角色的记忆）
-    if (sender?.memory != null) {
-      memoryEntries.addAll(
-          sender!.memory!.entries.where((e) => e.isActive));
-    }
-
-    // Story 记忆
-    final story = chat.bindStory;
-    if (story?.memory != null) {
-      memoryEntries.addAll(
-          story!.memory!.entries.where((e) => e.isActive));
-    }
-
-    return memoryEntries.map((entry) {
-      final dateStr =
-          '${entry.createdAt.year}-${entry.createdAt.month.toString().padLeft(2, '0')}-${entry.createdAt.day.toString().padLeft(2, '0')} '
-          '${entry.createdAt.hour.toString().padLeft(2, '0')}:${entry.createdAt.minute.toString().padLeft(2, '0')}';
-      final wrappedContent = '【记忆 · $dateStr】\n${entry.content}';
-
-      return LorebookItemModel(
-        id: entry.id,
-        name: 'memory-${entry.id}',
-        content: wrappedContent,
-        isActive: true,
-        activationType: ActivationType.always,
-        position: 'memory',
-      );
-    }).toList();
   }
 
   // Step 6: 替换Prompt Message中的<lore id=x>

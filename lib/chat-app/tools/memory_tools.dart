@@ -9,10 +9,15 @@ import 'package:get/get.dart';
 
 /// 注册所有记忆 (Memory) 相关工具。
 void registerMemoryTools() {
-  _registerListMemoryEntries();
-  _registerCreateMemoryEntry();
-  _registerUpdateMemoryEntry();
-  _registerDeleteMemoryEntry();
+  // ── 默认记忆（短期记忆，长文本）──
+  _registerReadDefaultMemory();
+  _registerWriteDefaultMemory();
+  _registerEditDefaultMemory();
+  // ── 辅助记忆（长期记忆，条目式）──
+  // _registerListAuxiliaryMemories();
+  // _registerCreateAuxiliaryMemory();
+  // _registerUpdateAuxiliaryMemory(); 
+  // _registerDeleteAuxiliaryMemory();
 }
 
 /// 注销所有记忆工具。
@@ -23,10 +28,13 @@ void unregisterMemoryTools() {
 }
 
 const _toolNames = [
-  'list_memory_entries',
-  'create_memory_entry',
-  'update_memory_entry',
-  'delete_memory_entry',
+  'read_memory',
+  'write_memory',
+  'edit_memory',
+  // 'list_auxiliary_memories',
+  // 'create_auxiliary_memory',
+  // 'update_auxiliary_memory',
+  // 'delete_auxiliary_memory',
 ];
 
 CharacterController get _charCtrl => Get.find<CharacterController>();
@@ -83,14 +91,19 @@ _MemoryAccess? _resolveFromContext(ToolCallContext ctx) {
   return null;
 }
 
+String _targetLabel(_MemoryAccess a) =>
+    a.targetType == 'story' ? '故事' : '角色';
+
 // ═══════════════════════════════════════════════════════════════════════════
-// 记忆条目工具
+// 默认记忆（短期记忆，长文本）— 默认注入 prompt
 // ═══════════════════════════════════════════════════════════════════════════
 
-void _registerListMemoryEntries() {
+void _registerReadDefaultMemory() {
   ToolRegistry.instance.register(
-    name: 'list_memory_entries',
-    description: '列出当前聊天所属角色或故事的全部记忆条目。',
+    name: 'read_memory',
+    description: '读取当前的记忆。这是一段会自动注入到 prompt 中的长文本，'
+        '用于记录当前会话的关键上下文、角色状态或近期事件。'
+        '如需更结构化的持久记忆，请使用辅助记忆工具（list/create/update/delete_auxiliary_memory）。',
     parameters: {
       'type': 'object',
       'properties': {},
@@ -99,137 +112,118 @@ void _registerListMemoryEntries() {
       final a = _resolveFromContext(ctx);
       if (a == null) return '当前聊天未绑定角色或故事，无法访问记忆。';
 
-      if (a.memory.entries.isEmpty) {
-        return '${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"还没有任何记忆条目。';
+      if (a.memory.defaultMemory.isEmpty) {
+        return '${_targetLabel(a)}"${a.targetName}"还没有默认记忆。'
+            '可以使用 write_memory 创建。';
       }
-
-      final result = a.memory.entries.map((e) => {
-            'id': e.id,
-            'content': e.content,
-            'created_at': e.createdAt.toIso8601String(),
-            'is_active': e.isActive,
-          }).toList();
 
       return jsonEncode({
         'target_type': a.targetType,
         'target_name': a.targetName,
-        'total': a.memory.entries.length,
-        'entries': result,
+        'content': a.memory.defaultMemory,
+        'length': a.memory.defaultMemory.length,
       });
     },
   );
 }
 
-void _registerCreateMemoryEntry() {
+void _registerWriteDefaultMemory() {
   ToolRegistry.instance.register(
-    name: 'create_memory_entry',
-    description: '为当前聊天所属角色或故事创建一条新的记忆条目。',
+    name: 'write_memory',
+    description: '写入记忆。支持覆盖或追加模式。'
+        '默认记忆是一段会自动注入到 prompt 中的长文本，适合记录当前会话的关键上下文。'
+        '此操作会整体设置默认记忆内容。如需局部修改，请使用 edit_memory。',
     parameters: {
       'type': 'object',
       'properties': {
         'content': {
           'type': 'string',
-          'description': '记忆正文内容',
+          'description': '要写入的记忆内容',
         },
-        'is_active': {
-          'type': 'boolean',
-          'description': '是否启用。默认 true。',
+        'mode': {
+          'type': 'string',
+          'enum': ['overwrite', 'append'],
+          'description': '写入模式：overwrite（覆盖，默认）或 append（追加到末尾）',
         },
       },
       'required': ['content'],
     },
     executor: (ctx) async {
       final a = _resolveFromContext(ctx);
-      if (a == null) return '当前聊天未绑定角色或故事，无法创建记忆。';
+      if (a == null) return '当前聊天未绑定角色或故事，无法访问记忆。';
 
       final content = ctx['content'] as String;
-      final isActive = ctx['is_active'] as bool? ?? true;
+      final mode = ctx['mode'] as String? ?? 'overwrite';
 
-      final entry = MemoryEntryModel(
-        id: DateTime.now().microsecondsSinceEpoch,
-        content: content,
-        isActive: isActive,
-      );
+      switch (mode) {
+        case 'append':
+          a.memory.defaultMemory += '\n$content';
+          break;
+        case 'overwrite':
+        default:
+          a.memory.defaultMemory = content;
+          break;
+      }
 
-      a.memory.entries.add(entry);
       a.save();
-      return '已为${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"创建记忆条目（id: ${entry.id}）。';
+      final action = mode == 'append' ? '追加' : '写入';
+      return '已${action}${_targetLabel(a)}"${a.targetName}"的默认记忆'
+          '（当前长度: ${a.memory.defaultMemory.length} 字符）。';
     },
   );
 }
 
-void _registerUpdateMemoryEntry() {
+void _registerEditDefaultMemory() {
   ToolRegistry.instance.register(
-    name: 'update_memory_entry',
-    description: '修改当前聊天所属角色或故事的一条记忆条目。只需传要修改的字段。',
+    name: 'edit_memory',
+    description: '局部修改记忆。在记忆文本中查找 old_text 并替换为 new_text。'
+        '类似文本编辑器的查找替换功能，适合进行小范围修改而无需重写整个记忆。'
+        'old_text 必须在记忆文本中唯一匹配一次，否则编辑会失败。',
     parameters: {
       'type': 'object',
       'properties': {
-        'entry_id': {
-          'type': 'integer',
-          'description': '记忆条目 ID',
-        },
-        'content': {
+        'old_text': {
           'type': 'string',
-          'description': '新的记忆正文（不传则保持不变）',
+          'description': '要被替换的原文。必须在记忆文本中精确匹配且仅匹配一次。',
         },
-        'is_active': {
-          'type': 'boolean',
-          'description': '是否启用（不传则保持不变）',
+        'new_text': {
+          'type': 'string',
+          'description': '替换后的新文本。传空字符串即删除 old_text。',
         },
       },
-      'required': ['entry_id'],
+      'required': ['old_text', 'new_text'],
     },
     executor: (ctx) async {
       final a = _resolveFromContext(ctx);
-      if (a == null) return '当前聊天未绑定角色或故事，无法修改记忆。';
+      if (a == null) return '当前聊天未绑定角色或故事，无法访问记忆。';
 
-      final entryId = ctx['entry_id'] as int;
-      final index = a.memory.entries.indexWhere((e) => e.id == entryId);
-      if (index == -1) return '未找到 id 为 $entryId 的记忆条目。';
+      final oldText = ctx['old_text'] as String;
+      final newText = ctx['new_text'] as String;
+      final current = a.memory.defaultMemory;
 
-      final oldEntry = a.memory.entries[index];
-      final newEntry = oldEntry.copyWith(
-        content: ctx['content'] as String?,
-        isActive: ctx['is_active'] as bool?,
-      );
+      if (current.isEmpty) {
+        return '记忆为空，无法编辑。请先使用 write_memory 写入内容。';
+      }
 
-      a.memory.entries[index] = newEntry;
+      if (oldText.isEmpty) {
+        return 'old_text 不能为空。';
+      }
+
+      final matches = oldText.allMatches(current).toList();
+      if (matches.isEmpty) {
+        return '未在记忆中找到 old_text 指定的内容。请确认原文是否正确。';
+      }
+      if (matches.length > 1) {
+        return 'old_text 在记忆中匹配了 ${matches.length} 次，但必须唯一匹配。'
+            '请提供更多上下文使 old_text 唯一。';
+      }
+
+      a.memory.defaultMemory =
+          current.replaceFirst(oldText, newText);
       a.save();
- 
-      final changes = <String>[];
-      if (ctx['content'] != null) changes.add('正文已更新');
-      if (ctx['is_active'] != null) changes.add('激活状态 → ${newEntry.isActive}');
-      return '已更新${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"的记忆条目（${changes.join("，")}）。';
-    },
-  );
-}
 
-void _registerDeleteMemoryEntry() {
-  ToolRegistry.instance.register(
-    name: 'delete_memory_entry',
-    description: '删除当前聊天所属角色或故事的一条记忆条目。此操作不可撤销。',
-    parameters: {
-      'type': 'object',
-      'properties': {
-        'entry_id': {
-          'type': 'integer',
-          'description': '要删除的记忆条目 ID',
-        },
-      },
-      'required': ['entry_id'],
-    },
-    executor: (ctx) async {
-      final a = _resolveFromContext(ctx);
-      if (a == null) return '当前聊天未绑定角色或故事，无法删除记忆。';
-
-      final entryId = ctx['entry_id'] as int;
-      final entry = a.memory.entries.firstWhereOrNull((e) => e.id == entryId);
-      if (entry == null) return '未找到 id 为 $entryId 的记忆条目，无需删除。';
-
-      a.memory.entries.removeWhere((e) => e.id == entryId);
-      a.save();
-      return '已从${a.targetType == 'story' ? '故事' : '角色'}"${a.targetName}"中删除记忆条目（id: $entryId）。';
+      return '已编辑${_targetLabel(a)}"${a.targetName}"的记忆'
+          '（替换 1 处，当前长度: ${a.memory.defaultMemory.length} 字符）。';
     },
   );
 }

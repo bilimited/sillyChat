@@ -356,40 +356,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _genMemory() async {
-    if (sessionController
-        .getAllCharactersInContext()
-        .map((char) => CharacterController.of.getCharacterById(char))
-        .where((char) => char.memory != null && char.memory!.entries.any((e) => e.isActive))
-        .isEmpty) {
-      SillyChatApp.snackbar(context, "没有可以用于生成记忆的角色，请先给角色添加记忆库");
-      return;
-    }
-
-    final colors = Theme.of(context).colorScheme;
-    Get.dialog(
-      AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 16),
-            Text('正在生成记忆...', style: TextStyle(color: colors.outline)),
-          ],
-        ),
-      ),
-      barrierDismissible: false,
-    );
-
-    await sessionController.genenateMemory();
-    SillyChatApp.snackbar(context, "记忆生成成功!");
-    if (SillyChatApp.isDesktop()) {
-      Navigator.pop(context);
-    } else {
-      Get.back();
-    }
-    setState(() {});
-  }
-
   // ─── Input bar ──────────────────────────────────────────────────────
 
   Widget _buildInputBar() {
@@ -674,9 +640,7 @@ class _ChatPageState extends State<ChatPage> {
       onSelected: (value) async {
         if (value == 'local_summary') {
           sessionController.doLocalSummary();
-        } else if (value == 'gen_memory') {
-          _genMemory();
-        } else if (value == 'auto_title') {
+        } else if(value == 'auto_title') {
           sessionController.generateTitle();
         } else if (value == 'ai_help_answer') {
           sessionController.simulateUserMessage();

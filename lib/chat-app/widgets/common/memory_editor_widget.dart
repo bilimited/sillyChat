@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/chat-app/models/memory_model.dart';
-import 'package:flutter_example/chat-app/pages/common/memory_entry_edit_page.dart';
-import 'package:flutter_example/chat-app/utils/customNav.dart';
 
-/// 可复用的记忆编辑器组件。
+/// 默认记忆编辑器 — 一个大文本编辑框，直接编辑短期/默认记忆。
 ///
-/// 展示记忆条目列表，支持添加/编辑/启用切换/删除。
 /// [memory] 和 [onChanged] 由父组件管理状态。
+/// 每次文本变化时会通过 [onChanged] 将更新后的 MemoryModel 回传。
 class MemoryEditorWidget extends StatefulWidget {
   final MemoryModel memory;
   final ValueChanged<MemoryModel> onChanged;
@@ -22,134 +20,51 @@ class MemoryEditorWidget extends StatefulWidget {
 }
 
 class _MemoryEditorWidgetState extends State<MemoryEditorWidget> {
-  void _emit(MemoryModel updated) => widget.onChanged(updated);
+  late TextEditingController _controller;
 
-  void _onAdd() async {
-    final result = await customNavigate<bool>(
-      MemoryEntryEditPage(memory: widget.memory),
-      context: context,
-    );
-    if (result == true && context.mounted) {
-      _emit(widget.memory); 
-    }
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.memory.defaultMemory);
   }
 
-  void _onEdit(MemoryEntryModel entry) async {
-    final result = await customNavigate<bool>(
-      MemoryEntryEditPage(entry: entry, memory: widget.memory),
-      context: context,
-    );
-    if (result == true && context.mounted) {
-      _emit(widget.memory);
-    }
-  }
-
-  void _onToggle(MemoryEntryModel entry, bool value) {
-    final index =
-        widget.memory.entries.indexWhere((e) => e.id == entry.id);
-    if (index == -1) return;
-    widget.memory.entries[index] = entry.copyWith(isActive: value);
-    _emit(widget.memory);
-  }
-
-  void _onDelete(MemoryEntryModel entry) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('将永久删除此记忆条目，是否继续？'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('确认')),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      widget.memory.entries.removeWhere((e) => e.id == entry.id);
-      _emit(widget.memory);
+  @override
+  void didUpdateWidget(covariant MemoryEditorWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 若外部传入新的 memory 对象（如数据刷新），同步文本
+    if (oldWidget.memory.defaultMemory != widget.memory.defaultMemory &&
+        _controller.text != widget.memory.defaultMemory) {
+      _controller.text = widget.memory.defaultMemory;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final entries = widget.memory.entries;
-
-    if (entries.isEmpty) {
-      return Column(
-        children: [
-          const Expanded(
-            child: Center(
-              child: Text('暂无记忆条目', style: TextStyle(color: Colors.grey)),
-            ),
-          ),
-          _buildAddButton(),
-        ],
-      );
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            itemCount: entries.length,
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  onTap: () => _onEdit(entry),
-                  title: Text(
-                    entry.content,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      decoration:
-                          entry.isActive ? null : TextDecoration.lineThrough,
-                    ),
-                  ),
-                  subtitle: Text(
-                    entry.createdAt.toString().substring(0, 16),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Switch(
-                        value: entry.isActive,
-                        onChanged: (v) => _onToggle(entry, v),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            size: 20, color: Colors.redAccent),
-                        onPressed: () => _onDelete(entry),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        _buildAddButton(),
-      ],
-    );
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
-  Widget _buildAddButton() {
+  void _onTextChanged(String text) {
+    final updated = widget.memory.copyWith(defaultMemory: text);
+    widget.onChanged(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: _onAdd,
-          icon: const Icon(Icons.add),
-          label: const Text('新增记忆'),
+      child: TextField(
+        controller: _controller,
+        onChanged: _onTextChanged,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        decoration: const InputDecoration(
+          hintText: '在此输入默认记忆…\n\n'
+              '默认记忆是一段会自动注入到 prompt 中的长文本，'
+              '适合记录当前会话的关键上下文、角色状态或近期事件。',
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.all(12),
         ),
       ),
     );

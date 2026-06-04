@@ -75,13 +75,6 @@ class CharacterController extends BaseController {
         characters.value =
             jsonList.map((json) => CharacterModel.fromJson(json)).toList();
 
-        // 迁移：将旧 memoryBookId 引用转为内联 MemoryModel
-        final needsMigration = jsonList
-            .where((j) => j is Map && j['memoryBookId'] != null)
-            .toList();
-        if (needsMigration.isNotEmpty) {
-          await _migrateMemoryFromLoreBooks(needsMigration);
-        }
 
         if (!characters.any((char) => char.id == 0)) {
           characters.insert(
@@ -99,65 +92,6 @@ class CharacterController extends BaseController {
     } catch (e) {
       print('加载角色数据失败: $e');
       Get.snackbar("ERROT", "Load Char Failed");
-    }
-  }
-
-  /// 迁移旧数据：将 memoryBookId 引用的 LoreBook 条目转为内联 MemoryModel
-  Future<void> _migrateMemoryFromLoreBooks(List<dynamic> rawJsonList) async {
-    try {
-      // 延迟获取 LoreBookController（避免循环依赖）
-      final lorebookFile = File(
-          '${await Get.find<SettingController>().getVaultPath()}/lorebooks.json');
-      if (!await lorebookFile.exists()) return;
-
-      final lorebookData = json.decode(await lorebookFile.readAsString());
-      final List<dynamic> lorebooks =
-          lorebookData['lorebooks'] as List<dynamic>? ?? [];
-
-      bool changed = false;
-
-      for (final rawChar in rawJsonList) {
-        final memoryBookId = rawChar['memoryBookId'] as int?;
-        if (memoryBookId == null) continue;
-
-        // 找到对应的 lorebook
-        final lbJson = lorebooks.firstWhereOrNull(
-            (lb) => lb['id'] == memoryBookId && lb['type'] == 'memory');
-        if (lbJson == null) continue;
-
-        final items = (lbJson['items'] as List<dynamic>?) ?? [];
-        if (items.isEmpty) continue;
-
-        // 找到对应的 CharacterModel
-        final charId = rawChar['id'] as int;
-        final char = getCharacterById(charId);
-        if (char.id != charId) continue;
-
-        // 转换条目
-        final memoryEntries = items.map((item) {
-          return MemoryEntryModel(
-            id: (item['id'] is String)
-                ? int.parse(item['id'])
-                : item['id'] as int,
-            content: item['content'] as String? ?? '',
-            createdAt:
-                DateTime.tryParse(item['createdAt'] as String? ?? '') ??
-                    DateTime.now(),
-            isActive: item['isActive'] as bool? ?? true,
-          );
-        }).toList();
-
-        char.memory = MemoryModel(entries: memoryEntries.toList());
-        changed = true;
-
-        print('已迁移角色 "${char.roleName}" 的 ${memoryEntries.length} 条记忆');
-      }
-
-      if (changed) {
-        await saveCharacters();
-      }
-    } catch (e) {
-      print('记忆迁移失败: $e');
     }
   }
 

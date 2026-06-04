@@ -49,7 +49,7 @@ class StoryModel {
       lorebookIds: (json['lorebookIds'] as List<dynamic>?)?.cast<int>() ?? [],
       metaData: json['metaData'] as Map<String, dynamic>? ?? {},
     )..memory = json['memory'] != null
-        ? MemoryModel.fromJson(json['memory'] as List<dynamic>?)
+        ? MemoryModel.fromJson(json['memory'])
         : null;
   }
 

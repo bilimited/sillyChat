@@ -233,6 +233,15 @@ class Promptbuilder {
             .toList()
         : llmMessages;
 
+    // 注入默认记忆（短期记忆）—— 始终作为 system 消息置顶
+    final defaultMemoryContent = _buildDefaultMemoryContent(sender);
+    if (defaultMemoryContent.isNotEmpty) {
+      llmMessagesAfterFormat.insert(
+        0,
+        LLMMessage(content: defaultMemoryContent, role: 'system'),
+      );
+    }
+
     return _mergeLLMMessages(
         llmMessagesAfterFormat, api?.provider == ServiceType.google);
   }
@@ -332,6 +341,41 @@ class Promptbuilder {
     if (role1 == 'user') return -1; // user < system
     if (role2 == 'user') return 1;
     return 0; // system
+  }
+
+  /// 收集默认记忆（短期记忆）文本。
+  ///
+  /// 来源优先级：
+  /// 1. 故事的默认记忆
+  /// 2. 发送者角色（群聊模式）的默认记忆
+  /// 3. 聊天绑定角色的默认记忆
+  String _buildDefaultMemoryContent(CharacterModel? sender) {
+    final List<String> parts = [];
+
+    // 故事默认记忆
+    final storyMemory = chat.bindStory?.memory?.defaultMemory;
+    if (storyMemory != null && storyMemory.isNotEmpty) {
+      parts.add(storyMemory);
+    }
+
+    // 发送者角色（群聊模式）的默认记忆
+    final senderMemory = sender?.memory?.defaultMemory;
+    if (senderMemory != null && senderMemory.isNotEmpty) {
+      parts.add(senderMemory);
+    }
+
+    // 聊天绑定角色的默认记忆（非群聊模式且没有 sender 时）
+    if (sender == null) {
+      final charMemory = chat.bindCharacter?.memory?.defaultMemory;
+      if (charMemory != null && charMemory.isNotEmpty) {
+        parts.add(charMemory);
+      }
+    }
+
+    if (parts.isEmpty) return '';
+
+    // 用分隔线包裹，帮助 LLM 识别这是记忆内容
+    return '[默认记忆（短期）]\n${parts.join('\n---\n')}\n[/默认记忆]';
   }
 
   LLMMessage _mergeChatHistory(List<LLMMessage> msglst) {

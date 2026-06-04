@@ -171,7 +171,7 @@ void _registerUpdateCharacter() {
       'properties': {
         'id': {
           'type': 'integer',
-          'description': '要修改的角色 ID',
+          'description': '要修改的角色 ID', 
         },
         'role_name': {
           'type': 'string',

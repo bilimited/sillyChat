@@ -23,7 +23,6 @@ import 'package:flutter_example/chat-app/utils/entitys/RequestOptions.dart';
 import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/utils/entitys/tool_call_context.dart';
-import 'package:flutter_example/chat-app/utils/lorebooks/memory_utils.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 import 'package:flutter_example/chat-app/utils/tool_call_tag.dart';
 import 'package:flutter_example/chat-app/utils/promptBuilder.dart';
@@ -576,40 +575,6 @@ class ChatSessionController extends BaseController {
       _handleAIResult(content, CharacterController.SUMMARY_CHARACTER_ID,
           overrideRole: MessageRole.user);
     }
-  }
-
-  Future<String> genenateMemory() async {
-    final summary = await genMemoryBackground();
-
-    final allChars =
-        getAllCharactersInContext().where((char) => char != Constants.USER_ID);
-
-    allChars.forEach((char) {
-      MemoryUtils.tryAddMemoryToCharacter(char, summary);
-    });
-
-    for (final msg in chat.messages) {
-      msg.visbility = MessageVisbility.hidden;
-    }
-
-    return summary;
-  }
-
-  Future<String> genMemoryBackground() async {
-    final setting = VaultSettingController.of().miscSetting.value;
-    var summary = "";
-    await for (var content in _getResponseInBackground(
-      _summaryHandler,
-      overrideOption: setting.genMemOption,
-    )) {
-      summary += content;
-    }
-
-    return summary;
-  }
-
-  void stopGenMemory() {
-    _summaryHandler.interrupt();
   }
 
   Future<void> _handleAIResult(String content, int assistantID,

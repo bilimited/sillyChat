@@ -50,29 +50,53 @@ class MemoryEntryModel {
 }
 
 class MemoryModel {
+  /// 长期/辅助记忆条目
   final List<MemoryEntryModel> entries;
+
+  /// 短期/默认记忆 — 一段长文本，始终注入到 prompt 中。 
+  String defaultMemory;
 
   MemoryModel({
     List<MemoryEntryModel>? entries,
+    this.defaultMemory = '',
   }) : entries = entries ?? [];
 
-  List<Map<String, dynamic>> toJson() =>
-      entries.map((e) => e.toJson()).toList();
+  Map<String, dynamic> toJson() => {
+        'entries': entries.map((e) => e.toJson()).toList(),
+        'defaultMemory': defaultMemory,
+      }; 
 
-  factory MemoryModel.fromJson(List<dynamic>? json) {
+  factory MemoryModel.fromJson(dynamic json) {
     if (json == null) return MemoryModel();
-    return MemoryModel(
-      entries: json
-          .map((e) => MemoryEntryModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+    // 兼容旧格式：纯数组
+    if (json is List) {
+      return MemoryModel(
+        entries: json
+            .map((e) => MemoryEntryModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+    }
+    // 新格式：{entries: [...], defaultMemory: '...'}
+    if (json is Map<String, dynamic>) {
+      return MemoryModel(
+        entries: (json['entries'] as List<dynamic>?)
+                ?.map((e) =>
+                    MemoryEntryModel.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+        defaultMemory: json['defaultMemory'] as String? ?? '',
+      );
+    }
+    return MemoryModel();
   }
 
   MemoryModel copyWith({
     List<MemoryEntryModel>? entries,
+    String? defaultMemory,
   }) {
     return MemoryModel(
       entries: entries ?? List<MemoryEntryModel>.from(this.entries),
+      defaultMemory: defaultMemory ?? this.defaultMemory,
     );
   }
 }
