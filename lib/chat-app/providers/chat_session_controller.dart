@@ -7,6 +7,7 @@ import 'package:flutter_example/chat-app/events.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_model.dart';
+import 'package:flutter_example/chat-app/models/agent_config_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/models/message_model.dart';
 import 'package:flutter_example/chat-app/pages/chat/chat_page.dart';
@@ -661,7 +662,8 @@ class ChatSessionController extends BaseController {
         .getLLMMessageList(sender: overrideAssistant);
 
     final reqOptions = overrideOption?.requestOptions ?? chat.requestOptions;
-
+    final agentConfig = overrideOption?.agentConfig ?? chat.chatOption.agentConfig;
+    
     setAIState(aiState.copyWith(
         LLMBuffer: "",
         isGenerating: true,
@@ -671,16 +673,15 @@ class ChatSessionController extends BaseController {
 
     StringBuffer fullResponse = StringBuffer();
     int toolCallIterations = 0;
-    const int maxToolCallIterations = 10;
+    final int maxToolCallIterations =
+        (agentConfig?.enabled == true) ? agentConfig!.maxCallRounds : 10;
 
     while (toolCallIterations < maxToolCallIterations) {
       // 每次循环都重新构建 options（因为 messages 在变化）
       LLMRequestOptions options = reqOptions.copyWith(
         messages: messages,
         // 如果有已注册的工具且调用方未显式设置 tools，则自动注入
-        tools: reqOptions.tools ?? (ToolRegistry.instance.hasTools
-            ? ToolRegistry.instance.definitions
-            : null),
+        tools: reqOptions.tools ?? _filteredDefinitions(agentConfig),
       );
 
       final List<ToolCall> collectedToolCalls = [];
@@ -773,6 +774,22 @@ class ChatSessionController extends BaseController {
     } else {
       yield result;
     }
+  }
+
+  /// 根据 [AgentConfig] 过滤工具定义。
+  ///
+  /// Agent 未启用时返回 `null`（不发送工具）；
+  /// 白名单为 `null` 或空时返回所有已注册工具；
+  /// 否则仅返回名称在白名单中的工具。
+  List<ToolDefinition>? _filteredDefinitions(AgentConfig? agentConfig) {
+    if (agentConfig?.enabled != true) return null;
+    if (!ToolRegistry.instance.hasTools) return null;
+    final allDefs = ToolRegistry.instance.definitions;
+    final whitelist = agentConfig!.toolWhitelist;
+    if (whitelist == null || whitelist.isEmpty) return allDefs;
+    return allDefs
+        .where((d) => whitelist.contains(d.function.name))
+        .toList();
   }
 
   /// 执行单个工具调用

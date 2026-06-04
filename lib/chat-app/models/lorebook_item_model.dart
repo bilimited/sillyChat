@@ -50,7 +50,7 @@ class LorebookItemModel {
       this.keywords = '',
       this.activationType = ActivationType.always,
       this.activationDepth = 0, // 默认回溯0条消息
-      this.priority = 0, // 默认优先级
+      this.priority = 0, // 默认优先级 
       this.logic = MatchingLogic.or,
       this.isActive = true, // 默认激活状态
       DateTime? createdAt,

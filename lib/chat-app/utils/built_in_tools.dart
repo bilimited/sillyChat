@@ -8,6 +8,8 @@
 /// BuiltInTools.registerAll();
 /// ```
 
+import 'package:flutter_example/chat-app/tools/character_tools.dart';
+import 'package:flutter_example/chat-app/tools/lorebook_tools.dart';
 import 'package:flutter_example/chat-app/utils/tool_registry.dart';
 
 class BuiltInTools {
@@ -20,6 +22,8 @@ class BuiltInTools {
     _registered = true;
 
     _registerTestTool();
+    registerLoreBookTools();
+    registerCharacterTools();
   }
 
   /// 测试工具：模型每次调用后返回调用次数，用于验证 Tool Call 端到端流程。
@@ -52,6 +56,8 @@ class BuiltInTools {
   static void unregisterAll() {
     if (!_registered) return;
     _registered = false;
+    unregisterCharacterTools();
+    unregisterLoreBookTools();
     ToolRegistry.instance.unregister('test_tool');
   }
 }

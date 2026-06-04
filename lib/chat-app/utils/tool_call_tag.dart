@@ -95,7 +95,7 @@ class ToolCallTag {
       return [message];
     }
 
-    final matches = _tagRegex.allMatches(message.content).toList();
+    final matches = _tagRegex.allMatches(message.content).toList(); 
     if (matches.isEmpty) return [message];
 
     final result = <LLMMessage>[];

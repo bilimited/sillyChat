@@ -1,3 +1,4 @@
+import 'package:flutter_example/chat-app/models/agent_config_model.dart';
 import 'package:flutter_example/chat-app/models/prompt_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/providers/prompt_controller.dart';
@@ -7,10 +8,12 @@ import 'package:get/get.dart';
 class ChatOptionModel {
   int id = 0; // 新增：用于唯一标识每个ChatOptionModel
   String name;
+  @Deprecated("已经没用了")
   String messageTemplate = "{{msg}}";
   LLMRequestOptions requestOptions;
   List<PromptModel> prompts = []; // 新增：存储实际的PromptModel对象
   List<RegexModel> regex = [];
+  AgentConfig? agentConfig; // Agent 配置（工具白名单、最大调用轮数等）
 
   static List<PromptModel> getPromptsbyId(List<int> promptId) {
     final PromptController controller = Get.find();
@@ -29,6 +32,7 @@ class ChatOptionModel {
     required this.requestOptions,
     required this.prompts,
     required this.regex,
+    this.agentConfig,
   });
 
   factory ChatOptionModel.fromJson(Map<String, dynamic> json) {
@@ -54,6 +58,9 @@ class ChatOptionModel {
               ?.map((e) => RegexModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      agentConfig: json['agentConfig'] != null
+          ? AgentConfig.fromJson(json['agentConfig'])
+          : null,
     );
   }
 
@@ -65,6 +72,7 @@ class ChatOptionModel {
           ..addAll({'max_history_length': requestOptions.maxHistoryLength}),
         'prompts': prompts.map((p) => p.toJson()).toList(),
         'regex': regex.map((r) => r.toJson()).toList(),
+        if (agentConfig != null) 'agentConfig': agentConfig!.toJson(),
       };
 
   ChatOptionModel copyWith(
@@ -75,6 +83,8 @@ class ChatOptionModel {
     LLMRequestOptions? requestOptions,
     List<PromptModel>? prompts,
     List<RegexModel>? regexs,
+    AgentConfig? agentConfig,
+    bool clearAgentConfig = false,
   }) {
     return ChatOptionModel(
       id: id ?? this.id,
@@ -86,6 +96,9 @@ class ChatOptionModel {
           (isDeep ? this.prompts.map((p) => p.copy()).toList() : this.prompts),
       regex: regexs ??
           (isDeep ? this.regex.map((r) => r.copyWith()).toList() : this.regex),
+      agentConfig: clearAgentConfig
+          ? null
+          : (agentConfig ?? (isDeep ? this.agentConfig?.copyWith() : this.agentConfig)),
     );
   }
 

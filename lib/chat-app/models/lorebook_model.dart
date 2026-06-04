@@ -10,7 +10,11 @@ class LorebookModel {
   final int id;
   final String name;
   final List<LorebookItemModel> items;
+
+  @Deprecated("已经不用了")
   final int scanDepth;
+
+  @Deprecated("已经不用了")
   final int maxToken;
 
   final LorebookType type;

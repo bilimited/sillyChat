@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/chat-app/models/agent_config_model.dart';
 import 'package:flutter_example/chat-app/models/regex_model.dart';
 import 'package:flutter_example/chat-app/utils/sillyTavern/STConfigExporter.dart';
+import 'package:flutter_example/chat-app/widgets/other/agent_config_editor.dart';
 import 'package:flutter_example/chat-app/widgets/other/prompt_editor.dart';
 import 'package:flutter_example/chat-app/widgets/other/regex_list_editor.dart';
 import 'package:get/get.dart';
@@ -33,6 +35,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
   late LLMRequestOptions _requestOptions;
   late List<PromptModel> _prompts;
   late List<RegexModel> _regexs;
+  AgentConfig? _agentConfig;
   bool isEditing = false;
 
   @override
@@ -46,6 +49,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
         widget.option?.requestOptions ?? defaultOption.requestOptions;
     _prompts = widget.option?.prompts ?? defaultOption.prompts;
     _regexs = widget.option?.regex ?? [];
+    _agentConfig = widget.option?.agentConfig;
   }
 
   @override
@@ -64,6 +68,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
         requestOptions: _requestOptions,
         prompts: _prompts,
         regex: _regexs,
+        agentConfig: _agentConfig,
       );
 
       final jsonStr = STConfigExporter.export(option);
@@ -96,6 +101,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       requestOptions: _requestOptions,
       prompts: _prompts,
       regex: _regexs,
+      agentConfig: _agentConfig,
     );
 
     if (widget.onSave != null) {
@@ -121,6 +127,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
       requestOptions: _requestOptions.copyWith(),
       prompts: _prompts.map((ele) => ele.copy()).toList(),
       regex: [],
+      agentConfig: _agentConfig?.copyWith(),
     );
     _controller.addChatOption(chatOption);
     Get.back();
@@ -136,7 +143,7 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
           _handleSave();
         },
         child: DefaultTabController(
-          length: 3, // Number of tabs
+          length: 4, // Number of tabs
           child: Scaffold(
             appBar: AppBar(
               title: Text(isEditing ? '编辑预设' : '新建预设'),
@@ -172,11 +179,10 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                     // TabBar for switching between modules
                     const TabBar(
                       tabs: [
-                        Tab(
-                          text: '提示词',
-                        ),
+                        Tab(text: '提示词'),
                         Tab(text: '请求参数'),
                         Tab(text: '正则'),
+                        Tab(text: 'Agent'),
                       ],
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicatorWeight: 3,
@@ -210,6 +216,15 @@ class _EditChatOptionPageState extends State<EditChatOptionPage> {
                             onChanged: (regex) {
                               setState(() {
                                 _regexs = regex;
+                              });
+                            },
+                          ),
+                          // Content for "Agent 配置"
+                          AgentConfigEditor(
+                            config: _agentConfig,
+                            onChanged: (config) {
+                              setState(() {
+                                _agentConfig = config;
                               });
                             },
                           ),

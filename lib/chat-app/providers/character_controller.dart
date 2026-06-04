@@ -205,6 +205,8 @@ class CharacterController extends BaseController {
     if (index != -1) {
       characters[index] = character;
       await saveCharacters();
+    }else{
+      print("更新没有成功啊哥们");
     }
   }
 
