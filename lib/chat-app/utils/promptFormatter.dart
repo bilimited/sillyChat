@@ -26,15 +26,15 @@ abstract class Promptformatter {
         RegExp(r'\{\{user\}\}', caseSensitive: false), user.roleName);
     prompt =
         prompt.replaceAll(RegExp(r'\{\{time\}\}', caseSensitive: false), time);
-
+ 
     prompt = prompt.replaceAll('{{userbrief}}', user.brief ?? '');
     prompt = prompt.replaceAll('{{description}}', chat.description ?? '');
-    prompt = prompt.replaceAll('{{memory}}|{{lore memory}}', memory ?? '');
+    prompt = prompt.replaceAll(RegExp(r'{{memory}}'), memory ?? '');
     prompt = prompt.replaceAll(
         RegExp(r'\{\{lastuserMessage\}\}|\{\{lastmessage\}\}',
             caseSensitive: false),
         userMessage); // 兼容酒馆
-    prompt = prompt.replaceAll(
+    prompt = prompt.replaceAll( 
         RegExp(r'\{\{extraprompt\}\}', caseSensitive: false),
         chat.bindStory?.story_prompt ?? "");
     prompt = BuildCharacterSystemPrompt(prompt, assistant);

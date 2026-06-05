@@ -6,7 +6,7 @@ class RegexModel {
   String name;
   String pattern; // 正则表达式
   String replacement; // 替换文本
-  String? trim; // 修减掉，不知道有啥用
+  String? trim; // 修减掉，在正则替换前，先去除一些文本，用换行分隔
   bool enabled;
 
   bool onRender = false; // 在渲染时应用正则

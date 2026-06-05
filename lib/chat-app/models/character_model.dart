@@ -213,7 +213,7 @@ class CharacterModel {
     MemoryModel? memory,
   }) {
     var newChar = CharacterModel(
-      id: id ?? DateTime.now().millisecondsSinceEpoch,
+      id: id ?? DateTime.now().millisecondsSinceEpoch, //TODO: What the fuck??
       remark: remark ?? this.remark,
       roleName: roleName ?? this.roleName,
       avatar: avatar ?? this.avatar,

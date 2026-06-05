@@ -14,6 +14,11 @@ void registerCharacterTools() {
   _registerCreateCharacter();
   _registerUpdateCharacter();
   _registerDeleteCharacter();
+  _registerEditCharacterField();
+  _registerListCharacterRelations();
+  _registerAddCharacterRelation();
+  _registerUpdateCharacterRelation();
+  _registerRemoveCharacterRelation();
 }
 
 /// 注销所有角色工具。
@@ -29,6 +34,11 @@ const _toolNames = [
   'create_character',
   'update_character',
   'delete_character',
+  'edit_character_field',
+  'list_character_relations',
+  'add_character_relation',
+  'update_character_relation',
+  'remove_character_relation',
 ];
 
 CharacterController get _ctrl => Get.find<CharacterController>();
@@ -68,6 +78,7 @@ void _registerSearchCharacters() {
             'role_name': c.roleName,
             'remark': c.remark,
             'brief': c.brief,
+            'archive': c.archive,
             'category': c.category,
           }).toList();
 
@@ -135,7 +146,7 @@ void _registerCreateCharacter() {
         'category': {
           'type': 'string',
           'description': '角色分组名称。默认空字符串（不分组）。',
-        },
+        }, 
       },
       'required': ['role_name'],
     },
@@ -146,10 +157,10 @@ void _registerCreateCharacter() {
       final category = ctx['category'] as String? ?? '';
 
       final character = CharacterModel(
-        id: DateTime.now().microsecondsSinceEpoch,
+        id: DateTime.now().millisecondsSinceEpoch,
         remark: roleName,
         roleName: roleName,
-        avatar: '',
+        avatar: '', 
         category: category,
       )
         ..brief = brief
@@ -205,6 +216,7 @@ void _registerUpdateCharacter() {
       }
 
       final updated = character.copyWith(
+        id: character.id,
         roleName: newRoleName,
         remark: newRemark,
         brief: ctx['brief'] as String?,
@@ -237,7 +249,7 @@ void _registerDeleteCharacter() {
       'required': ['id'],
     },
     executor: (ctx) async {
-      final id = ctx['id'] as int;
+      final id = ctx['id'] as int; 
 
       // 保护内置角色
       if (id == -1 || id == 0 || id == -2) {
@@ -252,6 +264,325 @@ void _registerDeleteCharacter() {
       final name = character.roleName;
       await _ctrl.deleteCharacter(id);
       return '已删除角色 "$name"（id: $id）。';
+    },
+  );
+}
+
+void _registerEditCharacterField() {
+  ToolRegistry.instance.register(
+    name: 'edit_character_field',
+    description: '对指定角色的 brief 或 archive 字段进行局部字符串替换编辑。'
+        '仅修改匹配到的部分文本，无需传递全量内容。'
+        '适用于小范围调整角色设定、修改特定段落等场景。',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'character_id': {
+          'type': 'integer',
+          'description': '要编辑的角色 ID',
+        },
+        'field': {
+          'type': 'string',
+          'enum': ['brief', 'archive'],
+          'description': '要编辑的字段：brief（简略信息）或 archive（完整人设）',
+        },
+        'old_text': {
+          'type': 'string',
+          'description': '要查找并替换的文本（普通字符串匹配）',
+        },
+        'new_text': {
+          'type': 'string',
+          'description': '替换后的新文本。默认为空字符串（即删除匹配到的文本）。',
+        },
+      },
+      'required': ['character_id', 'field', 'old_text'],
+    },
+    executor: (ctx) async {
+      final characterId = ctx['character_id'] as int;
+      final field = ctx['field'] as String;
+      final oldText = ctx['old_text'] as String;
+      final newText = ctx['new_text'] as String? ?? '';
+
+      if (oldText.isEmpty) {
+        return 'old_text 不能为空。';
+      }
+
+      final character = _ctrl.getCharacterById(characterId);
+      if (character.id != characterId || (character.id == -1 && characterId != -1)) {
+        return '未找到 id 为 $characterId 的角色。';
+      }
+
+      // 读取原始字段内容
+      String original;
+      switch (field) {
+        case 'brief':
+          original = character.brief ?? '';
+          break;
+        case 'archive':
+          original = character.archive;
+          break;
+        default:
+          return '不支持的字段: "$field"，仅支持 brief 和 archive。';
+      }
+
+      if (!original.contains(oldText)) {
+        return '在角色"${character.roleName}"的 $field 字段中未找到匹配的文本。'
+            '请先使用 get_character 工具查看该字段的完整内容，确认 old_text 是否正确。';
+      }
+
+      // 执行字符串替换（仅替换第一个匹配，避免误改）
+      final modified = original.replaceFirst(oldText, newText);
+
+      // 构建更新后的角色
+      final updated = character.copyWith(id: character.id)
+        ..brief = (field == 'brief' ? modified : character.brief)
+        ..archive = (field == 'archive' ? modified : character.archive);
+
+      await _ctrl.updateCharacter(updated);
+
+      final oldLen = original.length;
+      final newLen = modified.length;
+      final delta = newLen - oldLen;
+
+      return '已更新角色"${character.roleName}"的 $field 字段。\n'
+          '匹配位置: 找到并替换了第一处匹配\n'
+          '字段长度变化: $oldLen → $newLen (${delta >= 0 ? '+' : ''}$delta)';
+    },
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 角色关系工具
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// 根据 target_id 解析目标角色名，查找失败则返回 null。
+String? _resolveTargetName(int targetId) {
+  final char = _ctrl.getCharacterById(targetId);
+  return char.id == targetId ? char.roleName : null;
+}
+
+void _registerListCharacterRelations() {
+  ToolRegistry.instance.register(
+    name: 'list_character_relations',
+    description: '列出指定角色的所有人物关系。返回每个关系的目标角色名称、关系类型和关系简述。',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'character_id': {
+          'type': 'integer',
+          'description': '要查询关系的角色 ID',
+        },
+      },
+      'required': ['character_id'],
+    },
+    executor: (ctx) async {
+      final characterId = ctx['character_id'] as int;
+      final character = _ctrl.getCharacterById(characterId);
+      if (character.id != characterId || (character.id == -1 && characterId != -1)) {
+        return '未找到 id 为 $characterId 的角色。';
+      }
+
+      if (character.relations.isEmpty) {
+        return '角色"${character.roleName}"还没有任何人物关系。';
+      }
+
+      final result = character.relations.entries.map((entry) {
+        final rel = entry.value;
+        return {
+          'target_id': rel.targetId,
+          'target_name': _resolveTargetName(rel.targetId) ?? '未知角色',
+          'type': rel.type,
+          'brief': rel.brief,
+        };
+      }).toList();
+
+      return jsonEncode({
+        'character_id': character.id,
+        'character_name': character.roleName,
+        'total': result.length,
+        'relations': result,
+      });
+    },
+  );
+}
+
+void _registerAddCharacterRelation() {
+  ToolRegistry.instance.register(
+    name: 'add_character_relation',
+    description: '为指定角色添加一条人物关系。关系的 key 使用 target_id。'
+        '如果该 target_id 的关系已存在，则会覆盖。',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'character_id': {
+          'type': 'integer',
+          'description': '要添加关系的角色 ID',
+        },
+        'target_id': {
+          'type': 'integer',
+          'description': '关系目标角色 ID',
+        },
+        'type': {
+          'type': 'string',
+          'description': '关系类型，如"朋友"、"恋人"、"敌人"、"家人"、"同事"等。默认"朋友"。',
+        },
+        'brief': {
+          'type': 'string',
+          'description': '关系的简要描述，如"从小一起长大的青梅竹马"',
+        },
+      },
+      'required': ['character_id', 'target_id'],
+    },
+    executor: (ctx) async {
+      final characterId = ctx['character_id'] as int;
+      final targetId = ctx['target_id'] as int;
+      final relationType = ctx['type'] as String? ?? '朋友';
+      final relationBrief = ctx['brief'] as String?;
+
+      if (characterId == targetId) {
+        return '不能为角色添加与自身的关系。';
+      }
+
+      final character = _ctrl.getCharacterById(characterId);
+      if (character.id != characterId || (character.id == -1 && characterId != -1)) {
+        return '未找到 id 为 $characterId 的角色。';
+      }
+
+      // 验证目标角色存在
+      final targetName = _resolveTargetName(targetId);
+      if (targetName == null) {
+        return '未找到目标角色（id: $targetId）。请先创建该角色再添加关系。';
+      }
+
+      final isUpdate = character.relations.containsKey(targetId);
+
+      final relation = Relation(targetId: targetId)
+        ..type = relationType
+        ..brief = relationBrief;
+
+      final newRelations = Map<int, Relation>.from(character.relations);
+      newRelations[targetId] = relation;
+
+      final updated = character.copyWith(id: character.id, relations: newRelations);
+      await _ctrl.updateCharacter(updated);
+
+      final action = isUpdate ? '已更新（原关系已覆盖）' : '已添加';
+      return '$action角色"${character.roleName}"与"$targetName"的关系。\n'
+          '类型: $relationType${relationBrief != null ? '\n简述: $relationBrief' : ''}';
+    },
+  );
+}
+
+void _registerUpdateCharacterRelation() {
+  ToolRegistry.instance.register(
+    name: 'update_character_relation',
+    description: '修改指定角色的某条已有人物关系。只传需要修改的字段。',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'character_id': {
+          'type': 'integer',
+          'description': '角色 ID',
+        },
+        'target_id': {
+          'type': 'integer',
+          'description': '要修改的关系目标角色 ID',
+        },
+        'type': {
+          'type': 'string',
+          'description': '新的关系类型（不传则保持不变）',
+        },
+        'brief': {
+          'type': 'string',
+          'description': '新的关系简述（不传则保持不变）',
+        },
+      },
+      'required': ['character_id', 'target_id'],
+    },
+    executor: (ctx) async {
+      final characterId = ctx['character_id'] as int;
+      final targetId = ctx['target_id'] as int;
+      final newType = ctx['type'] as String?;
+      final newBrief = ctx['brief'] as String?;
+
+      if (newType == null && newBrief == null) {
+        return '请至少提供 type 或 brief 中的一个字段进行修改。';
+      }
+
+      final character = _ctrl.getCharacterById(characterId);
+      if (character.id != characterId || (character.id == -1 && characterId != -1)) {
+        return '未找到 id 为 $characterId 的角色。';
+      }
+
+      final existing = character.relations[targetId];
+      if (existing == null) {
+        final targetName = _resolveTargetName(targetId) ?? '未知角色';
+        return '角色"${character.roleName}"与"$targetName"（id: $targetId）之间不存在关系。'
+            '请先使用 add_character_relation 添加关系。';
+      }
+
+      final updated = existing.copy()
+        ..type = newType ?? existing.type
+        ..brief = newBrief ?? existing.brief;
+
+      final newRelations = Map<int, Relation>.from(character.relations);
+      newRelations[targetId] = updated;
+
+      final updatedChar = character.copyWith(id: character.id, relations: newRelations);
+      await _ctrl.updateCharacter(updatedChar);
+
+      final targetName = _resolveTargetName(targetId) ?? '未知角色';
+      final changes = <String>[];
+      if (newType != null) changes.add('类型 → "$newType"');
+      if (newBrief != null) changes.add('简述已更新');
+
+      return '已更新角色"${character.roleName}"与"$targetName"的关系（${changes.join("，")}）。';
+    },
+  );
+}
+
+void _registerRemoveCharacterRelation() {
+  ToolRegistry.instance.register(
+    name: 'remove_character_relation',
+    description: '移除指定角色的一条人物关系。此操作不可撤销。',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'character_id': {
+          'type': 'integer',
+          'description': '角色 ID',
+        },
+        'target_id': {
+          'type': 'integer',
+          'description': '要移除的关系目标角色 ID',
+        },
+      },
+      'required': ['character_id', 'target_id'],
+    },
+    executor: (ctx) async {
+      final characterId = ctx['character_id'] as int;
+      final targetId = ctx['target_id'] as int;
+
+      final character = _ctrl.getCharacterById(characterId);
+      if (character.id != characterId || (character.id == -1 && characterId != -1)) {
+        return '未找到 id 为 $characterId 的角色。';
+      }
+
+      final existing = character.relations[targetId];
+      if (existing == null) {
+        final targetName = _resolveTargetName(targetId) ?? '未知角色';
+        return '角色"${character.roleName}"与"$targetName"（id: $targetId）之间不存在关系，无需删除。';
+      }
+
+      final newRelations = Map<int, Relation>.from(character.relations);
+      newRelations.remove(targetId);
+
+      final updated = character.copyWith(id: character.id, relations: newRelations);
+      await _ctrl.updateCharacter(updated);
+
+      final targetName = _resolveTargetName(targetId) ?? '未知角色';
+      final oldType = existing.type ?? '未设置类型';
+      return '已移除角色"${character.roleName}"与"$targetName"的关系（原类型: $oldType）。';
     },
   );
 }
