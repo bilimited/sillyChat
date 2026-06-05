@@ -321,8 +321,8 @@ class _MessageBubbleState extends State<MessageBubble> {
       if (match.start > lastEnd) {
         final text = content.substring(lastEnd, match.start);
         if (text.isNotEmpty) {
-          segments.add(_ContentSegment(
-              type: _ContentSegmentType.text, content: text));
+          segments.add(
+              _ContentSegment(type: _ContentSegmentType.text, content: text));
         }
       }
 
@@ -653,75 +653,73 @@ class _MessageBubbleState extends State<MessageBubble> {
           )
         : SelectionArea(
             child: MarkdownBody(
-                  data: content,
-                  onTapLink: (text, href, title) {
-                    _launchURL(href ?? '');
-                  },
-                  //selectable: true,
-                  styleSheet: MarkdownStyleSheet(
-                    p: TextStyle(
-                      color: textColor,
-                    ),
-                    em: TextStyle(
-                      color: isMe ? textColor : colors.outline,
-                    ),
-                    horizontalRuleDecoration: BoxDecoration(
-                      border:
-                          Border.all(width: 1, color: colors.outlineVariant),
-                    ),
-                    textScaler:
-                        TextScaler.linear(displaySetting.ContentFontScale),
-                    blockquoteDecoration: BoxDecoration(
+              data: content,
+              onTapLink: (text, href, title) {
+                _launchURL(href ?? '');
+              },
+              //selectable: true,
+              styleSheet: MarkdownStyleSheet(
+                p: TextStyle(
+                  color: textColor,
+                ),
+                em: TextStyle(
+                  color: isMe ? textColor : colors.outline,
+                ),
+                horizontalRuleDecoration: BoxDecoration(
+                  border: Border.all(width: 1, color: colors.outlineVariant),
+                ),
+                textScaler: TextScaler.linear(displaySetting.ContentFontScale),
+                blockquoteDecoration: BoxDecoration(
+                  color: isMe
+                      ? colors.primary.withOpacity(0.06)
+                      : colors.surfaceVariant.withOpacity(0.04),
+                  border: Border(
+                    left: BorderSide(
                       color: isMe
-                          ? colors.primary.withOpacity(0.06)
-                          : colors.surfaceVariant.withOpacity(0.04),
-                      border: Border(
-                        left: BorderSide(
-                          color: isMe
-                              ? colors.primary
-                              : colors.primary.withOpacity(0.8),
-                          width: 4,
-                        ),
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    blockquote: TextStyle(
-                      color: isMe ? colors.onPrimary : colors.onSurfaceVariant,
-                      fontStyle: FontStyle.italic,
+                          ? colors.primary
+                          : colors.primary.withOpacity(0.8),
+                      width: 4,
                     ),
                   ),
-                  builders: isMe
-                      ? {}
-                      : {
-                          'quotedText': QuotedTextBuilder(TextScaler.linear(
-                              displaySetting.ContentFontScale)),
-                          'font': FontColorBuilder(),
-                          'pre': CodeBlockBuilder(TextScaler.linear(
-                              displaySetting.ContentFontScale)),
-                          'latex': LatexElementBuilder(
-                            textStyle: const TextStyle(
-                              // color: Colors.blue,
-                              fontWeight: FontWeight.w100,
-                            ),
-                            textScaleFactor: displaySetting.ContentFontScale,
-                          ),
-                        },
-                  extensionSet: md.ExtensionSet([
-                    const md.FencedCodeBlockSyntax(),
-                    const md.TableSyntax(),
-                    const md.UnorderedListWithCheckboxSyntax(),
-                    const md.OrderedListWithCheckboxSyntax(),
-                    const md.FootnoteDefSyntax(),
-                    //const md.HtmlBlockSyntax(),
-                    LatexBlockSyntax()
-                  ], [
-                    QuotedTextSyntax(),
-                    //HtmlTagSyntax(),
-                    LatexInlineSyntax()
-                  ]),
-                  softLineBreak: true,
-                  shrinkWrap: true,
-                  inlineSyntaxes: [],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                blockquote: TextStyle(
+                  color: isMe ? colors.onPrimary : colors.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              builders: isMe
+                  ? {}
+                  : {
+                      'quotedText': QuotedTextBuilder(
+                          TextScaler.linear(displaySetting.ContentFontScale)),
+                      'font': FontColorBuilder(),
+                      'pre': CodeBlockBuilder(
+                          TextScaler.linear(displaySetting.ContentFontScale)),
+                      'latex': LatexElementBuilder(
+                        textStyle: const TextStyle(
+                          // color: Colors.blue,
+                          fontWeight: FontWeight.w100,
+                        ),
+                        textScaleFactor: displaySetting.ContentFontScale,
+                      ),
+                    },
+              extensionSet: md.ExtensionSet([
+                const md.FencedCodeBlockSyntax(),
+                const md.TableSyntax(),
+                const md.UnorderedListWithCheckboxSyntax(),
+                const md.OrderedListWithCheckboxSyntax(),
+                const md.FootnoteDefSyntax(),
+                //const md.HtmlBlockSyntax(),
+                LatexBlockSyntax()
+              ], [
+                QuotedTextSyntax(),
+                //HtmlTagSyntax(),
+                LatexInlineSyntax()
+              ]),
+              softLineBreak: true,
+              shrinkWrap: true,
+              inlineSyntaxes: [],
             ),
           );
   }
@@ -809,25 +807,24 @@ class _MessageBubbleState extends State<MessageBubble> {
 // 提取气泡样式判断，保持代码整洁
   Widget _buildBubbleSwitcher(String content, ColorScheme colors) {
     if (displaySetting.messageBubbleStyle == MessageBubbleStyle.bubble) {
-      return Container(
-        decoration: BoxDecoration(
-          color: isMe
-              ? colors.primary
-              : isDesktop
-                  ? colors.surface
-                  : colors.surfaceContainer,
-          borderRadius:
-              BorderRadius.circular(displaySetting.MessageBubbleBorderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isMe ? colors.primary : colors.surfaceContainer,
+            borderRadius:
+                BorderRadius.circular(displaySetting.MessageBubbleBorderRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: _buildMessageContent(content),
         ),
-        padding: const EdgeInsets.all(12),
-        child: _buildMessageContent(content),
       );
     } else if (displaySetting.messageBubbleStyle ==
         MessageBubbleStyle.compact) {

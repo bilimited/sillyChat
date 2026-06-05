@@ -47,16 +47,13 @@ class _AgentConfigEditorState extends State<AgentConfigEditor> {
     _enabled = widget.config?.enabled ?? false;
     _maxCallRounds = widget.config?.maxCallRounds ?? 5;
     final whitelist = widget.config?.toolWhitelist;
-    _selectedTools = (whitelist != null && whitelist.isNotEmpty)
-        ? whitelist.toSet()
-        : _allTools.toSet();
+    _selectedTools = whitelist != null ? whitelist.toSet() : _allTools.toSet();
   }
 
   void _emit() {
     widget.onChanged(AgentConfig(
       enabled: _enabled,
-      toolWhitelist:
-          _isAllSelected ? null : _selectedTools.toList(),
+      toolWhitelist: _isAllSelected ? null : _selectedTools.toList(),
       maxCallRounds: _maxCallRounds,
     ));
   }
@@ -166,8 +163,7 @@ class _AgentConfigEditorState extends State<AgentConfigEditor> {
                 const Expanded(
                   child: Text(
                     '工具白名单',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 TextButton(
@@ -175,6 +171,7 @@ class _AgentConfigEditorState extends State<AgentConfigEditor> {
                     setState(() {
                       if (_isAllSelected) {
                         _selectedTools.clear();
+                        setState(() {});
                       } else {
                         _selectedTools = allTools.toSet();
                       }
@@ -195,7 +192,6 @@ class _AgentConfigEditorState extends State<AgentConfigEditor> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-
             if (allTools.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
