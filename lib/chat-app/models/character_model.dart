@@ -202,7 +202,7 @@ class CharacterModel {
   factory CharacterModel.empty() {
     return CharacterModel(
         id: DateTime.now().microsecondsSinceEpoch,
-        remark: '',
+        remark: '', 
         roleName: 'roleName',
         avatar: '',
         category: '');
@@ -214,7 +214,7 @@ class CharacterModel {
     String? roleName,
     String? avatar,
     String? description,
-    String? backgroundImage,
+    String? backgroundImage, 
     String? brief,
     String? archive, 
     String? firstMessage,

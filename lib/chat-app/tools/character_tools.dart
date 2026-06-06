@@ -64,7 +64,7 @@ void _registerSearchCharacters() {
     executor: (ctx) async {
       final keyword = (ctx['keyword'] as String).toLowerCase();
 
-      final matched = _ctrl.characters.where((c) {
+      final matched = _ctrl.getAllCharacters().where((c) {
         return c.roleName.toLowerCase().contains(keyword) ||
             c.remark.toLowerCase().contains(keyword);
       }).toList();
@@ -101,7 +101,7 @@ void _registerListCharacters() {
     },
     executor: (ctx) async {
       // 排除临时角色（绑定到故事的角色）
-      final list = _ctrl.characters.where((c) => c.bindStoryId == null).toList();
+      final list = _ctrl.getAllCharacters();
 
       if (list.isEmpty) {
         return '还没有任何角色。';

@@ -289,8 +289,6 @@ factory ChatOptionModel.roleplay({String? name}) {
           content: '''现在的时间是: {{time}}
 
 {{archive}}
-{{extraprompt}}
-
 用户名称:{{user}}
 ''', role: 'system', name: 'Base'),
           PromptModel(
@@ -304,6 +302,38 @@ factory ChatOptionModel.roleplay({String? name}) {
         ],
         regex: []);
   }
+
+  // agent默认预设
+    factory ChatOptionModel.agent({String? name}) {
+    int id = DateTime.now().microsecondsSinceEpoch;
+    return ChatOptionModel(
+        id: DateTime.now().microsecondsSinceEpoch,
+        name: name ?? '默认Agent预设',
+        requestOptions: LLMRequestOptions(messages: []),
+        prompts: [
+          PromptModel(id: id, 
+          content: '''
+# 用户偏好
+{{archive}}
+
+---
+''', role: 'system', name: 'Base'),
+          PromptModel(
+              id: id+1,
+              content: 'messageList',
+              role: 'system',
+              name: '消息列表',
+              isChatHistory: true),
+          // PromptModel(
+          //     id: id + 2, content: userMessage, role: 'user', name: '用户输入')
+        ],
+        regex: [],
+        agentConfig: AgentConfig(
+          enabled: true,
+          maxCallRounds: 10
+        ));
+  }
+
 
   factory ChatOptionModel.autoTitle() {
     int id = DateTime.now().microsecondsSinceEpoch;

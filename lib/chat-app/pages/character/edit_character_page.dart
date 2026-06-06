@@ -5,7 +5,7 @@ import 'package:flutter_example/chat-app/models/memory_model.dart';
 import 'package:flutter_example/chat-app/pages/common/category_manage_page.dart';
 import 'package:flutter_example/chat-app/pages/character/character_gallery.dart';
 import 'package:flutter_example/chat-app/pages/character/more_firstmessage_page.dart';
-import 'package:flutter_example/chat-app/pages/chat_options/chat_options_manager.dart';
+import 'package:flutter_example/chat-app/pages/chat_options/edit_chat_option.dart';
 import 'package:flutter_example/chat-app/pages/lorebooks/lorebook_editor.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/lorebook_controller.dart';
@@ -24,7 +24,8 @@ import '../../providers/character_controller.dart';
 class EditCharacterPage extends StatefulWidget {
   final int? characterId;
   final String? bindStoryId;
-  const EditCharacterPage({Key? key, this.characterId, this.bindStoryId})
+  final CharacterType? initialType;
+  const EditCharacterPage({Key? key, this.characterId, this.bindStoryId, this.initialType})
       : super(key: key);
 
   @override
@@ -56,6 +57,11 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   bool get isTemporaryCharacter =>
       widget.bindStoryId != null || (_character?.isTemporary ?? false);
 
+  bool get isAgent {
+    if (_character != null) return _character!.type == CharacterType.agent;
+    return widget.initialType == CharacterType.agent;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +69,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       _character = _characterController.getCharacterById(widget.characterId!);
     }
     _tabController = TabController(
-      length: (isTemporaryCharacter || isEditPlayer) ? 1 : 4,
+      length: (isTemporaryCharacter || isEditPlayer || isAgent) ? 1 : 4,
       vsync: this,
     );
 
@@ -82,11 +88,9 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         TextEditingController(text: _character?.firstMessage ?? '');
     _bindOption = _character?.bindOption;
 
-    if (_bindOption != null &&
-        !ChatOptionController.of()
-            .chatOptions
-            .any((o) => o.id == _bindOption!.id)) {
-      _bindOption = null;
+    // Agent 模式自动绑定空白预设
+    if (isAgent && _bindOption == null) {
+      _bindOption = ChatOptionModel.agent();
     }
   }
 
@@ -136,7 +140,8 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..archive = _archiveController.text
       ..messageStyle = _character?.messageStyle ?? MessageStyle.common
       ..bindOption = _bindOption
-      ..memory = _character?.memory;
+      ..memory = _character?.memory
+      ..type = isAgent ? CharacterType.agent : CharacterType.character;
   }
 
   Future<void> _save() async {
@@ -349,36 +354,6 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   () => _character?.messageStyle = v ?? MessageStyle.common),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<int?>(
-                    value: _bindOption?.id,
-                    decoration: const InputDecoration(labelText: '绑定预设'),
-                    hint: const Text('选择聊天预设'),
-                    items: [
-                      const DropdownMenuItem(
-                          value: null, child: Text('无 (使用默认，即第一个预设)')),
-                      ...Get.find<ChatOptionController>()
-                          .chatOptions
-                          .map((opt) => DropdownMenuItem(
-                                value: opt.id,
-                                child: Text(opt.name,
-                                    overflow: TextOverflow.ellipsis),
-                              )),
-                    ],
-                    onChanged: (v) => setState(() => _bindOption = v == null
-                        ? null
-                        : ChatOptionController.of().getChatOptionById(v)),
-                  ),
-                ),
-                IconButton(
-                    onPressed: () => customNavigate(ChatOptionsManagerPage(),
-                        context: context),
-                    icon: const Icon(Icons.settings_suggest)),
-              ],
-            ),
-            const SizedBox(height: 16),
             _buildBgSelector(),
           ],
         ),
@@ -535,8 +510,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       onPopInvokedWithResult: (didPop, result) => _save(),
       child: Scaffold(
           appBar: AppBar(
-            title: Text(isEditPlayer ? '编辑用户' : (isEditMode ? '编辑角色' : '新建角色')),
-            bottom: (isEditPlayer || isTemporaryCharacter)
+            title: Text(isEditPlayer
+                ? '编辑用户'
+                : isAgent
+                    ? (isEditMode ? '编辑助手' : '新建助手')
+                    : (isEditMode ? '编辑角色' : '新建角色')),
+            bottom: (isEditPlayer || isTemporaryCharacter || isAgent)
                 ? null
                 : TabBar(controller: _tabController, tabs: const [
                     Tab(text: '基本信息'),
@@ -546,61 +525,186 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                   ]),
             actions: isEditPlayer
                 ? []
-                : [
-                    if (isTemporaryCharacter && isEditMode)
-                      IconButton(
-                          icon: const Icon(Icons.publish),
-                          tooltip: '转为全局角色',
-                          onPressed: _promoteToGlobal),
-                    if (!isTemporaryCharacter)
-                      IconButton(
-                          icon: const Icon(Icons.image_outlined),
-                          onPressed: () => customNavigate(
-                              CharacterGalleryPage(
-                                  path:
-                                      "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
-                              context: context)),
-                    if (!isTemporaryCharacter)
-                      IconButton(
-                          icon: const Icon(Icons.copy_all),
-                          onPressed: () {
-                            if (_character != null) {
-                              _characterController.characterCilpBoard.value =
-                                  _character!.copyWith(
-                                      roleName: '${_character!.roleName}_副本');
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('已复制到剪贴板')));
-                            }
-                          }),
-                    if (isEditMode)
-                      IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: _deleteCharacter),
-                  ],
+                : isAgent
+                    ? [
+                        if (isEditMode)
+                          IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: _deleteCharacter),
+                      ]
+                    : [
+                        if (isTemporaryCharacter && isEditMode)
+                          IconButton(
+                              icon: const Icon(Icons.publish),
+                              tooltip: '转为全局角色',
+                              onPressed: _promoteToGlobal),
+                        if (!isTemporaryCharacter)
+                          IconButton(
+                              icon: const Icon(Icons.image_outlined),
+                              onPressed: () => customNavigate(
+                                  CharacterGalleryPage(
+                                      path:
+                                          "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
+                                  context: context)),
+                        if (!isTemporaryCharacter)
+                          IconButton(
+                              icon: const Icon(Icons.copy_all),
+                              onPressed: () {
+                                if (_character != null) {
+                                  _characterController.characterCilpBoard.value =
+                                      _character!.copyWith(
+                                          roleName: '${_character!.roleName}_副本');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('已复制到剪贴板')));
+                                }
+                              }),
+                        if (isEditMode)
+                          IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: _deleteCharacter),
+                      ],
           ),
           body: SafeArea(
             child: Form(
               key: _formKey,
-              child: isEditPlayer
-                  ? _buildPlayerSetting()
-                  : isTemporaryCharacter
-                      ? _buildBasicInfoTab()
-                      : TabBarView(controller: _tabController, children: [
-                          _buildBasicInfoTab(),
-                          _buildSettingsTab(),
-                          Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: EditRelationship(
-                                  character: _character,
-                                  relations: _character?.relations ?? {},
-                                  onChanged: (r) =>
-                                      setState(() => _character?.relations = r))),
-                          _buildMemoryTab(),
-                        ]),
+              child: isAgent
+                  ? _buildAgentEditPage()
+                  : isEditPlayer
+                      ? _buildPlayerSetting()
+                      : isTemporaryCharacter
+                          ? _buildBasicInfoTab()
+                          : TabBarView(controller: _tabController, children: [
+                              _buildBasicInfoTab(),
+                              _buildSettingsTab(),
+                              Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: EditRelationship(
+                                      character: _character,
+                                      relations: _character?.relations ?? {},
+                                      onChanged: (r) =>
+                                          setState(() => _character?.relations = r))),
+                              _buildMemoryTab(),
+                            ]),
             ),
           ),
         ),
       
+    );
+  }
+
+  Widget _buildAgentEditPage() {
+    final colors = Theme.of(context).colorScheme;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        // 头像
+        Center(
+          child: GestureDetector(
+            onTap: () => _pickImage(true),
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 60,
+                  backgroundColor: colors.surfaceContainerHighest,
+                  child: ClipOval(
+                    child: _avatarPath != null
+                        ? AvatarImage(fileName: _avatarPath!)
+                        : Icon(Icons.add_photo_alternate,
+                            size: 40, color: colors.onSurfaceVariant),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                        color: colors.surface, shape: BoxShape.circle),
+                    child: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: colors.primary,
+                      child: Icon(Icons.camera_alt,
+                          size: 14, color: colors.onPrimary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        // 角色名称
+        TextFormField(
+          controller: _nickNameController,
+          decoration:
+              const InputDecoration(labelText: '角色名称', hintText: '输入角色显示的昵称'),
+        ),
+        const SizedBox(height: 16),
+        // 绑定预设 — 点击进入编辑
+        _buildBindOptionEditor(),
+        const SizedBox(height: 16),
+        // 用户偏好（原角色设定）
+        ExpandableTextField(
+          controller: _archiveController,
+          decoration: const InputDecoration(
+              labelText: '用户偏好', helperText: '用户偏好、需求等设定'),
+          maxLines: 15,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBindOptionEditor() {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          await customNavigate(
+            EditChatOptionPage(
+              option: _bindOption,
+              onSave: (newOption) {
+                setState(() => _bindOption = newOption);
+              },
+            ),
+            context: context,
+          );
+          setState(() {});
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '绑定预设',
+                      style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _bindOption?.name ?? '未绑定',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

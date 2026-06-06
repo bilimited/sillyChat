@@ -27,12 +27,14 @@ class ContactsPage extends StatefulWidget {
   State<ContactsPage> createState() => _ContactsPageState();
 }
 
-class _ContactsPageState extends State<ContactsPage> {
+class _ContactsPageState extends State<ContactsPage>
+    with SingleTickerProviderStateMixin {
   final Map<String, bool> _expandedState = {};
   final characterController = Get.find<CharacterController>();
 
-  final TextEditingController _searchController = TextEditingController();
-  final RxString _searchText = ''.obs;
+  // 当前激活的 tab：角色 / 助手
+  CharacterType _activeTab = CharacterType.character;
+  late TabController _tabController;
 
   // 当前视图模式，默认列表
   CharacterViewMode _viewMode = CharacterViewMode.list;
@@ -40,32 +42,26 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      _searchText.value = _searchController.text;
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() => _activeTab = _tabController.index == 0
+          ? CharacterType.character
+          : CharacterType.agent);
     });
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  // 搜索和分组逻辑
+  // 按类型和分组过滤
   List<MapEntry<String, List<CharacterModel>>> get _filteredAndGroupedContacts {
-    final allCharacters = _searchText.value.isEmpty
-        ? characterController.getAllCharacters()
-        : characterController.characters
-            .where((contact) =>
-                contact.roleName
-                    .toLowerCase()
-                    .contains(_searchText.value.toLowerCase()) ||
-                contact.category
-                    .toLowerCase()
-                    .contains(_searchText.value.toLowerCase()) ||
-                (contact.brief?.toLowerCase() ?? '')
-                    .contains(_searchText.value.toLowerCase()))
-            .toList();
+    final allCharacters = characterController
+        .getAllCharactersAndAgent()
+        .where((c) => c.type == _activeTab)
+        .toList();
 
     final map = allCharacters.fold(<String, List<CharacterModel>>{}, (map, contact) {
       map.putIfAbsent(contact.category, () => []);
@@ -95,7 +91,10 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   void _showAddCharacterDialog(BuildContext context) {
-    customNavigate(const EditCharacterPage(), context: context);
+    customNavigate(
+      EditCharacterPage(initialType: _activeTab),
+      context: context, 
+    );
   }
 
   void _openCategoryManage(BuildContext context) {
@@ -462,7 +461,7 @@ class _ContactsPageState extends State<ContactsPage> {
             const SizedBox(height: 16.0),
             FloatingActionButton(
               onPressed: () => _showAddCharacterDialog(context),
-              tooltip: '新增角色',
+              tooltip: _activeTab == CharacterType.agent ? '新增助手' : '新增角色',
               child: const Icon(Icons.add),
             ),
           ],
@@ -473,51 +472,16 @@ class _ContactsPageState extends State<ContactsPage> {
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             InnerAppBar(
-              title: Container(
-                height: 40.0,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                child: Obx(
-                  () => TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: '搜索角色',
-                      hintStyle:
-                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        size: 20.0,
-                      ),
-                      prefixIconConstraints: const BoxConstraints(
-                        minHeight: 32.0,
-                        minWidth: 32.0,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0,
-                        horizontal: 12.0,
-                      ),
-                      border: InputBorder.none,
-                      suffixIcon: _searchText.value.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                size: 20.0,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                _searchText.value = '';
-                              },
-                            )
-                          : null,
-                    ),
-                    style: TextStyle(color: theme.colorScheme.onSurface),
-                    cursorColor: theme.colorScheme.primary,
-                  ),
-                ),
+              title: TabBar(
+                controller: _tabController,
+                labelColor: theme.colorScheme.onSurface,
+                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(text: '角色'),
+                  Tab(text: '助手'),
+                ],
               ),
               actions: [
                 IconButton(
@@ -548,22 +512,25 @@ class _ContactsPageState extends State<ContactsPage> {
           ];
         },
         body: Obx(() {
+          // 监听角色列表变化以触发重建
+          characterController.characters.length;
           final groupedContacts = _filteredAndGroupedContacts;
-          final isSearching = _searchText.value.isNotEmpty;
 
-          if (groupedContacts.isEmpty && isSearching) {
+          if (groupedContacts.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.search_off,
+                    _activeTab == CharacterType.agent
+                        ? Icons.smart_toy_outlined
+                        : Icons.person_off,
                     size: 60.0,
                     color: theme.colorScheme.outline,
                   ),
                   const SizedBox(height: 16.0),
                   Text(
-                    '未找到匹配的角色',
+                    _activeTab == CharacterType.agent ? '暂无助手' : '暂无角色',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.outline,
                     ),
@@ -581,18 +548,15 @@ class _ContactsPageState extends State<ContactsPage> {
               final groupKey = entry.key;
               final contacts = entry.value;
 
-              final isExpanded =
-                  isSearching || (_expandedState[groupKey] ?? true);
+              final isExpanded = _expandedState[groupKey] ?? true;
 
               return Theme(
                 data: theme.copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
-                  key: PageStorageKey('${groupKey}_$isSearching'),
+                  key: PageStorageKey('${groupKey}_${_activeTab.name}'),
                   initiallyExpanded: isExpanded,
                   onExpansionChanged: (expanded) {
-                    if (!isSearching) {
-                      _expandedState[groupKey] = expanded;
-                    }
+                    _expandedState[groupKey] = expanded;
                   },
                   title: Text(
                     "$groupKey (${contacts.length})",

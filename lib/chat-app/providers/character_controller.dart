@@ -283,9 +283,15 @@ class CharacterController extends BaseController {
 
   static CharacterController get of => Get.find<CharacterController>();
 
-  List<CharacterModel> getAllCharacters() {
-    return characters.where((char) => char.bindStoryId == null).toList();
+  List<CharacterModel> getAllCharactersAndAgent() {
+    return characters.where((char) => char.bindStoryId == null ).toList();
   }
+
+    List<CharacterModel> getAllCharacters() {
+    return characters.where((char) => char.bindStoryId == null && char.type != CharacterType.agent).toList();
+  }
+
+  
 
   List<CharacterModel> getCharactersByStoryId(String storyId) {
     return characters.where((char) => char.bindStoryId == storyId).toList();
