@@ -84,6 +84,14 @@
 
   /* ---- Message selection highlight ---- */
   --message-selected-bg: transparent;
+
+  /* ---- Think / Tool blocks ---- */
+  --think-bg: #f5f5f5;
+  --think-border: rgba(0, 0, 0, 0.08);
+  --think-header-text: #888888;
+  --think-body-text: #777777;
+  --tool-accent: var(--theme-color);
+  --tool-args-bg: rgba(0, 0, 0, 0.04);
 }
 
 
@@ -142,6 +150,14 @@ html.theme-dark {
 
   /* ---- Message selection highlight ---- */
   --message-selected-bg: transparent;
+
+  /* ---- Think / Tool blocks ---- */
+  --think-bg: #373737;
+  --think-border: rgba(255, 255, 255, 0.1);
+  --think-header-text: #aaaaaa;
+  --think-body-text: #bbbbbb;
+  --tool-accent: hsl(var(--theme-h), var(--theme-s), 70%);
+  --tool-args-bg: rgba(255, 255, 255, 0.06);
 }
 
 

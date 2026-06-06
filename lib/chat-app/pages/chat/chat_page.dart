@@ -21,6 +21,7 @@ import 'package:flutter_example/chat-app/utils/ModalUtil.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 
 import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
+import 'package:flutter_example/chat-app/widgets/chat/chat_vars_panel.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
 import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
@@ -61,8 +62,7 @@ class _ChatPageState extends State<ChatPage> {
   /// Scroll controller that bridges ChatPage to the active message list
   /// implementation (Flutter or WebView). Each implementation wires its
   /// concrete scroll behavior into this controller.
-  final MessageListScrollController _scrollCtrl =
-      MessageListScrollController();
+  final MessageListScrollController _scrollCtrl = MessageListScrollController();
 
   // 目前仅用于剪贴板
   final ChatController _chatController = Get.find<ChatController>();
@@ -96,7 +96,7 @@ class _ChatPageState extends State<ChatPage> {
     final stories = chat.bindStory?.loreBooks ?? [];
     Set<LorebookItemModel> lst = {};
     for (final lorebook in [...global, ...chars, ...stories]) {
-      for (final item in lorebook.items) { 
+      for (final item in lorebook.items) {
         if (item.activationType == ActivationType.manual) {
           lst.add(item);
         }
@@ -113,12 +113,12 @@ class _ChatPageState extends State<ChatPage> {
   // 是否处于用户阅读历史的锁定状态
   bool _isUserReading = false;
 
-  bool get isNearBottom =>
-      _scrollCtrl.scrollToBottom != null; // simplified
+  bool get isNearBottom => _scrollCtrl.scrollToBottom != null; // simplified
 
   bool _isRendering = false;
 
   bool _showWheel = false;
+  bool _showChatVars = false;
 
   @override
   void setState(VoidCallback fn) {
@@ -537,7 +537,6 @@ class _ChatPageState extends State<ChatPage> {
       toolbarHeight: isDesktop ? 66 : null,
       scrolledUnderElevation: isDesktop ? 0 : 0,
       backgroundColor: Colors.transparent,
-
       title: InkWell(
         onTap: () {
           showEditDialog(
@@ -640,10 +639,12 @@ class _ChatPageState extends State<ChatPage> {
       onSelected: (value) async {
         if (value == 'local_summary') {
           sessionController.doLocalSummary();
-        } else if(value == 'auto_title') {
+        } else if (value == 'auto_title') {
           sessionController.generateTitle();
         } else if (value == 'ai_help_answer') {
           sessionController.simulateUserMessage();
+        } else if (value == 'chat_vars') {
+          setState(() => _showChatVars = !_showChatVars);
         } else if (value == 'search') {
           customNavigate(
               ManageMessagePage(
@@ -657,6 +658,20 @@ class _ChatPageState extends State<ChatPage> {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'chat_vars',
+          child: Row(
+            children: [
+              Icon(
+                Icons.data_object,
+                color: Theme.of(context).iconTheme.color,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Text(_showChatVars ? '关闭变量面板' : '聊天变量'),
+            ],
+          ),
+        ),
         PopupMenuItem<String>(
           value: 'auto_title',
           child: Row(
@@ -748,7 +763,6 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: colors.surface,
-
       appBar: _buildAppBar(),
       body: Container(
         child: Stack(
@@ -756,6 +770,12 @@ class _ChatPageState extends State<ChatPage> {
             if (chat.backgroundOrCharBackground != null)
               _buildBackgroundImage(),
             _buildMainContent(),
+            Positioned(
+              top: 64,
+              left: 0,
+              right: 0,
+              child: _buildChatVarsPanel(),
+            ),
             _buildCharacterWheelOverlay(),
             _buildToBottomButton()
           ],
@@ -769,11 +789,16 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: colors.surfaceContainerHigh,
-
       body: Stack(
         children: [
           if (chat.backgroundOrCharBackground != null) _buildBackgroundImage(),
           _buildMainContent(),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildChatVarsPanel(),
+          ),
         ],
       ),
       appBar: _buildAppBar(),
@@ -801,11 +826,39 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildEmptyScreen() {
     return Scaffold(
-        appBar: AppBar(leading: _buildDrawerButton()),
-        body: Center(
-            child:
-                const Text("如果你看到了这个，一定是出了点啥问题。请点击左上角菜单按钮创建新聊天吧。")),
-        );
+      appBar: AppBar(leading: _buildDrawerButton()),
+      body: Center(child: const Text("如果你看到了这个，一定是出了点啥问题。请点击左上角菜单按钮创建新聊天吧。")),
+    );
+  }
+
+  Widget _buildChatVarsPanel() {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      offset: _showChatVars ? Offset.zero : const Offset(0, -1),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: _showChatVars ? 1.0 : 0.0,
+        child: _showChatVars
+            ? ChatVarsPanel(
+                chatVars: chat.chatVars,
+                onEdit: (oldKey, newKey, value) {
+                  if (oldKey.isNotEmpty && oldKey != newKey) {
+                    chat.chatVars.remove(oldKey);
+                  }
+                  chat.chatVars[newKey] = value;
+                  _updateChat();
+                  setState(() {});
+                },
+                onDelete: (key) {
+                  chat.chatVars.remove(key);
+                  _updateChat();
+                  setState(() {});
+                },
+              )
+            : const SizedBox.shrink(),
+      ),
+    );
   }
 
   Widget _buildCharacterWheelOverlay() {
@@ -833,11 +886,9 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Obx(() => AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
-
           transitionBuilder: (Widget child, Animation<double> animation) {
             return FadeTransition(opacity: animation, child: child);
           },
-
           child: sessionController.isChatUninitialized || _isRendering
               ? Container(
                   key: const ValueKey('LoadScreen'),

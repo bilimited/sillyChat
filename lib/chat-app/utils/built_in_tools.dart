@@ -9,7 +9,9 @@
 /// ```
 
 import 'package:flutter_example/chat-app/tools/character_tools.dart';
+import 'package:flutter_example/chat-app/tools/chat_context_tool.dart';
 import 'package:flutter_example/chat-app/tools/chat_tool.dart';
+import 'package:flutter_example/chat-app/tools/chat_vars_tools.dart';
 import 'package:flutter_example/chat-app/tools/lorebook_tools.dart';
 import 'package:flutter_example/chat-app/tools/memory_tools.dart';
 import 'package:flutter_example/chat-app/tools/regex_tools.dart';
@@ -28,8 +30,10 @@ class BuiltInTools {
     registerLoreBookTools();
     registerCharacterTools();
     registerMemoryTools();
+    registerChatContextTool();
     registerChatTools();
     registerRegexTools();
+    registerChatVarsTools();
   }
 
   /// 测试工具：模型每次调用后返回调用次数，用于验证 Tool Call 端到端流程。
@@ -65,8 +69,10 @@ class BuiltInTools {
     unregisterCharacterTools();
     unregisterLoreBookTools();
     unregisterMemoryTools();
+    unregisterChatContextTool();
     unregisterChatTools();
     unregisterRegexTools();
+    unregisterChatVarsTools();
     ToolRegistry.instance.unregister('test_tool');
   }
 }
