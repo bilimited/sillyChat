@@ -43,6 +43,20 @@ enum MessageStyle {
   String toJson() => toString().split('.').last;
 }
 
+enum CharacterType {
+  character,
+  agent;
+
+  static CharacterType fromJson(String json) {
+    return CharacterType.values.firstWhere(
+      (type) => type.name == json,
+      orElse: () => CharacterType.character,
+    );
+  }
+
+  String toJson() => name;
+}
+
 class CharacterModel { 
   final int id;
   MessageStyle messageStyle = MessageStyle.common;
@@ -72,21 +86,12 @@ class CharacterModel {
 
   MemoryModel? memory; // 内联记忆
 
-  int? bindOptionId; // 角色绑定的预设，会覆盖聊天的预设
+  ChatOptionModel? bindOption; // 角色绑定的预设（内联），会覆盖聊天的预设
   String? bindStoryId; // 绑定的故事ID，非空表示临时角色
+  CharacterType type = CharacterType.character; // 角色类型，暂不可由用户编辑
 
   bool get isTemporary => bindStoryId != null;
   bool get isDefaultAssistant => this.id == -1;
-
-  ChatOptionModel? get bindOption {
-    // 默认助手直接绑定空预设（已取消，现在使用默认预设）
-    // if (isDefaultAssistant) {
-    //   return ChatOptionModel.base();
-    // }
-    return bindOptionId == null
-        ? null
-        : ChatOptionController.of().getChatOptionById(bindOptionId!);
-  }
 
   CharacterModel(
       {required this.id,
@@ -130,8 +135,9 @@ class CharacterModel {
           messageStyle.toString().split('.').last, // 序列化messageStyle
       'lorebookIds': lorebookIds, // 添加lorebookIds字段
       'memory': memory?.toJson(), // 内联记忆
-      'bindOption': bindOptionId, // 添加bindOption字段
+      'bindOption': bindOption?.toJson(), // 内联预设
       'bindStoryId': bindStoryId,
+      'type': type.toJson(),
     };
   }
 
@@ -178,8 +184,17 @@ class CharacterModel {
       orElse: () => MessageStyle.common,
     );
 
-    char.bindOptionId = json['bindOption'];
+    // 兼容旧格式（int ID）和新格式（内联 ChatOptionModel）
+    final bindOptionRaw = json['bindOption'];
+    if (bindOptionRaw is Map<String, dynamic>) {
+      char.bindOption = ChatOptionModel.fromJson(bindOptionRaw);
+    } else if (bindOptionRaw is int) {
+      char.bindOption =
+          ChatOptionController.of().getChatOptionById(bindOptionRaw);
+    }
+
     char.bindStoryId = json['bindStoryId'];
+    char.type = CharacterType.fromJson(json['type'] ?? 'character');
 
     return char;
   }
@@ -201,16 +216,17 @@ class CharacterModel {
     String? description,
     String? backgroundImage,
     String? brief,
-    String? archive,
+    String? archive, 
     String? firstMessage,
     List<String>? moreFirstMessage,
     String? category,
     Map<int, Relation>? relations,
     List<int>? lorebookIds,
     MessageStyle? messageStyle,
-    PackageValue<int?>? bindOption,
+    ChatOptionModel? bindOption,
     PackageValue<String?>? bindStoryId,
     MemoryModel? memory,
+    CharacterType? type,
   }) {
     var newChar = CharacterModel(
       id: id ?? DateTime.now().millisecondsSinceEpoch, //TODO: What the fuck??
@@ -243,11 +259,8 @@ class CharacterModel {
           this.relations.map((key, value) => MapEntry(key, value.copy()));
     }
 
-    if (bindOption != null) {
-      newChar.bindOptionId = bindOption.value;
-    } else {
-      newChar.bindOptionId = this.bindOptionId;
-    }
+    newChar.bindOption = bindOption ?? this.bindOption;
+    newChar.type = type ?? this.type;
 
     newChar.memory = memory ?? this.memory;
 

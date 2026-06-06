@@ -8,7 +8,6 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_controller.dart';
 import 'package:flutter_example/chat-app/providers/chat_option_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
-import 'package:flutter_example/chat-app/utils/PackageValue.dart';
 
 class InitApp {
   static Future<void> initData() async {
@@ -58,7 +57,7 @@ class InitApp {
 
     final char = CharacterModel.empty().copyWith(
       roleName: "默认助手",
-      bindOption: PackageValue(emptyOption.id),
+      bindOption: emptyOption,
       archive: Constants.DEFAULT_AGENT_PROMPT,
       firstMessage: """你好，我是 SillyChat 内置助手 👋  
 我可以帮你快速找到功能入口，比如切换 API、导入 SillyTavern 内容、查找预设，或者介绍这个应用的基本用法。  

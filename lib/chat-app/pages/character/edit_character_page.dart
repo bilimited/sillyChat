@@ -18,6 +18,7 @@ import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.da
 import 'package:flutter_example/chat-app/widgets/common/memory_editor_widget.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
+import '../../models/chat_option_model.dart';
 import '../../providers/character_controller.dart';
 
 class EditCharacterPage extends StatefulWidget {
@@ -45,7 +46,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   late TextEditingController _briefController;
   late TextEditingController _firstMessageController;
 
-  int? _bindOption;
+  ChatOptionModel? _bindOption;
   String? _avatarPath;
   String? _backgroundPath;
   CharacterModel? _character;
@@ -79,11 +80,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     _backgroundPath = _character?.backgroundImage;
     _firstMessageController =
         TextEditingController(text: _character?.firstMessage ?? '');
-    _bindOption = _character?.bindOptionId;
+    _bindOption = _character?.bindOption;
 
-    if (!ChatOptionController.of()
-        .chatOptions
-        .any((o) => o.id == _bindOption)) {
+    if (_bindOption != null &&
+        !ChatOptionController.of()
+            .chatOptions
+            .any((o) => o.id == _bindOption!.id)) {
       _bindOption = null;
     }
   }
@@ -133,7 +135,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       ..relations = _character?.relations ?? {}
       ..archive = _archiveController.text
       ..messageStyle = _character?.messageStyle ?? MessageStyle.common
-      ..bindOptionId = _bindOption
+      ..bindOption = _bindOption
       ..memory = _character?.memory;
   }
 
@@ -351,7 +353,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
               children: [
                 Expanded(
                   child: DropdownButtonFormField<int?>(
-                    value: _bindOption,
+                    value: _bindOption?.id,
                     decoration: const InputDecoration(labelText: '绑定预设'),
                     hint: const Text('选择聊天预设'),
                     items: [
@@ -365,7 +367,9 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                                     overflow: TextOverflow.ellipsis),
                               )),
                     ],
-                    onChanged: (v) => setState(() => _bindOption = v),
+                    onChanged: (v) => setState(() => _bindOption = v == null
+                        ? null
+                        : ChatOptionController.of().getChatOptionById(v)),
                   ),
                 ),
                 IconButton(
