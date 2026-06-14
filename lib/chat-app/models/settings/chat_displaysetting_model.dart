@@ -31,6 +31,7 @@ class ChatDisplaySettingModel {
   bool displayMessageDate = false;
   bool displayMessageIndex = false;
   bool tryParseInlineHtml = true;
+  bool useWebview = false;
 
   bool get displayAvatar => avatarStyle != AvatarStyle.hidden;
 
@@ -52,6 +53,7 @@ class ChatDisplaySettingModel {
     this.MessageBubbleBorderRadius = 16,
     this.BackgroundImageBlur = 1.0,
     this.BackgroundImageOpacity = 1.0,
+    this.useWebview = false,
   });
 
   // JSON序列化
@@ -75,6 +77,7 @@ class ChatDisplaySettingModel {
       'tryParseInlineHtml': tryParseInlineHtml,
       'BackgroundImageOpacity': BackgroundImageOpacity,
       'BackgroundImageBlur': BackgroundImageBlur,
+      'useWebview': useWebview,
     };
   }
 
@@ -100,5 +103,6 @@ class ChatDisplaySettingModel {
     tryParseInlineHtml = json['tryParseInlineHtml'] ?? true;
     BackgroundImageOpacity = (json['BackgroundImageOpacity'] ?? 1.0).toDouble();
     BackgroundImageBlur = (json['BackgroundImageBlur'] ?? 1.0).toDouble();
+    useWebview = json['useWebview'] ?? false;
   }
 }

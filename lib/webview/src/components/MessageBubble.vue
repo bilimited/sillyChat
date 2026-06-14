@@ -35,12 +35,12 @@ const props = defineProps({
   time: { type: String, default: '' },
   isUser: { type: Boolean, default: false },
 });
-
+ 
 const segments = computed(() => {
   if (!props.content) return [];
   return parseContentSegments(props.content);
 });
-
+ 
 function renderMarkdown(text) {
   if (!text) return '';
   return md.render(text);

@@ -222,6 +222,19 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
 
             const Divider(),
 
+            SettingsSwitchTile(
+              title: '使用 WebView 渲染消息',
+              subtitle: '启用后使用 WebView 渲染聊天消息（实验性功能，重启聊天生效）',
+              value: setting.useWebview,
+              onChanged: (bool value) {
+                setting.useWebview = value;
+                controller.displaySettingModel.refresh();
+                controller.saveSettings();
+              },
+            ),
+
+            const Divider(),
+
             SettingsSliderTile(
               label:
                   '聊天字体缩放: ${setting.ContentFontScale.toStringAsFixed(2)}',

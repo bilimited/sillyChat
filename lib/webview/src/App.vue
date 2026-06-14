@@ -1,45 +1,60 @@
 <template>
   <div class="app-container">
-    <div class="chat-scroll-area" ref="scrollContainer" @scroll="onScroll">
-      <div class="message-list">
-        <ChatMessage
-          v-for="msg in displayMessages"
-          :key="msg.id"
-          :message="msg"
-          :isUser="msg.role === 'user'"
-          :isSelected="selectedMessage?.time === msg.time"
-          :isEditing="editingMessageTime === msg.time"
-          :showAvatar="showAvatar"
-          :showAssistantName="showAssistantName"
-          :showMessageTime="showMessageTime"
-          :avatarSrc="getAvatar(msg.sender)"
-          :senderName="getCharacterName(msg.sender)"
-          :isLastAssistant="isLastAssistantMessage(msg)"
-          :alternativeIndex="alternativeIndex(msg)"
-          @select="toggleSelect(msg)"
-          @edit="onEdit(msg)"
-          @editSave="(content) => onEditSave(msg, content)"
-          @editCancel="onEditCancel"
-          @copy="onCopy(msg)"
-          @delete="onDelete(msg)"
-          @retry="onRetry"
-          @switchAlt="(dir) => onSwitchAlternative(msg, dir)"
-          @more="onMore(msg)" 
-        />
+    <DynamicScroller
+      ref="scroller"
+      :items="displayMessages"
+      :min-item-size="60"
+      key-field="id"
+      class="chat-scroll-area"
+      :prerender="20"
+      :buffer="600"
+      @scroll="onScroll"
+    >
+      <template #default="{ item, active }">
+        <DynamicScrollerItem
+          :item="item"
+          :active="active"
+          :data-msg-id="item.id"
+        >
+          <div class="msg-row">
+            <ChatMessage
+            :message="item"
+            :isUser="item.role === 'user'"
+            :isSelected="selectedMessage?.time === item.time"
+            :isEditing="editingMessageTime === item.time"
+            :showAvatar="showAvatar"
+            :showAssistantName="showAssistantName"
+            :showMessageTime="showMessageTime"
+            :avatarSrc="getAvatar(item.sender)"
+            :senderName="getCharacterName(item.sender)"
+            :isLastAssistant="isLastAssistantMessage(item)"
+            :alternativeIndex="alternativeIndex(item)"
+            @select="toggleSelect(item)"
+            @edit="onEdit(item)"
+            @editSave="(content) => onEditSave(item, content)"
+            @editCancel="onEditCancel"
+            @copy="onCopy(item)"
+            @delete="onDelete(item)"
+            @retry="onRetry"
+            @switchAlt="(dir) => onSwitchAlternative(item, dir)"
+            @more="onMore(item)"
+          />
+          </div>
+        </DynamicScrollerItem>
+      </template>
+    </DynamicScroller>
 
-        <StreamingMessage
-          v-if="appState.isGenerating"
-          :buffer="appState.LLMBuffer"
-          :statusText="appState.GenerateState"
-          :avatarSrc="getAvatar(appState.currentAssistant)"
-          :showAvatar="showAvatar"
-          :showAssistantName="showAssistantName"
-          :assistantName="getCharacterName(appState.currentAssistant)"
-        />
-      </div>
-      <div class="bottom-spacer"></div>
+    <div v-if="appState.isGenerating" class="streaming-wrapper">
+      <StreamingMessage
+        :buffer="appState.LLMBuffer"
+        :statusText="appState.GenerateState"
+        :avatarSrc="getAvatar(appState.currentAssistant)"
+        :showAvatar="showAvatar"
+        :showAssistantName="showAssistantName"
+        :assistantName="getCharacterName(appState.currentAssistant)"
+      />
     </div>
-  </div> 
+  </div>
 </template>
 
 <script setup>
@@ -72,7 +87,7 @@ const displaySettings = ref({
 });
 
 // DOM Ref
-const scrollContainer = ref(null);
+const scroller = ref(null);
 
 // --- Computed ---
 const displayMessages = computed(() => chatData.value?.messages || []);
@@ -197,35 +212,26 @@ const alternativeIndex = (msg) => {
 
 // --- Scroll helpers ---
 
-const handleScrollPreservation = async (updateAction) => {
-  if (!scrollContainer.value) {
-    updateAction();
-    return;
-  }
-  const el = scrollContainer.value;
-  const previousScrollTop = el.scrollTop;
-
-  updateAction();
-
-  await nextTick();
-  el.scrollTop = previousScrollTop;
-};
+const getScrollEl = () => scroller.value?.$el;
 
 const isNearBottom = (el) => {
   return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
 };
 
 const doScrollToBottom = () => {
-  if (!scrollContainer.value) return;
-  scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+  const el = getScrollEl();
+  if (!el) return;
+  el.scrollTop = el.scrollHeight;
+  // Re-apply after a frame in case the scroller is still measuring heights
+  requestAnimationFrame(() => {
+    const el2 = getScrollEl();
+    if (el2) el2.scrollTop = el2.scrollHeight;
+  });
 };
 
 const doScrollToMessage = (msgId) => {
-  if (!scrollContainer.value) return;
-  const target = scrollContainer.value.querySelector(`[data-msg-id="${msgId}"]`);
-  if (target) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  if (!scroller.value) return;
+  scroller.value.scrollToItem(msgId);
 };
 
 // --- Message selection & toolbar ---
@@ -287,10 +293,11 @@ const onMore = (msg) => {
 
 let scrollDebounceTimer = null;
 const onScroll = () => {
-  if (!scrollContainer.value) return;
+  const el = getScrollEl();
+  if (!el) return;
   if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
   scrollDebounceTimer = setTimeout(() => {
-    const near = isNearBottom(scrollContainer.value);
+    const near = isNearBottom(el);
     appApi.notifyScrollState(near);
   }, 150);
 };
@@ -299,15 +306,25 @@ const onScroll = () => {
 
 onMounted(() => {
   appApi.subscribeChat((newChat) => {
+    const chatChanged = !chatData.value || chatData.value.id !== newChat.id;
     editingMessageTime.value = null;
-    handleScrollPreservation(() => {
-      chatData.value = newChat;
-      appState.value = { ...appState.value, LLMBuffer: '' };
-    });
+    chatData.value = newChat;
+    appState.value = { ...appState.value, LLMBuffer: '' };
+
+    // Scroll to bottom when entering a new chat.
+    // Double rAF: the DynamicScroller updates heights asynchronously
+    // (ResizeObserver), so one frame is not enough.
+    if (chatChanged) {
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => doScrollToBottom());
+        });
+      });
+    }
   });
 
   appApi.subscribeState((newState) => {
-    const el = scrollContainer.value;
+    const el = getScrollEl();
     const atBottom = el ? isNearBottom(el) : false;
 
     if (newState.isGenerating) {
@@ -333,17 +350,22 @@ onMounted(() => {
     }
 
     if (atBottom && appState.value.isGenerating) {
-      nextTick(() => { if(el) el.scrollTop = el.scrollHeight; });
+      nextTick(() => doScrollToBottom());
     }
   });
 
   appApi.subscribeMessageAdded(({ message, index }) => {
     if (!chatData.value) return;
-    handleScrollPreservation(() => {
-      const messages = [...chatData.value.messages];
-      messages.splice(index, 0, message);
-      chatData.value = { ...chatData.value, messages };
-    });
+    const el = getScrollEl();
+    const atBottom = el ? isNearBottom(el) : false;
+
+    const messages = [...chatData.value.messages];
+    messages.splice(index, 0, message);
+    chatData.value = { ...chatData.value, messages };
+
+    if (atBottom) {
+      nextTick(() => doScrollToBottom());
+    }
   });
 
   appApi.subscribeMessageUpdated((updatedMessage) => {
@@ -351,24 +373,20 @@ onMounted(() => {
     if (editingMessageTime.value === updatedMessage.time) {
       editingMessageTime.value = null;
     }
-    handleScrollPreservation(() => {
-      const messages = chatData.value.messages.map(
-        m => (m.id === updatedMessage.id && m.time === updatedMessage.time)
-          ? updatedMessage
-          : m
-      );
-      chatData.value = { ...chatData.value, messages };
-    });
+    const messages = chatData.value.messages.map(
+      m => (m.id === updatedMessage.id && m.time === updatedMessage.time)
+        ? updatedMessage
+        : m
+    );
+    chatData.value = { ...chatData.value, messages };
   });
 
   appApi.subscribeMessageRemoved((removedMessage) => {
     if (!chatData.value) return;
-    handleScrollPreservation(() => {
-      const messages = chatData.value.messages.filter(
-        m => !(m.id === removedMessage.id && m.time === removedMessage.time)
-      );
-      chatData.value = { ...chatData.value, messages };
-    });
+    const messages = chatData.value.messages.filter(
+      m => !(m.id === removedMessage.id && m.time === removedMessage.time)
+    );
+    chatData.value = { ...chatData.value, messages };
   });
 
   appApi.subscribeTokenAppend((token) => {
@@ -377,11 +395,11 @@ onMounted(() => {
         ...appState.value,
         LLMBuffer: appState.value.LLMBuffer + token,
       };
-      const el = scrollContainer.value;
+      const el = getScrollEl();
       if (el) {
         const atBottom = isNearBottom(el);
         if (atBottom) {
-          nextTick(() => { if(el) el.scrollTop = el.scrollHeight; });
+          nextTick(() => doScrollToBottom());
         }
       }
     }
@@ -448,15 +466,20 @@ onUnmounted(() => {
   display: none;
 }
 
-.message-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.streaming-wrapper {
+  padding: 0 16px;
+}
+
+/* Spacing between messages — on a wrapper inside each scroller item
+   so it participates in the scroller's height measurement. */
+.msg-row {
   padding-bottom: 20px;
 }
 
-.bottom-spacer {
-  height: 20px;
+/* Give the whole scroller content area breathing room at top & bottom */
+:deep(.vue-recycle-scroller__item-wrapper) {
+  padding-top: 12px;
+  padding-bottom: 20px;
 }
 
 /* ---- Markdown rendered content (deep styles — penetrate child components) ---- */

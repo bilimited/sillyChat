@@ -4,6 +4,7 @@ import 'package:flutter_example/chat-app/providers/base_controller.dart';
 import 'package:flutter_example/chat-app/providers/setting_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:get/get.dart';
+import '../models/built_in_characters.dart';
 import '../models/category_config.dart';
 import '../models/character_model.dart';
 import '../models/memory_model.dart';
@@ -31,23 +32,10 @@ class CharacterController extends BaseController {
     return grouped;
   }
 
-  // 系统内建角色
-  static final defaultCharacter = CharacterModel(
-      id: -1,
-      remark: "内置角色",
-      roleName: 'AI助手',
-      avatar: "",
-      category: "",
-      messageStyle: MessageStyle.common);
-
-  static const SUMMARY_CHARACTER_ID = -2;
-  static final summaryCharacter = CharacterModel(
-      id: SUMMARY_CHARACTER_ID,
-      remark: '总结姬',
-      roleName: '总结姬',
-      avatar: '',
-      category: '',
-      messageStyle: MessageStyle.summary);
+  // 系统内建角色（定义见 built_in_characters.dart）
+  static CharacterModel get defaultCharacter => BuiltInCharacters.defaultAssistant;
+  static const int SUMMARY_CHARACTER_ID = BuiltInCharacters.summaryCharacterId;
+  static CharacterModel get summaryCharacter => BuiltInCharacters.summaryCharacter;
 
   int? get myId => _vaultSettingController.myId.value;
   set myId(val) {
@@ -195,25 +183,37 @@ class CharacterController extends BaseController {
     await saveCategoryConfigs();
   }
 
-  // 添加新角色
+  // 添加新角色（不允许使用内置角色 ID）
   Future<void> addCharacter(CharacterModel character) async {
+    if (BuiltInCharacters.isBuiltIn(character.id)) {
+      print('不能使用内置角色 ID 添加角色');
+      return;
+    }
     characters.add(character);
     await saveCharacters();
   }
 
-  // 更新角色
+  // 更新角色（内置角色只读，不允许编辑）
   Future<void> updateCharacter(CharacterModel character) async {
+    if (BuiltInCharacters.isBuiltIn(character.id)) {
+      print('不能编辑内置角色');
+      return;
+    }
     final index = characters.indexWhere((char) => char.id == character.id);
     if (index != -1) {
       characters[index] = character;
       await saveCharacters();
-    }else{
+    } else {
       print("更新没有成功啊哥们");
     }
   }
 
-  // 删除角色
+  // 删除角色（内置角色只读，不允许删除）
   Future<void> deleteCharacter(int id) async {
+    if (BuiltInCharacters.isBuiltIn(id)) {
+      print('不能删除内置角色');
+      return;
+    }
     characters.removeWhere((char) => char.id == id);
     await saveCharacters();
   }
