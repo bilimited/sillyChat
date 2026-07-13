@@ -377,6 +377,12 @@ class _ChatPageState extends State<ChatPage> {
                 _showWheel = !_showWheel;
               });
             },
+            onShowHistory: () {
+              customNavigate(
+                  SimpleChatFilesPage(
+                      directoryPath: p.dirname(chat.file?.path ?? '')),
+                  context: context);
+            },
             topToolBar: [
               // ToggleChip(
               //     icon: Icons.chat,
@@ -606,14 +612,6 @@ class _ChatPageState extends State<ChatPage> {
         ),
       ),
       actions: [
-        IconButton(
-            onPressed: () {
-              customNavigate(
-                  SimpleChatFilesPage(
-                      directoryPath: p.dirname(chat.file?.path ?? '')),
-                  context: context);
-            },
-            icon: const Icon(Icons.history)),
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// 功能特性：
 /// - 包含一个图标和文本标签。
 /// - 拥有一个细边框。
-/// - 点击时可以在“开启”和“关闭”状态之间切换。
+/// - 点击时可以在"开启"和"关闭"状态之间切换。
 /// - 关闭状态时，背景色为浅灰色，内容为深灰色。
 /// - 当状态改变时，会触发一个回调函数。
 /// - 点击时有平滑的动画效果。
@@ -58,12 +58,7 @@ class _ToggleChipState extends State<ToggleChip> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final activeColor = theme.colorScheme.primary;
-    final inactiveColor = theme.colorScheme.outline;
-    final activeContentColor = theme.colorScheme.primary;
-    final inactiveBackgroundColor = theme.colorScheme.outline;
+    final colors = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -74,12 +69,10 @@ class _ToggleChipState extends State<ToggleChip> {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           decoration: BoxDecoration(
-            color: _isSelected
-                ? activeColor.withOpacity(0.2)
-                : inactiveBackgroundColor.withOpacity(0.2),
+            color: _isSelected ? colors.primaryContainer : colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12.0),
             border: Border.all(
-              color: _isSelected ? activeColor : inactiveColor,
+              color: _isSelected ? colors.primary : colors.outlineVariant,
               width: 1.0,
             ),
           ),
@@ -94,7 +87,7 @@ class _ToggleChipState extends State<ToggleChip> {
                   child: Icon(
                     widget.icon,
                     key: ValueKey(_isSelected),
-                    color: _isSelected ? activeContentColor : inactiveColor,
+                    color: _isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant,
                     size: 16.0,
                   ),
                 ),
@@ -103,8 +96,8 @@ class _ToggleChipState extends State<ToggleChip> {
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
-                  fontSize: 12,
-                  color: _isSelected ? activeContentColor : inactiveColor,
+                  fontSize: 13,
+                  color: _isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant,
                 ),
                 child: Text(widget.text),
               ),

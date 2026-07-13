@@ -36,6 +36,7 @@ class BottomInputArea extends StatefulWidget {
   final VoidCallback onRetryLastest;
   final VoidCallback onUpdateChat;
   final VoidCallback onShowWheel;
+  final VoidCallback? onShowHistory;
 
   ChatModel get chat => sessionController.chat;
   ChatMode get mode => chat.mode ?? ChatMode.auto;
@@ -58,6 +59,7 @@ class BottomInputArea extends StatefulWidget {
     required this.onRetryLastest,
     required this.onUpdateChat,
     required this.onShowWheel,
+    this.onShowHistory,
     this.topToolBar = const [],
     this.canSend = true,
     this.showPlus = true,
@@ -76,8 +78,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
 
   final FocusNode _focusNode = FocusNode(); // 1. 创建 FocusNode
   bool _isFocused = false; // 跟踪焦点状态
-
-  bool _isDirectorPanelExpanded = false;
 
   bool get isGroupMode => widget.mode == ChatMode.group;
   bool get isAutoMode => widget.mode == ChatMode.auto;
@@ -181,27 +181,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
     }
   }
 
-  Widget _buildDirectorModePanel() {
-    final colors = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            runSpacing: 4,
-            direction: Axis.horizontal,
-            children: widget.topToolBar,
-          ),
-          Divider(
-            height: 24,
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -227,14 +206,6 @@ class _BottomInputAreaState extends State<BottomInputArea> {
           ),
           child: Column(
             children: [
-              AnimatedSize(
-                duration: Durations.medium1,
-                curve: Curves.easeOut,
-                child: _isDirectorPanelExpanded
-                    ? _buildDirectorModePanel()
-                    : SizedBox.shrink(),
-              ),
-
               // Input field
               TextField(
                 focusNode: _focusNode, // 6. 将 FocusNode 附加到 TextField
@@ -268,7 +239,7 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                           showConfirmDialog(
                               context: context,
                               title: "确定要开启新话题吗?",
-                              content: "你可以点击右上角时钟图标查看历史话题。",
+                              content: "开启新话题后，可在左侧历史按钮中查看之前的对话。",
                               onConfirm: () async {
                                 final (chat, fp) = await ChatController.of
                                     .createChatForChat(widget.chat);
@@ -294,34 +265,21 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                           ],
                         ),
                       )),
-                  // Left side: Toolbar
-                  if (widget.showToolBar)
+                  if (widget.onShowHistory != null)
                     Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() => _isDirectorPanelExpanded =
-                                !_isDirectorPanelExpanded);
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(Icons.tune,
-                                    size: 20,
-                                    color: _isDirectorPanelExpanded
-                                        ? colors.primary
-                                        : colors.outline),
-                              ),
-
-                              // Text("更多",style: TextStyle(fontSize: 13,color: _isDirectorPanelExpanded
-                              //           ? colors.primary
-                              //           : colors.outline),)
-                            ],
+                      padding: const EdgeInsets.only(left: 4.0),
+                      child: InkWell(
+                        onTap: widget.onShowHistory,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.history,
+                            color: colors.outline,
+                            size: 20,
                           ),
-                        )),
-
+                        ),
+                      ),
+                    ),
                   const Spacer(),
 
                   // Right side: Action buttons
@@ -511,6 +469,15 @@ class _BottomInputAreaState extends State<BottomInputArea> {
                   );
                 }).toList(),
               ),
+            ),
+          ),
+        if (widget.topToolBar.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Wrap(
+              runSpacing: 4,
+              direction: Axis.horizontal,
+              children: widget.topToolBar,
             ),
           ),
         Row(
