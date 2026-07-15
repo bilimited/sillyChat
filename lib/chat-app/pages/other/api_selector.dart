@@ -154,56 +154,25 @@ class _ApiModelSelectionPageState extends State<ApiModelSelectionPage> {
         // --- 标题部分 ---
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colors.secondaryContainer,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                api.provider.toLocalString(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: colors.onSecondaryContainer,
+            GestureDetector(
+              onTap: () async {
+                await customNavigate(ApiEditPage(api: api), context: context);
+                setState(() {});
+              },
+              child: Expanded(
+                child: Text(
+                  api.displayName.isNotEmpty ? api.displayName : '未命名节点',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                api.displayName.isNotEmpty ? api.displayName : '未命名节点',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colors.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        // --- 尾部按钮部分 ---
-        trailing: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // 自定义小按钮 (点击事件待定)
-            IconButton(
-              icon: Icon(Icons.more_horiz, size: 20, color: colors.outline),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              onPressed: () async {
-                await customNavigate(
-                    ApiEditPage(
-                      api: api,
-                    ),
-                    context: context);
-                setState(() {});
-              },
-            ),
-            // 标准展开箭头
-            const ExpandIcon(onPressed: null), // 内部会自动处理点击
           ],
         ),
         // --- 子项（模型列表） ---
@@ -244,9 +213,6 @@ class _ApiModelSelectionPageState extends State<ApiModelSelectionPage> {
         ),
         child: Row(
           children: [
-            Icon(Icons.auto_awesome_outlined,
-                size: 16, color: colors.primary.withOpacity(0.7)),
-            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 modelName,
