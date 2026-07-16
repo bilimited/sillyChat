@@ -11,230 +11,22 @@ import 'package:flutter_example/chat-app/providers/character_controller.dart';
 import 'package:flutter_example/chat-app/providers/vault_setting_controller.dart';
 import 'package:flutter_example/chat-app/utils/customNav.dart';
 import 'package:flutter_example/chat-app/utils/entitys/ChatAIState.dart';
-import 'package:flutter_example/chat-app/utils/image_utils.dart';
 import 'package:flutter_example/chat-app/widgets/common/sticky_overlay_container.dart';
 import 'package:flutter_markdown_plus_latex/flutter_markdown_plus_latex.dart';
 
 import 'package:flutter_example/chat-app/widgets/common/avatar_image.dart';
-import 'package:flutter_example/chat-app/widgets/chat/custom_codeblock_widget.dart';
+import 'package:flutter_example/chat-app/widgets/chat/content_segment.dart';
+import 'package:flutter_example/chat-app/widgets/chat/markdown_extensions.dart';
+import 'package:flutter_example/chat-app/widgets/chat/summary_message_bubble.dart';
 import 'package:flutter_example/chat-app/widgets/chat/think_widget.dart';
 import 'package:flutter_example/chat-app/widgets/chat/tool_call_result_widget.dart';
 import 'package:flutter_example/main.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart'; // import 'package:flutter_markdown_latex/flutter_markdown_latex.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-class QuotedTextSyntax extends md.InlineSyntax {
-  QuotedTextSyntax() : super(r'[“"”]([^"“”]*)["“”]');
-
-  @override
-  bool onMatch(md.InlineParser parser, Match match) {
-    final text = md.Element.text('quotedText', match.group(1)!);
-    parser.addNode(text);
-    return true;
-  }
-}
-
-class QuotedTextBuilder extends MarkdownElementBuilder {
-  final TextScaler textScaler;
-
-  // 在构造函数中接收 context
-  QuotedTextBuilder(this.textScaler);
-
-  @override
-  Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
-      TextStyle? preferredStyle, TextStyle? parentStyle) {
-    if (element.tag == 'quotedText') {
-      // 在这里使用 context 来获取主题颜色
-      final colors = Theme.of(context).colorScheme;
-      return RichText(
-        textScaler: textScaler,
-        text: TextSpan(
-          text: '"${element.textContent}"',
-          style: TextStyle(
-            color: colors.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-    }
-    return null;
-  }
-}
-
-class LatexSyntax extends md.InlineSyntax {
-  LatexSyntax() : super(r'"([^"]*)"');
-
-  @override
-  bool onMatch(md.InlineParser parser, Match match) {
-    final text = md.Element.text('latex', match.group(1)!);
-    parser.addNode(text);
-    return true;
-  }
-}
-
-class HtmlTagSyntax extends md.InlineSyntax {
-  HtmlTagSyntax() : super(r'<([a-zA-Z0-9]+)\s*([^>]*)>(.*?)<\/\1>');
-
-  // 正则表达式用于解析属性
-  final _attributeRegex = RegExp(r'([a-zA-Z0-9_-]+)\s*=\s*('
-      r'"([^"]*)"|' // 带双引号的属性值
-      r"'([^']*)'|" // 带单引号的属性值
-      r'([^>\s]+)' // 不带引号的属性值
-      r')');
-
-  /// 规范化颜色代码
-  /// 将 #rgb, #rrggbb, #rrggbbaa 格式统一转换为 #rrggbbaaff
-  String _normalizeColor(String color) {
-    if (color.startsWith('#')) {
-      String hex = color.substring(1);
-      if (hex.length == 3) {
-        // #rgb -> #rrggbb
-        hex = hex.split('').map((c) => c + c).join('');
-      }
-      if (hex.length == 6) {
-        // #rrggbb -> #rrggbbaa (默认alpha为ff)
-        hex = '${hex}ff';
-      }
-      if (hex.length == 8) {
-        return '${hex.toLowerCase()}';
-      }
-    }
-    return color;
-  }
-
-  @override
-  bool onMatch(md.InlineParser parser, Match match) {
-    final tagName = match.group(1)!;
-    final attributesString = match.group(2) ?? '';
-    final content = match.group(3) ?? '';
-
-    final attributes = <String, String>{};
-    for (final attrMatch in _attributeRegex.allMatches(attributesString)) {
-      final key = attrMatch.group(1)!.toLowerCase();
-      // group(3), group(4), group(5) 分别对应双引号、单引号和无引号的值
-      String value =
-          attrMatch.group(3) ?? attrMatch.group(4) ?? attrMatch.group(5) ?? '';
-
-      if (key == 'color') {
-        value = _normalizeColor(value);
-      }
-      attributes[key] = value;
-    }
-
-    final element = md.Element(tagName, [md.Text(content)]);
-    element.attributes.addAll(attributes);
-    parser.addNode(element);
-
-    return true;
-  }
-}
-
-class FontColorBuilder extends MarkdownElementBuilder {
-  @override
-  Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
-      TextStyle? preferredStyle, TextStyle? parentStyle) {
-    if (element.tag == 'font') {
-      final color = element.attributes['color'];
-      return RichText(
-        text: TextSpan(
-          text: element.textContent,
-          style: parentStyle?.copyWith(color: Color(int.parse('0x$color'))),
-        ),
-      );
-    }
-    return null;
-  }
-}
-
-/// 消息内容片段的类型
-enum _ContentSegmentType { text, think, toolCallResult }
-
-/// 消息内容片段 — 将消息内容拆分为不同类型的片段
-class _ContentSegment {
-  final _ContentSegmentType type;
-  final String content;
-  final Map<String, String>? attributes; // toolCallResult: id, name, args
-  final bool isThinking; // think: 是否为未闭合的思考块（流式输出中）
-
-  const _ContentSegment({
-    required this.type,
-    required this.content,
-    this.attributes,
-    this.isThinking = false,
-  });
-}
-
-class CodeBlockBuilder extends MarkdownElementBuilder {
-  final TextScaler textScaler;
-
-  // 在构造函数中接收 context
-  CodeBlockBuilder(this.textScaler);
-
-  @override
-  void visitElementBefore(md.Element element) {
-    if (element.tag != 'pre') return;
-
-    // 1. 提取原始代码内容和语言
-    // 我们必须在 Before 阶段做这件事，因为稍后我们要清空 children
-    String codeText = '';
-    String language = '';
-
-    if (element.children != null && element.children!.isNotEmpty) {
-      // FencedCodeBlock 通常结构是 <pre><code class="language-dart">...</code></pre>
-      for (var child in element.children!) {
-        if (child is md.Element && child.tag == 'code') {
-          codeText = child.textContent;
-          // 提取语言
-          final classAttribute = child.attributes['class'];
-          if (classAttribute != null &&
-              classAttribute.startsWith('language-')) {
-            language = classAttribute.substring('language-'.length);
-          }
-        } else if (child is md.Text) {
-          // 某些特殊情况下可能有直接文本
-          codeText += child.text;
-        }
-      }
-    } else {
-      codeText = element.textContent;
-    }
-
-    // 2. 将提取的数据暂存到 element 的 attributes 中
-    // 这样在 visitElementAfter 中就能获取到了
-    element.attributes['__custom_code__'] = codeText.trimRight();
-    element.attributes['__custom_lang__'] = language;
-
-    // 3. ★ 关键修复步骤 ★
-    // 清空子元素。这样 flutter_markdown 就不会去遍历它们，
-    // 就不会把代码文本添加到 _inlines 缓冲区中。
-    // 当执行到 visitElementAfter 时，_inlines 也就保持为空，从而通过断言检测。
-    element.children?.clear();
-  }
-
-  @override
-  Widget? visitElementAfterWithContext(
-    BuildContext context,
-    md.Element element,
-    TextStyle? preferredStyle,
-    TextStyle? parentStyle,
-  ) {
-    if (element.tag != 'pre') return null;
-
-    // 4. 从 attributes 中取出我们在 Before 阶段保存的数据
-    final codeText = element.attributes['__custom_code__'] ?? '';
-    final language = element.attributes['__custom_lang__'] ?? '';
-
-    return CustomCodeBlockWidget(
-      code: codeText,
-      language: language,
-      textScaler: textScaler,
-    );
-  }
-}
 
 class MessageBubble extends StatefulWidget {
   final MessageModel message;
@@ -304,8 +96,8 @@ class _MessageBubbleState extends State<MessageBubble> {
   ///
   /// 支持多个思考块和工具调用块穿插在文本中。
   /// 会检测末尾未闭合的 <think> 标签（流式输出中）。
-  List<_ContentSegment> _parseContentSegments(String content) {
-    final segments = <_ContentSegment>[];
+  List<ContentSegment> _parseContentSegments(String content) {
+    final segments = <ContentSegment>[];
 
     // 组合正则：同时匹配完整的 <think> 和 <ToolCallResult> 标签
     // group(1): think 内容；group(2): id；group(3): name；group(4): args；group(5): result
@@ -322,20 +114,20 @@ class _MessageBubbleState extends State<MessageBubble> {
         final text = content.substring(lastEnd, match.start);
         if (text.isNotEmpty) {
           segments.add(
-              _ContentSegment(type: _ContentSegmentType.text, content: text));
+              ContentSegment(type: ContentSegmentType.text, content: text));
         }
       }
 
       if (match.group(1) != null) {
         // 完整的 <think> 块
-        segments.add(_ContentSegment(
-          type: _ContentSegmentType.think,
+        segments.add(ContentSegment(
+          type: ContentSegmentType.think,
           content: match.group(1) ?? '',
         ));
       } else {
         // 完整的 <ToolCallResult> 块
-        segments.add(_ContentSegment(
-          type: _ContentSegmentType.toolCallResult,
+        segments.add(ContentSegment(
+          type: ContentSegmentType.toolCallResult,
           content: match.group(5) ?? '',
           attributes: {
             'id': match.group(2) ?? '',
@@ -357,19 +149,19 @@ class _MessageBubbleState extends State<MessageBubble> {
           RegExp(r'<think>(.*)', dotAll: true).firstMatch(remaining);
       if (unclosedThink != null) {
         if (unclosedThink.start > 0) {
-          segments.add(_ContentSegment(
-              type: _ContentSegmentType.text,
+          segments.add(ContentSegment(
+              type: ContentSegmentType.text,
               content: remaining.substring(0, unclosedThink.start)));
         }
-        segments.add(_ContentSegment(
-          type: _ContentSegmentType.think,
+        segments.add(ContentSegment(
+          type: ContentSegmentType.think,
           content: unclosedThink.group(1) ?? '',
           isThinking: true,
         ));
       } else {
         if (remaining.isNotEmpty) {
-          segments.add(_ContentSegment(
-              type: _ContentSegmentType.text, content: remaining));
+          segments.add(ContentSegment(
+              type: ContentSegmentType.text, content: remaining));
         }
       }
     }
@@ -725,7 +517,7 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   /// 构建消息片段容器 — 渲染所有内容片段（文本气泡、思考块、工具调用结果）
-  Widget _buildSegmentsContainer(List<_ContentSegment> segments) {
+  Widget _buildSegmentsContainer(List<ContentSegment> segments) {
     return StickyOverlayContainer(
       overlay: widget.buildBottomButtons(widget.isSelected, message),
       alignment: isMe ? Alignment.bottomRight : Alignment.bottomLeft,
@@ -785,16 +577,16 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   /// 根据片段类型构建对应的 Widget
-  Widget _buildSegmentWidget(_ContentSegment seg) {
+  Widget _buildSegmentWidget(ContentSegment seg) {
     switch (seg.type) {
-      case _ContentSegmentType.text:
+      case ContentSegmentType.text:
         return _buildBubbleSwitcher(seg.content, colors);
-      case _ContentSegmentType.think:
+      case ContentSegmentType.think:
         return ThinkWidget(
           isThinking: seg.isThinking,
           thinkContent: seg.content,
         );
-      case _ContentSegmentType.toolCallResult:
+      case ContentSegmentType.toolCallResult:
         return ToolCallResultWidget(
           id: seg.attributes?['id'] ?? '',
           name: seg.attributes?['name'] ?? '',
@@ -840,6 +632,99 @@ class _MessageBubbleState extends State<MessageBubble> {
     } else {
       return _buildMessageContent(content);
     }
+  }
+
+  /// 从消息内容中提取纯文本 — 跳过 <think> 和 <ToolCallResult> 块
+  String _extractPlainText(String content) {
+    final tagRegex = RegExp(
+      r'<think>(.*?)</think>|'
+      r'''<ToolCallResult\s+id="([^"]*)"\s+name="([^"]*)"\s+args='([^']*)'>(.*?)</ToolCallResult>''',
+      dotAll: true,
+    );
+
+    final buffer = StringBuffer();
+    int lastEnd = 0;
+    for (final match in tagRegex.allMatches(content)) {
+      if (match.start > lastEnd) {
+        buffer.write(content.substring(lastEnd, match.start));
+      }
+      lastEnd = match.end;
+    }
+    if (lastEnd < content.length) {
+      final remaining = content.substring(lastEnd);
+      // 去掉未闭合的 <think> 标签
+      final cleaned =
+          remaining.replaceFirst(RegExp(r'<think>.*', dotAll: true), '');
+      buffer.write(cleaned);
+    }
+
+    return buffer.toString();
+  }
+
+  /// 模拟气泡 — 模拟微信等聊天应用的显示模式
+  /// 消息内容按分隔符拆分为多个独立气泡，思考块/工具调用块隐藏
+  Widget _buildSimulate(List<dynamic> regexs) {
+    // 1. 提取纯文本（跳过 think / toolCallResult 块）
+    var text = _extractPlainText(message.content);
+
+    // 2. 应用正则规则
+    for (final regex in regexs
+        .where((reg) => reg.onRender)
+        .where((reg) => reg.isAvailable(widget.chat, message))) {
+      text = regex.process(text);
+    }
+
+    // 3. 按分隔符拆分
+    final parts = text
+        .split(displaySetting.simulateSplitDelimiter)
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
+
+    // 4. 判断是否正在生成
+    final isGenerating = isLoading || (widget.state?.isGenerating == true);
+
+    // 5. 空内容且生成中：显示"对方正在输入"
+    if (parts.isEmpty && isGenerating) {
+      return _buildBubbleSwitcher('', colors);
+    }
+
+    // 6. 空内容且不在生成中：显示空容器
+    if (parts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        if (message.resPath.isNotEmpty) _buildMessageImage(),
+        ...List.generate(parts.length, (i) {
+          final isLast = i == parts.length - 1;
+          if (isLast && isGenerating) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                _buildBubbleSwitcher(parts[i], colors),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, top: 4),
+                  child: Text(
+                    '对方正在输入',
+                    style: TextStyle(
+                      color: colors.outline,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+          return _buildBubbleSwitcher(parts[i], colors);
+        }),
+      ],
+    );
   }
 
   Widget _buildNarration() {
@@ -890,14 +775,14 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     // 仅对文本片段应用正则规则（思考块和工具调用块的内容不受正则影响）
     final segments = rawSegments.map((seg) {
-      if (seg.type != _ContentSegmentType.text) return seg;
+      if (seg.type != ContentSegmentType.text) return seg;
       var text = seg.content;
       for (final regex in regexs
           .where((reg) => reg.onRender)
           .where((reg) => reg.isAvailable(widget.chat, message))) {
         text = regex.process(text);
       }
-      return _ContentSegment(type: _ContentSegmentType.text, content: text);
+      return ContentSegment(type: ContentSegmentType.text, content: text);
     }).toList();
 
     return Obx(() {
@@ -929,63 +814,113 @@ class _MessageBubbleState extends State<MessageBubble> {
                     message: message,
                     displaySetting: displaySetting,
                     widget: widget)
-                : Padding(
-                    padding: isHideName
-                        ? const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 3)
-                        : const EdgeInsets.only(
-                            left: 16, right: 16, top: 10, bottom: 4),
-                    child: Column(
-                      crossAxisAlignment: isMe
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: isMe
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                : style == MessageStyle.simulate
+                    ? Padding(
+                        padding: isHideName
+                            ? const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 3)
+                            : const EdgeInsets.only(
+                                left: 16, right: 16, top: 10, bottom: 4),
+                        child: Column(
+                          crossAxisAlignment: isMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
                           children: [
-                            if (!isMe && !isHideName) ...[
-                              _buildMessageAvatar(),
-                              const SizedBox(width: 10),
-                            ],
-
-                            // 用于让连续消息对齐
-                            if (!isMe && isHideName)
-                              SizedBox(
-                                width: avatarRadius * 2 + 10,
-                              ),
-                            Flexible(
-                              child: Column(
-                                crossAxisAlignment: isMe
-                                    ? CrossAxisAlignment.end
-                                    : CrossAxisAlignment.start,
-                                children: [
-                                  if (!isHideName) _buildMessageUserName(),
-
-                                  // 渲染消息片段：思考块、工具调用结果、文本气泡
-                                  _buildSegmentsContainer(segments),
-                                  // SizedBox(height: 8.0),
-                                  // widget.buildBottomButtons(
-                                  //     widget.isSelected, message),
+                            Row(
+                              mainAxisAlignment: isMe
+                                  ? MainAxisAlignment.end
+                                  : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isMe && !isHideName) ...[
+                                  _buildMessageAvatar(),
+                                  const SizedBox(width: 10),
                                 ],
-                              ),
+                                if (!isMe && isHideName)
+                                  SizedBox(
+                                    width: avatarRadius * 2 + 10,
+                                  ),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: isMe
+                                        ? CrossAxisAlignment.end
+                                        : CrossAxisAlignment.start,
+                                    children: [
+                                      if (!isHideName) _buildMessageUserName(),
+                                      _buildSimulate(regexs),
+                                    ],
+                                  ),
+                                ),
+                                if (isMe && !isHideName) ...[
+                                  const SizedBox(width: 10),
+                                  _buildMessageAvatar(),
+                                ],
+                                if (isMe && isHideName)
+                                  SizedBox(
+                                    width: avatarRadius * 2 + 10,
+                                  ),
+                              ],
                             ),
-
-                            if (isMe && !isHideName) ...[
-                              const SizedBox(width: 10),
-                              _buildMessageAvatar(),
-                            ],
-                            if (isMe && isHideName)
-                              SizedBox(
-                                width: avatarRadius * 2 + 10,
-                              ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
+                      )
+                    : Padding(
+                        padding: isHideName
+                            ? const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 3)
+                            : const EdgeInsets.only(
+                                left: 16, right: 16, top: 10, bottom: 4),
+                        child: Column(
+                          crossAxisAlignment: isMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: isMe
+                                  ? MainAxisAlignment.end
+                                  : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isMe && !isHideName) ...[
+                                  _buildMessageAvatar(),
+                                  const SizedBox(width: 10),
+                                ],
+
+                                // 用于让连续消息对齐
+                                if (!isMe && isHideName)
+                                  SizedBox(
+                                    width: avatarRadius * 2 + 10,
+                                  ),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: isMe
+                                        ? CrossAxisAlignment.end
+                                        : CrossAxisAlignment.start,
+                                    children: [
+                                      if (!isHideName) _buildMessageUserName(),
+
+                                      // 渲染消息片段：思考块、工具调用结果、文本气泡
+                                      _buildSegmentsContainer(segments),
+                                      // SizedBox(height: 8.0),
+                                      // widget.buildBottomButtons(
+                                      //     widget.isSelected, message),
+                                    ],
+                                  ),
+                                ),
+
+                                if (isMe && !isHideName) ...[
+                                  const SizedBox(width: 10),
+                                  _buildMessageAvatar(),
+                                ],
+                                if (isMe && isHideName)
+                                  SizedBox(
+                                    width: avatarRadius * 2 + 10,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
       );
       if (message.isHidden) {
         return Opacity(
@@ -1024,116 +959,5 @@ class _MessageBubbleState extends State<MessageBubble> {
 
       return gestureDetector;
     });
-  }
-}
-
-class SummaryMessageBubble extends StatefulWidget {
-  const SummaryMessageBubble({
-    super.key,
-    required this.context,
-    required this.isLoading,
-    required this.message,
-    required this.displaySetting,
-    required this.widget,
-  });
-
-  final BuildContext context;
-  final bool isLoading;
-  final MessageModel message;
-  final ChatDisplaySettingModel displaySetting;
-  final MessageBubble widget;
-
-  @override
-  State<SummaryMessageBubble> createState() => _SummaryMessageBubbleState();
-}
-
-class _SummaryMessageBubbleState extends State<SummaryMessageBubble> {
-  bool _expanded = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textColor = colors.onSurfaceVariant;
-    final summaryText = widget.message.content.replaceAll('\n', ' ');
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.tertiaryContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        widget.isLoading
-                            ? SpinKitWave(
-                                itemCount: 3,
-                                size: 14,
-                                color: colors.primary,
-                              )
-                            : Icon(Icons.auto_awesome,
-                                color: colors.primary, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          "AI摘要",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _expanded = !_expanded;
-                        });
-                      },
-                      child: Icon(
-                        _expanded ? Icons.expand_less : Icons.expand_more,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _expanded
-                    ? MarkdownBody(
-                        data: widget.message.content,
-                        softLineBreak: true,
-                        shrinkWrap: true,
-                        styleSheet: MarkdownStyleSheet(
-                          // p: TextStyle(color: colors.outline),
-                          textScaler: TextScaler.linear(
-                              widget.displaySetting.ContentFontScale),
-                          horizontalRuleDecoration: BoxDecoration(
-                            border: Border.all(
-                                width: 1, color: colors.outlineVariant),
-                          ),
-                        ),
-                      )
-                    : Text(
-                        summaryText,
-                        textScaler: TextScaler.linear(
-                            widget.displaySetting.ContentFontScale),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          widget.widget
-              .buildBottomButtons(widget.widget.isSelected, widget.message)
-        ],
-      ),
-    );
   }
 }

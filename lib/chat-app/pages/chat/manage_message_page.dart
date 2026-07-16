@@ -308,30 +308,6 @@ class _ManageMessagePageState extends State<ManageMessagePage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            tooltip: "复制",
-            onPressed: () {
-              _chatController.putMessageToClipboard(
-                  widget.chat.messages, _selectedMessages);
-              SillyChatApp.snackbar(
-                  context, "复制了${_selectedMessages.length}条消息");
-              _cancelMultiSelect();
-            },
-            icon: Icon(Icons.copy_all, color: colors.onSurfaceVariant),
-          ),
-          IconButton(
-            tooltip: "剪切",
-            onPressed: () {
-              _chatController.putMessageToClipboard(
-                  widget.chat.messages, _selectedMessages);
-              widget.chatSessionController.removeMessages(_selectedMessages);
-              SillyChatApp.snackbar(
-                  context, "剪切了${_selectedMessages.length}条消息");
-              _updateChat();
-              _cancelMultiSelect();
-            },
-            icon: Icon(Icons.cut, color: colors.onSurfaceVariant),
-          ),
-          IconButton(
             tooltip: "隐藏",
             onPressed: () {
               for (final msg in _selectedMessages) {

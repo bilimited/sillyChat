@@ -37,23 +37,7 @@ class ChatController extends BaseController {
   final Rx<FileDeletedEvent?> fileDeleteEvent = Rx(null);
   final Rx<FileCreatedEvent?> fileCreateEvent = Rx(null);
 
-  final RxList<MessageModel> messageClipboard = <MessageModel>[].obs;
-
   final RxBool isMultiSelecting = false.obs;
-
-  List<MessageModel> get messageToPaste {
-    final now = DateTime.now();
-    final messagesToPaste = messageClipboard.reversed
-        .toList()
-        .asMap()
-        .entries
-        .map((entry) => entry.value.copyWith(
-              time: now.add(Duration(microseconds: entry.key + 1)),
-              id: now.microsecondsSinceEpoch + entry.key + 1,
-            ))
-        .toList();
-    return messagesToPaste;
-  }
 
   final CharacterController characterController = Get.find();
 
@@ -69,9 +53,6 @@ class ChatController extends BaseController {
   // 已打开的聊天
   final RxMap<String, ChatSessionController?> openedChat =
       <String, ChatSessionController>{}.obs;
-
-  bool get atFirstPage => pageController.page == 0;
-  bool get atSecondPage => pageController.page == 1;
 
   void fireDeleteEvent(String path) {
     fileDeleteEvent.value = FileDeletedEvent(path);
@@ -94,7 +75,6 @@ class ChatController extends BaseController {
     markReady();
   }
 
-
   // 加载聊天索引
   Future<void> loadChatIndex() async {
     try {
@@ -104,8 +84,7 @@ class ChatController extends BaseController {
         final String contents = await file.readAsString();
         final Map<String, dynamic> jsonList = json.decode(contents);
         jsonList.forEach((key, json) {
-          chatIndex[key] =
-              ChatMetaModel.fromJson(json, p.canonicalize(key));
+          chatIndex[key] = ChatMetaModel.fromJson(json, p.canonicalize(key));
         });
       } else {}
     } catch (e) {
@@ -152,7 +131,7 @@ class ChatController extends BaseController {
       }
       recentChats.assignAll(loaded);
       print('加载最近聊天成功，共 ${recentChats.length} 条');
-      if(recentChats.isNotEmpty){
+      if (recentChats.isNotEmpty) {
         openChat(recentChats[0].path);
       }
     } catch (e) {
@@ -202,7 +181,8 @@ class ChatController extends BaseController {
   Future<void> removeRecentChatByPath(String _path) async {
     final path = p.canonicalize(_path);
     final before = recentChats.length;
-    recentChats.removeWhere((m) => p.equals(p.canonicalize(m.path), path) ||
+    recentChats.removeWhere((m) =>
+        p.equals(p.canonicalize(m.path), path) ||
         p.isWithin(path, p.canonicalize(m.path)));
     if (recentChats.length != before) {
       print('移除最近聊天: $path (剩余 ${recentChats.length} 条)');
@@ -414,17 +394,5 @@ class ChatController extends BaseController {
 
     // 创建并返回找到的唯一文件
     return newFile.create(recursive: recursive);
-  }
-
-  void putMessageToClipboard(
-      List<MessageModel> originalMessages, List<MessageModel> messageToCopy) {
-    final messageMap = {for (var msg in messageToCopy) msg.id: msg};
-
-    final orderedMessagesToCopy = originalMessages
-        .where((msgToCopy) => messageMap.containsKey(msgToCopy.id))
-        .toList() // Convert the iterable to a list
-        .cast<MessageModel>(); // Explicitly cast to MessageModel
-
-    messageClipboard.assignAll(orderedMessagesToCopy.reversed);
   }
 }

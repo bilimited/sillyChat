@@ -135,12 +135,10 @@ class _FlutterChatMessageListState extends State<FlutterChatMessageListView> {
                   return Builder(builder: (context) {
                     final i = index - 1;
                     final message = messages[i];
-                    return _buildMessageBubble(
-                        message,
+                    return _buildMessageBubble(message,
                         i < messages.length - 1 ? messages[i + 1] : null,
                         index: i,
-                        isNarration:
-                            message.style == MessageStyle.narration);
+                        isNarration: message.style == MessageStyle.narration);
                   });
                 }
               },
@@ -257,8 +255,7 @@ class _FlutterChatMessageListState extends State<FlutterChatMessageListView> {
     );
   }
 
-  Widget _buildCompactAction(
-      IconData icon, String? label, VoidCallback onTap) {
+  Widget _buildCompactAction(IconData icon, String? label, VoidCallback onTap) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Material(
@@ -308,8 +305,7 @@ class _FlutterChatMessageListState extends State<FlutterChatMessageListView> {
 
   void _showEditDialog(MessageModel message) {
     customNavigate(
-        EditMessagePage(
-            sessionController: sessionController, message: message),
+        EditMessagePage(sessionController: sessionController, message: message),
         context: context);
   }
 
@@ -350,41 +346,6 @@ class _FlutterChatMessageListState extends State<FlutterChatMessageListView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_chatController.messageClipboard.isNotEmpty) ...[
-                Text('剪贴板中共${_chatController.messageClipboard.length}条消息'),
-                ListTile(
-                  leading: const Icon(Icons.paste),
-                  title: const Text('粘贴到上方'),
-                  onTap: () async {
-                    Get.back();
-                    final messagesToPaste = _chatController.messageToPaste;
-                    final msgList = chat.messages;
-                    final idx =
-                        msgList.indexWhere((m) => m.time == message.time);
-                    if (idx != -1) {
-                      msgList.insertAll(idx, messagesToPaste);
-                      await sessionController.saveChat();
-                      setState(() {});
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.paste),
-                  title: const Text('粘贴到下方'),
-                  onTap: () async {
-                    Get.back();
-                    final messagesToPaste = _chatController.messageToPaste;
-                    final msgList = chat.messages;
-                    final idx =
-                        msgList.indexWhere((m) => m.time == message.time);
-                    if (idx != -1) {
-                      msgList.insertAll(idx + 1, messagesToPaste);
-                      await sessionController.saveChat();
-                      setState(() {});
-                    }
-                  },
-                ),
-              ],
               ListTile(
                 leading: const Icon(Icons.image),
                 title: const Text('添加图片'),
@@ -449,8 +410,8 @@ class _FlutterChatMessageListState extends State<FlutterChatMessageListView> {
     final branchMessages = chat.messages.sublist(0, index + 1);
     final newChat = chat.copyWith(
         isCopyFile: false, messages: branchMessages, name: '${chat.name}的分支');
-    final fp = await ChatController.of
-        .createChat(newChat, p.dirname(chat.file!.path));
+    final fp =
+        await ChatController.of.createChat(newChat, p.dirname(chat.file!.path));
     ChatController.of.openChat(fp);
   }
 }

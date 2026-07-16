@@ -18,6 +18,7 @@ class ChatListItem extends StatelessWidget {
   bool isSelected;
   VoidCallback onTap;
   VoidCallback onLongPress;
+  bool compact;
 
   Widget? avatar; // 替换头像
 
@@ -27,6 +28,7 @@ class ChatListItem extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.onLongPress,
+    this.compact = true,
   }) : super(key: key);
 
   String _formatTime(String time) {
@@ -73,29 +75,36 @@ class ChatListItem extends StatelessWidget {
                         colors: [gradColor, theme.colorScheme.surface]),
                   )
                 : null,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(
+                horizontal: 16, vertical: compact ? 8 : 12),
             child: Row(
               children: [
                 if (chat != null)
                   chat!.mode == ChatMode.group
-                      ? StackAvatar(avatarUrls: chat!.getAllAvatars())
+                      ? StackAvatar(
+                          avatarUrls: chat!.getAllAvatars(),
+                          avatarSize: compact ? 36 : 45,
+                          spacing: compact ? 13 : 17,
+                        )
                       : isQuickChat
                           ? CircleAvatar(
                               backgroundColor:
                                   theme.colorScheme.surfaceContainerHighest,
-                              radius: 24,
+                              radius: compact ? 12 : 24,
                               child: Icon(
                                 Icons.chat_bubble_outline_rounded,
                                 color: theme.colorScheme.onSurface,
-                                size: 20,
+                                size: compact ? 16 : 20,
                               )
                               //Text(chat!.name[0],style: TextStyle(color: theme.colorScheme.onPrimary),),
                               )
-                          : AvatarImage.round(chat!.assistant.avatar, 24),
-                const SizedBox(width: 16),
+                          : AvatarImage.round(
+                              chat!.assistant.avatar, compact ? 18 : 24),
+                SizedBox(width: compact ? 12 : 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -110,24 +119,27 @@ class ChatListItem extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      // 如果有标签则显示标签，否则显示最近消息
-                      if (chat != null)
-                        Text(
-                          ToolCallTag.stripTags(
-                            chat!.lastMessage
-                                .replaceAll(
-                                    RegExp(r'<think>.*?</think>', dotAll: true),
-                                    '')
-                                .replaceAll('\n', ''),
+                      // 紧凑模式不显示最近消息预览
+                      if (!compact) ...[
+                        const SizedBox(height: 4),
+                        if (chat != null)
+                          Text(
+                            ToolCallTag.stripTags(
+                              chat!.lastMessage
+                                  .replaceAll(
+                                      RegExp(r'<think>.*?</think>',
+                                          dotAll: true),
+                                      '')
+                                  .replaceAll('\n', ''),
+                            ),
+                            style: TextStyle(
+                              color: theme.colorScheme.outline,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          style: TextStyle(
-                            color: theme.colorScheme.outline,
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -145,26 +157,30 @@ class ChatListItem extends StatelessWidget {
                           fontSize: 12,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${chat!.messageCount}条',
-                              style: TextStyle(
-                                color: theme.colorScheme.outline,
-                                fontSize: 10,
+                      // 紧凑模式不显示消息计数
+                      if (!compact) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${chat!.messageCount}条',
+                                style: TextStyle(
+                                  color: theme.colorScheme.outline,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
               ],

@@ -202,6 +202,7 @@ class _RecentChatPageState extends State<RecentChatPage> {
                 Get.back();
               }
             },
+            compact: false,
             onLongPress: () {
               if (!_isMultiSelectMode) {
                 setState(() {

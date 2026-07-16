@@ -176,32 +176,6 @@ class _ChatPageState extends State<ChatPage> {
     sessionController.saveChat();
   }
 
-  // ─── WebView UI-context callbacks ─────────────────────────────────────
-  //
-  // These are invoked by WebviewChatMessageListView when the Vue frontend
-  // triggers actions that need Flutter UI context (Clipboard, Navigator,
-  // ImagePicker, dialogs). The Flutter message list handles these actions
-  // internally via its own BuildContext.
-
-  void _onCopyToClipboard(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    SillyChatApp.snackbar(context, '复制成功');
-  }
-
-  void _onPasteMessages(String timeStr, String position) {
-    final messagesToPaste = _chatController.messageToPaste;
-    if (messagesToPaste.isEmpty) return;
-    final msgList = chat.messages;
-    final targetTime = DateTime.parse(timeStr);
-    final idx = msgList.indexWhere((m) => m.time == targetTime);
-    if (idx != -1) {
-      final insertIdx = position == 'above' ? idx : idx + 1;
-      msgList.insertAll(insertIdx, messagesToPaste);
-      _updateChat();
-      setState(() {});
-    }
-  }
-
   Future<void> _onPickImageForMessage(String timeStr) async {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -256,41 +230,6 @@ class _ChatPageState extends State<ChatPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_chatController.messageClipboard.isNotEmpty) ...[
-                Text('剪贴板中共${_chatController.messageClipboard.length}条消息'),
-                ListTile(
-                  leading: const Icon(Icons.paste),
-                  title: const Text('粘贴到上方'),
-                  onTap: () async {
-                    Get.back();
-                    final messagesToPaste = _chatController.messageToPaste;
-                    final msgList = chat.messages;
-                    final idx =
-                        msgList.indexWhere((m) => m.time == message.time);
-                    if (idx != -1) {
-                      msgList.insertAll(idx, messagesToPaste);
-                      await _updateChat();
-                      setState(() {});
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.paste),
-                  title: const Text('粘贴到下方'),
-                  onTap: () async {
-                    Get.back();
-                    final messagesToPaste = _chatController.messageToPaste;
-                    final msgList = chat.messages;
-                    final idx =
-                        msgList.indexWhere((m) => m.time == message.time);
-                    if (idx != -1) {
-                      msgList.insertAll(idx + 1, messagesToPaste);
-                      await _updateChat();
-                      setState(() {});
-                    }
-                  },
-                ),
-              ],
               ListTile(
                 leading: const Icon(Icons.image),
                 title: const Text('添加图片'),
@@ -450,8 +389,6 @@ class _ChatPageState extends State<ChatPage> {
                   onReadingStateChanged: (bool isReading) {
                     setState(() => _isUserReading = isReading);
                   },
-                  onCopyToClipboard: _onCopyToClipboard,
-                  onPasteMessages: _onPasteMessages,
                   onPickImageForMessage: _onPickImageForMessage,
                   onCreateBranch: _createBranchFrom,
                   onOptimizeMessage: _showOptimizationDialog,

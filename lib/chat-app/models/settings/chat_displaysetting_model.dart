@@ -33,6 +33,8 @@ class ChatDisplaySettingModel {
   bool tryParseInlineHtml = true;
   bool useWebview = false;
 
+  String simulateSplitDelimiter = "\n";
+
   bool get displayAvatar => avatarStyle != AvatarStyle.hidden;
 
   ChatDisplaySettingModel({
@@ -54,6 +56,7 @@ class ChatDisplaySettingModel {
     this.BackgroundImageBlur = 1.0,
     this.BackgroundImageOpacity = 1.0,
     this.useWebview = false,
+    this.simulateSplitDelimiter = "\n",
   });
 
   // JSON序列化
@@ -78,6 +81,7 @@ class ChatDisplaySettingModel {
       'BackgroundImageOpacity': BackgroundImageOpacity,
       'BackgroundImageBlur': BackgroundImageBlur,
       'useWebview': useWebview,
+      'simulateSplitDelimiter': simulateSplitDelimiter,
     };
   }
 
@@ -104,5 +108,6 @@ class ChatDisplaySettingModel {
     BackgroundImageOpacity = (json['BackgroundImageOpacity'] ?? 1.0).toDouble();
     BackgroundImageBlur = (json['BackgroundImageBlur'] ?? 1.0).toDouble();
     useWebview = json['useWebview'] ?? false;
+    simulateSplitDelimiter = json['simulateSplitDelimiter'] ?? "\n";
   }
 }

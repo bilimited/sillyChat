@@ -31,7 +31,8 @@ class Relation {
 enum MessageStyle {
   common,
   narration,
-  summary;
+  summary,
+  simulate;
 
   static MessageStyle fromJson(String json) {
     return MessageStyle.values.firstWhere(

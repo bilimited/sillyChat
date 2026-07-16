@@ -24,8 +24,6 @@ class WebviewChatMessageListView extends ChatMessageListView {
     required super.sessionController,
     required super.scrollController,
     required super.onReadingStateChanged,
-    required super.onCopyToClipboard,
-    required super.onPasteMessages, 
     required super.onPickImageForMessage,
     required super.onCreateBranch,
     required super.onOptimizeMessage,
