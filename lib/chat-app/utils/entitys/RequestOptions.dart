@@ -5,6 +5,16 @@ import 'package:flutter_example/chat-app/utils/entitys/llmMessage.dart';
 import 'package:flutter_example/chat-app/utils/entitys/tool_call.dart';
 import 'package:flutter_example/chat-app/widgets/other/compressed_message.dart';
 
+enum ThinkEffort { disabled, low, medium, high, xhigh }
+
+ThinkEffort _parseThinkEffort(dynamic value) {
+  if (value is String) {
+    final index = ThinkEffort.values.indexWhere((e) => e.name == value);
+    if (index != -1) return ThinkEffort.values[index];
+  }
+  return ThinkEffort.disabled;
+}
+
 class LLMRequestOptions {
   final List<LLMMessage> messages; // 消息记录
   final int maxTokens; // token上限
@@ -16,6 +26,7 @@ class LLMRequestOptions {
   final int apiId;
   final String? modelName;
   final int seed;
+  final ThinkEffort thinkEffort; // 推理深度
 
   final bool isDeleteThinking; // 是否删除思考消息
   final bool isThinkMode; // 是否思考模式
@@ -44,6 +55,7 @@ class LLMRequestOptions {
     this.isThinkMode = false,
     this.isDeleteThinking = true,
     this.seed = -1,
+    this.thinkEffort = ThinkEffort.disabled,
     this.isMergeMessageList = false,
     this.isStreaming = true,
     this.modelName,
@@ -68,6 +80,7 @@ class LLMRequestOptions {
       isDeleteThinking: json['is_delete_thinking'] ?? true,
       isThinkMode: json['is_think_mode'] ?? false,
       seed: json['seed'] ?? -1,
+      thinkEffort: _parseThinkEffort(json['think_effort']),
       isMergeMessageList: json['is_merge_message_list'] ?? false,
       isStreaming: json['is_streaming'] ?? true,
       chatCompressionSettings: json.containsKey('chat_compression_settings')
@@ -93,6 +106,7 @@ class LLMRequestOptions {
       'is_delete_thinking': isDeleteThinking,
       'is_think_mode': isThinkMode,
       'seed': seed,
+      'think_effort': thinkEffort.name,
       'is_merge_message_list': isMergeMessageList,
       'is_streaming': isStreaming,
       'chat_compression_settings': chatCompressionSettings.toJson(),
@@ -115,6 +129,7 @@ class LLMRequestOptions {
     bool? isDeleteThinking,
     bool? isThinkMode,
     int? seed,
+    ThinkEffort? thinkEffort,
     bool? isMergeMessageList,
     bool? isStreaming,
     ChatCompressionSettings? chatCompressionSettings,
@@ -134,6 +149,7 @@ class LLMRequestOptions {
       isDeleteThinking: isDeleteThinking ?? this.isDeleteThinking,
       isThinkMode: isThinkMode ?? this.isThinkMode,
       seed: seed ?? this.seed,
+      thinkEffort: thinkEffort ?? this.thinkEffort,
       isMergeMessageList: isMergeMessageList ?? this.isMergeMessageList,
       isStreaming: isStreaming ?? this.isStreaming,
       chatCompressionSettings:

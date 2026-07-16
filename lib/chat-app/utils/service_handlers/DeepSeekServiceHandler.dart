@@ -10,17 +10,17 @@ import 'package:http/http.dart';
 class Deepseekservicehandler extends Openaiservicehandler {
   const Deepseekservicehandler()
       : super(
-            baseUrl: 'https://api.deepseek.com/v1',
-            name: 'deepseek',
-            defaultModelList: const [
-              'deepseek-chat',
-              'deepseek-reasoner',
-              'DeepSeek-V3-0324',
-              'DeepSeek-R1-0528',
-              'DeepSeek-V3',
-              'DeepSeek-R1',
-              
-            ],);
+          baseUrl: 'https://api.deepseek.com/v1',
+          name: 'deepseek',
+          defaultModelList: const [
+            'deepseek-chat',
+            'deepseek-reasoner',
+            'DeepSeek-V3-0324',
+            'DeepSeek-R1-0528',
+            'DeepSeek-V3',
+            'DeepSeek-R1',
+          ],
+        );
 
   @override
   bool get canFetchBalance => true;

@@ -76,22 +76,6 @@ class Openaiservicehandler extends Servicehandler {
   }
 
   parseImage(String path) async {
-    // try {
-    //   final bytes = await FlutterImageCompress.compressWithFile(
-    //     path,
-    //     quality: 85,
-    //     format: CompressFormat.jpeg,
-    //   );
-    //   if (bytes != null) {
-    //     imageContents.add({
-    //       "type": "image_url",
-    //       "image_url": base64Encode(bytes),
-    //     });
-    //   }
-    // } catch (e) {
-    //   // 这里可以改为更合适的日志记录
-    //   print('Error compressing/reading file $path: $e');
-    // }
     final file = File(path);
 
     final bytes = await file.readAsBytes();
@@ -182,6 +166,14 @@ class Openaiservicehandler extends Servicehandler {
     // 添加工具选择策略
     if (options.toolChoice != null) {
       body['tool_choice'] = options.toolChoice;
+    }
+
+    // 推理深度
+    if (options.thinkEffort == ThinkEffort.disabled) {
+      body['thinking'] = {'type': 'disabled'};
+    } else {
+      body['thinking'] = {'type': 'enabled'};
+      body['reasoning_effort'] = options.thinkEffort.name;
     }
 
     return body;
@@ -305,8 +297,7 @@ class Openaiservicehandler extends Servicehandler {
           continue;
         }
 
-        final delta =
-            jsonData['choices'][0]['delta'] as Map<String, dynamic>?;
+        final delta = jsonData['choices'][0]['delta'] as Map<String, dynamic>?;
         if (delta == null) continue;
 
         // ----- 处理工具调用增量 -----
@@ -314,8 +305,8 @@ class Openaiservicehandler extends Servicehandler {
         if (toolCallsDelta != null) {
           for (final tcDelta in toolCallsDelta) {
             final idx = (tcDelta['index'] as int?) ?? 0;
-            final pending = pendingToolCalls.putIfAbsent(
-                idx, () => _PendingToolCall());
+            final pending =
+                pendingToolCalls.putIfAbsent(idx, () => _PendingToolCall());
 
             if (tcDelta['id'] != null) {
               pending.id = tcDelta['id'] as String;
@@ -333,8 +324,7 @@ class Openaiservicehandler extends Servicehandler {
         }
 
         // ----- 检查 finish_reason -----
-        final finishReason =
-            jsonData['choices'][0]['finish_reason'] as String?;
+        final finishReason = jsonData['choices'][0]['finish_reason'] as String?;
 
         if (finishReason == 'tool_calls') {
           // 工具调用完成，发送所有累积的工具调用
@@ -355,8 +345,7 @@ class Openaiservicehandler extends Servicehandler {
         }
 
         // ----- 处理文本内容（含思维链） -----
-        final reasoningContent =
-            delta['reasoning_content'] as String? ?? '';
+        final reasoningContent = delta['reasoning_content'] as String? ?? '';
         final content = delta['content'] as String? ?? '';
 
         if (reasoningContent.isNotEmpty && !cot) {

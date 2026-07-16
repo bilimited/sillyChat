@@ -54,6 +54,28 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildApiSelector(),
+        _buildDropdown(
+          label: '推理深度 (Reasoning Effort)',
+          value: widget.options.thinkEffort,
+          items: ThinkEffort.values,
+          itemLabel: (e) {
+            switch (e) {
+              case ThinkEffort.disabled:
+                return '关闭';
+              case ThinkEffort.low:
+                return '低 (Low)';
+              case ThinkEffort.medium:
+                return '中 (Medium)';
+              case ThinkEffort.high:
+                return '高 (High)';
+              case ThinkEffort.xhigh:
+                return '极高 (X-High)';
+            }
+          },
+          onChanged: (value) {
+            widget.onChanged(widget.options.copyWith(thinkEffort: value));
+          },
+        ),
         Divider(
           height: 16,
         ),
@@ -248,6 +270,35 @@ class _RequestOptionsEditorState extends State<RequestOptionsEditor> {
         ),
         Text(label),
       ],
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label),
+          DropdownButton<T>(
+            value: value,
+            isExpanded: true,
+            items: items.map((e) {
+              return DropdownMenuItem<T>(
+                value: e,
+                child: Text(itemLabel(e)),
+              );
+            }).toList(),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }
