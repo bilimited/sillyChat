@@ -13,6 +13,7 @@ import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
 import '../../providers/chat_option_controller.dart';
 import '../../models/chat_option_model.dart';
+import '../../utils/tool_registry.dart';
 
 class ChatOptionsManagerPage extends StatelessWidget {
   final ChatOptionController _controller = Get.find<ChatOptionController>();
@@ -43,7 +44,8 @@ class ChatOptionsManagerPage extends StatelessWidget {
         },
         body: Obx(
           () => ReorderableListView.builder(
-            padding: const EdgeInsets.only(top: 8, bottom: 80,left: 8,right: 8),
+            padding:
+                const EdgeInsets.only(top: 8, bottom: 80, left: 8, right: 8),
             itemCount: _controller.chatOptions.length,
             onReorder: _controller.reorderChatOptions,
             itemBuilder: (context, index) {
@@ -65,12 +67,14 @@ class ChatOptionsManagerPage extends StatelessWidget {
 
   Widget _buildOptionCard(
       ChatOptionModel option, int index, BuildContext context) {
+    final isDefault = index == 0;
     final name = option.name;
     final isDefaultApi = option.requestOptions.apiId == -1;
     final apiName = option.requestOptions.api?.displayName;
     final promptCount = option.prompts.length;
     final regexCount = option.regex.length;
-    final temperature = option.requestOptions.temperature;
+    final agentEnabled = option.agentConfig?.enabled ?? false;
+    final toolWhitelist = option.agentConfig?.toolWhitelist;
     final colorScheme = Theme.of(context).colorScheme;
 
     return KeyedSubtree(
@@ -88,7 +92,15 @@ class ChatOptionsManagerPage extends StatelessWidget {
         title: name,
         subTitle: Builder(builder: (context) {
           final chips = <Widget>[];
+          if (isDefault) {
+            chips.add(InfoChip(
+              label: '默认预设',
+              color: Colors.orange,
+              icon: Icons.star,
+            ));
+          }
           if (apiName != null && apiName.isNotEmpty) {
+            if (chips.isNotEmpty) chips.add(const SizedBox(width: 6));
             chips.add(InfoChip(
               label: isDefaultApi ? '使用默认' : apiName,
               color: colorScheme.primary,
@@ -109,17 +121,37 @@ class ChatOptionsManagerPage extends StatelessWidget {
               color: colorScheme.tertiary,
             ));
           }
-          if (temperature != null) {
-            if (chips.isNotEmpty) chips.add(const SizedBox(width: 6));
+          if (chips.isNotEmpty) chips.add(const SizedBox(width: 6));
+          if (agentEnabled) {
+            final toolCount = toolWhitelist?.length ??
+                ToolRegistry.instance.definitions.length;
             chips.add(InfoChip(
-              label: '温度 $temperature',
-              color: Color.fromARGB(255, 216, 74, 63),
+              label: '$toolCount 个工具',
+              color: Colors.teal,
+              icon: Icons.build,
+            ));
+          } else {
+            chips.add(InfoChip(
+              label: 'Agent 未启用',
+              color: Colors.grey,
+              icon: Icons.build_outlined,
             ));
           }
           if (chips.isEmpty) return const SizedBox.shrink();
           return Wrap(children: chips);
         }),
         options: [
+          if (!isDefault)
+            AppCardOptionItem<String>(
+              value: 'set_default',
+              child: const Row(
+                children: [
+                  Icon(Icons.push_pin),
+                  SizedBox(width: 12),
+                  Text('设为默认预设'),
+                ],
+              ),
+            ),
           AppCardOptionItem<String>(
             value: 'edit',
             child: const Row(
@@ -155,9 +187,11 @@ class ChatOptionsManagerPage extends StatelessWidget {
           ),
         ],
         onSelected: (value) {
-          if (value == 'edit') {
-            customNavigate(
-                EditChatOptionPage(option: option), context: context);
+          if (value == 'set_default') {
+            _onSetDefault(index);
+          } else if (value == 'edit') {
+            customNavigate(EditChatOptionPage(option: option),
+                context: context);
           } else if (value == 'export_st') {
             _onExportST(option, context);
           } else if (value == 'delete') {
@@ -165,11 +199,17 @@ class ChatOptionsManagerPage extends StatelessWidget {
           }
         },
         onTap: () {
-          customNavigate(
-              EditChatOptionPage(option: option), context: context);
+          customNavigate(EditChatOptionPage(option: option), context: context);
         },
       ),
     );
+  }
+
+  void _onSetDefault(int index) {
+    final option = _controller.chatOptions.removeAt(index);
+    _controller.chatOptions.insert(0, option);
+    _controller.update();
+    _controller.saveChatOptions();
   }
 
   Future<void> _onExportST(ChatOptionModel option, BuildContext context) async {

@@ -634,7 +634,7 @@ class ChatSessionController extends BaseController {
         LLMBuffer: "",
         isGenerating: true,
         GenerateState: "正在激活世界书...",
-        style: assistant.messageStyle,
+        style: chat.isImmersiveMode ? MessageStyle.simulate : assistant.messageStyle,
         currentAssistant: assistantId));
 
     StringBuffer fullResponse = StringBuffer();

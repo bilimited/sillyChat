@@ -152,8 +152,8 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                           FontManager.loadFont(
                               context: context,
                               onFontLoaded: (fontFamily, fontPath) {
-                                controller
-                                    .updateThemeStardard(fontName: fontFamily);
+                                controller.updateThemeStardard(
+                                    fontName: fontFamily);
                                 _globalFontController.text = fontFamily;
                                 setting.GlobalFont = fontFamily;
                                 setting.CustomFontPath = fontPath;
@@ -224,7 +224,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
 
             SettingsSwitchTile(
               title: '使用 WebView 渲染消息',
-              subtitle: '启用后使用 WebView 渲染聊天消息（实验性功能，重启聊天生效）',
+              subtitle: '启用后使用 WebView 渲染聊天消息（实验性功能，重启聊天生效）（**未完成，不要点**）',
               value: setting.useWebview,
               onChanged: (bool value) {
                 setting.useWebview = value;
@@ -236,8 +236,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
             const Divider(),
 
             SettingsSliderTile(
-              label:
-                  '聊天字体缩放: ${setting.ContentFontScale.toStringAsFixed(2)}',
+              label: '聊天字体缩放: ${setting.ContentFontScale.toStringAsFixed(2)}',
               value: setting.ContentFontScale,
               min: 0.5,
               max: 2.0,
@@ -261,8 +260,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
               onSave: () => controller.saveSettings(),
             ),
             SettingsSliderTile(
-              label:
-                  '头像圆角: ${setting.AvatarBorderRadius.toStringAsFixed(1)}',
+              label: '头像圆角: ${setting.AvatarBorderRadius.toStringAsFixed(1)}',
               value: setting.AvatarBorderRadius,
               min: 0,
               max: 50,

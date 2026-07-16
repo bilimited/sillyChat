@@ -693,38 +693,53 @@ class _MessageBubbleState extends State<MessageBubble> {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        if (message.resPath.isNotEmpty) _buildMessageImage(),
-        ...List.generate(parts.length, (i) {
-          final isLast = i == parts.length - 1;
-          if (isLast && isGenerating) {
-            return Column(
+    return StickyOverlayContainer(
+        overlay: widget.buildBottomButtons(widget.isSelected, message),
+        alignment: isMe ? Alignment.bottomRight : Alignment.bottomLeft,
+        margin: EdgeInsets.zero,
+        child: SizedBox(
+          width: double.infinity,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCirc,
+            padding: widget.isSelected
+                ? const EdgeInsetsGeometry.only(bottom: 24)
+                : EdgeInsetsGeometry.zero,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment:
                   isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                _buildBubbleSwitcher(parts[i], colors),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 4),
-                  child: Text(
-                    '对方正在输入',
-                    style: TextStyle(
-                      color: colors.outline,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
+                if (message.resPath.isNotEmpty) _buildMessageImage(),
+                ...List.generate(parts.length, (i) {
+                  final isLast = i == parts.length - 1;
+                  if (isLast && isGenerating) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: isMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        _buildBubbleSwitcher(parts[i], colors),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12, top: 4),
+                          child: Text(
+                            '对方正在输入',
+                            style: TextStyle(
+                              color: colors.outline,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return _buildBubbleSwitcher(parts[i], colors);
+                }),
               ],
-            );
-          }
-          return _buildBubbleSwitcher(parts[i], colors);
-        }),
-      ],
-    );
+            ),
+          ),
+        ));
   }
 
   Widget _buildNarration() {

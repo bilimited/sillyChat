@@ -51,6 +51,7 @@ class ChatModel {
   Map<String, bool> activitedLorebookItems = {}; // 手动激活的LorebookItem
 
   bool needAutoTitle = false; // 是否需要自动生成标题
+  bool isImmersiveMode = false; // 沉浸模式：AI消息默认使用拟真风格
 
   // 对话摘要，介绍或作者注释
   // 会被插入到提示词中
@@ -157,6 +158,7 @@ class ChatModel {
     this.mode = ChatMode.auto,
     this.messageTemplate = "{{msg}}", // 新增：构造函数参数
     this.needAutoTitle = false,
+    this.isImmersiveMode = false,
   }) {}
 
   List<String> getAllAvatars(CharacterController controller) {
@@ -186,10 +188,10 @@ class ChatModel {
     return match?.group(1);
   }
 
-  factory ChatModel.empty() {
+  factory ChatModel.empty({String? leading}) {
     return ChatModel(
         id: DateTime.now().microsecondsSinceEpoch,
-        name: "新对话",
+        name: leading != null ? "${leading}-新对话" : "新对话",
         avatar: '',
         lastMessage: '对话已创建',
         time: DateTime.now().toString(),
@@ -235,7 +237,8 @@ class ChatModel {
       ..activitedLorebookItems =
           (json['activitedLorebookItems'] as Map<String, dynamic>?)
                   ?.map((key, value) => MapEntry(key, value == true)) ??
-              {};
+              {}
+      ..isImmersiveMode = json['isImmersiveMode'] ?? false;
   }
 
   static Future<ChatModel> fromFile(File f) async {
@@ -264,6 +267,7 @@ class ChatModel {
         'chatVars': chatVars,
         'activitedLorebookItems': activitedLorebookItems,
         'needAutoTitle': needAutoTitle,
+        'isImmersiveMode': isImmersiveMode,
         'meta': metaData,
       };
 
@@ -288,7 +292,8 @@ class ChatModel {
       Map<String, String>? chatVars,
       Map<String, String>? metaData,
       Map<String, bool>? activitedLorebookItems,
-      bool? needAutoTitle}) {
+      bool? needAutoTitle,
+      bool? isImmersiveMode}) {
     final chat = ChatModel(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -309,7 +314,8 @@ class ChatModel {
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
-          activitedLorebookItems ?? this.activitedLorebookItems;
+          activitedLorebookItems ?? this.activitedLorebookItems
+      ..isImmersiveMode = isImmersiveMode ?? this.isImmersiveMode;
     if (isCopyFile) chat.file = this.file;
     return chat;
   }
@@ -334,7 +340,8 @@ class ChatModel {
       Map<String, String>? chatVars,
       Map<String, String>? metaData,
       Map<String, bool>? activitedLorebookItems,
-      bool? needAutoTitle}) {
+      bool? needAutoTitle,
+      bool? isImmersiveMode}) {
     return ChatModel(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -355,7 +362,8 @@ class ChatModel {
       ..chatVars = chatVars ?? this.chatVars
       ..metaData = metaData ?? this.metaData
       ..activitedLorebookItems =
-          activitedLorebookItems ?? this.activitedLorebookItems;
+          activitedLorebookItems ?? this.activitedLorebookItems
+      ..isImmersiveMode = isImmersiveMode ?? this.isImmersiveMode;
   }
 }
 

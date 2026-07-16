@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +25,6 @@ import 'package:flutter_example/chat-app/widgets/chat/bottom_input_area.dart';
 import 'package:flutter_example/chat-app/widgets/chat/chat_vars_panel.dart';
 import 'package:flutter_example/chat-app/widgets/lorebook/lorebook_activator.dart';
 import 'package:flutter_example/chat-app/widgets/common/size_animated.dart';
-import 'package:flutter_example/chat-app/widgets/common/toggle_chip.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
@@ -67,6 +67,9 @@ class _ChatPageState extends State<ChatPage> {
   // 目前仅用于剪贴板
   final ChatController _chatController = Get.find<ChatController>();
   final VaultSettingController _settingController = Get.find();
+
+  /// ChatPage 自身的 Scaffold key，用于控制右侧 endDrawer
+  final GlobalKey<ScaffoldState> _chatScaffoldKey = GlobalKey<ScaffoldState>();
 
   final bool isDesktop = SillyChatApp.isDesktop();
 
@@ -322,55 +325,7 @@ class _ChatPageState extends State<ChatPage> {
                       directoryPath: p.dirname(chat.file?.path ?? '')),
                   context: context);
             },
-            topToolBar: [
-              // ToggleChip(
-              //     icon: Icons.chat,
-              //     text: '手动模式',
-              //     initialValue: chat.mode == ChatMode.group,
-              //     onToggle: (value) {
-              //       setState(() {
-              //         if (chat.mode == ChatMode.group) {
-              //           chat.mode = ChatMode.auto;
-              //         } else {
-              //           chat.mode = ChatMode.group;
-              //         }
-              //       });
-              //       _updateChat();
-              //     }),
-              ...manualItems.map((item) {
-                return ToggleChip(
-                    // icon: Icons.book,
-                    text: item.name,
-                    initialValue: item.isActive,
-                    onToggle: (val) {
-                      item.isActive = val;
-                      LoreBookController.of.saveLorebooks();
-                    });
-              }),
-              ToggleChip(
-                  icon: Icons.tune,
-                  text: '',
-                  initialValue: false,
-                  asButton: true,
-                  onToggle: (value) {
-                    final global =
-                        Get.find<LoreBookController>().globalActivitedLoreBooks;
-                    final chars = chat.characters
-                        .expand((char) => char.loreBooks)
-                        .toSet();
-                    final stories = chat.bindStory?.loreBooks ?? [];
-                    if (chat.assistantId != null)
-                      chars.addAll(chat.assistant!.loreBooks);
-                    customNavigate(
-                        LoreBookActivator(
-                            chatSessionController: sessionController,
-                            lorebooks: [
-                              ...{...global, ...chars, ...stories}
-                            ],
-                            chat: chat),
-                        context: context);
-                  }),
-            ],
+            topToolBar: const [],
             havaBackgroundImage: chat.assistant.backgroundImage != null,
           );
         }));
@@ -563,91 +518,12 @@ class _ChatPageState extends State<ChatPage> {
                 context: context);
           },
         ),
-        _buildMoreVertButton(),
-      ],
-    );
-  }
-
-  Widget _buildMoreVertButton() {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert),
-      onSelected: (value) async {
-        if (value == 'local_summary') {
-          sessionController.doLocalSummary();
-        } else if (value == 'auto_title') {
-          sessionController.generateTitle();
-        } else if (value == 'ai_help_answer') {
-          sessionController.simulateUserMessage();
-        } else if (value == 'chat_vars') {
-          setState(() => _showChatVars = !_showChatVars);
-        } else if (value == 'search') {
-          customNavigate(
-              ManageMessagePage(
-                chat: chat,
-                chatSessionController: sessionController,
-                onTapMessage: (message) {
-                  _scrollToMessage(message);
-                },
-              ),
-              context: context);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        PopupMenuItem<String>(
-          value: 'chat_vars',
-          child: Row(
-            children: [
-              Icon(
-                Icons.data_object,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Text(_showChatVars ? '关闭变量面板' : '聊天变量'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'auto_title',
-          child: Row(
-            children: [
-              Icon(
-                Icons.title,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              const Text('生成标题'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'local_summary',
-          child: Row(
-            children: [
-              Icon(
-                Icons.summarize,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              const Text('聊天内总结'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'recent_chat',
-          child: Row(
-            children: [
-              Icon(
-                Icons.history,
-                color: Theme.of(context).iconTheme.color,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              const Text('最近聊天'),
-            ],
-          ),
+        IconButton(
+          icon: const Icon(Icons.info_outline),
+          tooltip: '聊天详情',
+          onPressed: () {
+            _chatScaffoldKey.currentState?.openEndDrawer();
+          },
         ),
       ],
     );
@@ -696,9 +572,11 @@ class _ChatPageState extends State<ChatPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
+      key: _chatScaffoldKey,
       extendBodyBehindAppBar: true,
       backgroundColor: colors.surface,
       appBar: _buildAppBar(),
+      endDrawer: _buildRightDrawer(context),
       body: Container(
         child: Stack(
           children: [
@@ -722,8 +600,10 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildDesktop(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      key: _chatScaffoldKey,
       extendBodyBehindAppBar: true,
       backgroundColor: colors.surfaceContainerHigh,
+      endDrawer: _buildRightDrawer(context),
       body: Stack(
         children: [
           if (chat.backgroundOrCharBackground != null) _buildBackgroundImage(),
@@ -757,6 +637,259 @@ class _ChatPageState extends State<ChatPage> {
           widget.scaffoldKey?.currentState?.openDrawer();
         },
         icon: const Icon(Icons.menu));
+  }
+
+  Widget _buildRightDrawer(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Drawer(
+      width: min(_maxDrawerWidth, MediaQuery.of(context).size.width * 0.85),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: const Text('聊天详情'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                _chatScaffoldKey.currentState?.closeEndDrawer();
+              },
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // ── 基本信息 ──
+            _buildDrawerSectionTitle('基本信息', textTheme, colors),
+            const SizedBox(height: 8),
+            _buildDrawerInfoRow(
+              Icons.chat_bubble_outline,
+              '聊天名称',
+              chat.name,
+              colors,
+              onTap: () {
+                _chatScaffoldKey.currentState?.closeEndDrawer();
+                showEditDialog(
+                  title: "编辑标题",
+                  hintText: '请输入聊天标题',
+                  initialValue: chat.name,
+                  onConfirm: (name) {
+                    chat.name = name;
+                    setState(() {
+                      _updateChat();
+                    });
+                  },
+                );
+              },
+            ),
+            if (chat.bindCharacter != null)
+              _buildDrawerInfoRow(
+                Icons.person,
+                '角色',
+                chat.bindCharacter!.roleName,
+                colors,
+              ),
+            if (chat.bindStory != null)
+              _buildDrawerInfoRow(
+                Icons.store_mall_directory,
+                '故事',
+                chat.bindStory!.name,
+                colors,
+              ),
+            _buildDrawerInfoRow(
+              Icons.token,
+              '预估 Tokens',
+              '约 ${sessionController.cachedTokens}',
+              colors,
+            ),
+            // ── 世界书激活 ──
+            if (manualItems.isNotEmpty) ...[
+              const Divider(height: 32),
+              _buildDrawerSectionTitle('世界书激活', textTheme, colors),
+              const SizedBox(height: 4),
+              ...manualItems.map((item) {
+                return _buildLorebookToggle(item.name, item.isActive, (val) {
+                  item.isActive = val;
+                  LoreBookController.of.saveLorebooks();
+                  setState(() {});
+                }, colors);
+              }),
+            ],
+            _buildLorebookActivatorTile(colors),
+            const Divider(height: 32),
+
+            // ── 沉浸模式 ──
+            _buildDrawerSectionTitle('沉浸模式', textTheme, colors),
+            const SizedBox(height: 8),
+            Card(
+              margin: const EdgeInsets.only(bottom: 4),
+              child: SwitchListTile(
+                dense: true,
+                title: const Text(
+                  '沉浸模式',
+                  style: TextStyle(fontSize: 14),
+                ),
+                subtitle: const Text(
+                  'AI消息默认使用拟真风格',
+                  style: TextStyle(fontSize: 12),
+                ),
+                secondary:
+                    Icon(Icons.visibility, size: 20, color: colors.primary),
+                value: chat.isImmersiveMode,
+                onChanged: (val) {
+                  setState(() {
+                    chat.isImmersiveMode = val;
+                    _updateChat();
+                  });
+                },
+                activeTrackColor: colors.primary,
+              ),
+            ),
+            const Divider(height: 32),
+
+            // ── 操作 ──
+            _buildDrawerSectionTitle('操作', textTheme, colors),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.title),
+              title: const Text('生成标题'),
+              onTap: () {
+                _chatScaffoldKey.currentState?.closeEndDrawer();
+                sessionController.generateTitle();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.summarize),
+              title: const Text('聊天内总结'),
+              onTap: () {
+                _chatScaffoldKey.currentState?.closeEndDrawer();
+                sessionController.doLocalSummary();
+              },
+            ),
+            const Divider(height: 32),
+
+            // ── 聊天变量 ──
+            if (chat.chatVars.isNotEmpty) ...[
+              _buildDrawerSectionTitle('聊天变量', textTheme, colors),
+              const SizedBox(height: 8),
+              ...chat.chatVars.entries.map((entry) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  child: ListTile(
+                    dense: true,
+                    title: Text(
+                      entry.key,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      entry.value,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
+              }),
+              const Divider(height: 32),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const double _maxDrawerWidth = 400;
+
+  Widget _buildDrawerSectionTitle(
+      String title, TextTheme textTheme, ColorScheme colors) {
+    return Text(
+      title,
+      style: textTheme.titleSmall?.copyWith(
+        color: colors.primary,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildDrawerInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    ColorScheme colors, {
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        leading: Icon(icon, size: 20, color: colors.primary),
+        title: Text(
+          label,
+          style: const TextStyle(fontSize: 12),
+        ),
+        subtitle: Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        trailing: onTap != null ? const Icon(Icons.edit, size: 16) : null,
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildLorebookToggle(
+    String name,
+    bool value,
+    ValueChanged<bool> onChanged,
+    ColorScheme colors,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: SwitchListTile(
+        dense: true,
+        title: Text(
+          name,
+          style: const TextStyle(fontSize: 14),
+        ),
+        secondary: Icon(Icons.book, size: 20, color: colors.primary),
+        value: value,
+        onChanged: onChanged,
+        activeTrackColor: colors.primary,
+      ),
+    );
+  }
+
+  Widget _buildLorebookActivatorTile(ColorScheme colors) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        leading: Icon(Icons.tune, size: 20, color: colors.primary),
+        title: const Text(
+          '管理世界书激活',
+          style: TextStyle(fontSize: 14),
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 18),
+        onTap: () {
+          _chatScaffoldKey.currentState?.closeEndDrawer();
+          final global =
+              Get.find<LoreBookController>().globalActivitedLoreBooks;
+          final chars =
+              chat.characters.expand((char) => char.loreBooks).toSet();
+          final stories = chat.bindStory?.loreBooks ?? [];
+          if (chat.assistantId != null) {
+            chars.addAll(chat.assistant!.loreBooks);
+          }
+          customNavigate(
+            LoreBookActivator(
+              chatSessionController: sessionController,
+              lorebooks: [...{...global, ...chars, ...stories}],
+              chat: chat,
+            ),
+            context: context,
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildEmptyScreen() {

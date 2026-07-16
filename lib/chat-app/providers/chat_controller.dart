@@ -264,8 +264,8 @@ class ChatController extends BaseController {
       CharacterModel character) async {
     String path = p.join(SettingController.of.getChatPathSync(), 'roles',
         character.id.toString());
-    final chat =
-        ChatModel.empty().copyWith(assistantId: character.id, messages: [
+    final chat = ChatModel.empty(leading: character.roleName)
+        .copyWith(assistantId: character.id, messages: [
       if (character.firstMessage != null && character.firstMessage!.isNotEmpty)
         MessageModel(
             id: DateTime.now().millisecondsSinceEpoch,
@@ -281,7 +281,8 @@ class ChatController extends BaseController {
   Future<(ChatModel, String)> createChatForStory(StoryModel story) async {
     String path = p.join(
         SettingController.of.getChatPathSync(), 'stories', story.id.toString());
-    final chat = ChatModel.empty().copyWith(mode: ChatMode.group);
+    final chat =
+        ChatModel.empty(leading: story.name).copyWith(mode: ChatMode.group);
     final fp = await createChat(chat, path);
     return (chat, fp);
   }

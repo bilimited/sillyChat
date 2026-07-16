@@ -124,45 +124,45 @@ class _EditMessagePageState extends State<EditMessagePage> {
 
                 const Spacer(),
 
-                // 右侧：消息类型选择
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: theme.dividerColor.withOpacity(0.5)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<MessageStyle>(
-                      value: _messageType,
-                      isDense: true,
-                      icon: const Icon(Icons.tune, size: 18),
-                      style: theme.textTheme.bodyMedium,
-                      items: const [
-                        DropdownMenuItem(
-                          value: MessageStyle.common,
-                          child: Text('文本'),
-                        ),
-                        DropdownMenuItem(
-                          value: MessageStyle.narration,
-                          child: Text('旁白'),
-                        ),
-                        DropdownMenuItem(
-                          value: MessageStyle.summary,
-                          child: Text('摘要'),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _messageType = val;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
+                // // 右侧：消息类型选择
+                // Container(
+                //   padding: const EdgeInsets.symmetric(horizontal: 12),
+                //   decoration: BoxDecoration(
+                //     color: theme.cardColor,
+                //     borderRadius: BorderRadius.circular(8),
+                //     border:
+                //         Border.all(color: theme.dividerColor.withOpacity(0.5)),
+                //   ),
+                //   child: DropdownButtonHideUnderline(
+                //     child: DropdownButton<MessageStyle>(
+                //       value: _messageType,
+                //       isDense: true,
+                //       icon: const Icon(Icons.tune, size: 18),
+                //       style: theme.textTheme.bodyMedium,
+                //       items: const [
+                //         DropdownMenuItem(
+                //           value: MessageStyle.common,
+                //           child: Text('文本'),
+                //         ),
+                //         DropdownMenuItem(
+                //           value: MessageStyle.narration,
+                //           child: Text('旁白'),
+                //         ),
+                //         DropdownMenuItem(
+                //           value: MessageStyle.summary,
+                //           child: Text('摘要'),
+                //         ),
+                //       ],
+                //       onChanged: (val) {
+                //         if (val != null) {
+                //           setState(() {
+                //             _messageType = val;
+                //           });
+                //         }
+                //       },
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
