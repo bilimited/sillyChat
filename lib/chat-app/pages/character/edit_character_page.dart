@@ -18,6 +18,7 @@ import 'package:flutter_example/chat-app/widgets/common/expandable_text_field.da
 import 'package:flutter_example/chat-app/widgets/common/memory_editor_widget.dart';
 import 'package:get/get.dart';
 import '../../models/character_model.dart';
+import '../../models/built_in_characters.dart';
 import '../../models/chat_option_model.dart';
 import '../../providers/character_controller.dart';
 
@@ -61,6 +62,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
     if (_character != null) return _character!.type == CharacterType.agent;
     return widget.initialType == CharacterType.agent;
   }
+
+  /// 是否为内置角色（只读模式），排除 id=-1 的兜底角色
+  bool get _isBuiltIn =>
+      _character != null &&
+      BuiltInCharacters.isBuiltIn(_character!.id) &&
+      _character!.id != BuiltInCharacters.defaultAssistantId;
 
   @override
   void initState() {
@@ -145,6 +152,7 @@ class _EditCharacterPageState extends State<EditCharacterPage>
   }
 
   Future<void> _save() async {
+    if (_isBuiltIn) return;
     final character = _saveCharacter();
     if (character == null) return;
     isEditMode
@@ -447,6 +455,17 @@ class _EditCharacterPageState extends State<EditCharacterPage>
 
   // --- 操作逻辑 ---
 
+  void _copyAsEditable() {
+    if (_character == null) return;
+    final copy = _character!.copyWith(
+      roleName: '${_character!.roleName}_副本',
+    );
+    _characterController.addCharacter(copy);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已复制为可编辑助手')),
+    );
+  }
+
   void _onBindLorebook() {
     final availableBooks = _lorebookController.lorebooks
         .where((lb) =>
@@ -512,10 +531,12 @@ class _EditCharacterPageState extends State<EditCharacterPage>
           appBar: AppBar(
             title: Text(isEditPlayer
                 ? '编辑用户'
-                : isAgent
-                    ? (isEditMode ? '编辑助手' : '新建助手')
-                    : (isEditMode ? '编辑角色' : '新建角色')),
-            bottom: (isEditPlayer || isTemporaryCharacter || isAgent)
+                : _isBuiltIn
+                    ? '内置助手详情'
+                    : isAgent
+                        ? (isEditMode ? '编辑助手' : '新建助手')
+                        : (isEditMode ? '编辑角色' : '新建角色')),
+            bottom: (_isBuiltIn || isEditPlayer || isTemporaryCharacter || isAgent)
                 ? null
                 : TabBar(controller: _tabController, tabs: const [
                     Tab(text: '基本信息'),
@@ -523,46 +544,54 @@ class _EditCharacterPageState extends State<EditCharacterPage>
                     Tab(text: '关系'),
                     Tab(text: '记忆'),
                   ]),
-            actions: isEditPlayer
-                ? []
-                : isAgent
-                    ? [
-                        if (isEditMode)
-                          IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: _deleteCharacter),
-                      ]
-                    : [
-                        if (isTemporaryCharacter && isEditMode)
-                          IconButton(
-                              icon: const Icon(Icons.publish),
-                              tooltip: '转为全局角色',
-                              onPressed: _promoteToGlobal),
-                        if (!isTemporaryCharacter)
-                          IconButton(
-                              icon: const Icon(Icons.image_outlined),
-                              onPressed: () => customNavigate(
-                                  CharacterGalleryPage(
-                                      path:
-                                          "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
-                                  context: context)),
-                        if (!isTemporaryCharacter)
-                          IconButton(
-                              icon: const Icon(Icons.copy_all),
-                              onPressed: () {
-                                if (_character != null) {
-                                  _characterController.characterCilpBoard.value =
-                                      _character!.copyWith(
-                                          roleName: '${_character!.roleName}_副本');
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('已复制到剪贴板')));
-                                }
-                              }),
-                        if (isEditMode)
-                          IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: _deleteCharacter),
-                      ],
+            actions: _isBuiltIn
+                ? [
+                    IconButton(
+                      icon: const Icon(Icons.copy_all),
+                      tooltip: '复制为可编辑助手',
+                      onPressed: _copyAsEditable,
+                    ),
+                  ]
+                : isEditPlayer
+                    ? []
+                    : isAgent
+                        ? [
+                            if (isEditMode)
+                              IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: _deleteCharacter),
+                          ]
+                        : [
+                            if (isTemporaryCharacter && isEditMode)
+                              IconButton(
+                                  icon: const Icon(Icons.publish),
+                                  tooltip: '转为全局角色',
+                                  onPressed: _promoteToGlobal),
+                            if (!isTemporaryCharacter)
+                              IconButton(
+                                  icon: const Icon(Icons.image_outlined),
+                                  onPressed: () => customNavigate(
+                                      CharacterGalleryPage(
+                                          path:
+                                              "${SettingController.of.getImagePathSync()}/${widget.characterId}/"),
+                                      context: context)),
+                            if (!isTemporaryCharacter)
+                              IconButton(
+                                  icon: const Icon(Icons.copy_all),
+                                  onPressed: () {
+                                    if (_character != null) {
+                                      _characterController.characterCilpBoard.value =
+                                          _character!.copyWith(
+                                              roleName: '${_character!.roleName}_副本');
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('已复制到剪贴板')));
+                                    }
+                                  }),
+                            if (isEditMode)
+                              IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: _deleteCharacter),
+                          ],
           ),
           body: SafeArea(
             child: Form(
@@ -600,34 +629,35 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         // 头像
         Center(
           child: GestureDetector(
-            onTap: () => _pickImage(true),
+            onTap: _isBuiltIn ? null : () => _pickImage(true),
             child: Stack(
               children: [
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: colors.surfaceContainerHighest,
                   child: ClipOval(
-                    child: _avatarPath != null
+                    child: _avatarPath != null && _avatarPath!.isNotEmpty
                         ? AvatarImage(fileName: _avatarPath!)
-                        : Icon(Icons.add_photo_alternate,
+                        : Icon(Icons.smart_toy_outlined,
                             size: 40, color: colors.onSurfaceVariant),
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                        color: colors.surface, shape: BoxShape.circle),
-                    child: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: colors.primary,
-                      child: Icon(Icons.camera_alt,
-                          size: 14, color: colors.onPrimary),
+                if (!_isBuiltIn)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                          color: colors.surface, shape: BoxShape.circle),
+                      child: CircleAvatar(
+                        radius: 14,
+                        backgroundColor: colors.primary,
+                        child: Icon(Icons.camera_alt,
+                            size: 14, color: colors.onPrimary),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -636,16 +666,18 @@ class _EditCharacterPageState extends State<EditCharacterPage>
         // 角色名称
         TextFormField(
           controller: _nickNameController,
+          readOnly: _isBuiltIn,
           decoration:
               const InputDecoration(labelText: '角色名称', hintText: '输入角色显示的昵称'),
         ),
         const SizedBox(height: 16),
-        // 绑定预设 — 点击进入编辑
+        // 绑定预设 — 点击进入编辑（内置角色只读）
         _buildBindOptionEditor(),
         const SizedBox(height: 16),
         // 用户偏好（原角色设定）
         ExpandableTextField(
           controller: _archiveController,
+          readOnly: _isBuiltIn,
           decoration: const InputDecoration(
               labelText: '用户偏好', helperText: '用户偏好、需求等设定'),
           maxLines: 15,
@@ -660,18 +692,20 @@ class _EditCharacterPageState extends State<EditCharacterPage>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () async {
-          await customNavigate(
-            EditChatOptionPage(
-              option: _bindOption,
-              onSave: (newOption) {
-                setState(() => _bindOption = newOption);
+        onTap: _isBuiltIn
+            ? null
+            : () async {
+                await customNavigate(
+                  EditChatOptionPage(
+                    option: _bindOption,
+                    onSave: (newOption) {
+                      setState(() => _bindOption = newOption);
+                    },
+                  ),
+                  context: context,
+                );
+                setState(() {});
               },
-            ),
-            context: context,
-          );
-          setState(() {});
-        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(

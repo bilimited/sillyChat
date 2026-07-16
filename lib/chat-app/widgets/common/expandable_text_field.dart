@@ -25,6 +25,7 @@ class ExpandableTextField extends StatefulWidget {
   final int? minLines;
   final int? maxLines;
   final bool autofocus;
+  final bool readOnly;
 
   final TextStyle? style;
 
@@ -40,6 +41,7 @@ class ExpandableTextField extends StatefulWidget {
     // 默认为 null 以实现自适应高度的多行输入
     this.maxLines = 4,
     this.autofocus = false,
+    this.readOnly = false,
     this.style,
   });
 
@@ -160,6 +162,7 @@ class _ExpandableTextFieldState extends State<ExpandableTextField>
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           autofocus: widget.autofocus,
+          readOnly: widget.readOnly,
           style: widget.style,
         ),
         // 带动画的操作按钮区域
@@ -183,7 +186,7 @@ class _ExpandableTextFieldState extends State<ExpandableTextField>
                     icon: Icons.fullscreen,
                     onPressed: () {
                       customNavigate(
-                          _FullscreenEditorPage(controller: widget.controller),
+                          _FullscreenEditorPage(controller: widget.controller, readOnly: widget.readOnly),
                           context: context);
                     },
                   ),
@@ -231,8 +234,9 @@ Widget buildIconTextButton(BuildContext context,
 /// 全屏输入页面
 class _FullscreenEditorPage extends StatelessWidget {
   final TextEditingController controller;
+  final bool readOnly;
 
-  const _FullscreenEditorPage({required this.controller});
+  const _FullscreenEditorPage({required this.controller, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -253,6 +257,7 @@ class _FullscreenEditorPage extends StatelessWidget {
           autofocus: true,
           maxLines: null,
           expands: true,
+          readOnly: readOnly,
           decoration: const InputDecoration(
             border: InputBorder.none,
             hintText: '在这里输入内容...',

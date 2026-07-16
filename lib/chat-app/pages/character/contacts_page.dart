@@ -14,6 +14,7 @@ import 'package:flutter_example/chat-app/utils/sillyTavern/STCharacterImporter.d
 import 'package:flutter_example/chat-app/widgets/inner_app_bar.dart';
 import 'package:flutter_example/main.dart';
 import 'package:get/get.dart';
+import '../../models/built_in_characters.dart';
 import '../../models/character_model.dart';
 
 // 定义三种显示模式
@@ -155,6 +156,12 @@ class _ContactsPageState extends State<ContactsPage>
     String value,
   ) {
     switch (value) {
+      case 'view':
+        customNavigate(
+          EditCharacterPage(characterId: contact.id),
+          context: context,
+        );
+        break;
       case 'edit':
         _editCharacter(context, contact);
         break;
@@ -169,19 +176,32 @@ class _ContactsPageState extends State<ContactsPage>
     CharacterModel contact, {
     Color? iconColor,
   }) {
+    final isBuiltIn = BuiltInCharacters.isBuiltIn(contact.id) &&
+        contact.id != BuiltInCharacters.defaultAssistantId;
+
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz, size: 20, color: iconColor),
       onSelected: (value) => _handleCharacterMenuAction(context, contact, value),
-      itemBuilder: (context) => const [
-        PopupMenuItem<String>(
-          value: 'edit',
-          child: Text('编辑角色'),
-        ),
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Text('删除角色'),
-        ),
-      ],
+      itemBuilder: (context) {
+        if (isBuiltIn) {
+          return const [
+            PopupMenuItem<String>(
+              value: 'view',
+              child: Text('查看详情'),
+            ),
+          ];
+        }
+        return const [
+          PopupMenuItem<String>(
+            value: 'edit',
+            child: Text('编辑角色'),
+          ),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Text('删除角色'),
+          ),
+        ];
+      },
     );
   }
 

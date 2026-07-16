@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/chat-app/models/character_model.dart';
@@ -36,7 +35,7 @@ class _MainPageMobileState extends State<MainPageMobile> {
 
   DateTime? _lastPressedBackAt; // 实现再按一次退出
 
-  static const double _drawerWidthScaler = 1;
+  static const double _drawerWidthScaler = 0.9;
   static const double _maxDrawerWidth = 500;
 
   @override

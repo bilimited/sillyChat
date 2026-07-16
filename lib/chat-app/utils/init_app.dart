@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_example/chat-app/constants.dart';
 import 'package:flutter_example/chat-app/models/api_model.dart';
-import 'package:flutter_example/chat-app/models/character_model.dart';
+import 'package:flutter_example/chat-app/models/built_in_characters.dart';
 import 'package:flutter_example/chat-app/models/chat_metadata_model.dart';
 import 'package:flutter_example/chat-app/models/chat_option_model.dart';
 import 'package:flutter_example/chat-app/providers/character_controller.dart';
@@ -49,23 +48,13 @@ class InitApp {
           provider: ServiceType.openai),
     ]);
     final id = DateTime.now().millisecondsSinceEpoch;
-    final emptyOption = ChatOptionModel.base(name: '空白预设').copyWith(false,id: id);
 
     ChatOptionController.of().addChatOption(ChatOptionModel.roleplay().copyWith(false,id: id+1));
-    ChatOptionController.of().addChatOption(emptyOption);
-    
 
-    final char = CharacterModel.empty().copyWith(
-      roleName: "默认助手",
-      bindOption: emptyOption,
-      archive: Constants.DEFAULT_AGENT_PROMPT,
-      firstMessage: """你好，我是 SillyChat 内置助手 👋  
-我可以帮你快速找到功能入口，比如切换 API、导入 SillyTavern 内容、查找预设，或者介绍这个应用的基本用法。  
-如果你不知道从哪里开始，也可以直接问我：“怎么切换模型？”或者“预设在哪？”"""
-    );
-    CharacterController.of.addCharacter(char);
+    // 使用内置默认助手（不再创建持久化角色和空白预设，空白预设已内联到角色 bindOption 中）
+    final builtIn = BuiltInCharacters.defaultAgent;
 
-    final (chat,fp) = await ChatController.of.createChatForCharacter(char);
+    final (chat,fp) = await ChatController.of.createChatForCharacter(builtIn);
     ChatController.of.openChat(fp);
     ChatController.of.pushRecentChat(fp, ChatMetaModel.fromChatModel(chat, fp));
 
@@ -74,5 +63,5 @@ class InitApp {
     await CharacterController.of.saveCharacters();
     debugPrint("吃屎数据加载完成");
     VaultSettingController.of().isFirstOpen.value = false;
-  } 
+  }
 }

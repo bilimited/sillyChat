@@ -98,43 +98,42 @@ class ChatOptionModel {
           (isDeep ? this.regex.map((r) => r.copyWith()).toList() : this.regex),
       agentConfig: clearAgentConfig
           ? null
-          : (agentConfig ?? (isDeep ? this.agentConfig?.copyWith() : this.agentConfig)),
+          : (agentConfig ??
+              (isDeep ? this.agentConfig?.copyWith() : this.agentConfig)),
     );
   }
 
   // RP预设，包含所有功能
-factory ChatOptionModel.roleplay({String? name}) {
-  final int id = DateTime.now().microsecondsSinceEpoch;
+  factory ChatOptionModel.roleplay({String? name}) {
+    final int id = DateTime.now().microsecondsSinceEpoch;
 
-  const String bilimitedComments = "作者注释：\n"
-      "{{lore xxx default=xxx}}代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到{{lore x ...}} 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
-      "{{user}}代表用户的名称，{{char}}代表发言角色的名称,{{archive}}代表发言角色的详细介绍，{{description}}为当前聊天的作者注释。\n"
-      "{{relations}}代表发言角色的关联人物列表。只有出现在群成员中，且与该角色有关联的角色会被插入到此处。\n"
-      "{{recent-characters:x}}处会插入最近x条消息中提到，且没有出现在人物关系列表内的角色简介。\n"
-      "在发送请求时，会自动去除空白的Prompt。";
+    const String bilimitedComments = "作者注释：\n"
+        "{{lore xxx default=xxx}}代表了世界书条目插入的位置，世界书条目的position属性为x，世界书就会被插入到{{lore x ...}} 相应的位置。default=xxx的意思是如果在该位置没有匹配的世界书条目的话，就会被替换成xxx对应的内容\n"
+        "{{user}}代表用户的名称，{{char}}代表发言角色的名称,{{archive}}代表发言角色的详细介绍，{{description}}为当前聊天的作者注释。\n"
+        "{{relations}}代表发言角色的关联人物列表。只有出现在群成员中，且与该角色有关联的角色会被插入到此处。\n"
+        "{{recent-characters:x}}处会插入最近x条消息中提到，且没有出现在人物关系列表内的角色简介。\n"
+        "在发送请求时，会自动去除空白的Prompt。";
 
-  return ChatOptionModel(
-    id: id,
-    name: name ?? '默认预设',
-    requestOptions: LLMRequestOptions(messages: []),
-    prompts: [
-      PromptModel(
-        id: id - 1,
-        content: bilimitedComments,
-        role: 'system',
-        name: '作者注释说明',
-      )..isEnable = false,
-
-      PromptModel(
-        id: id,
-        content: '{{lore before_char}}',
-        role: 'system',
-        name: '世界书·角色前',
-      ),
-
-      PromptModel(
-        id: id + 1,
-        content: '''
+    return ChatOptionModel(
+      id: id,
+      name: name ?? '默认预设',
+      requestOptions: LLMRequestOptions(messages: []),
+      prompts: [
+        PromptModel(
+          id: id - 1,
+          content: bilimitedComments,
+          role: 'system',
+          name: '作者注释说明',
+        )..isEnable = false,
+        PromptModel(
+          id: id,
+          content: '{{lore before_char}}',
+          role: 'system',
+          name: '世界书·角色前',
+        ),
+        PromptModel(
+          id: id + 1,
+          content: '''
 # 角色定义
 名称：{{char}}
 你是{{char}}，将扮演以下介绍中的角色。
@@ -142,43 +141,39 @@ factory ChatOptionModel.roleplay({String? name}) {
 ## 介绍
 {{archive}}
 ''',
-        role: 'system',
-        name: '角色定义',
-      ),
-
-      PromptModel(
-        id: id + 2,
-        content: '''
+          role: 'system',
+          name: '角色定义',
+        ),
+        PromptModel(
+          id: id + 2,
+          content: '''
 ## 人物关系
 {{relations}}
 ''',
-        role: 'system',
-        name: '人物关系',
-      ),
-
-      PromptModel(
-        id: id + 3,
-        content: '''
+          role: 'system',
+          name: '人物关系',
+        ),
+        PromptModel(
+          id: id + 3,
+          content: '''
 ## 其他角色
 {{recent-characters:5}}
 ''',
-        role: 'system',
-        name: '其他角色',
-      ),
-
-      PromptModel(
-        id: id + 4,
-        content: '''
+          role: 'system',
+          name: '其他角色',
+        ),
+        PromptModel(
+          id: id + 4,
+          content: '''
 ## 其他设定
 {{lore after_char}}
 ''',
-        role: 'system',
-        name: '其他设定',
-      ),
-
-      PromptModel(
-        id: id + 5,
-        content: '''
+          role: 'system',
+          name: '其他设定',
+        ),
+        PromptModel(
+          id: id + 5,
+          content: '''
 {{lore before_em}}
 
 {{description}}
@@ -187,49 +182,45 @@ factory ChatOptionModel.roleplay({String? name}) {
 
 {{extraprompt}}
 ''',
-        role: 'system',
-        name: '作者注释内容',
-      ),
-
-      PromptModel(
-        id: id + 6,
-        content: '''
+          role: 'system',
+          name: '作者注释内容',
+        ),
+        PromptModel(
+          id: id + 6,
+          content: '''
 # 用户设定
 我是{{user}}。
 {{userbrief}}
 ''',
-        role: 'system',
-        name: '用户设定',
-      ),
-
-      PromptModel(
-        id: id + 7,
-        content: '''
+          role: 'system',
+          name: '用户设定',
+        ),
+        PromptModel(
+          id: id + 7,
+          content: '''
 # 聊天回忆
 {{lore memory}}
 ''',
-        role: 'system',
-        name: '聊天回忆',
-      ),
-
-      PromptModel(
-        id: id + 8,
-        content: '# 对话正文',
-        role: 'system',
-        name: '对话正文',
-      ),
-
-      PromptModel(
-        id: id + 9,
-        content: 'messageList',
-        role: 'system',
-        name: '消息列表',
-        isChatHistory: true,
-      ),
-    ],
-    regex: [],
-  );
-}
+          role: 'system',
+          name: '聊天回忆',
+        ),
+        PromptModel(
+          id: id + 8,
+          content: '# 对话正文',
+          role: 'system',
+          name: '对话正文',
+        ),
+        PromptModel(
+          id: id + 9,
+          content: 'messageList',
+          role: 'system',
+          name: '消息列表',
+          isChatHistory: true,
+        ),
+      ],
+      regex: [],
+    );
+  }
 
   // 普通预设，只有角色定义和消息列表
   factory ChatOptionModel.common({String? name}) {
@@ -285,14 +276,17 @@ factory ChatOptionModel.roleplay({String? name}) {
         name: name ?? '默认预设',
         requestOptions: LLMRequestOptions(messages: []),
         prompts: [
-          PromptModel(id: id, 
-          content: '''现在的时间是: {{time}}
+          PromptModel(
+              id: id,
+              content: '''现在的时间是: {{time}}
 
 {{archive}}
 用户名称:{{user}}
-''', role: 'system', name: 'Base'),
+''',
+              role: 'system',
+              name: 'Base'),
           PromptModel(
-              id: id+1,
+              id: id + 1,
               content: 'messageList',
               role: 'system',
               name: '消息列表',
@@ -304,22 +298,23 @@ factory ChatOptionModel.roleplay({String? name}) {
   }
 
   // agent默认预设
-    factory ChatOptionModel.agent({String? name}) {
+  factory ChatOptionModel.agent({String? name}) {
     int id = DateTime.now().microsecondsSinceEpoch;
     return ChatOptionModel(
         id: DateTime.now().microsecondsSinceEpoch,
         name: name ?? '默认Agent预设',
         requestOptions: LLMRequestOptions(messages: []),
         prompts: [
-          PromptModel(id: id, 
-          content: '''
-# 用户偏好
-{{archive}}
-
----
-''', role: 'system', name: 'Base'),
           PromptModel(
-              id: id+1,
+              id: id,
+              content: '''
+{{archive}}
+---
+''',
+              role: 'system',
+              name: 'Base'),
+          PromptModel(
+              id: id + 1,
               content: 'messageList',
               role: 'system',
               name: '消息列表',
@@ -328,12 +323,8 @@ factory ChatOptionModel.roleplay({String? name}) {
           //     id: id + 2, content: userMessage, role: 'user', name: '用户输入')
         ],
         regex: [],
-        agentConfig: AgentConfig(
-          enabled: true,
-          maxCallRounds: 10
-        ));
+        agentConfig: AgentConfig(enabled: true, maxCallRounds: 10));
   }
-
 
   factory ChatOptionModel.autoTitle() {
     int id = DateTime.now().microsecondsSinceEpoch;

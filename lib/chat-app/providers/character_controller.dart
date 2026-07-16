@@ -47,7 +47,15 @@ class CharacterController extends BaseController {
     super.onInit();
     await loadCharacters();
     await loadCategoryConfigs();
+    _ensureBuiltInAssistant();
     markReady();
+  }
+
+  /// 将内置默认助手注入 characters 列表，使其在联系人页面中可见（不持久化）
+  void _ensureBuiltInAssistant() {
+    if (!characters.any((c) => c.id == BuiltInCharacters.defaultAgentId)) {
+      characters.add(BuiltInCharacters.defaultAgent);
+    }
   }
 
   // 从本地加载角色数据
@@ -91,7 +99,10 @@ class CharacterController extends BaseController {
       
 
       final String jsonString = json.encode(
-        characters.map((char) => char.toJson()).toList(),
+        characters
+            .where((char) => !BuiltInCharacters.isBuiltIn(char.id))
+            .map((char) => char.toJson())
+            .toList(),
       );
       await file.writeAsString(jsonString);
     } catch (e) {
@@ -224,6 +235,10 @@ class CharacterController extends BaseController {
       return summaryCharacter;
     }
 
+    if (id == BuiltInCharacters.defaultAgentId) {
+      return BuiltInCharacters.defaultAgent;
+    }
+
     return characters.firstWhereOrNull((char) => char.id == id) ??
         defaultCharacter;
   }
@@ -284,7 +299,12 @@ class CharacterController extends BaseController {
   static CharacterController get of => Get.find<CharacterController>();
 
   List<CharacterModel> getAllCharactersAndAgent() {
-    return characters.where((char) => char.bindStoryId == null ).toList();
+    final chars = characters.where((char) => char.bindStoryId == null).toList();
+    // 始终确保内置默认助手可见（不依赖 onInit 时序）
+    if (!chars.any((c) => c.id == BuiltInCharacters.defaultAgentId)) {
+      chars.add(BuiltInCharacters.defaultAgent);
+    }
+    return chars;
   }
 
     List<CharacterModel> getAllCharacters() {

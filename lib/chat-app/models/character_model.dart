@@ -58,7 +58,7 @@ enum CharacterType {
   String toJson() => name;
 }
 
-class CharacterModel { 
+class CharacterModel {
   final int id;
   MessageStyle messageStyle = MessageStyle.common;
 
@@ -92,7 +92,7 @@ class CharacterModel {
   CharacterType type = CharacterType.character; // 角色类型，暂不可由用户编辑
 
   bool get isTemporary => bindStoryId != null;
-  bool get isDefaultAssistant => this.id == -1;
+  bool get isDefaultAssistant => this.id < 0;
 
   CharacterModel(
       {required this.id,
@@ -203,7 +203,7 @@ class CharacterModel {
   factory CharacterModel.empty() {
     return CharacterModel(
         id: DateTime.now().microsecondsSinceEpoch,
-        remark: '', 
+        remark: '',
         roleName: 'roleName',
         avatar: '',
         category: '');
@@ -215,9 +215,9 @@ class CharacterModel {
     String? roleName,
     String? avatar,
     String? description,
-    String? backgroundImage, 
+    String? backgroundImage,
     String? brief,
-    String? archive, 
+    String? archive,
     String? firstMessage,
     List<String>? moreFirstMessage,
     String? category,
