@@ -217,7 +217,7 @@ void _registerUpdateLorebook() {
             changes.add('本就不在全局激活列表中，无需操作');
           }
         }
-        await _ctrl.saveLorebooks();
+        await _ctrl.saveActivationState();
       }
 
       return '已更新世界书 "${updated.name}"（${changes.join("，")}）。';

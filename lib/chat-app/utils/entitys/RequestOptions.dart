@@ -55,7 +55,7 @@ class LLMRequestOptions {
     this.isThinkMode = false,
     this.isDeleteThinking = true,
     this.seed = -1,
-    this.thinkEffort = ThinkEffort.disabled,
+    this.thinkEffort = ThinkEffort.high,
     this.isMergeMessageList = false,
     this.isStreaming = true,
     this.modelName,
@@ -111,8 +111,7 @@ class LLMRequestOptions {
       'is_streaming': isStreaming,
       'chat_compression_settings': chatCompressionSettings.toJson(),
       'modelName': modelName,
-      if (tools != null)
-        'tools': tools!.map((t) => t.toJson()).toList(),
+      if (tools != null) 'tools': tools!.map((t) => t.toJson()).toList(),
       if (toolChoice != null) 'tool_choice': toolChoice,
     };
   }

@@ -247,7 +247,7 @@ class LoreBookManagerPage extends StatelessWidget {
                           controller.globalActivitedLoreBookIds
                               .add(lorebook.id);
                         }
-                        controller.saveLorebooks();
+                        controller.saveActivationState();
                         break;
                       case 'delete':
                         final confirm = await showDialog<bool>(

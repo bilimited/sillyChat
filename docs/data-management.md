@@ -25,7 +25,8 @@ Silly Chat 采用基于文件的本地数据存储，并提供完善的数据导
 | `stories.json` | 故事数据 |
 | `prompts.json` | 提示词模板 |
 | `chat_options.json` | 对话预设 |
-| `lorebooks.json` | 世界书数据 |
+| `lorebooks/{id}.json` | 世界书数据（每个世界书独立文件） |
+| `lorebooks/_global_activation.json` | 全局激活的世界书 ID 列表 |
 | `chat_index.json` | 聊天元数据索引 |
 | `recent_chat.json` | 最近聊天记录 |
 | `chats/roles/{角色ID}/` | 各角色的聊天文件 (`.chat`) |
